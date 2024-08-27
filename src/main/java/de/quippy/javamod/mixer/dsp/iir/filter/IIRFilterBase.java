@@ -2,7 +2,7 @@
  * @(#) IIRFilterBase.java
  *
  * Created on 09.01.2012 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
  *----------------------------------------------------------------------
  *
  * Source adopted from package com.db.media.audio.dsp.*;
- * 
+ *
  * Copyright (c) 2000 Silvere Martin-Michiellot All Rights Reserved.
  *
  * Silvere Martin-Michiellot grants you ("Licensee") a non-exclusive,
@@ -49,141 +49,150 @@
  * the design, construction, operation or maintenance of any nuclear
  * facility. Licensee represents and warrants that it will not use or
  * redistribute the Software for such purposes.
- * 
+ *
  */
+
 package de.quippy.javamod.mixer.dsp.iir.filter;
 
 /**
  * @author Daniel Becker
  */
-public abstract class IIRFilterBase
-{
-	protected int frequency;
-	protected int sampleRate;
+public abstract class IIRFilterBase {
+
+    protected int frequency;
+    protected int sampleRate;
     protected static final int HISTORYSIZE = 3;
     protected float[][] inArray;
     protected float[][] outArray;
     protected float alpha;
-	protected float beta;
-	protected float gamma;
-	protected float amplitudeAdj;
+    protected float beta;
+    protected float gamma;
+    protected float amplitudeAdj;
 
     /**
      * Default Constructor - to already set the GAIN
+     *
      * @since 09.01.2012
      */
-    public IIRFilterBase()
-    {
-    	super();
+    public IIRFilterBase() {
+        super();
     }
-	/**
-	 * Call this to initialize. Will set the memory to 0
-	 * @since 09.01.2012
-	 */
-	public void initialize(final int sampleRate, final int channels, final int frequency, final float parameter)
-	{
-		this.frequency = frequency;
-		this.sampleRate = sampleRate;
-		inArray = new float[channels][HISTORYSIZE];
-		outArray = new float[channels][HISTORYSIZE];
-		clearHistory();
-	}
-	/**
-	 * Clean the history
-	 * @since 14.01.2012
-	 */
-	public void clearHistory()
-	{
-		int channels = inArray.length;
-		for (int c=0; c<channels; c++)
-		{
-			for (int i=0; i<HISTORYSIZE; i++)
-			{
-				inArray[c][i] = outArray[c][i] = 0f;
-			}
-		}
-	}
-	/**
-	 * Convert from decimalValue to DeciBel
-	 * @since 14.01.2012
-	 * @param dbValue
-	 * @return
-	 */
-	public static float getIIRDecimalValueFrom(float dbValue)
-	{
-		double decimalValue = Math.pow(10, dbValue / 20.0);
-		return (float)((decimalValue<1.0)?-decimalValue:decimalValue);
-	}
-	/**
-	 * convert from DeciBel to decimalValue
-	 * @since 14.01.2012
-	 * @param decimalValue
-	 * @return
-	 */
-	public static float getIIRDBValueFrom(final float decimalValue)
-	{
-		return (float)Math.log10((decimalValue<0)?-decimalValue:decimalValue)*20.0f;
-	}
-	/**
-	 * Given a frequency of interest, calculate radians/sample
-	 * @since 07.01.2012
-	 * @param freq
-	 * @return
-	 */
-	protected float calcRadiansPerSample(float freq)
-	{
-		return (float)((2.0 * Math.PI * freq) / sampleRate);
-	}
-	/**
-	 * Return the radiant per sample at the frequency of interest
-	 * @since 07.01.2012
-	 * @return
-	 */
-	protected float getThetaZero()
-	{
-		return calcRadiansPerSample(frequency);
-	}
-	/**
-	 * Set the amplitude adjustment to be applied to filtered data
-	 * Values typically range from -.25 to +4.0.
-	 * @param amplitudeAdj
-	 * @since 09.01.2012
-	 */
-	public void setAmplitudeAdj(float newAmplitudeAdj)
-	{
-		amplitudeAdj = newAmplitudeAdj;
-	}
-	public float getAmplitudeAdj()
-	{
-		return amplitudeAdj;
-	}
-	/**
-	 * Set the amplitude adjustment to be applied to filtered data
-	 * Values typically range from -12 to +12 db.
-	 * @param dbValue
-	 * @since 13.01.2012
-	 */
-	public void setGain(float dbValue)
-	{
-		setAmplitudeAdj(IIRFilterBase.getIIRDecimalValueFrom(dbValue));
-	}
-	/**
-	 * Get the amplitude adjustment in db value
-	 * @since 14.01.2012
-	 * @return
-	 */
-	public float getGain()
-	{
-		return getIIRDBValueFrom(getAmplitudeAdj());
-	}
-	/**
-	 * @param sample
-	 * @param channel
-	 * @param iIndex
-	 * @param jIndex
-	 * @param kIndex
-	 * @return
-	 * @since 12.01.2012
-	 */
-	protected abstract float performFilterCalculation(final float sample, final int channel, final int iIndex, final int jIndex, final int kIndex);
+
+    /**
+     * Call this to initialize. Will set the memory to 0
+     *
+     * @since 09.01.2012
+     */
+    public void initialize(final int sampleRate, final int channels, final int frequency, final float parameter) {
+        this.frequency = frequency;
+        this.sampleRate = sampleRate;
+        inArray = new float[channels][HISTORYSIZE];
+        outArray = new float[channels][HISTORYSIZE];
+        clearHistory();
+    }
+
+    /**
+     * Clean the history
+     *
+     * @since 14.01.2012
+     */
+    public void clearHistory() {
+        int channels = inArray.length;
+        for (int c = 0; c < channels; c++) {
+            for (int i = 0; i < HISTORYSIZE; i++) {
+                inArray[c][i] = outArray[c][i] = 0f;
+            }
+        }
+    }
+
+    /**
+     * Convert from decimalValue to DeciBel
+     *
+     * @param dbValue
+     * @return
+     * @since 14.01.2012
+     */
+    public static float getIIRDecimalValueFrom(float dbValue) {
+        double decimalValue = Math.pow(10, dbValue / 20.0);
+        return (float) ((decimalValue < 1.0) ? -decimalValue : decimalValue);
+    }
+
+    /**
+     * convert from DeciBel to decimalValue
+     *
+     * @param decimalValue
+     * @return
+     * @since 14.01.2012
+     */
+    public static float getIIRDBValueFrom(final float decimalValue) {
+        return (float) Math.log10((decimalValue < 0) ? -decimalValue : decimalValue) * 20.0f;
+    }
+
+    /**
+     * Given a frequency of interest, calculate radians/sample
+     *
+     * @param freq
+     * @return
+     * @since 07.01.2012
+     */
+    protected float calcRadiansPerSample(float freq) {
+        return (float) ((2.0 * Math.PI * freq) / sampleRate);
+    }
+
+    /**
+     * Return the radiant per sample at the frequency of interest
+     *
+     * @return
+     * @since 07.01.2012
+     */
+    protected float getThetaZero() {
+        return calcRadiansPerSample(frequency);
+    }
+
+    /**
+     * Set the amplitude adjustment to be applied to filtered data
+     * Values typically range from -.25 to +4.0.
+     *
+     * @param amplitudeAdj
+     * @since 09.01.2012
+     */
+    public void setAmplitudeAdj(float newAmplitudeAdj) {
+        amplitudeAdj = newAmplitudeAdj;
+    }
+
+    public float getAmplitudeAdj() {
+        return amplitudeAdj;
+    }
+
+    /**
+     * Set the amplitude adjustment to be applied to filtered data
+     * Values typically range from -12 to +12 db.
+     *
+     * @param dbValue
+     * @since 13.01.2012
+     */
+    public void setGain(float dbValue) {
+        setAmplitudeAdj(IIRFilterBase.getIIRDecimalValueFrom(dbValue));
+    }
+
+    /**
+     * Get the amplitude adjustment in db value
+     *
+     * @return
+     * @since 14.01.2012
+     */
+    public float getGain() {
+        return getIIRDBValueFrom(getAmplitudeAdj());
+    }
+
+    /**
+     * @param sample
+     * @param channel
+     * @param iIndex
+     * @param jIndex
+     * @param kIndex
+     * @return
+     * @since 12.01.2012
+     */
+    protected abstract float performFilterCalculation(final float sample, final int channel, final int iIndex, final int jIndex, final int kIndex);
 }

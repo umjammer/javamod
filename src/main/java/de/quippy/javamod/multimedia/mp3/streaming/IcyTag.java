@@ -1,11 +1,11 @@
 /*
  * IcyTag.
- * 
+ *
  * jicyshout : http://sourceforge.net/projects/jicyshout/
- *  
+ *
  * JavaZOOM : mp3spi@javazoom.net
  * 			  http://www.javazoom.net
- * 
+ *
  *-----------------------------------------------------------------------
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Library General Public License as published
@@ -27,31 +27,31 @@ package de.quippy.javamod.multimedia.mp3.streaming;
 
 import java.io.Serializable;
 
-/** 
- * A tag parsed from an icecast tag. 
+
+/**
+ * A tag parsed from an icecast tag.
  */
-public class IcyTag implements Serializable
-{
-	private static final long serialVersionUID = -5433537975531168164L;
+public class IcyTag implements Serializable {
 
-	private String name;
-	private String value;
+    private static final long serialVersionUID = -5433537975531168164L;
 
-	public IcyTag(String name, String value)
-	{
-		this.name = name;
-		this.value = value;
-	}
-	public String getName()
-	{
-		return name;
-	}
-	public String getValue()
-	{
-		return value;
-	}
-	public String toString()
-	{
-		return getName() + ":" + getValue();
-	}
+    private String name;
+    private String value;
+
+    public IcyTag(String name, String value) {
+        this.name = name;
+        this.value = value;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public String toString() {
+        return getName() + ":" + getValue();
+    }
 }

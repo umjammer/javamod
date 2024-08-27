@@ -2,7 +2,7 @@
  * @(#) PlaylistGUIChangeListener.java
  *
  * Created on 30.01.2011 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,16 +19,19 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *----------------------------------------------------------------------
  */
+
 package de.quippy.javamod.main.gui.playlist;
 
 import de.quippy.javamod.main.playlist.PlayList;
+
 
 /**
  * @author Daniel Becker
  * @since 30.01.2011
  */
-public interface PlaylistGUIChangeListener
-{
-	public void userSelectedPlaylistEntry();
-	public void playListChanged(PlayList newPlayList);
+public interface PlaylistGUIChangeListener {
+
+    public void userSelectedPlaylistEntry();
+
+    public void playListChanged(PlayList newPlayList);
 }

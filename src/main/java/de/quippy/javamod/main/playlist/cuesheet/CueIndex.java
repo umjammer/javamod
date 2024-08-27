@@ -2,7 +2,7 @@
  * @(#) CueIndex.java
  *
  * Created on 14.02.2012 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,55 +19,53 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *----------------------------------------------------------------------
  */
+
 package de.quippy.javamod.main.playlist.cuesheet;
 
 /**
  * @author Daniel Becker
- *
  */
-public class CueIndex
-{
-	private int indexNo;
-	private long millisecondIndex;
-	/**
-	 * 
-	 * @since 14.02.2012
-	 */
-	public CueIndex()
-	{
-		super();
-	}
+public class CueIndex {
 
-	/**
-	 * @return the indexNo
-	 * @since 14.02.2012
-	 */
-	public int getIndexNo()
-	{
-		return indexNo;
-	}
-	/**
-	 * @param indexNo the indexNo to set
-	 * @since 14.02.2012
-	 */
-	public void setIndexNo(int indexNo)
-	{
-		this.indexNo = indexNo;
-	}
-	/**
-	 * @return the millisecondIndex
-	 * @since 14.02.2012
-	 */
-	public long getMillisecondIndex()
-	{
-		return millisecondIndex;
-	}
-	/**
-	 * @param millisecondIndex the millisecondIndex to set
-	 * @since 14.02.2012
-	 */
-	public void setMillisecondIndex(long millisecondIndex)
-	{
-		this.millisecondIndex = millisecondIndex;
-	}
+    private int indexNo;
+    private long millisecondIndex;
+
+    /**
+     * @since 14.02.2012
+     */
+    public CueIndex() {
+        super();
+    }
+
+    /**
+     * @return the indexNo
+     * @since 14.02.2012
+     */
+    public int getIndexNo() {
+        return indexNo;
+    }
+
+    /**
+     * @param indexNo the indexNo to set
+     * @since 14.02.2012
+     */
+    public void setIndexNo(int indexNo) {
+        this.indexNo = indexNo;
+    }
+
+    /**
+     * @return the millisecondIndex
+     * @since 14.02.2012
+     */
+    public long getMillisecondIndex() {
+        return millisecondIndex;
+    }
+
+    /**
+     * @param millisecondIndex the millisecondIndex to set
+     * @since 14.02.2012
+     */
+    public void setMillisecondIndex(long millisecondIndex) {
+        this.millisecondIndex = millisecondIndex;
+    }
 }

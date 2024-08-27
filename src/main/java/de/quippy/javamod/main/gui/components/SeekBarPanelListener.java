@@ -2,7 +2,7 @@
  * @(#) SeekBarPanelListener.java
  *
  * Created on 15.02.2012 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,13 +19,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *----------------------------------------------------------------------
  */
+
 package de.quippy.javamod.main.gui.components;
 
 /**
  * @author Daniel Becker
- *
  */
-public interface SeekBarPanelListener
-{
-	public void valuesChanged(long milliseconds);
+public interface SeekBarPanelListener {
+
+    public void valuesChanged(long milliseconds);
 }

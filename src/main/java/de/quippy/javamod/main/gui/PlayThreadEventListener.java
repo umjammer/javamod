@@ -2,7 +2,7 @@
  * @(#) PlayThreadEventListener.java
  *
  * Created on 18.05.2008 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,15 +19,17 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *----------------------------------------------------------------------
  */
+
 package de.quippy.javamod.main.gui;
 
 import java.util.EventListener;
+
 
 /**
  * @author Daniel Becker
  * @since 18.05.2008
  */
-public interface PlayThreadEventListener extends EventListener
-{
-	public void playThreadEventOccured(PlayThread thread);
+public interface PlayThreadEventListener extends EventListener {
+
+    public void playThreadEventOccured(PlayThread thread);
 }

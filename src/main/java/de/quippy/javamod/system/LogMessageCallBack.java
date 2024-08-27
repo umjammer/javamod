@@ -2,7 +2,7 @@
  * @(#) LogMessageCallBack.java
  *
  * Created on 03.10.2007 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,17 +19,21 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *----------------------------------------------------------------------
  */
+
 package de.quippy.javamod.system;
 
 import java.util.EventListener;
+
 
 /**
  * @author Daniel Becker
  * @since 03.10.2007
  */
-public interface LogMessageCallBack extends EventListener
-{
-	public void error(String message, Throwable ex);
-	public void info(String message);
-	public void debug(String message);
+public interface LogMessageCallBack extends EventListener {
+
+    public void error(String message, Throwable ex);
+
+    public void info(String message);
+
+    public void debug(String message);
 }

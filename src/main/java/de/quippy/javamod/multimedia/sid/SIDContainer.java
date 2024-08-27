@@ -2,7 +2,7 @@
  * @(#) SIDContainer.java
  *
  * Created on 04.10.2009 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,139 +36,136 @@ import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import libsidplay.sidtune.SidTune;
 import libsidplay.sidtune.SidTuneInfo;
 
+
 /**
  * @author Daniel Becker
  * @since 04.10.2009
  */
-public class SIDContainer extends MultimediaContainer
-{
-	/** these are copied from libsidplay.components.sidtune.defaultFileNameExt */
-	private static final String[] SIDFILEEXTENSION = new String [] 
-   	{
-	 	// Preferred default file extension for single-file sidtunes
-		// or sidtune description files in SIDPLAY INFOFILE format.
-		"sid",
-		// Common file extension for single-file sidtunes due to SIDPLAY/DOS
-		// displaying files *.DAT in its file selector by default.
-		// Originally this was intended to be the extension of the raw data
-		// file
-		// of two-file sidtunes in SIDPLAY INFOFILE format.
-		"dat",
-		// Extension of Amiga Workbench tooltype icon info files, which
-		// have been cut to MS-DOS file name length (8.3).
-		"inf"
-   	};
-	public static final String PROPERTY_SID_FREQUENCY = "javamod.player.sid.frequency"; 
-	public static final String PROPERTY_SID_MODEL = "javamod.player.sid.sidmodel"; 
-	public static final String PROPERTY_SID_OPTIMIZATION = "javamod.player.sid.optimization"; 
-	public static final String PROPERTY_SID_USEFILTER = "javamod.player.sid.usesidfilter"; 
-	public static final String PROPERTY_SID_VIRTUALSTEREO = "javamod.player.sid.virtualstrereo"; 
-	/* GUI Constants ---------------------------------------------------------*/
-	public static final String DEFAULT_SAMPLERATE = "44100";
-	public static final String DEFAULT_SIDMODEL = "0";
-	public static final String DEFAULT_OPTIMIZATION = "1";
-	public static final String DEFAULT_USEFILTER = "true";
-	public static final String DEFAULT_VIRTUALSTEREO = "false";
+public class SIDContainer extends MultimediaContainer {
 
-	public static final String[] SAMPLERATE = new String[]
- 	{
-		"8000", "11025", "16000", "22050", "33075", DEFAULT_SAMPLERATE, "48000", "96000"
- 	};
-	public static final String[] SIDMODELS = new String[]
-	{
-		"best", "SID 6581 (old model)", "SID 8580 (new model)"
-	};
+    /** these are copied from libsidplay.components.sidtune.defaultFileNameExt */
+    private static final String[] SIDFILEEXTENSION = new String[]
+            {
+                    // Preferred default file extension for single-file sidtunes
+                    // or sidtune description files in SIDPLAY INFOFILE format.
+                    "sid",
+                    // Common file extension for single-file sidtunes due to SIDPLAY/DOS
+                    // displaying files *.DAT in its file selector by default.
+                    // Originally this was intended to be the extension of the raw data
+                    // file
+                    // of two-file sidtunes in SIDPLAY INFOFILE format.
+                    "dat",
+                    // Extension of Amiga Workbench tooltype icon info files, which
+                    // have been cut to MS-DOS file name length (8.3).
+                    "inf"
+            };
+    public static final String PROPERTY_SID_FREQUENCY = "javamod.player.sid.frequency";
+    public static final String PROPERTY_SID_MODEL = "javamod.player.sid.sidmodel";
+    public static final String PROPERTY_SID_OPTIMIZATION = "javamod.player.sid.optimization";
+    public static final String PROPERTY_SID_USEFILTER = "javamod.player.sid.usesidfilter";
+    public static final String PROPERTY_SID_VIRTUALSTEREO = "javamod.player.sid.virtualstrereo";
+    /* GUI Constants ---------------------------------------------------------*/
+    public static final String DEFAULT_SAMPLERATE = "44100";
+    public static final String DEFAULT_SIDMODEL = "0";
+    public static final String DEFAULT_OPTIMIZATION = "1";
+    public static final String DEFAULT_USEFILTER = "true";
+    public static final String DEFAULT_VIRTUALSTEREO = "false";
 
-	private Properties currentProps = null;
+    public static final String[] SAMPLERATE = new String[]
+            {
+                    "8000", "11025", "16000", "22050", "33075", DEFAULT_SAMPLERATE, "48000", "96000"
+            };
+    public static final String[] SIDMODELS = new String[]
+            {
+                    "best", "SID 6581 (old model)", "SID 8580 (new model)"
+            };
 
-	private SidTune sidTune;
-	private SIDMixer currentMixer;
-	private SIDConfigPanel sidConfigPanel;
-	private SIDInfoPanel sidInfoPanel;
+    private Properties currentProps = null;
 
-	/**
-	 * Will be executed during class load
-	 */
-	static
-	{
-		MultimediaContainerManager.registerContainer(new SIDContainer());
-	}
-	/**
-	 * Constructor for SIDContainer
-	 */
-	public SIDContainer()
-	{
-		super();
-	}
-	/**
-	 * @param sidFileUrl
-	 * @return
-	 * @see de.quippy.javamod.multimedia.MultimediaContainer#getInstance(java.net.URL)
-	 */
-	@Override
-	public MultimediaContainer getInstance(URL sidFileUrl)
-	{
-		MultimediaContainer result = super.getInstance(sidFileUrl);
-		sidTune = loadSidTune(sidFileUrl);
-		if (!MultimediaContainerManager.isHeadlessMode()) ((SIDInfoPanel)getInfoPanel()).fillInfoPanelWith(getFileURL(), sidTune);
-		return result; 
-	}
-	@Override
-	public String getSongName()
-	{
-		if (sidTune!=null)
-			return getShortDescriptionFrom(sidTune);
-		else
-			return super.getSongName();
-	}
-	/**
-	 * @param url
-	 * @return
-	 * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongInfosFor(java.net.URL)
-	 */
-	@Override
-	public Object[] getSongInfosFor(URL url)
-	{
-		String songName = MultimediaContainerManager.getSongNameFromURL(url);
-		Long duration = Long.valueOf(-1);
-		try
-		{
-			SidTune sidTune = loadSidTune(url);
-			if (sidTune!=null)
-			{
-				songName = getShortDescriptionFrom(sidTune);
-				duration = Long.valueOf(sidTune.getInfo().getSongs() * 1000);
-			}
-		}
-		catch (Throwable ex)
-		{
-		}
-		return new Object[] { songName, duration };
-	}
-	public void nameChanged()
-	{
-		if (!MultimediaContainerManager.isHeadlessMode()) ((SIDInfoPanel)getInfoPanel()).fillInfoPanelWith(getFileURL(), sidTune);
-		fireMultimediaContainerEvent(new MultimediaContainerEvent(this, MultimediaContainerEvent.SONG_NAME_CHANGED_OLD_INVALID, getSongName()));
-	}
-	/**
-	 * @return
-	 * @see de.quippy.javamod.multimedia.MultimediaContainer#canExport()
-	 */
-	@Override
-	public boolean canExport()
-	{
-		return true;
-	}
-	/**
-	 * @since 11.10.2009
-	 * @param sidFileURL
-	 * @return a SIDTune
-	 */
-	private SidTune loadSidTune(URL sidFileURL)
-	{
-		InputStream in = null;
-		try
-		{
+    private SidTune sidTune;
+    private SIDMixer currentMixer;
+    private SIDConfigPanel sidConfigPanel;
+    private SIDInfoPanel sidInfoPanel;
+
+    /**
+     * Will be executed during class load
+     */
+    static {
+        MultimediaContainerManager.registerContainer(new SIDContainer());
+    }
+
+    /**
+     * Constructor for SIDContainer
+     */
+    public SIDContainer() {
+        super();
+    }
+
+    /**
+     * @param sidFileUrl
+     * @return
+     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInstance(java.net.URL)
+     */
+    @Override
+    public MultimediaContainer getInstance(URL sidFileUrl) {
+        MultimediaContainer result = super.getInstance(sidFileUrl);
+        sidTune = loadSidTune(sidFileUrl);
+        if (!MultimediaContainerManager.isHeadlessMode())
+            ((SIDInfoPanel) getInfoPanel()).fillInfoPanelWith(getFileURL(), sidTune);
+        return result;
+    }
+
+    @Override
+    public String getSongName() {
+        if (sidTune != null)
+            return getShortDescriptionFrom(sidTune);
+        else
+            return super.getSongName();
+    }
+
+    /**
+     * @param url
+     * @return
+     * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongInfosFor(java.net.URL)
+     */
+    @Override
+    public Object[] getSongInfosFor(URL url) {
+        String songName = MultimediaContainerManager.getSongNameFromURL(url);
+        Long duration = Long.valueOf(-1);
+        try {
+            SidTune sidTune = loadSidTune(url);
+            if (sidTune != null) {
+                songName = getShortDescriptionFrom(sidTune);
+                duration = Long.valueOf(sidTune.getInfo().getSongs() * 1000);
+            }
+        } catch (Throwable ex) {
+        }
+        return new Object[] {songName, duration};
+    }
+
+    public void nameChanged() {
+        if (!MultimediaContainerManager.isHeadlessMode())
+            ((SIDInfoPanel) getInfoPanel()).fillInfoPanelWith(getFileURL(), sidTune);
+        fireMultimediaContainerEvent(new MultimediaContainerEvent(this, MultimediaContainerEvent.SONG_NAME_CHANGED_OLD_INVALID, getSongName()));
+    }
+
+    /**
+     * @return
+     * @see de.quippy.javamod.multimedia.MultimediaContainer#canExport()
+     */
+    @Override
+    public boolean canExport() {
+        return true;
+    }
+
+    /**
+     * @param sidFileURL
+     * @return a SIDTune
+     * @since 11.10.2009
+     */
+    private SidTune loadSidTune(URL sidFileURL) {
+        InputStream in = null;
+        try {
 //			in = new FileOrPackedInputStream(sidFileURL);
 //			int size = in.available();
 //			if (size<1024) size = 1024;
@@ -185,142 +182,135 @@ public class SIDContainer extends MultimediaContainer
 //					sidTuneData = newBuffer;
 //				}
 //			}
-			return SidTune.load(Path.of(sidFileURL.toURI()).toFile());
-		}
-		catch (Exception ex)
-		{
-			throw new RuntimeException(ex);
-		}
-		finally
-		{
-			if (in!=null) try { in.close(); } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
-		}
-	}
-	/**
-	 * @since 12.02.2011
-	 * @param sidTune
-	 * @return
-	 */
-	private String getShortDescriptionFrom(SidTune sidTune)
-	{
-		SidTuneInfo info = sidTune.getInfo();
-		String [] infoString = info.getInfoString().toArray(new String[0]);
-		return infoString[0] + " [" + infoString[1] + "] " + info.getCurrentSong() + '/' + info.getSongs() + " (" + infoString[2] + ')';
-	}
-	/**
-	 * @return
-	 * @see de.quippy.javamod.multimedia.MultimediaContainer#createNewMixer()
-	 */
-	@Override
-	public Mixer createNewMixer()
-	{
-		configurationSave(currentProps); // fill with default values
-		
-		int frequency = Integer.parseInt(currentProps.getProperty(PROPERTY_SID_FREQUENCY, DEFAULT_SAMPLERATE));
-		int sidModel = Integer.parseInt(currentProps.getProperty(PROPERTY_SID_MODEL, DEFAULT_SIDMODEL));
-		int optimization = Integer.parseInt(currentProps.getProperty(PROPERTY_SID_OPTIMIZATION, DEFAULT_OPTIMIZATION));
-		boolean useSIDFilter = Boolean.parseBoolean(currentProps.getProperty(PROPERTY_SID_USEFILTER, DEFAULT_USEFILTER));
-		boolean isStereo = Boolean.parseBoolean(currentProps.getProperty(PROPERTY_SID_VIRTUALSTEREO, DEFAULT_VIRTUALSTEREO));
-		
-		currentMixer = new SIDMixer(sidTune, this, frequency, sidModel, optimization, useSIDFilter, isStereo);
-		return currentMixer;
-	}
-	public SIDMixer getCurrentMixer()
-	{
-		return currentMixer;
-	}
-	/**
-	 * @param newProps
-	 * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationChanged(java.util.Properties)
-	 */
-	@Override
-	public void configurationChanged(final Properties newProps)
-	{
-		if (currentProps==null) currentProps = new Properties();
-		currentProps.setProperty(PROPERTY_SID_FREQUENCY, newProps.getProperty(PROPERTY_SID_FREQUENCY, DEFAULT_SAMPLERATE));
-		currentProps.setProperty(PROPERTY_SID_MODEL, newProps.getProperty(PROPERTY_SID_MODEL, DEFAULT_SIDMODEL));
-		currentProps.setProperty(PROPERTY_SID_USEFILTER, newProps.getProperty(PROPERTY_SID_USEFILTER, DEFAULT_USEFILTER));
-		currentProps.setProperty(PROPERTY_SID_VIRTUALSTEREO, newProps.getProperty(PROPERTY_SID_VIRTUALSTEREO, DEFAULT_VIRTUALSTEREO));
-		
-		if (!MultimediaContainerManager.isHeadlessMode())
-		{
-			final SIDConfigPanel configPanel = (SIDConfigPanel)getConfigPanel();
-			configPanel.configurationChanged(newProps);
-		}
-	}
-	/**
-	 * @param props
-	 * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationSave(java.util.Properties)
-	 */
-	@Override
-	public void configurationSave(final Properties props)
-	{
-		if (currentProps==null) currentProps = new Properties();
-		if (!MultimediaContainerManager.isHeadlessMode())
-		{
-			SIDConfigPanel configPanel = (SIDConfigPanel)getConfigPanel();
-			configPanel.configurationSave(currentProps);
-		}
+            return SidTune.load(Path.of(sidFileURL.toURI()).toFile());
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            if (in != null) try {
+                in.close();
+            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+        }
+    }
 
-		if (props!=null)
-		{
-			props.setProperty(PROPERTY_SID_FREQUENCY, (currentProps!=null)?currentProps.getProperty(PROPERTY_SID_FREQUENCY, DEFAULT_SAMPLERATE):DEFAULT_SAMPLERATE);
-			props.setProperty(PROPERTY_SID_MODEL, (currentProps!=null)?currentProps.getProperty(PROPERTY_SID_MODEL, DEFAULT_SIDMODEL):DEFAULT_SIDMODEL);
-			props.setProperty(PROPERTY_SID_USEFILTER, (currentProps!=null)?currentProps.getProperty(PROPERTY_SID_USEFILTER, DEFAULT_USEFILTER):DEFAULT_USEFILTER);
-			props.setProperty(PROPERTY_SID_VIRTUALSTEREO, (currentProps!=null)?currentProps.getProperty(PROPERTY_SID_VIRTUALSTEREO, DEFAULT_VIRTUALSTEREO):DEFAULT_VIRTUALSTEREO);
-		}
-	}
-	/**
-	 * @return
-	 * @see de.quippy.javamod.multimedia.MultimediaContainer#getInfoPanel()
-	 */
-	@Override
-	public JPanel getInfoPanel()
-	{
-		if (sidInfoPanel==null)
-		{
-			sidInfoPanel = new SIDInfoPanel();
-			sidInfoPanel.setParentContainer(this);
-		}
-		return sidInfoPanel;
-	}
-	/**
-	 * @return
-	 * @see de.quippy.javamod.multimedia.MultimediaContainer#getConfigPanel()
-	 */
-	@Override
-	public JPanel getConfigPanel()
-	{
-		if (sidConfigPanel==null)
-		{
-			sidConfigPanel = new SIDConfigPanel();
-			sidConfigPanel.setParentContainer(this);
-		}
-		return sidConfigPanel;
-	}
-	/**
-	 * @return
-	 * @see de.quippy.javamod.multimedia.MultimediaContainer#getFileExtensionList()
-	 */
-	@Override
-	public String[] getFileExtensionList()
-	{
-		return SIDFILEEXTENSION;
-	}
-	/**
-	 * @return
-	 * @see de.quippy.javamod.multimedia.MultimediaContainer#getName()
-	 */
-	@Override
-	public String getName()
-	{
-		return "SID-File";
-	}
-	/**
-	 * @see de.quippy.javamod.multimedia.MultimediaContainer#cleanUp()
-	 */
-	@Override
-	public void cleanUp()
-	{
-	}
+    /**
+     * @param sidTune
+     * @return
+     * @since 12.02.2011
+     */
+    private String getShortDescriptionFrom(SidTune sidTune) {
+        SidTuneInfo info = sidTune.getInfo();
+        String[] infoString = info.getInfoString().toArray(new String[0]);
+        return infoString[0] + " [" + infoString[1] + "] " + info.getCurrentSong() + '/' + info.getSongs() + " (" + infoString[2] + ')';
+    }
+
+    /**
+     * @return
+     * @see de.quippy.javamod.multimedia.MultimediaContainer#createNewMixer()
+     */
+    @Override
+    public Mixer createNewMixer() {
+        configurationSave(currentProps); // fill with default values
+
+        int frequency = Integer.parseInt(currentProps.getProperty(PROPERTY_SID_FREQUENCY, DEFAULT_SAMPLERATE));
+        int sidModel = Integer.parseInt(currentProps.getProperty(PROPERTY_SID_MODEL, DEFAULT_SIDMODEL));
+        int optimization = Integer.parseInt(currentProps.getProperty(PROPERTY_SID_OPTIMIZATION, DEFAULT_OPTIMIZATION));
+        boolean useSIDFilter = Boolean.parseBoolean(currentProps.getProperty(PROPERTY_SID_USEFILTER, DEFAULT_USEFILTER));
+        boolean isStereo = Boolean.parseBoolean(currentProps.getProperty(PROPERTY_SID_VIRTUALSTEREO, DEFAULT_VIRTUALSTEREO));
+
+        currentMixer = new SIDMixer(sidTune, this, frequency, sidModel, optimization, useSIDFilter, isStereo);
+        return currentMixer;
+    }
+
+    public SIDMixer getCurrentMixer() {
+        return currentMixer;
+    }
+
+    /**
+     * @param newProps
+     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationChanged(java.util.Properties)
+     */
+    @Override
+    public void configurationChanged(final Properties newProps) {
+        if (currentProps == null) currentProps = new Properties();
+        currentProps.setProperty(PROPERTY_SID_FREQUENCY, newProps.getProperty(PROPERTY_SID_FREQUENCY, DEFAULT_SAMPLERATE));
+        currentProps.setProperty(PROPERTY_SID_MODEL, newProps.getProperty(PROPERTY_SID_MODEL, DEFAULT_SIDMODEL));
+        currentProps.setProperty(PROPERTY_SID_USEFILTER, newProps.getProperty(PROPERTY_SID_USEFILTER, DEFAULT_USEFILTER));
+        currentProps.setProperty(PROPERTY_SID_VIRTUALSTEREO, newProps.getProperty(PROPERTY_SID_VIRTUALSTEREO, DEFAULT_VIRTUALSTEREO));
+
+        if (!MultimediaContainerManager.isHeadlessMode()) {
+            final SIDConfigPanel configPanel = (SIDConfigPanel) getConfigPanel();
+            configPanel.configurationChanged(newProps);
+        }
+    }
+
+    /**
+     * @param props
+     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationSave(java.util.Properties)
+     */
+    @Override
+    public void configurationSave(final Properties props) {
+        if (currentProps == null) currentProps = new Properties();
+        if (!MultimediaContainerManager.isHeadlessMode()) {
+            SIDConfigPanel configPanel = (SIDConfigPanel) getConfigPanel();
+            configPanel.configurationSave(currentProps);
+        }
+
+        if (props != null) {
+            props.setProperty(PROPERTY_SID_FREQUENCY, (currentProps != null) ? currentProps.getProperty(PROPERTY_SID_FREQUENCY, DEFAULT_SAMPLERATE) : DEFAULT_SAMPLERATE);
+            props.setProperty(PROPERTY_SID_MODEL, (currentProps != null) ? currentProps.getProperty(PROPERTY_SID_MODEL, DEFAULT_SIDMODEL) : DEFAULT_SIDMODEL);
+            props.setProperty(PROPERTY_SID_USEFILTER, (currentProps != null) ? currentProps.getProperty(PROPERTY_SID_USEFILTER, DEFAULT_USEFILTER) : DEFAULT_USEFILTER);
+            props.setProperty(PROPERTY_SID_VIRTUALSTEREO, (currentProps != null) ? currentProps.getProperty(PROPERTY_SID_VIRTUALSTEREO, DEFAULT_VIRTUALSTEREO) : DEFAULT_VIRTUALSTEREO);
+        }
+    }
+
+    /**
+     * @return
+     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInfoPanel()
+     */
+    @Override
+    public JPanel getInfoPanel() {
+        if (sidInfoPanel == null) {
+            sidInfoPanel = new SIDInfoPanel();
+            sidInfoPanel.setParentContainer(this);
+        }
+        return sidInfoPanel;
+    }
+
+    /**
+     * @return
+     * @see de.quippy.javamod.multimedia.MultimediaContainer#getConfigPanel()
+     */
+    @Override
+    public JPanel getConfigPanel() {
+        if (sidConfigPanel == null) {
+            sidConfigPanel = new SIDConfigPanel();
+            sidConfigPanel.setParentContainer(this);
+        }
+        return sidConfigPanel;
+    }
+
+    /**
+     * @return
+     * @see de.quippy.javamod.multimedia.MultimediaContainer#getFileExtensionList()
+     */
+    @Override
+    public String[] getFileExtensionList() {
+        return SIDFILEEXTENSION;
+    }
+
+    /**
+     * @return
+     * @see de.quippy.javamod.multimedia.MultimediaContainer#getName()
+     */
+    @Override
+    public String getName() {
+        return "SID-File";
+    }
+
+    /**
+     * @see de.quippy.javamod.multimedia.MultimediaContainer#cleanUp()
+     */
+    @Override
+    public void cleanUp() {
+    }
 }

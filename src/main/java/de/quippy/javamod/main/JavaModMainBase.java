@@ -1,8 +1,8 @@
 /*
  * @(#) JavaModMainBase.java
- * 
+ *
  * Created on 15.06.2006 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *----------------------------------------------------------------------
  */
+
 package de.quippy.javamod.main;
 
 import de.quippy.javamod.system.Helpers;
@@ -29,21 +30,20 @@ import de.quippy.javamod.system.Log;
  * @author Daniel Becker
  * @since 15.06.2006
  */
-public class JavaModMainBase
-{
-	static
-	{
-		// Now load and initialize all classes, that should not be
-		// initialized during play!
-		Helpers.registerAllClasses();
-		Log.setLogLevel(Log.LOGLEVEL_ERROR | Log.LOGLEVEL_INFO);
-	}
-	/**
-	 * Constructor for JavaModMainBase
-	 */
-	public JavaModMainBase(boolean gui)
-	{
-		super();
-		Helpers.setCoding(gui);
-	}
+public class JavaModMainBase {
+
+    static {
+        // Now load and initialize all classes, that should not be
+        // initialized during play!
+        Helpers.registerAllClasses();
+        Log.setLogLevel(Log.LOGLEVEL_ERROR | Log.LOGLEVEL_INFO);
+    }
+
+    /**
+     * Constructor for JavaModMainBase
+     */
+    public JavaModMainBase(boolean gui) {
+        super();
+        Helpers.setCoding(gui);
+    }
 }

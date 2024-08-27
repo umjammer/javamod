@@ -2,7 +2,7 @@
  * @(#) SoundOutputStream.java
  *
  * Created on 02.10.2010 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,10 +19,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *----------------------------------------------------------------------
  */
+
 package de.quippy.javamod.io;
 
 import java.io.File;
-
 import javax.sound.sampled.AudioFormat;
 
 import de.quippy.javamod.io.wav.WaveFile;
@@ -34,30 +34,53 @@ import de.quippy.javamod.mixer.dsp.AudioProcessor;
  * This Interface describes a soundoutput stream for playback
  * @since 02.10.2010
  */
-public interface SoundOutputStream
-{
-	public void open();
-	public void close();
-	public void closeAllDevices();
-	public boolean isInitialized();
-	public void startLine(final boolean flushOrDrain);
-	public void stopLine(final boolean flushOrDrain);
-	public void flushLine();
-	public void drainLine();
-	public int getLineBufferSize();
-	public void writeSampleData(final byte[] samples, final int start, final int length);
-	public void setInternalFramePosition(final long newPosition);
-	public long getFramePosition();
-	public void setVolume(final float gain);
-	public void setBalance(final float balance);
-	public void setAudioProcessor(final AudioProcessor audioProcessor);
-	public void setExportFile(final File exportFile);
-	public void setWaveExportFile(final WaveFile waveExportFile);
-	public void setPlayDuringExport(final boolean playDuringExport);
-	public void setKeepSilent(final boolean keepSilent);
-	public void changeAudioFormatTo(final AudioFormat newFormat);
-	public void changeAudioFormatTo(final AudioFormat newFormat, final int newSourceLineBufferSize);
-	public void setSourceLineBufferSize(final int newSourceLineBufferSize);
-	public AudioFormat getAudioFormat();
-	public boolean matches(final SoundOutputStream otherStream);
+public interface SoundOutputStream {
+
+    public void open();
+
+    public void close();
+
+    public void closeAllDevices();
+
+    public boolean isInitialized();
+
+    public void startLine(final boolean flushOrDrain);
+
+    public void stopLine(final boolean flushOrDrain);
+
+    public void flushLine();
+
+    public void drainLine();
+
+    public int getLineBufferSize();
+
+    public void writeSampleData(final byte[] samples, final int start, final int length);
+
+    public void setInternalFramePosition(final long newPosition);
+
+    public long getFramePosition();
+
+    public void setVolume(final float gain);
+
+    public void setBalance(final float balance);
+
+    public void setAudioProcessor(final AudioProcessor audioProcessor);
+
+    public void setExportFile(final File exportFile);
+
+    public void setWaveExportFile(final WaveFile waveExportFile);
+
+    public void setPlayDuringExport(final boolean playDuringExport);
+
+    public void setKeepSilent(final boolean keepSilent);
+
+    public void changeAudioFormatTo(final AudioFormat newFormat);
+
+    public void changeAudioFormatTo(final AudioFormat newFormat, final int newSourceLineBufferSize);
+
+    public void setSourceLineBufferSize(final int newSourceLineBufferSize);
+
+    public AudioFormat getAudioFormat();
+
+    public boolean matches(final SoundOutputStream otherStream);
 }

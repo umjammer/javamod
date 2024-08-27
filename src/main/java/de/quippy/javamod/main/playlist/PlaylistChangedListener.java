@@ -2,7 +2,7 @@
  * @(#) PlaylistChangedListener.java
  *
  * Created on 30.01.2011 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,14 +19,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *----------------------------------------------------------------------
  */
+
 package de.quippy.javamod.main.playlist;
 
 /**
  * @author Daniel Becker
  * @since 30.01.2011
  */
-public interface PlaylistChangedListener
-{
-	public void activeElementChanged(PlayListEntry oldActiveElement, PlayListEntry newActiveElement);
-	public void selectedElementChanged(PlayListEntry oldSelectedElement, PlayListEntry newSelectedElement);
+public interface PlaylistChangedListener {
+
+    public void activeElementChanged(PlayListEntry oldActiveElement, PlayListEntry newActiveElement);
+
+    public void selectedElementChanged(PlayListEntry oldSelectedElement, PlayListEntry newSelectedElement);
 }

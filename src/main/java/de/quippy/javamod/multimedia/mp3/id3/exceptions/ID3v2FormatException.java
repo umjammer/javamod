@@ -23,55 +23,50 @@
 package de.quippy.javamod.multimedia.mp3.id3.exceptions;
 
 /**
- * Description: 
- *  This exception is thrown when an data in an id3v2 tag violates the 
- *  id3v2 standards.
+ * Description:
+ * This exception is thrown when an data in an id3v2 tag violates the
+ * id3v2 standards.
  *
- * @author:  Jonathan Hilliker modified by Daniel Becker
+ * @author: Jonathan Hilliker modified by Daniel Becker
  */
-public class ID3v2FormatException extends Exception
-{
-	private static final long serialVersionUID = 1668617234586193326L;
+public class ID3v2FormatException extends Exception {
 
-	/**
-	 * Create an ID3v2FormatException with a default message
-	 *
-	 */
-	public ID3v2FormatException()
-	{
-		super("ID3v2 tag is not formatted correctly.");
-	}
+    private static final long serialVersionUID = 1668617234586193326L;
 
-	/**
-	 * Create an ID3v2FormatException with a specified message
-	 *
-	 * @param msg the message for this exception
-	 */
-	public ID3v2FormatException(String msg)
-	{
-		super(msg);
-	}
+    /**
+     * Create an ID3v2FormatException with a default message
+     */
+    public ID3v2FormatException() {
+        super("ID3v2 tag is not formatted correctly.");
+    }
 
-	/**
-	 * Create an ID3v2FormatException with a specified message
-	 * and original exception
-	 * 
-	 * @param msg the message for this exception
-	 * @param cause the cause that wraps this exception
-	 */
-	public ID3v2FormatException(String message, Throwable cause)
-	{
-		super(message, cause);
-	}
+    /**
+     * Create an ID3v2FormatException with a specified message
+     *
+     * @param msg the message for this exception
+     */
+    public ID3v2FormatException(String msg) {
+        super(msg);
+    }
 
-	/**
-	 * Create an ID3v2FormatException with the original
-	 * exception
-	 * 
-	 * @param cause the cause that wraps this exception
-	 */
-	public ID3v2FormatException(Throwable cause)
-	{
-		super(cause);
-	}
+    /**
+     * Create an ID3v2FormatException with a specified message
+     * and original exception
+     *
+     * @param msg   the message for this exception
+     * @param cause the cause that wraps this exception
+     */
+    public ID3v2FormatException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * Create an ID3v2FormatException with the original
+     * exception
+     *
+     * @param cause the cause that wraps this exception
+     */
+    public ID3v2FormatException(Throwable cause) {
+        super(cause);
+    }
 }

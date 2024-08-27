@@ -2,7 +2,7 @@
  * @(#) MultimediaContainerEventListener.java
  *
  * Created on 27.12.2008 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,22 +19,25 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *----------------------------------------------------------------------
  */
+
 package de.quippy.javamod.multimedia;
 
 import java.util.EventListener;
+
 
 /**
  * @author Daniel Becker
  * @since 27.12.2008
  */
-public interface MultimediaContainerEventListener extends EventListener
-{
-	/**
-	 * Will get fired if an event of interest is raised. This is actually
-	 * only once the case: if an mp3 is streamd and the IcyInputStream
-	 * gets a new Title
-	 * @since 27.12.2008
-	 * @param event
-	 */
-	public void multimediaContainerEventOccured(MultimediaContainerEvent event);
+public interface MultimediaContainerEventListener extends EventListener {
+
+    /**
+     * Will get fired if an event of interest is raised. This is actually
+     * only once the case: if an mp3 is streamd and the IcyInputStream
+     * gets a new Title
+     *
+     * @param event
+     * @since 27.12.2008
+     */
+    public void multimediaContainerEventOccured(MultimediaContainerEvent event);
 }

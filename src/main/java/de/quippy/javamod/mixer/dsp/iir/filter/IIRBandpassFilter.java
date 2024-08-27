@@ -2,7 +2,7 @@
  * @(#) IIRBandpassFilter.java
  *
  * Created on 09.01.2012 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
  *----------------------------------------------------------------------
  *
  * Source adopted from package com.db.media.audio.dsp.*;
- * 
+ *
  * Copyright (c) 2000 Silvere Martin-Michiellot All Rights Reserved.
  *
  * Silvere Martin-Michiellot grants you ("Licensee") a non-exclusive,
@@ -49,72 +49,74 @@
  * the design, construction, operation or maintenance of any nuclear
  * facility. Licensee represents and warrants that it will not use or
  * redistribute the Software for such purposes.
- * 
+ *
  */
+
 package de.quippy.javamod.mixer.dsp.iir.filter;
 
 /**
  * Optimized IIR bandpass filter with only 3 multiplies per sample
  * Used for each band of the graphic equalizer.
+ *
  * @author Daniel Becker
  */
-public class IIRBandpassFilter extends IIRFilterBase
-{
+public class IIRBandpassFilter extends IIRFilterBase {
+
     /**
      * Default Constructor - to already set the GAIN
+     *
      * @since 09.01.2012
      */
-    public IIRBandpassFilter()
-    {
-    	super();
+    public IIRBandpassFilter() {
+        super();
     }
-	/**
-	 * @param sampleRate
-	 * @param channels
-	 * @param frequency
-	 * @param parameter
-	 * @see de.quippy.javamod.mixer.dsp.iir.filter.IIRFilterBase#initialize(int, int, int, float)
-	 * @since 09.01.2012
-	 */
-	@Override
-	public void initialize(final int sampleRate, final int channels, final int frequency, final float parameter)
-	{
-		super.initialize(sampleRate, channels, frequency, parameter);
+
+    /**
+     * @param sampleRate
+     * @param channels
+     * @param frequency
+     * @param parameter
+     * @see de.quippy.javamod.mixer.dsp.iir.filter.IIRFilterBase#initialize(int, int, int, float)
+     * @since 09.01.2012
+     */
+    @Override
+    public void initialize(final int sampleRate, final int channels, final int frequency, final float parameter) {
+        super.initialize(sampleRate, channels, frequency, parameter);
         // thetaZero = 2 * Pi * Freq * T or (2 * Pi * Freq) / sampleRate
         // where Freq is center frequency of bandpass filter
         float thetaZero = getThetaZero();
-        float theTan = (float)Math.tan(thetaZero / (2.0f * parameter));
+        float theTan = (float) Math.tan(thetaZero / (2.0f * parameter));
 
         // Beta relates gain to bandwidth (and therefore q) at -3 db points
         beta = 0.5f * ((1.0f - theTan) / (1.0f + theTan));
         // For unity gain at center frequency
         alpha = (0.5f - beta) / 2.0f;
         // Final filter coefficient
-        gamma = (0.5f + beta) * (float)Math.cos(thetaZero);
+        gamma = (0.5f + beta) * (float) Math.cos(thetaZero);
         // multiply by two to save time later
         alpha *= 2f;
         beta *= 2f;
         gamma *= 2f;
-	}
-	/**
-	 * @param sample
-	 * @param channel
-	 * @param iIndex
-	 * @param jIndex
-	 * @param kIndex
-	 * @return
-	 * @see de.quippy.javamod.mixer.dsp.iir.filter.IIRFilterBase#performFilterCalculation(float, int, int, int, int)
-	 * @since 12.01.2012
-	 */
-	@Override
-	protected float performFilterCalculation(final float sample, final int channel, final int iIndex, final int jIndex, final int kIndex)
-	{
-		final float [] x = inArray[channel];
-		final float [] y = outArray[channel];
-		
-		y[iIndex] = (alpha * ((x[iIndex] = sample) - x[jIndex])) + 
-					(gamma * y[kIndex]) - 
-					(beta  * y[jIndex]);
-		return y[iIndex];
-	}
+    }
+
+    /**
+     * @param sample
+     * @param channel
+     * @param iIndex
+     * @param jIndex
+     * @param kIndex
+     * @return
+     * @see de.quippy.javamod.mixer.dsp.iir.filter.IIRFilterBase#performFilterCalculation(float, int, int, int, int)
+     * @since 12.01.2012
+     */
+    @Override
+    protected float performFilterCalculation(final float sample, final int channel, final int iIndex, final int jIndex, final int kIndex) {
+        final float[] x = inArray[channel];
+        final float[] y = outArray[channel];
+
+        y[iIndex] = (alpha * ((x[iIndex] = sample) - x[jIndex])) +
+                (gamma * y[kIndex]) -
+                (beta * y[jIndex]);
+        return y[iIndex];
+    }
 }

@@ -2,7 +2,7 @@
  * @(#) DSPEffekt.java
  *
  * Created on 09.01.2012 by Daniel Becker
- * 
+ *
  *-----------------------------------------------------------------------
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,18 +19,22 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *----------------------------------------------------------------------
  */
+
 package de.quippy.javamod.mixer.dsp;
 
 import javax.sound.sampled.AudioFormat;
 
+
 /**
  * @author Daniel Becker
- *
  */
-public interface DSPEffekt
-{
-	public void initialize(final AudioFormat audioFormat, final int sampleBufferLength);
-	public int doEffekt(final float[] buffer, final int start, final int length);
-	public void setIsActive(boolean active);
-	public boolean isActive();
+public interface DSPEffekt {
+
+    public void initialize(final AudioFormat audioFormat, final int sampleBufferLength);
+
+    public int doEffekt(final float[] buffer, final int start, final int length);
+
+    public void setIsActive(boolean active);
+
+    public boolean isActive();
 }
