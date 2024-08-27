@@ -25,6 +25,7 @@
 
 package de.quippy.javamod.multimedia.mp3.streaming;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 
@@ -33,10 +34,11 @@ import java.io.Serializable;
  */
 public class IcyTag implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -5433537975531168164L;
 
-    private String name;
-    private String value;
+    private final String name;
+    private final String value;
 
     public IcyTag(String name, String value) {
         this.name = name;

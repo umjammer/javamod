@@ -23,6 +23,7 @@
 package de.quippy.javamod.main.playlist.cuesheet;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -35,14 +36,14 @@ public class CueTrack {
     private String title;
     private String performer;
     private String songwriter;
-    private ArrayList<CueIndex> indexes;
+    private final List<CueIndex> indexes;
 
     /**
      * @since 14.02.2012
      */
     public CueTrack() {
         super();
-        indexes = new ArrayList<CueIndex>();
+        indexes = new ArrayList<>();
     }
 
     /**
@@ -126,7 +127,7 @@ public class CueTrack {
     }
 
     /**
-     * @param cueTrack
+     * @param index
      * @since 14.02.2012
      */
     public void addIndex(CueIndex index) {
@@ -137,7 +138,7 @@ public class CueTrack {
      * @return the tracks
      * @since 14.02.2012
      */
-    public ArrayList<CueIndex> getIndexes() {
+    public List<CueIndex> getIndexes() {
         return indexes;
     }
 }

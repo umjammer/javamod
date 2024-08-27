@@ -23,6 +23,8 @@
 package de.quippy.javamod.main;
 
 import java.io.File;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.Properties;
 
@@ -34,7 +36,8 @@ import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import de.quippy.javamod.multimedia.mod.ModContainer;
 import de.quippy.javamod.system.Helpers;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -51,6 +54,8 @@ import de.quippy.javamod.system.Log;
  * -eWAVEFILE: export to wave file
  */
 public class CommandLine extends JavaModMainBase implements PlayThreadEventListener {
+
+    private static final Logger logger = getLogger(CommandLine.class.getName());
 
     private URL modFileName;
     private File wavFileName;
@@ -72,25 +77,25 @@ public class CommandLine extends JavaModMainBase implements PlayThreadEventListe
      * Show a help screen...
      */
     private static void showHelp() {
-        Log.info("java -jar ./javamod [-rx] [-b{8,16,24,32}] [-s{+,-}] [-i{+,-}] [-w{+,-}] [-n{+,-}] [-m{+,-}] [-d{+,-}] [-l{+,-}] [-ax] [-h{+,-}]");
-        Log.info("                    [-j{+,-}] [-v0.0-1.0] [-eWAVFILE] MODFILE\n");
-        Log.info("-rx        : use Samplerate x (8000/11025/22050/44100/96000...");
-        Log.info("                               anything your soundhardware supports)");
-        Log.info("-b8/16/24  : #Bits per sample");
-        Log.info("-s+/-      : Stereo/Mono");
-        Log.info("-i0/1/2/3  : interpolation: 0:none; 1:linear; 2:cubic spline; 3:fir interpolation");
-        Log.info("-tms       : ms of buffer size (30 is minimum)");
-        Log.info("-w+/-      : do/don't wide stereo mix");
-        Log.info("-n+/-      : do/don't noise reduction");
-        Log.info("-m+/-      : do/don't mega bass");
-        Log.info("-d+/-      : do/don't dc removal");
-        Log.info("-l0/1/2/4  : set loop handling: 0:original; 1:fade out; 2:ignore; 4:loop song (4 can be added to 0, 1 or 2)");
-        Log.info("-ax        : set max NNAs channels used");
-        Log.info("-h+/-      : do/don't shuffle playlists after loading");
-        Log.info("-j+/-      : do/don't repeat playlist");
-        Log.info("-v0.0-1.0  : set volume");
-        Log.info("-eWAVEFILE : export to wave file");
-        Log.info("Dithering  : no dithering settings in command line version");
+        System.err.println("java -jar ./javamod [-rx] [-b{8,16,24,32}] [-s{+,-}] [-i{+,-}] [-w{+,-}] [-n{+,-}] [-m{+,-}] [-d{+,-}] [-l{+,-}] [-ax] [-h{+,-}]");
+        System.err.println("                    [-j{+,-}] [-v0.0-1.0] [-eWAVFILE] MODFILE\n");
+        System.err.println("-rx        : use Samplerate x (8000/11025/22050/44100/96000...");
+        System.err.println("                               anything your soundhardware supports)");
+        System.err.println("-b8/16/24  : #Bits per sample");
+        System.err.println("-s+/-      : Stereo/Mono");
+        System.err.println("-i0/1/2/3  : interpolation: 0:none; 1:linear; 2:cubic spline; 3:fir interpolation");
+        System.err.println("-tms       : ms of buffer size (30 is minimum)");
+        System.err.println("-w+/-      : do/don't wide stereo mix");
+        System.err.println("-n+/-      : do/don't noise reduction");
+        System.err.println("-m+/-      : do/don't mega bass");
+        System.err.println("-d+/-      : do/don't dc removal");
+        System.err.println("-l0/1/2/4  : set loop handling: 0:original; 1:fade out; 2:ignore; 4:loop song (4 can be added to 0, 1 or 2)");
+        System.err.println("-ax        : set max NNAs channels used");
+        System.err.println("-h+/-      : do/don't shuffle playlists after loading");
+        System.err.println("-j+/-      : do/don't repeat playlist");
+        System.err.println("-v0.0-1.0  : set volume");
+        System.err.println("-eWAVEFILE : export to wave file");
+        System.err.println("Dithering  : no dithering settings in command line version");
     }
 
     /**
@@ -101,11 +106,10 @@ public class CommandLine extends JavaModMainBase implements PlayThreadEventListe
     private void parseParameters(String[] args) {
         Properties props = new Properties();
 
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("-")) // parameter:
-            {
-                String op = args[i].substring(2);
-                switch (args[i].toLowerCase().charAt(1)) {
+        for (String arg : args) {
+            if (arg.startsWith("-")) { // parameter:
+                String op = arg.substring(2);
+                switch (arg.toLowerCase().charAt(1)) {
                     case 'i':
                         props.setProperty(ModContainer.PROPERTY_PLAYER_ISP, Integer.toString(Integer.parseInt(op.substring(0, 1))));
                         break;
@@ -155,13 +159,13 @@ public class CommandLine extends JavaModMainBase implements PlayThreadEventListe
                         initialVolume = Float.parseFloat(op);
                         break;
                     default:
-                        throw new RuntimeException("Unknown parameter: " + args[i].charAt(1));
+                        throw new RuntimeException("Unknown parameter: " + arg.charAt(1));
                 }
             } else {
-                String fileName = args[i];
+                String fileName = arg;
                 modFileName = Helpers.createURLfromString(fileName);
                 if (modFileName == null) {
-                    Log.error("This is not parsable: " + fileName);
+                    logger.log(Level.ERROR, "This is not parsable: " + fileName);
                     System.exit(-1);
                 }
             }
@@ -174,6 +178,7 @@ public class CommandLine extends JavaModMainBase implements PlayThreadEventListe
      * @param thread
      * @see de.quippy.javamod.main.gui.PlayThreadEventListener#playThreadEventOccured(de.quippy.javamod.main.gui.PlayThread)
      */
+    @Override
     public void playThreadEventOccured(PlayThread thread) {
         if (!thread.isRunning() && thread.getHasFinishedNormaly()) {
             if (currentPlayList != null && currentPlayList.next())
@@ -240,7 +245,7 @@ public class CommandLine extends JavaModMainBase implements PlayThreadEventListe
 
             if (mediaPLSFileURL != null) loadMultimediaFile(mediaPLSFileURL);
         } catch (Throwable ex) {
-            Log.error("[MainForm::loadMultimediaOrPlayListFile]", ex);
+            logger.log(Level.ERROR, "[MainForm::loadMultimediaOrPlayListFile]", ex);
             currentPlayList = null;
         }
     }
@@ -258,7 +263,7 @@ public class CommandLine extends JavaModMainBase implements PlayThreadEventListe
                 if (newContainer != null) currentContainer = newContainer;
             }
         } catch (Throwable ex) {
-            Log.error("[MainForm::loadMultimediaFile] Loading of " + mediaFileURL + " failed!", ex);
+            logger.log(Level.ERROR, "[MainForm::loadMultimediaFile] Loading of " + mediaFileURL + " failed!", ex);
             currentContainer = null;
         } finally {
             // if we are currently playing, start the current piece:
@@ -270,7 +275,7 @@ public class CommandLine extends JavaModMainBase implements PlayThreadEventListe
      * @param args
      */
     public static void main(String[] args) {
-        Log.info(Helpers.FULLVERSION + " " + Helpers.COPYRIGHT + "\n");
+        logger.log(Level.INFO, Helpers.FULLVERSION + " " + Helpers.COPYRIGHT + "\n");
         try {
             if (args.length == 0) {
                 showHelp();
@@ -285,7 +290,7 @@ public class CommandLine extends JavaModMainBase implements PlayThreadEventListe
                 }
             }
         } catch (Exception ex) {
-            Log.error("Error occured:", ex);
+            logger.log(Level.ERROR, "Error occured:", ex);
             showHelp();
             System.exit(-1);
         } finally {

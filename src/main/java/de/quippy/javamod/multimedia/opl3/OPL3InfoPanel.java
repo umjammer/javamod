@@ -23,7 +23,7 @@
 package de.quippy.javamod.multimedia.opl3;
 
 import java.awt.LayoutManager;
-
+import java.io.Serial;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -40,6 +40,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class OPL3InfoPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = 6059322698770106687L;
 
     private JLabel opl3NameLabel = null;

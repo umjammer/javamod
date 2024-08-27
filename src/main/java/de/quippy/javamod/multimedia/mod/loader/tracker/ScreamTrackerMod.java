@@ -44,10 +44,9 @@ import de.quippy.javamod.multimedia.mod.mixer.ScreamTrackerMixer;
  */
 public class ScreamTrackerMod extends Module {
 
-    private static final String[] MODFILEEXTENSION = new String[]
-            {
-                    "s3m"
-            };
+    private static final String[] MODFILEEXTENSION = {
+            "s3m"
+    };
     private static final String S3M_ID = "SCRM";
     private static final boolean REMOVE_UNUSED_CHANNELS = true;
 
@@ -55,46 +54,47 @@ public class ScreamTrackerMod extends Module {
     private static final int sample16Bit = 0x04;
 
     // Flags
-//	38 (26h)|  2  | FLAGS.  This is the flags section.  You need to bitwise AND
-//	|     |	it with the following values to see if the corresponding flags
-//	|     | are set.  Most of them are for Scream Tracker specific
-//	|     |	information so can just about be ignored if you like.
-//	|     | if ((value AND  1) >0) : st2vibrato (not supported in st3.01)
-//	|     | if ((value AND  2) >0) : st2tempo (not supported in st3.01)
-//	|     | if ((value AND  4) >0) : amigaslides (not supported in st3.01)
-//	|     | if ((value AND  8) >0) : 0vol optimizations: Automatically
-//	|     |                          turn off looping notes whose volume
-//	|     |                          is 0 for >2 note rows.  Don't bother
-//	|     |                          with this.
-//	|     | if ((value AND 16) >0) : amiga limits: Disallow any notes
-//	|     |                          that go beyond the amiga hardware
-//	|     |                          limits (like amiga does). This means
-//	|     |                          that sliding up stops at B-5 etc.
-//	|     |                          This also affects some minor amiga
-//	|     |                          compatibility issues.
-//	|     | if ((value AND 32) >0) : enable filter/sfx (not supported)
-//	|     | if ((value AND 64) >0) : st3.00 volumeslides.  Normally
-//	|     |                          volumeslide is NOT performed on first
-//	|     |                          frame of each row (this is according
-//	|     |                          to amiga playing). If this is set,
-//	|     |                          volumeslide is performed ALSO on the
-//	|     |                          first row. This is set by default if
-//	|     |                          the CWT/V value is 1300h.
-//	|     | if ((value AND 128) >0): special custom data in file.  If
-//	|     |                          this is set then you can use the
-//	|     |                          'Special' pointer at offset 3Eh.
-//	|     |				  See more about this when describing
-//	|     |				  this special pointer.
+
+    //	38 (26h)|  2  | FLAGS.  This is the flags section.  You need to bitwise AND
+    //	|     |	it with the following values to see if the corresponding flags
+    //	|     | are set.  Most of them are for Scream Tracker specific
+    //	|     |	information so can just about be ignored if you like.
+    //	|     | if ((value AND  1) >0) : st2vibrato (not supported in st3.01)
+    //	|     | if ((value AND  2) >0) : st2tempo (not supported in st3.01)
+    //	|     | if ((value AND  4) >0) : amigaslides (not supported in st3.01)
+    //	|     | if ((value AND  8) >0) : 0vol optimizations: Automatically
+    //	|     |                          turn off looping notes whose volume
+    //	|     |                          is 0 for >2 note rows.  Don't bother
+    //	|     |                          with this.
+    //	|     | if ((value AND 16) >0) : amiga limits: Disallow any notes
+    //	|     |                          that go beyond the amiga hardware
+    //	|     |                          limits (like amiga does). This means
+    //	|     |                          that sliding up stops at B-5 etc.
+    //	|     |                          This also affects some minor amiga
+    //	|     |                          compatibility issues.
+    //	|     | if ((value AND 32) >0) : enable filter/sfx (not supported)
+    //	|     | if ((value AND 64) >0) : st3.00 volumeslides.  Normally
+    //	|     |                          volumeslide is NOT performed on first
+    //	|     |                          frame of each row (this is according
+    //	|     |                          to amiga playing). If this is set,
+    //	|     |                          volumeslide is performed ALSO on the
+    //	|     |                          first row. This is set by default if
+    //	|     |                          the CWT/V value is 1300h.
+    //	|     | if ((value AND 128) >0): special custom data in file.  If
+    //	|     |                          this is set then you can use the
+    //	|     |                          'Special' pointer at offset 3Eh.
+    //	|     |				  See more about this when describing
+    //	|     |				  this special pointer.
     private static final int songST2Vibrato = 0x01;
     private static final int songST2Tempo = 0x02;
     private static final int songAmigaSlides = 0x04;
-    //	private static final int songVolOptimized	 = 0x08;
+    //    private static final int songVolOptimized	 = 0x08;
     private static final int songAmigaLimit = 0x10;
-    //	private static final int songEnableFilter	 = 0x20;
+    //    private static final int songEnableFilter	 = 0x20;
     private static final int songFastVolSlide = 0x40;
 //	private static final int songCustomData		 = 0x80;
 
-    /**
+    /*
      * Will be executed during class load
      */
     static {
@@ -119,110 +119,64 @@ public class ScreamTrackerMod extends Module {
     /**
      * Constructor for ScreamTrackerMod
      *
-     * @param fileExtension
+     * @param fileName
      */
     protected ScreamTrackerMod(String fileName) {
         super(fileName);
     }
 
-    /**
-     * @return the file extensions this loader is suitable for
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getFileExtensionList()
-     */
     @Override
     public String[] getFileExtensionList() {
         return MODFILEEXTENSION;
     }
 
-    /**
-     * @param sampleRate
-     * @param doISP
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getModMixer(int, boolean)
-     */
     @Override
-    public BasicModMixer getModMixer(final int sampleRate, final int doISP, final int doNoLoops, final int maxNNAChannels) {
+    public BasicModMixer getModMixer(int sampleRate, int doISP, int doNoLoops, int maxNNAChannels) {
         return new ScreamTrackerMixer(this, sampleRate, doISP, doNoLoops, maxNNAChannels);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getPanningSeparation()
-     */
     @Override
     public int getPanningSeparation() {
         return 128;
     }
 
-    /**
-     * @param channel
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getPanningValue(int)
-     */
     @Override
     public int getPanningValue(int channel) {
         return panningValue[channel];
     }
 
-    /**
-     * @param channel
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getChannelVolume(int)
-     */
     @Override
     public int getChannelVolume(int channel) {
         return 64;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getFrequencyTable()
-     */
     @Override
     public int getFrequencyTable() {
         return ModConstants.STM_S3M_TABLE;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getSongMessage()
-     */
     @Override
     public String getSongMessage() {
         return null;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getMidiConfig()
-     */
     @Override
     public MidiMacros getMidiConfig() {
         return null;
     }
 
-    /**
-     * @return always false for these mods
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getFT2Tremolo()
-     */
     @Override
     public boolean getFT2Tremolo() {
         return false;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getModSpeedIsTicks()
-     */
     @Override
     public boolean getModSpeedIsTicks() {
         return false;
     }
 
     /**
-     * @param inputStream
      * @return true, if this is a Scream Tracker 3 mod, false if this is not clear
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#checkLoadingPossible(de.quippy.javamod.io.ModfileInputStream)
      */
     @Override
     public boolean checkLoadingPossible(ModfileInputStream inputStream) throws IOException {
@@ -232,11 +186,6 @@ public class ScreamTrackerMod extends Module {
         return s3mID.equals(S3M_ID);
     }
 
-    /**
-     * @param fileName
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getNewInstance(java.lang.String)
-     */
     @Override
     protected Module getNewInstance(String fileName) {
         return new ScreamTrackerMod(fileName);
@@ -245,11 +194,10 @@ public class ScreamTrackerMod extends Module {
     /**
      * Set a Pattern by interpreting
      *
-     * @param input
-     * @param offset
+     * @param inputStream
      * @param pattNum
      */
-    private void setPattern(final int pattNum, final ModfileInputStream inputStream) throws IOException {
+    private void setPattern(int pattNum, ModfileInputStream inputStream) throws IOException {
         int row = 0;
         PatternRow currentRow = getPatternContainer().getPatternRow(pattNum, row);
 
@@ -274,9 +222,8 @@ public class ScreamTrackerMod extends Module {
                 int effekt = 0;
                 int effektOp = 0;
 
-                if ((packByte & 0x20) != 0) // Note and Sample follow
-                {
-                    final int ton = inputStream.read();
+                if ((packByte & 0x20) != 0) { // Note and Sample follow
+                    int ton = inputStream.read();
                     count--;
                     switch (ton) {
                         case 0xFF:
@@ -302,14 +249,12 @@ public class ScreamTrackerMod extends Module {
                     count--;
                 }
 
-                if ((packByte & 0x40) != 0) // volume following
-                {
+                if ((packByte & 0x40) != 0) { // volume following
                     volume = inputStream.read();
                     count--;
                 }
 
-                if ((packByte & 0x80) != 0) // Effects!
-                {
+                if ((packByte & 0x80) != 0) { // Effects!
                     effekt = inputStream.read();
                     count--;
                     effektOp = inputStream.read();
@@ -337,11 +282,6 @@ public class ScreamTrackerMod extends Module {
         }
     }
 
-    /**
-     * @param inputStream
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#loadModFile(byte[])
-     */
     @Override
     protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
         setModType(ModConstants.MODTYPE_S3M);
@@ -389,17 +329,17 @@ public class ScreamTrackerMod extends Module {
         setBaseVolume(globalVolume);
 
         // Tempo
-        final int speed = inputStream.read();
+        int speed = inputStream.read();
         setTempo((speed <= 0) ? 6 : speed);
 
         // BPM
-        final int tempo = inputStream.read();
+        int tempo = inputStream.read();
         setBPMSpeed((tempo <= 32) ? 125 : tempo); // tempo <= 32 is ignored by Scream Tracker
 
         // MasterVolume (mv&0x80)!=0 --> Stereo else Mono, MasterVolume&0x7F is SoundBlaster specific
         int masterVol = inputStream.read();
         if ((masterVol & 0x80) != 0) songFlags |= ModConstants.SONG_ISSTEREO;
-        final int mixingPreAmp = masterVol & 0x7F;
+        int mixingPreAmp = masterVol & 0x7F;
         setMixingPreAmp((mixingPreAmp < 0x10) ? 0x10 : mixingPreAmp);
 
         // UltraClick removal --> ignored (only for GUS playback)
@@ -420,11 +360,10 @@ public class ScreamTrackerMod extends Module {
         inputStream.read(channelStatus);
 
         // prepare panningValue array with panning and mute status
-        final int[] tmpPanning = new int[32];
+        int[] tmpPanning = new int[32];
         for (int c = 0; c < 32; c++) {
             int status = channelStatus[c] & 0xFF;
-            if ((status & 0x80) != 0) // Muted channel - not necessarily disabled (&0xF==0!)
-            {
+            if ((status & 0x80) != 0) { // Muted channel - not necessarily disabled (&0xF==0!)
                 tmpPanning[c] |= ModConstants.CHANNEL_IS_MUTED; // this is like IT does it, but in this case will also lead to a completely disabled channel without even doing effects
                 status &= ~0x80;
             }
@@ -434,7 +373,7 @@ public class ScreamTrackerMod extends Module {
                 tmpPanning[c] |= 0x0C << 4;
             else if (status < 0x19) // AdlibChannel
                 tmpPanning[c] |= 128;
-            else                // disabled or broken
+            else // disabled or broken
                 tmpPanning[c] = ModConstants.CHANNEL_IS_MUTED;
         }
 
@@ -456,8 +395,8 @@ public class ScreamTrackerMod extends Module {
             if (skipByte == 0xFF) startSeek++;
         }
 
-        final int anzPointers = getNSamples() + getNPattern();
-        final long[] paraPointers = new long[anzPointers];
+        int anzPointers = getNSamples() + getNPattern();
+        long[] paraPointers = new long[anzPointers];
         inputStream.seek(startSeek);
         for (int i = 0; i < anzPointers; i++) paraPointers[i] = (inputStream.readIntelUnsignedWord() << 4);
 
@@ -480,9 +419,8 @@ public class ScreamTrackerMod extends Module {
         channelMap = new int[32];
         int anzChannels = 0;
         for (int c = 0; c < 32; c++) {
-            final int status = channelStatus[c] & 0xFF;
-            if ((status & ~0x80) < 19 || !REMOVE_UNUSED_CHANNELS) // active channel
-            {
+            int status = channelStatus[c] & 0xFF;
+            if ((status & ~0x80) < 19 || !REMOVE_UNUSED_CHANNELS) { // active channel
                 tmpPanning[anzChannels] = tmpPanning[c];
                 channelMap[c] = anzChannels++;
             } else
@@ -505,7 +443,7 @@ public class ScreamTrackerMod extends Module {
         int gusAdresses = 0;
         boolean anySamples = false;
         for (int i = 0; i < getNSamples(); i++) {
-            final long pointer = paraPointers[i];
+            long pointer = paraPointers[i];
             if ((pointer == 0) || (pointer + 0x50) > inputStream.getLength()) continue;
             inputStream.seek(pointer);
             byte packingScheme = 0;
@@ -515,7 +453,7 @@ public class ScreamTrackerMod extends Module {
             // Defaults
             current.setGlobalVolume(ModConstants.MAXSAMPLEVOLUME);
 
-            final int instrumentType = inputStream.read();
+            int instrumentType = inputStream.read();
             current.setType(instrumentType);
             // Sample name
             current.setDosFileName(inputStream.readString(12));
@@ -526,8 +464,7 @@ public class ScreamTrackerMod extends Module {
             long sampleOffset = (lowByte | (highByte << 16)) << 4;
             if (sampleOffset > inputStream.getLength()) sampleOffset &= 0xFFFF;
 
-            if (instrumentType == 1) // Sample
-            {
+            if (instrumentType == 1) { // Sample
                 // Length
                 int sampleLength = inputStream.readIntelDWord();
                 current.setLength(sampleLength);
@@ -553,7 +490,7 @@ public class ScreamTrackerMod extends Module {
                 current.setSustainLoopLength(0);
 
                 // volume
-                final int volume = inputStream.read();
+                int volume = inputStream.read();
                 current.setVolume((volume > 64) ? 64 : volume);
 
                 // Reserved (Sample Beginning Offset?!)
@@ -576,15 +513,14 @@ public class ScreamTrackerMod extends Module {
                 // does not do the trick.
                 if (current.getAdlibWaveSelect(0) > 3 || current.getAdlibWaveSelect(1) > 3) needsOPL = OPL3;
                 // volume
-                final int volume = inputStream.read();
+                int volume = inputStream.read();
                 current.setVolume((volume > 64) ? 64 : volume);
                 // "dsk" - unknown + plus 2 unused bytes
                 inputStream.skip(3);
-            } else // Something we do not know
-            {
+            } else { // Something we do not know
                 inputStream.skip(12);
                 // volume
-                final int volume = inputStream.read();
+                int volume = inputStream.read();
                 current.setVolume((volume > 64) ? 64 : volume);
                 inputStream.skip(3);
             }
@@ -602,7 +538,7 @@ public class ScreamTrackerMod extends Module {
 
             // Again reserved data - but we pick out the GUS addresses. Schism and ModPlug use that to identify certain playback quirks
             inputStream.skip(4);
-            final int gusAdress = inputStream.readIntelUnsignedWord();
+            int gusAdress = inputStream.readIntelUnsignedWord();
             gusAdresses |= gusAdress;
             inputStream.skip(6);
 
@@ -647,10 +583,9 @@ public class ScreamTrackerMod extends Module {
                 }
             }
 
-            final long pointer = paraPointers[getNSamples() + pattNum];
+            long pointer = paraPointers[getNSamples() + pattNum];
             if (pointer + 0x40 > inputStream.getLength()) continue;
-            if (pointer > 0) // 0== empty pattern
-            {
+            if (pointer > 0) { // 0== empty pattern
                 inputStream.seek(pointer);
                 setPattern(pattNum, inputStream);
             }
@@ -685,7 +620,7 @@ public class ScreamTrackerMod extends Module {
                 if (version <= 0x3214)
                     trackerName = "Impulse Tracker %1d.%02x";
                 else
-                    setTrackerName(String.format("Impulse Tracker 2.14p%d", Integer.valueOf(version - 0x3214)));
+                    setTrackerName(String.format("Impulse Tracker 2.14p%d", version - 0x3214));
                 break;
             case 4:
                 if (version == 0x4100)
@@ -716,10 +651,10 @@ public class ScreamTrackerMod extends Module {
             default:
                 break;
         }
-        if (trackerName == null && (getTrackerName() == null || getTrackerName().length() == 0))
+        if (trackerName == null && (getTrackerName() == null || getTrackerName().isEmpty()))
             trackerName = ("Unknown Tracker (ID: " + ((version & 0xF000) >> 12) + ") %1d, %02x");
         if (trackerName != null)
-            setTrackerName(String.format(trackerName, Integer.valueOf((version >> 8) & 0x0F), Integer.valueOf(version & 0xFF)));
+            setTrackerName(String.format(trackerName, (version >> 8) & 0x0F, version & 0xFF));
 
         // With OpenModPlug Files we create default channel colors if none are set
         // but only, if standards of S3M are broken (in this case: OOPL3 is needed)

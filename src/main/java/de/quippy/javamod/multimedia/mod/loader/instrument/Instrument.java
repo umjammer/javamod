@@ -121,106 +121,106 @@ public class Instrument {
     /**
      * @param name The name to set.
      */
-    public void setName(final String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
     /**
      * @param dosFileName the dosFileName to set
      */
-    public void setDosFileName(final String dosFileName) {
+    public void setDosFileName(String dosFileName) {
         this.dosFileName = dosFileName;
     }
 
     /**
      * @param volumeFadeOut The volumeFadeOut to set.
      */
-    public void setVolumeFadeOut(final int volumeFadeOut) {
+    public void setVolumeFadeOut(int volumeFadeOut) {
         this.volumeFadeOut = volumeFadeOut;
     }
 
     /**
      * @param dublicateNoteCheck the dublicateNoteCheck to set
      */
-    public void setDublicateNoteCheck(final int dublicateNoteCheck) {
+    public void setDublicateNoteCheck(int dublicateNoteCheck) {
         this.dublicateNoteCheck = dublicateNoteCheck;
     }
 
     /**
-     * @param dublicateNodeAction the dublicateNodeAction to set
+     * @param dublicateNoteAction the dublicateNodeAction to set
      */
-    public void setDublicateNoteAction(final int dublicateNoteAction) {
+    public void setDublicateNoteAction(int dublicateNoteAction) {
         this.dublicateNoteAction = dublicateNoteAction;
     }
 
     /**
      * @param nna the NewNoteAction to set
      */
-    public void setNNA(final int nna) {
+    public void setNNA(int nna) {
         NNA = nna;
     }
 
     /**
      * @param pitchPanSeparation the pitchPanSeparation to set
      */
-    public void setPitchPanSeparation(final int pitchPanSeparation) {
+    public void setPitchPanSeparation(int pitchPanSeparation) {
         this.pitchPanSeparation = pitchPanSeparation;
     }
 
     /**
      * @param pitchPanCenter the pitchPanCenter to set
      */
-    public void setPitchPanCenter(final int pitchPanCenter) {
+    public void setPitchPanCenter(int pitchPanCenter) {
         this.pitchPanCenter = pitchPanCenter;
     }
 
     /**
      * @param globalVolume the globalVolume to set
      */
-    public void setGlobalVolume(final int globalVolume) {
+    public void setGlobalVolume(int globalVolume) {
         this.globalVolume = globalVolume;
     }
 
     /**
-     * @param defaultPan the defaultPan to set
+     * @param newDefaultPanning the defaultPan to set
      */
-    public void setDefaultPan(final int newDefaultPanning) {
+    public void setDefaultPan(int newDefaultPanning) {
         this.defaultPanning = newDefaultPanning;
     }
 
-    public void setPanning(final boolean newSetPanning) {
+    public void setPanning(boolean newSetPanning) {
         setPanning = newSetPanning;
     }
 
-    public void setMute(final boolean newMute) {
+    public void setMute(boolean newMute) {
         mute = newMute;
     }
 
     /**
      * @param randomVolumeVariation the randomVolumeVariation to set
      */
-    public void setRandomVolumeVariation(final int randomVolumeVariation) {
+    public void setRandomVolumeVariation(int randomVolumeVariation) {
         this.randomVolumeVariation = randomVolumeVariation;
     }
 
     /**
      * @param randomPanningVariation the randomPanningVariation to set
      */
-    public void setRandomPanningVariation(final int randomPanningVariation) {
+    public void setRandomPanningVariation(int randomPanningVariation) {
         this.randomPanningVariation = randomPanningVariation;
     }
 
     /**
      * @param initialFilterCutoff the initialFilterCutoff to set
      */
-    public void setInitialFilterCutoff(final int initialFilterCutoff) {
+    public void setInitialFilterCutoff(int initialFilterCutoff) {
         this.initialFilterCutoff = initialFilterCutoff;
     }
 
     /**
      * @param initialFilterResonance the initialFilterResonance to set
      */
-    public void setInitialFilterResonance(final int initialFilterResonance) {
+    public void setInitialFilterResonance(int initialFilterResonance) {
         this.initialFilterResonance = initialFilterResonance;
     }
 

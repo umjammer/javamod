@@ -24,8 +24,8 @@ package de.quippy.javamod.multimedia.sid;
 
 import java.awt.GridBagLayout;
 import java.awt.LayoutManager;
+import java.io.Serial;
 import java.net.URL;
-
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -45,6 +45,7 @@ import libsidplay.sidtune.SidTuneInfo;
  */
 public class SIDInfoPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = -8536617277576828277L;
 
     private JLabel sidFileNameLabel = null;
@@ -475,7 +476,7 @@ public class SIDInfoPanel extends JPanel {
         return sidInfoFileName;
     }
 
-    public void fillInfoPanelWith(final SidTuneInfo sidTuneInfo) {
+    public void fillInfoPanelWith(SidTuneInfo sidTuneInfo) {
         String[] sidTuneInfoStrings = sidTuneInfo.getInfoString().toArray(String[]::new);
         getSIDSongNumber().setText(sidTuneInfo.getCurrentSong() + "/" + sidTuneInfo.getSongs());
         getSIDSongName().setText(sidTuneInfoStrings[0]);
@@ -494,7 +495,7 @@ public class SIDInfoPanel extends JPanel {
                 sb.append(sidCommentStrings[i]).append('\n');
             getSIDSongComment().setText(sb.toString());
         }
-        final Model sidModel = sidTuneInfo.getSIDModel(0);
+        Model sidModel = sidTuneInfo.getSIDModel(0);
         getSIDSIDModel().setText(sidModel.name());
         getSIDLoadAddr().setText('$' + ModConstants.getAsHex(sidTuneInfo.getLoadAddr(), 4));
         getSIDInitAddr().setText('$' + ModConstants.getAsHex(sidTuneInfo.getInitAddr(), 4));
@@ -506,10 +507,10 @@ public class SIDInfoPanel extends JPanel {
         getSIDInfoFileName().setText(sidTuneInfo.getClockSpeed().name()); // TODO infoFileName
     }
 
-    public void fillInfoPanelWith(final URL sidFileUrl, final SidTune sidTune) {
+    public void fillInfoPanelWith(URL sidFileUrl, SidTune sidTune) {
         if (sidFileUrl != null) getSIDFileName().setText(Helpers.getFileNameFromURL(sidFileUrl));
         if (sidTune != null) {
-            final SidTuneInfo sidTuneInfo = sidTune.getInfo();
+            SidTuneInfo sidTuneInfo = sidTune.getInfo();
             if (sidTuneInfo != null) fillInfoPanelWith(sidTuneInfo);
         }
     }

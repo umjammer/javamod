@@ -23,9 +23,10 @@
 package de.quippy.javamod.multimedia.mp3;
 
 import java.awt.LayoutManager;
+import java.io.Serial;
 import java.util.Collection;
 import java.util.HashMap;
-
+import java.util.Map;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -40,6 +41,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class MP3StreamInfoPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = 2105268194816135760L;
 
     public static final String SONGNAME = "streamtitle";
@@ -72,7 +74,7 @@ public class MP3StreamInfoPanel extends JPanel {
     private JLabel mp3Info_L_ShortDescription = null;
     private JTextField mp3Info_ShortDescription = null;
 
-    private HashMap<String, JTextField> fields;
+    private Map<String, JTextField> fields;
 
     private MP3Container parentContainer = null;
 
@@ -153,7 +155,7 @@ public class MP3StreamInfoPanel extends JPanel {
         this.add(getMP3Info_ShortDescription(), Helpers.getGridBagConstraint(1, 8, 1, 0, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
         this.add(new JPanel(), Helpers.getGridBagConstraint(0, 9, 1, 0, java.awt.GridBagConstraints.BOTH, java.awt.GridBagConstraints.EAST, 1.0, 1.0));
 
-        this.fields = new HashMap<String, JTextField>();
+        this.fields = new HashMap<>();
         fields.put(SONGNAME, getMP3Info_ShortDescription());
         fields.put(SHORT_DESCIPTION, getMP3Info_ServerType());
         fields.put(SERVER, getMP3Info_ServerType());
@@ -347,26 +349,26 @@ public class MP3StreamInfoPanel extends JPanel {
     }
 
     public void clearFields() {
-        final Collection<JTextField> textFields = fields.values();
+        Collection<JTextField> textFields = fields.values();
         for (JTextField textField : textFields) textField.setText(Helpers.EMPTY_STING);
     }
 
     public void fillInfoPanelWith(IcyTag icyTag) {
         if (icyTag == null) return;
-        final JTextField field = fields.get(icyTag.getName().toLowerCase());
+        JTextField field = fields.get(icyTag.getName().toLowerCase());
         if (field != null) {
-            final String value = icyTag.getValue();
+            String value = icyTag.getValue();
             if (value != null) field.setText(value.trim());
         }
     }
-//	public String getCurrentSongName()
-//	{
-//		StringBuilder b = new StringBuilder();
-//		String songName = fields.get(SONGNAME).getText();
-//		if (songName!=null && songName.length()!=0) b.append(songName);
-//		
-//		String serverName = fields.get(SERVER_NAME).getText();
-//		if (serverName!=null && serverName.length()!=0) b.append(" (").append(serverName).append(')');
-//		return b.toString();
-//	}
+
+//    public String getCurrentSongName() {
+//        StringBuilder b = new StringBuilder();
+//        String songName = fields.get(SONGNAME).getText();
+//        if (songName != null && songName.length() != 0) b.append(songName);
+//
+//        String serverName = fields.get(SERVER_NAME).getText();
+//        if (serverName != null && serverName.length() != 0) b.append(" (").append(serverName).append(')');
+//        return b.toString();
+//    }
 }

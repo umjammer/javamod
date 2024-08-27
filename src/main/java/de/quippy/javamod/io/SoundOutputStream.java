@@ -36,51 +36,51 @@ import de.quippy.javamod.mixer.dsp.AudioProcessor;
  */
 public interface SoundOutputStream {
 
-    public void open();
+    void open();
 
-    public void close();
+    void close();
 
-    public void closeAllDevices();
+    void closeAllDevices();
 
-    public boolean isInitialized();
+    boolean isInitialized();
 
-    public void startLine(final boolean flushOrDrain);
+    void startLine(boolean flushOrDrain);
 
-    public void stopLine(final boolean flushOrDrain);
+    void stopLine(boolean flushOrDrain);
 
-    public void flushLine();
+    void flushLine();
 
-    public void drainLine();
+    void drainLine();
 
-    public int getLineBufferSize();
+    int getLineBufferSize();
 
-    public void writeSampleData(final byte[] samples, final int start, final int length);
+    void writeSampleData(byte[] samples, int start, int length);
 
-    public void setInternalFramePosition(final long newPosition);
+    void setInternalFramePosition(long newPosition);
 
-    public long getFramePosition();
+    long getFramePosition();
 
-    public void setVolume(final float gain);
+    void setVolume(float gain);
 
-    public void setBalance(final float balance);
+    void setBalance(float balance);
 
-    public void setAudioProcessor(final AudioProcessor audioProcessor);
+    void setAudioProcessor(AudioProcessor audioProcessor);
 
-    public void setExportFile(final File exportFile);
+    void setExportFile(File exportFile);
 
-    public void setWaveExportFile(final WaveFile waveExportFile);
+    void setWaveExportFile(WaveFile waveExportFile);
 
-    public void setPlayDuringExport(final boolean playDuringExport);
+    void setPlayDuringExport(boolean playDuringExport);
 
-    public void setKeepSilent(final boolean keepSilent);
+    void setKeepSilent(boolean keepSilent);
 
-    public void changeAudioFormatTo(final AudioFormat newFormat);
+    void changeAudioFormatTo(AudioFormat newFormat);
 
-    public void changeAudioFormatTo(final AudioFormat newFormat, final int newSourceLineBufferSize);
+    void changeAudioFormatTo(AudioFormat newFormat, int newSourceLineBufferSize);
 
-    public void setSourceLineBufferSize(final int newSourceLineBufferSize);
+    void setSourceLineBufferSize(int newSourceLineBufferSize);
 
-    public AudioFormat getAudioFormat();
+    AudioFormat getAudioFormat();
 
-    public boolean matches(final SoundOutputStream otherStream);
+    boolean matches(SoundOutputStream otherStream);
 }

@@ -41,15 +41,14 @@ import de.quippy.javamod.multimedia.MultimediaContainerManager;
  */
 public class APEContainer extends MultimediaContainer {
 
-    private static final String[] APEFILEEXTENSION = new String[]
-            {
-                    "ape", "apl", "mac"
-            };
+    private static final String[] APEFILEEXTENSION = {
+            "ape", "apl", "mac"
+    };
     private APEInfoPanel apeInfoPanel;
 
     private APETag idTag;
 
-    /**
+    /*
      * Will be executed during class load
      */
     static {
@@ -63,27 +62,18 @@ public class APEContainer extends MultimediaContainer {
         super();
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#canExport()
-     */
     @Override
     public boolean canExport() {
         return true;
     }
 
-    /**
-     * @param url
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInstance(java.net.URL)
-     */
     @Override
     public MultimediaContainer getInstance(URL url) {
         MultimediaContainer result = super.getInstance(url);
         File apeFile = null;
         try {
             apeFile = File.createFile(url, "r");
-            IAPEDecompress spAPEDecompress = IAPEDecompress.CreateIAPEDecompress(apeFile);
+            IAPEDecompress spAPEDecompress = IAPEDecompress.createAPEDecompress(apeFile);
             idTag = spAPEDecompress.getApeInfoTag();
             if (!MultimediaContainerManager.isHeadlessMode())
                 ((APEInfoPanel) getInfoPanel()).fillInfoPanelWith(spAPEDecompress, getPrintableFileUrl(), getSongName());
@@ -91,47 +81,38 @@ public class APEContainer extends MultimediaContainer {
         } finally {
             if (apeFile != null) try {
                 apeFile.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
         return result;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#createNewMixer()
-     */
     @Override
     public Mixer createNewMixer() {
         return new APEMixer(getFileURL());
     }
 
-    private String getSongName(APETag idTag, URL forURL) {
+    private static String getSongName(APETag idTag, URL forURL) {
         if (idTag != null) {
             try {
-                String artist = idTag.GetFieldString(APETag.APE_TAG_FIELD_ARTIST);
-                String album = idTag.GetFieldString(APETag.APE_TAG_FIELD_ALBUM);
-                String title = idTag.GetFieldString(APETag.APE_TAG_FIELD_TITLE);
-                if (title == null || title.length() == 0) title = MultimediaContainerManager.getSongNameFromURL(forURL);
+                String artist = idTag.getFieldString(APETag.APE_TAG_FIELD_ARTIST);
+                String album = idTag.getFieldString(APETag.APE_TAG_FIELD_ALBUM);
+                String title = idTag.getFieldString(APETag.APE_TAG_FIELD_TITLE);
+                if (title == null || title.isEmpty()) title = MultimediaContainerManager.getSongNameFromURL(forURL);
 
                 StringBuilder str = new StringBuilder();
-                if (artist != null && artist.length() != 0) {
+                if (artist != null && !artist.isEmpty()) {
                     str.append(artist).append(" - ");
                 }
-                if (album != null && album.length() != 0) {
+                if (album != null && !album.isEmpty()) {
                     str.append(album).append(" - ");
                 }
                 return str.append(title).toString();
-            } catch (Throwable ex) // we can get the runtime exception "Unsupported Function"
-            {
+            } catch (Throwable ex) { // we can get the runtime exception "Unsupported Function"
             }
         }
         return MultimediaContainerManager.getSongNameFromURL(forURL);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongName()
-     */
     @Override
     public String getSongName() {
         if (idTag != null)
@@ -140,39 +121,26 @@ public class APEContainer extends MultimediaContainer {
             return super.getSongName();
     }
 
-    /**
-     * @param url
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongInfosFor(java.net.URL)
-     */
     @Override
     public Object[] getSongInfosFor(URL url) {
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
-        Long duration = Long.valueOf(-1);
+        long duration = -1;
         try {
             File apeFile = File.createFile(url, "r");
-            IAPEDecompress spAPEDecompress = IAPEDecompress.CreateIAPEDecompress(apeFile);
+            IAPEDecompress spAPEDecompress = IAPEDecompress.createAPEDecompress(apeFile);
             APETag idTag = spAPEDecompress.getApeInfoTag();
             songName = getSongName(idTag, url);
-            duration = Long.valueOf(spAPEDecompress.getApeInfoDecompressLengthMS());
+            duration = spAPEDecompress.getApeInfoDecompressLengthMS();
         } catch (Throwable ex) {
         }
         return new Object[] {songName, duration};
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getConfigPanel()
-     */
     @Override
     public JPanel getConfigPanel() {
         return null;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInfoPanel()
-     */
     @Override
     public JPanel getInfoPanel() {
         if (apeInfoPanel == null) {
@@ -182,43 +150,24 @@ public class APEContainer extends MultimediaContainer {
         return apeInfoPanel;
     }
 
-    /**
-     * @param newProps
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationChanged(java.util.Properties)
-     */
     @Override
     public void configurationChanged(Properties newProps) {
     }
 
-    /**
-     * @param props
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationSave(java.util.Properties)
-     */
     @Override
     public void configurationSave(Properties props) {
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getFileExtensionList()
-     */
     @Override
     public String[] getFileExtensionList() {
         return APEFILEEXTENSION;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getName()
-     */
     @Override
     public String getName() {
         return "APE-File";
     }
 
-    /**
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#cleanUp()
-     */
     @Override
     public void cleanUp() {
     }

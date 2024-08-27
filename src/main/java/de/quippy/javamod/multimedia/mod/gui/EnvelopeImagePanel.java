@@ -24,6 +24,7 @@ package de.quippy.javamod.multimedia.mod.gui;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.io.Serial;
 import javax.swing.JComponent;
 
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope;
@@ -35,6 +36,7 @@ import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope;
  */
 public class EnvelopeImagePanel extends JComponent {
 
+    @Serial
     private static final long serialVersionUID = 2409671172691613794L;
 
     private static final Color GRID_COLOR = Color.lightGray;
@@ -60,16 +62,16 @@ public class EnvelopeImagePanel extends JComponent {
         setDoubleBuffered(true);
     }
 
-    private int getX(final int xPos) {
+    private int getX(int xPos) {
         return (xPos * getWidth()) / MAX_WIDTH;
     }
 
-    private int getY(final int yPos) {
+    private int getY(int yPos) {
         return getHeight() - ((yPos * getHeight()) >> 6);
     }
 
-    private void drawGrid(final Graphics g, final int top, final int left, final int width, final int height) {
-        final int halfHeight = height >> 1;
+    private void drawGrid(Graphics g, int top, int left, int width, int height) {
+        int halfHeight = height >> 1;
 
         g.setColor(GRID_COLOR);
         g.drawLine(left, top + halfHeight, left + width, top + halfHeight);
@@ -89,7 +91,7 @@ public class EnvelopeImagePanel extends JComponent {
         }
     }
 
-    private void drawLoopLine(final Graphics g, final int startPoint, final int endPoint, final int width, final int height, final Color col) {
+    private void drawLoopLine(Graphics g, int startPoint, int endPoint, int width, int height, Color col) {
         g.setColor(col);
         int x = getX(envelope.positions[startPoint]) - BOXWIDTH;
         if (x < 0) x = 0;
@@ -102,12 +104,12 @@ public class EnvelopeImagePanel extends JComponent {
     }
 
     /**
-     * @param gfx
+     * @param g
      * @since 07.01.2024
      */
-    private void drawEnvelope(final Graphics g) {
-        final int width = getWidth();
-        final int height = getHeight();
+    private void drawEnvelope(Graphics g) {
+        int width = getWidth();
+        int height = getHeight();
 
         g.setColor(BACKGROUND_COLOR);
         g.fillRect(0, 0, width, height);

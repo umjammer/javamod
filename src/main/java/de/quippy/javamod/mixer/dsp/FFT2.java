@@ -37,7 +37,7 @@ public class FFT2 {
     public static final int REVERSE = 1;
     private int frameSize = 0;
     private int bits = 0;
-    private int flip[] = null;
+    private int[] flip = null;
 
     public FFT2(int frameSize) {
         this.frameSize = frameSize;
@@ -58,10 +58,10 @@ public class FFT2 {
         }
     }
 
-    public void smsFft(float fftBuffer[], int sign) {
+    public void smsFft(float[] fftBuffer, int sign) {
         if (sign != FORWARD && sign != REVERSE) throw new IllegalArgumentException("invalid sign: " + sign);
         for (int i = 1; i < frameSize - 1; i++) {
-            final int j = flip[i];
+            int j = flip[i];
             if (i < j) {
                 int i2 = i << 1;
                 int j2 = j << 1;
@@ -80,12 +80,12 @@ public class FFT2 {
         int le = 2;
         for (; k < bits; k++) {
             le <<= 1;
-            final int le2 = le >> 1;
+            int le2 = le >> 1;
             float ur = 1.0f;
             float ui = 0.0f;
-            final float arg = (float) Math.PI / (float) (le2 >> 1);
-            final float wr = (float) FastMath.fastCos(arg);
-            final float wi = (float) sign * (float) FastMath.fastSin(arg);
+            float arg = (float) Math.PI / (float) (le2 >> 1);
+            float wr = (float) FastMath.fastCos(arg);
+            float wi = (float) sign * (float) FastMath.fastSin(arg);
 //			int idx = 0;
             for (int j = 0; j < le2; j += 2) {
                 int p1r = j;
@@ -106,7 +106,7 @@ public class FFT2 {
                     p2i += le;
                 }
 
-                final float tr = ur * wr - ui * wi;
+                float tr = ur * wr - ui * wi;
                 ui = ur * wi + ui * wr;
                 ur = tr;
             }

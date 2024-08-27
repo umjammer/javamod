@@ -69,7 +69,7 @@ public class MP3FileID3Controller {
         } finally {
             if (raf != null) try {
                 raf.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
     }
 
@@ -775,19 +775,19 @@ public class MP3FileID3Controller {
             album = getAlbum(ID3V2);
         }
         if (id3v1Exists()) {
-            if (artist == null || artist.length() == 0) artist = getArtist(ID3V1);
-            if (title == null || title.length() == 0) title = getTitle(ID3V1);
-            if (album == null || album.length() == 0) album = getAlbum(ID3V1);
+            if (artist == null || artist.isEmpty()) artist = getArtist(ID3V1);
+            if (title == null || title.isEmpty()) title = getTitle(ID3V1);
+            if (album == null || album.isEmpty()) album = getAlbum(ID3V1);
         }
 
         StringBuilder str = new StringBuilder();
-        if (artist != null && artist.length() != 0) {
+        if (artist != null && !artist.isEmpty()) {
             str.append(artist).append(" - ");
         }
-        if (album != null && album.length() != 0) {
+        if (album != null && !album.isEmpty()) {
             str.append(album).append(" - ");
         }
-        if (title == null || title.length() == 0) title = MultimediaContainerManager.getSongNameFromFile(mp3File);
+        if (title == null || title.isEmpty()) title = MultimediaContainerManager.getSongNameFromFile(mp3File);
         return str.append(title).toString();
     }
 
@@ -797,8 +797,7 @@ public class MP3FileID3Controller {
      * should be either ID3V1 or ID3V2.  The type parameter should be either
      * BOTH_TAGS, ID3V1_ONLY, ID3V2_ONLY, NO_TAGS, or EXISTING_TAGS_ONLY.
      *
-     * @param tagVersion the id3 version to check
-     * @param type       specifies what conditions the tags are allowed to proceed
+     * @param type specifies what conditions the tags are allowed to proceed
      * @return true if it is ok to proceed with the read/write
      */
     private boolean allow(int type) {

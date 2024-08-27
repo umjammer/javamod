@@ -24,6 +24,7 @@ package de.quippy.javamod.main.gui.components;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.Serial;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
@@ -35,6 +36,7 @@ import javax.swing.JCheckBox;
  */
 public class FixedStateCheckBox extends JCheckBox implements ItemListener {
 
+    @Serial
     private static final long serialVersionUID = -8129487219688669718L;
 
     private boolean fixedState;
@@ -130,7 +132,7 @@ public class FixedStateCheckBox extends JCheckBox implements ItemListener {
         fixedState = isSelected();
     }
 
-    public void setFixedState(final boolean fixedState) {
+    public void setFixedState(boolean fixedState) {
         this.fixedState = fixedState;
         setSelected(fixedState);
     }

@@ -61,7 +61,7 @@ public class SampleInstrumentPlayer {
      *
      * @param theModMixer
      */
-    public SampleInstrumentPlayer(final ModMixer theModMixer) {
+    public SampleInstrumentPlayer(ModMixer theModMixer) {
         super();
         doHardStop = false;
         setCurrentModMixer(theModMixer);
@@ -85,7 +85,7 @@ public class SampleInstrumentPlayer {
      * @param forNoteIndex   the noteIndex (starting with 1) to play - a corresponding period is found here...
      * @since 29.12.2023
      */
-    public void startPlayback(final Instrument forInstrument, final Sample forSample, final int forNoteIndex) {
+    public void startPlayback(Instrument forInstrument, Sample forSample, int forNoteIndex) {
         if (!aktMemo.instrumentFinished) stopPlayback();
         if ((forSample == null && forInstrument == null) || forNoteIndex < 1) return;
 
@@ -166,24 +166,24 @@ public class SampleInstrumentPlayer {
     private void playSample() {
         if (sample == null || sample.length == 0) return;
 
-        final int sampleRate = currentModMixer.getCurrentSampleRate();
-        final int sampleSizeInBits = currentModMixer.getCurrentSampleSizeInBits();
-        final int channels = currentModMixer.getCurrentChannels();
+        int sampleRate = currentModMixer.getCurrentSampleRate();
+        int sampleSizeInBits = currentModMixer.getCurrentSampleSizeInBits();
+        int channels = currentModMixer.getCurrentChannels();
 
-        final int bytesPerSample = sampleSizeInBits >> 3;
-        final int shift = 32 - sampleSizeInBits;
-        final long maximum = ModConstants.CLIPP32BIT_MAX >> shift;
-        final long minimum = ModConstants.CLIPP32BIT_MIN >> shift;
+        int bytesPerSample = sampleSizeInBits >> 3;
+        int shift = 32 - sampleSizeInBits;
+        long maximum = ModConstants.CLIPP32BIT_MAX >> shift;
+        long minimum = ModConstants.CLIPP32BIT_MIN >> shift;
 
-        final Dither dither = new Dither(channels, sampleSizeInBits, 4, 2, false);
+        Dither dither = new Dither(channels, sampleSizeInBits, 4, 2, false);
 
         prepareAktMemoAndMixer();
-        final int samplesPerTick = currentMixer.samplesPerTick;
-        final long leftBuffer[] = new long[samplesPerTick];
-        final long rightBuffer[] = new long[samplesPerTick];
+        int samplesPerTick = currentMixer.samplesPerTick;
+        long[] leftBuffer = new long[samplesPerTick];
+        long[] rightBuffer = new long[samplesPerTick];
 
-        final int bufferSize = ((250 * sampleRate) / 1000) * bytesPerSample * channels;
-        final byte[] output = new byte[bufferSize];
+        int bufferSize = ((250 * sampleRate) / 1000) * bytesPerSample * channels;
+        byte[] output = new byte[bufferSize];
 
         SoundOutputStream outputStream = new SoundOutputStreamImpl(new AudioFormat(sampleRate, sampleSizeInBits, channels, true, false), null, null, false, false, bufferSize);
         outputStream.open();
@@ -209,8 +209,7 @@ public class SampleInstrumentPlayer {
                 rightBuffer[s] = 0;
 
                 // Dither
-                if (sampleSizeInBits < 32) // our maximum - no dithering needed
-                {
+                if (sampleSizeInBits < 32) { // our maximum - no dithering needed
                     sampleL = (long) ((dither.process((double) sampleL / (double) (0x7FFFFFFFL), 0) * (double) maximum) + 0.5d);
                     sampleR = (long) ((dither.process((double) sampleR / (double) (0x7FFFFFFFL), 1) * (double) maximum) + 0.5d);
                 }

@@ -26,7 +26,8 @@ import javax.sound.sampled.AudioFormat;
 
 import de.quippy.javamod.mixer.BasicMixer;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.oplType;
+import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.OplType;
+import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.Version;
 import de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence;
 
 
@@ -36,12 +37,12 @@ import de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence;
  */
 public class OPL3Mixer extends BasicMixer {
 
-    private static int ANZ_CHANNELS = 2;
-    private static int BITS_PER_SAMPLE = 16;
-    private static int MS_BUFFER_SIZE = 200;
-    private static int COOL_DOWN = 2; // 2 seconds of cool down for OPL
-    private static int RAMP_DOWN_SHIFT = 14;
-    private static int RAMP_DOWN_START = 1 << RAMP_DOWN_SHIFT;
+    private static final int ANZ_CHANNELS = 2;
+    private static final int BITS_PER_SAMPLE = 16;
+    private static final int MS_BUFFER_SIZE = 200;
+    private static final int COOL_DOWN = 2; // 2 seconds of cool down for OPL
+    private static final int RAMP_DOWN_SHIFT = 14;
+    private static final int RAMP_DOWN_START = 1 << RAMP_DOWN_SHIFT;
 
     // Wide Stereo Vars
     private boolean doVirtualStereo;
@@ -51,7 +52,7 @@ public class OPL3Mixer extends BasicMixer {
     private int readPointer;
     private int writePointer;
 
-    private OPL3Sequence opl3Sequence;
+    private final OPL3Sequence opl3Sequence;
     private EmuOPL opl;
 
     private byte[] buffer;
@@ -59,13 +60,13 @@ public class OPL3Mixer extends BasicMixer {
     private long samplesWritten = 0;
     private int rampDownVolume;
 
-    private float sampleRate;
-    private EmuOPL.version OPLVersion;
+    private final float sampleRate;
+    private final Version OPLVersion;
 
     /**
      * Constructor for OPL3Mixer
      */
-    public OPL3Mixer(final EmuOPL.version OPLVersion, final float sampleRate, final OPL3Sequence opl3Sequence, final boolean doVirtualStereo) {
+    public OPL3Mixer(Version OPLVersion, float sampleRate, OPL3Sequence opl3Sequence, boolean doVirtualStereo) {
         super();
         this.OPLVersion = OPLVersion;
         this.sampleRate = sampleRate;
@@ -94,21 +95,13 @@ public class OPL3Mixer extends BasicMixer {
         setAudioFormat(new AudioFormat(sampleRate, BITS_PER_SAMPLE, ANZ_CHANNELS, true, false));
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#isSeekSupported()
-     */
     @Override
     public boolean isSeekSupported() {
         return true;
     }
 
-    /**
-     * @param milliseconds
-     * @see de.quippy.javamod.mixer.BasicMixer#seek(long)
-     */
     @Override
-    protected void seek(final long milliseconds) {
+    protected void seek(long milliseconds) {
         double ms = 0d;
         opl3Sequence.initialize(opl);
         while (ms < milliseconds && opl3Sequence.updateToOPL(opl))
@@ -116,46 +109,26 @@ public class OPL3Mixer extends BasicMixer {
         samplesWritten = (long) ((ms * sampleRate / 1000d) + 0.5d);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getLengthInMilliseconds()
-     */
     @Override
     public long getLengthInMilliseconds() {
         return opl3Sequence.getLengthInMilliseconds();
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getMillisecondPosition()
-     */
     @Override
     public long getMillisecondPosition() {
         return samplesWritten * 1000L / (long) sampleRate;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getChannelCount()
-     */
     @Override
     public int getChannelCount() {
         return ANZ_CHANNELS;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getCurrentKBperSecond()
-     */
     @Override
     public int getCurrentKBperSecond() {
         return (int) ((ANZ_CHANNELS * BITS_PER_SAMPLE * sampleRate) / 1000L);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getCurrentSampleRate()
-     */
     @Override
     public int getCurrentSampleRate() {
         return (int) sampleRate;
@@ -165,17 +138,14 @@ public class OPL3Mixer extends BasicMixer {
      * @param doVirtualStereo
      * @since 14.08.2020
      */
-    public void setDoVirtualSereoMix(final boolean doVirtualStereo) {
+    public void setDoVirtualSereoMix(boolean doVirtualStereo) {
         this.doVirtualStereo = doVirtualStereo;
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#startPlayback()
-     */
     @Override
     public void startPlayback() {
         initialize();
-        final int[] fromOPL3 = new int[2];
+        int[] fromOPL3 = new int[2];
         samplesWritten = 0;
         int bufferIndex = 0;
 
@@ -189,12 +159,12 @@ public class OPL3Mixer extends BasicMixer {
 
             boolean finished = false;
             while (!finished) {
-                final boolean newData = opl3Sequence.updateToOPL(opl);
+                boolean newData = opl3Sequence.updateToOPL(opl);
 
-                final double refresh = (newData) ? 1.0d / opl3Sequence.getRefresh() : (double) COOL_DOWN;
+                double refresh = (newData) ? 1.0d / opl3Sequence.getRefresh() : (double) COOL_DOWN;
                 int samples = (int) (((double) sampleRate * refresh) + 0.5);
                 if (hasStopPosition()) {
-                    final long bytesToWrite = getSamplesToWriteLeft();
+                    long bytesToWrite = getSamplesToWriteLeft();
                     if ((long) (samples) > bytesToWrite) samples = (int) bytesToWrite;
                 }
                 for (int s = 0; s < samples; s++) {
@@ -204,7 +174,7 @@ public class OPL3Mixer extends BasicMixer {
                     fromOPL3[0] = fromOPL3[1] = 0;
 
                     // WideStrereo Mixing - but only with stereo
-                    if (doVirtualStereo && opl.getOPLType() != oplType.OPL2) {
+                    if (doVirtualStereo && opl.getOPLType() != OplType.OPL2) {
                         wideLBuffer[writePointer] = samplel;
                         wideRBuffer[writePointer++] = sampler;
                         if (writePointer >= maxWideStereo) writePointer = 0;
@@ -223,10 +193,10 @@ public class OPL3Mixer extends BasicMixer {
                     }
 
                     // Clipping - always a good idea (sample is 32bit (int), but 16 bit is border):
-                    if (samplel > 0x00007FFF) samplel = 0x00007FFF;
-                    else if (samplel < 0xFFFF8000) samplel = 0xFFFF8000;
-                    if (sampler > 0x00007FFF) sampler = 0x00007FFF;
-                    else if (sampler < 0xFFFF8000) sampler = 0xFFFF8000;
+                    if (samplel > 0x0000_7FFF) samplel = 0x0000_7FFF;
+                    else if (samplel < 0xFFFF_8000) samplel = 0xFFFF_8000;
+                    if (sampler > 0x0000_7FFF) sampler = 0x0000_7FFF;
+                    else if (sampler < 0xFFFF_8000) sampler = 0xFFFF_8000;
 
                     buffer[bufferIndex] = (byte) (samplel & 0xFF);
                     buffer[bufferIndex + 1] = (byte) ((samplel >> 8) & 0xFF);
@@ -241,8 +211,7 @@ public class OPL3Mixer extends BasicMixer {
                     if (isStopping() || isPausing() || isInSeeking()) break;
                 }
 
-                if (!newData && !isStopping()) // if no new Data, we are ready
-                {
+                if (!newData && !isStopping()) { // if no new Data, we are ready
                     // finish off the buffer, if something is left
                     bufferIndex -= 4;
                     if (bufferIndex > 0) {

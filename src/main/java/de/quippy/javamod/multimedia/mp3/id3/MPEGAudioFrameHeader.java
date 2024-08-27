@@ -31,98 +31,51 @@ import de.quippy.javamod.multimedia.mp3.id3.exceptions.NoMPEGFramesException;
 
 
 /**
- * Description:
- * This class reads through the file specified and tries to find an mpeg
+ * This class reads through the file specified and tries to find a mpeg
  * frame.  It then reads data from the header of the first frame encountered.
  * Parts of this class will not work correctly on VBR files.
  *
- * @author: Jonathan Hilliker modified by Daniel becker
+ * @author Jonathan Hilliker modified by Daniel becker
  */
 public class MPEGAudioFrameHeader {
 
     private static final int HEADER_SIZE = 4;
-    private static final int[][] bitrateTable =
-            {
-                    {
-                            -1, -1, -1, -1, -1
-                    },
-                    {
-                            32, 32, 32, 32, 8
-                    },
-                    {
-                            64, 48, 40, 48, 16
-                    },
-                    {
-                            96, 56, 48, 56, 24
-                    },
-                    {
-                            128, 64, 56, 64, 32
-                    },
-                    {
-                            160, 80, 64, 80, 40
-                    },
-                    {
-                            192, 96, 80, 96, 48
-                    },
-                    {
-                            224, 112, 96, 112, 56
-                    },
-                    {
-                            256, 128, 112, 128, 64
-                    },
-                    {
-                            288, 160, 128, 144, 80
-                    },
-                    {
-                            320, 192, 160, 160, 96
-                    },
-                    {
-                            352, 224, 192, 176, 112
-                    },
-                    {
-                            384, 256, 224, 192, 128
-                    },
-                    {
-                            416, 320, 256, 224, 144
-                    },
-                    {
-                            448, 384, 320, 256, 160
-                    },
-                    {
-                            -1, -1, -1, -1, -1
-                    }
-            };
-    private static final int[][] sampleTable =
-            {
-                    {
-                            44100, 22050, 11025
-                    },
-                    {
-                            48000, 24000, 12000
-                    },
-                    {
-                            32000, 16000, 8000
-                    },
-                    {
-                            -1, -1, -1
-                    }
-            };
-    private static final String[] versionLabels =
-            {
-                    "MPEG Version 2.5", null, "MPEG Version 2.0", "MPEG Version 1.0"
-            };
-    private static final String[] layerLabels =
-            {
-                    null, "Layer III", "Layer II", "Layer I"
-            };
-    private static final String[] channelLabels =
-            {
-                    "Stereo", "Joint Stereo (STEREO)", "Dual Channel (STEREO)", "Single Channel (MONO)"
-            };
-    private static final String[] emphasisLabels =
-            {
-                    "none", "50/15 ms", null, "CCIT J.17"
-            };
+    private static final int[][] bitrateTable = {
+            {-1, -1, -1, -1, -1},
+            {32, 32, 32, 32, 8},
+            {64, 48, 40, 48, 16},
+            {96, 56, 48, 56, 24},
+            {128, 64, 56, 64, 32},
+            {160, 80, 64, 80, 40},
+            {192, 96, 80, 96, 48},
+            {224, 112, 96, 112, 56},
+            {256, 128, 112, 128, 64},
+            {288, 160, 128, 144, 80},
+            {320, 192, 160, 160, 96},
+            {352, 224, 192, 176, 112},
+            {384, 256, 224, 192, 128},
+            {416, 320, 256, 224, 144},
+            {448, 384, 320, 256, 160},
+            {-1, -1, -1, -1, -1}
+    };
+    private static final int[][] sampleTable = {
+            {44100, 22050, 11025},
+            {48000, 24000, 12000},
+            {32000, 16000, 8000},
+            {-1, -1, -1}
+    };
+    private static final String[] versionLabels = {
+            "MPEG Version 2.5", null, "MPEG Version 2.0", "MPEG Version 1.0"
+    };
+    private static final String[] layerLabels = {
+            null, "Layer III", "Layer II", "Layer I"
+    };
+    private static final String[] channelLabels = {
+            "Stereo", "Joint Stereo (STEREO)", "Dual Channel (STEREO)", "Single Channel (MONO)"
+    };
+    private static final String[] emphasisLabels = {
+            "none", "50/15 ms", null, "CCIT J.17"
+    };
     private static final int MPEG_V_25 = 0;
     private static final int MPEG_V_2 = 2;
     private static final int MPEG_V_1 = 3;
@@ -146,7 +99,7 @@ public class MPEGAudioFrameHeader {
      * information will be read in from the first frame header the object
      * encounters in the file.
      *
-     * @param mp3 the file to read from
+     * @param raf the file to read from
      * @throws NoMPEGFramesException if the file is not a valid mpeg
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
@@ -163,7 +116,7 @@ public class MPEGAudioFrameHeader {
      * attached to the file and pass it to this ctor, it will take less time
      * to find the frame.
      *
-     * @param mp3    the file to read from
+     * @param raf    the file to read from
      * @param offset the offset to start searching from
      * @throws NoMPEGFramesException if the file is not a valid mpeg
      * @throws FileNotFoundException if an error occurs
@@ -188,7 +141,7 @@ public class MPEGAudioFrameHeader {
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
      */
-    private long findFrame(RandomAccessInputStream raf, int offset) throws IOException {
+    private static long findFrame(RandomAccessInputStream raf, int offset) throws IOException {
         long loc = -1;
         raf.seek(offset);
 
@@ -239,7 +192,7 @@ public class MPEGAudioFrameHeader {
      *
      * @param bitrateIndex the bitrate index read from the header
      */
-    private int findBitRate(int bitrateIndex, int version, int layer) {
+    private static int findBitRate(int bitrateIndex, int version, int layer) {
         int ind = -1;
 
         if (version == MPEG_V_1) {
@@ -270,19 +223,13 @@ public class MPEGAudioFrameHeader {
      *
      * @param sampleIndex the sample rate index read from the header
      */
-    private int findSampleRate(int sampleIndex, int version) {
-        int ind = -1;
-
-        switch (version) {
-            case MPEG_V_1:
-                ind = 0;
-                break;
-            case MPEG_V_2:
-                ind = 1;
-                break;
-            case MPEG_V_25:
-                ind = 2;
-        }
+    private static int findSampleRate(int sampleIndex, int version) {
+        int ind = switch (version) {
+            case MPEG_V_1 -> 0;
+            case MPEG_V_2 -> 1;
+            case MPEG_V_25 -> 2;
+            default -> -1;
+        };
 
         if ((ind != -1) && (sampleIndex >= 0) && (sampleIndex <= 3)) {
             return sampleTable[sampleIndex][ind];

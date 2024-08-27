@@ -24,7 +24,7 @@ package de.quippy.javamod.multimedia.wav;
 
 import java.awt.LayoutManager;
 import java.io.IOException;
-
+import java.io.Serial;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.swing.JLabel;
@@ -40,6 +40,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class WavInfoPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = -2853660365143541701L;
 
     private JLabel wavNameLabel = null;
@@ -249,7 +250,7 @@ public class WavInfoPanel extends JPanel {
         try {
             lengthInMilliseconds = (int) (((long) audioInputStream.available() / ((long) audioFormat.getSampleSizeInBits() >> 3) / (long) audioFormat.getChannels()) * 1000L / (long) audioFormat.getSampleRate());
         } catch (IOException ex) {
-            //Log.error("IGNORED", ex);
+            //logger.log(Level.ERROR, "IGNORED", ex);
         }
         getWavDuration().setText(Helpers.getTimeStringFromMilliseconds(lengthInMilliseconds));
     }

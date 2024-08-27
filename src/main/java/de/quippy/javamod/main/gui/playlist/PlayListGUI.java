@@ -30,8 +30,6 @@ import java.awt.Rectangle;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetContext;
 import java.awt.dnd.DropTargetDropEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -39,10 +37,14 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
+import java.io.Serial;
 import java.io.Serializable;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
@@ -67,8 +69,9 @@ import de.quippy.javamod.main.playlist.PlayList;
 import de.quippy.javamod.main.playlist.PlayListEntry;
 import de.quippy.javamod.main.playlist.PlaylistChangedListener;
 import de.quippy.javamod.system.Helpers;
-import de.quippy.javamod.system.Log;
 import de.quippy.javamod.system.StringUtils;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -77,6 +80,9 @@ import de.quippy.javamod.system.StringUtils;
  */
 public class PlayListGUI extends JPanel implements PlaylistChangedListener, PlaylistDropListenerCallBack {
 
+    private static final Logger logger = getLogger(PlayListGUI.class.getName());
+
+    @Serial
     private static final long serialVersionUID = -7914306014081401144L;
 
     /** lines to show more when scrolling */
@@ -112,7 +118,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
 
     private EditPlaylistEntry editPlayListEntryDialog = null;
 
-    private ArrayList<DropTarget> dropTargetList;
+    private List<DropTarget> dropTargetList;
 
     private PlayListUpdateThread playlistUpdateThread;
 
@@ -121,7 +127,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
     private String markColorBackground;
     private String markColorForeground;
 
-    private ArrayList<PlaylistGUIChangeListener> listeners = new ArrayList<PlaylistGUIChangeListener>();
+    private final List<PlaylistGUIChangeListener> listeners = new ArrayList<>();
 
     private final static class InvisiableCaret implements Caret {
 
@@ -133,54 +139,71 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             super();
         }
 
+        @Override
         public void setVisible(boolean v) { /*NOOP*/ }
 
+        @Override
         public void setSelectionVisible(boolean v) { /*NOOP*/ }
 
+        @Override
         public boolean isVisible() {
             return false;
         }
 
+        @Override
         public boolean isSelectionVisible() {
             return false;
         }
 
+        @Override
         public void setMagicCaretPosition(Point p) {
             magicCaretPosition = p;
         }
 
+        @Override
         public Point getMagicCaretPosition() {
             return magicCaretPosition;
         }
 
+        @Override
         public void setDot(int dot) {
             this.dot = dot;
         }
 
+        @Override
         public int getDot() {
             return dot;
         }
 
+        @Override
         public void setBlinkRate(int rate) {
             this.rate = rate;
         }
 
+        @Override
         public int getBlinkRate() {
             return rate;
         }
 
+        @Override
         public void removeChangeListener(ChangeListener l) { /*NOOP*/ }
 
+        @Override
         public void addChangeListener(ChangeListener l) { /*NOOP*/ }
 
+        @Override
         public void paint(Graphics g) { /*NOOP*/ }
 
+        @Override
         public void moveDot(int dot) { /*NOOP*/ }
 
+        @Override
         public void install(JTextComponent c) { /*NOOP*/ }
 
+        @Override
         public void deinstall(JTextComponent c) { /*NOOP*/ }
 
+        @Override
         public int getMark() {
             return dot;
         }
@@ -188,12 +211,13 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
 
     private final static class PlayListUpdateThread extends Thread implements Serializable {
 
+        @Serial
         private static final long serialVersionUID = -8105723830268691249L;
 
-        private PlayListGUI parent;
+        private final PlayListGUI parent;
         private volatile boolean stopIt;
         private volatile boolean isStopped;
-        private volatile boolean finished;
+        private final boolean finished;
 
         public PlayListUpdateThread(PlayListGUI parent) {
             super();
@@ -217,11 +241,11 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             }
         }
 
-        //		public void finish()
-//		{
-//			halt();
-//			finished = true;
-//		}
+//        public void finish() {
+//            halt();
+//            finished = true;
+//        }
+
         public void restart() {
             stopIt = false;
             isStopped = false;
@@ -267,7 +291,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
         add(getButton_Shuffle(), Helpers.getGridBagConstraint(1, 1, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.EAST, 1.0, 0.0));
         add(getButton_Repeat(), Helpers.getGridBagConstraint(2, 1, 1, 0, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.EAST, 0.0, 0.0));
 
-        dropTargetList = new ArrayList<DropTarget>();
+        dropTargetList = new ArrayList<>();
         PlaylistDropListener myListener = new PlaylistDropListener(this);
         Helpers.registerDropListener(dropTargetList, this, myListener);
 
@@ -298,11 +322,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             button_Save.setPressedIcon(buttonSave);
             button_Save.setMargin(new java.awt.Insets(4, 6, 4, 6));
             button_Save.setFont(Helpers.getDialogFont());
-            button_Save.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    doSavePlayList();
-                }
-            });
+            button_Save.addActionListener(e -> doSavePlayList());
         }
         return button_Save;
     }
@@ -328,11 +348,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             button_Repeat.setPressedIcon(buttonRepeat_normal);
             button_Repeat.setMargin(new java.awt.Insets(4, 6, 4, 6));
             button_Repeat.setFont(Helpers.getDialogFont());
-            button_Repeat.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    doToggleRepeat();
-                }
-            });
+            button_Repeat.addActionListener(e -> doToggleRepeat());
         }
         return button_Repeat;
     }
@@ -356,11 +372,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             button_Shuffle.setPressedIcon(buttonShuffle);
             button_Shuffle.setMargin(new java.awt.Insets(4, 6, 4, 6));
             button_Shuffle.setFont(Helpers.getDialogFont());
-            button_Shuffle.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    doShufflePlayList();
-                }
-            });
+            button_Shuffle.addActionListener(e -> doShufflePlayList());
         }
         return button_Shuffle;
     }
@@ -387,8 +399,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                 public void keyPressed(KeyEvent e) {
                     if (e.isConsumed() || playList == null) return;
 
-                    if (e.isControlDown()) // All CTRL-Combinations:
-                    {
+                    if (e.isControlDown()) { // All CTRL-Combinations:
                         switch (e.getKeyCode()) {
                             case KeyEvent.VK_S:
                                 doSavePlayList();
@@ -419,8 +430,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                                 e.consume();
                                 break;
                         }
-                    } else if (e.isShiftDown()) // All SHIFT-Combinations
-                    {
+                    } else if (e.isShiftDown()) { // All SHIFT-Combinations
                         switch (e.getKeyCode()) {
                             case KeyEvent.VK_UP:
                                 doChangeSelectionInList(-1);
@@ -431,8 +441,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                                 e.consume();
                                 break;
                         }
-                    } else if (e.isAltDown()) // All ALT-Combinations
-                    {
+                    } else if (e.isAltDown()) { // All ALT-Combinations
                         switch (e.getKeyCode()) {
                             case KeyEvent.VK_UP:
                                 doMoveSelectedEntriesInList(-1);
@@ -490,9 +499,11 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                 }
             });
             textArea.addMouseMotionListener(new MouseMotionListener() {
+                @Override
                 public void mouseMoved(MouseEvent e) {
                 }
 
+                @Override
                 public void mouseDragged(MouseEvent e) {
                     if (e.isConsumed() || playList == null) return;
 
@@ -521,11 +532,10 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                     if (e.isConsumed() || playList == null) return;
 
                     lastClickedEntry = null;
-                    final int index = getSelectedIndexFromPoint(e.getPoint(), false);
+                    int index = getSelectedIndexFromPoint(e.getPoint(), false);
                     if (index != -1) {
                         PlayListEntry entry = playList.getEntry(index);
-                        if (e.isShiftDown()) // Select multiple (area)
-                        {
+                        if (e.isShiftDown()) { // Select multiple (area)
                             PlayListEntry[] alreadySelectedEntries = playList.getSelectedEntries();
                             if (alreadySelectedEntries == null)
                                 playList.setSelectedElement(index);
@@ -534,8 +544,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                                 playList.setSelectedElements(fromIndex, index);
                             }
                             lastClickedEntry = entry;
-                        } else if (e.isControlDown()) // select multiple (individual)
-                        {
+                        } else if (e.isControlDown()) { // select multiple (individual)
                             playList.toggleSelectedElement(index);
                             lastClickedEntry = entry;
                         } else if (!entry.isSelected()) {
@@ -556,7 +565,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                 public void mouseClicked(MouseEvent e) {
                     if (e.isConsumed() || playList == null) return;
 
-                    final int index = getSelectedIndexFromPoint(e.getPoint(), false);
+                    int index = getSelectedIndexFromPoint(e.getPoint(), false);
                     if (index != -1) {
                         if (SwingUtilities.isLeftMouseButton(e)) {
                             PlayListEntry entry = playList.getEntry(index);
@@ -586,9 +595,9 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             playListPopUp.add(getPopUpEntryRefreshEntry());
             playListPopUp.add(getPopUpEntryEditEntry());
         }
-        final boolean noEmptyList = (playList != null && playList.size() > 0);
+        boolean noEmptyList = (playList != null && playList.size() > 0);
         PlayListEntry[] selectedEntries = (noEmptyList) ? playList.getSelectedEntries() : null;
-        final boolean elementSpecificEntriesEnabled = (noEmptyList && selectedEntries != null);
+        boolean elementSpecificEntriesEnabled = (noEmptyList && selectedEntries != null);
         getPopUpEntryDeleteFromList().setEnabled(elementSpecificEntriesEnabled);
         getPopUpEntryRefreshEntry().setEnabled(elementSpecificEntriesEnabled);
         getPopUpEntryEditEntry().setEnabled(elementSpecificEntriesEnabled && selectedEntries != null && selectedEntries.length == 1);
@@ -601,11 +610,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             popUpEntryDeleteFromList.setName("JPopUpMenu_DeleteFromList");
             popUpEntryDeleteFromList.setText("<del> delete entry from list");
             popUpEntryDeleteFromList.addActionListener(
-                    new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {
-                            doDeleteSelectedEntryFromList();
-                        }
-                    });
+                    e -> doDeleteSelectedEntryFromList());
         }
         return popUpEntryDeleteFromList;
     }
@@ -616,11 +621,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             popUpEntryCropFromList.setName("JPopUpMenu_CropFromList");
             popUpEntryCropFromList.setText("<ctrl-del> crop entry from list");
             popUpEntryCropFromList.addActionListener(
-                    new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {
-                            doCropSelectedEntryFromList();
-                        }
-                    });
+                    e -> doCropSelectedEntryFromList());
         }
         return popUpEntryCropFromList;
     }
@@ -631,11 +632,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             popUpEntryRefreshEntry.setName("JPopUpMenu_RefreshEntry");
             popUpEntryRefreshEntry.setText("<ctrl-u> Refresh entry");
             popUpEntryRefreshEntry.addActionListener(
-                    new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {
-                            doUpdateSelectedEntryFromList();
-                        }
-                    });
+                    e -> doUpdateSelectedEntryFromList());
         }
         return popUpEntryRefreshEntry;
     }
@@ -646,11 +643,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             popUpEntryEditEntry.setName("JPopUpMenu_EditEntry");
             popUpEntryEditEntry.setText("<ctrl-e> Edit entry");
             popUpEntryEditEntry.addActionListener(
-                    new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {
-                            doEditSelectedEntry();
-                        }
-                    });
+                    e -> doEditSelectedEntry());
         }
         return popUpEntryEditEntry;
     }
@@ -669,9 +662,9 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
     private void doDeleteSelectedEntryFromList() {
         PlayListEntry[] selectedEntries = playList.getSelectedEntries();
         if (selectedEntries != null) {
-            final int lastIndex = selectedEntries.length - 1;
+            int lastIndex = selectedEntries.length - 1;
             if (lastIndex >= 0) {
-                final int markAfterDeletion = selectedEntries[0].getIndexInPlaylist();
+                int markAfterDeletion = selectedEntries[0].getIndexInPlaylist();
                 playlistUpdateThread.halt();
                 try {
                     for (int i = 0; i <= lastIndex; i++) {
@@ -693,9 +686,9 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
         if (allEntries != null) {
             playlistUpdateThread.halt();
             try {
-                for (int i = 0; i < allEntries.length; i++) {
-                    if (!allEntries[i].isSelected())
-                        playList.remove(allEntries[i].getIndexInPlaylist());
+                for (PlayListEntry allEntry : allEntries) {
+                    if (!allEntry.isSelected())
+                        playList.remove(allEntry.getIndexInPlaylist());
                 }
                 createList(getFirstVisableIndex());
                 firePlaylistChanged();
@@ -710,10 +703,10 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
         if (selectedEntries != null) {
             playlistUpdateThread.halt();
             try {
-                for (int i = 0; i < selectedEntries.length; i++) {
-                    selectedEntries[i].setSongName(null);
-                    selectedEntries[i].setDuration(null);
-                    updateLine(selectedEntries[i].getIndexInPlaylist());
+                for (PlayListEntry selectedEntry : selectedEntries) {
+                    selectedEntry.setSongName(null);
+                    selectedEntry.setDuration(null);
+                    updateLine(selectedEntry.getIndexInPlaylist());
                 }
             } finally {
                 playlistUpdateThread.restart();
@@ -758,8 +751,8 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                 if (selectedFile != null) {
                     File f = selectedFile.getSelectedFile();
                     if (f != null) {
-                        final String filename = f.getAbsolutePath();
-                        final String fileNameLow = filename.toLowerCase();
+                        String filename = f.getAbsolutePath();
+                        String fileNameLow = filename.toLowerCase();
                         if (!fileNameLow.endsWith("pls") && !fileNameLow.endsWith("m3u8") && !fileNameLow.endsWith("m3u") && !fileNameLow.endsWith("cue"))
                             f = new File(filename + ".M3U");
 
@@ -776,7 +769,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                         try {
                             playList.savePlayListTo(f);
                         } catch (Exception ex) {
-                            Log.error("Save playlist", ex);
+                            logger.log(Level.ERROR, "Save playlist", ex);
                         }
                     }
                 }
@@ -888,8 +881,8 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                         moveBy = selected[0].getIndexInPlaylist();
                     if (moveBy == 0) return;
 
-                    for (int i = 0; i < selected.length; i++) {
-                        int fromIndex = selected[i].getIndexInPlaylist();
+                    for (PlayListEntry playListEntry : selected) {
+                        int fromIndex = playListEntry.getIndexInPlaylist();
                         playList.move(fromIndex, fromIndex + moveBy);
                     }
                 } else {
@@ -914,9 +907,9 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
     }
 
     private void doPlaySelectedPiece() {
-        final PlayListEntry[] selected = playList.getSelectedEntries();
+        PlayListEntry[] selected = playList.getSelectedEntries();
         if (selected != null) {
-            final int index = selected[0].getIndexInPlaylist();
+            int index = selected[0].getIndexInPlaylist();
             playList.setSelectedElement(index);
             playList.setCurrentElement(index);
             fireActiveElementChanged();
@@ -925,7 +918,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
 
     private Element getTableRowDocumentElementForIndex(int index) {
         if (index > -1) {
-            final HTMLDocument doc = (HTMLDocument) getPlaylistTextArea().getDocument();
+            HTMLDocument doc = (HTMLDocument) getPlaylistTextArea().getDocument();
             if (doc != null) {
                 return doc.getElement(getTableRowID(index));
             }
@@ -935,7 +928,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
 
     private Element getTextDocumentElementForIndex(int index) {
         if (index > -1) {
-            final HTMLDocument doc = (HTMLDocument) getPlaylistTextArea().getDocument();
+            HTMLDocument doc = (HTMLDocument) getPlaylistTextArea().getDocument();
             if (doc != null) {
                 return doc.getElement(getTextID(index));
             }
@@ -945,7 +938,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
 
     private Element getDurationDocumentElementForIndex(int index) {
         if (index > -1) {
-            final HTMLDocument doc = (HTMLDocument) getPlaylistTextArea().getDocument();
+            HTMLDocument doc = (HTMLDocument) getPlaylistTextArea().getDocument();
             if (doc != null) {
                 return doc.getElement(getDurationID(index));
             }
@@ -960,15 +953,15 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
     }
 
     private int getFirstVisableIndex() {
-        final int size = playList.size();
+        int size = playList.size();
         for (int i = 0; i < size; i++) {
-            final Element element = getTableRowDocumentElementForIndex(i);
+            Element element = getTableRowDocumentElementForIndex(i);
             if (element != null) {
                 try {
-                    final Rectangle2D r1 = getPlaylistTextArea().modelToView2D(element.getStartOffset());
-                    final Rectangle2D r2 = getPlaylistTextArea().modelToView2D(element.getEndOffset() - 1);
-                    final Rectangle r = new Rectangle((int) r1.getX(), (int) r1.getY(), (int) (r2.getX() - r1.getX()), (int) r1.getHeight());
-                    final Rectangle intersect = r.intersection(getPlaylistTextArea().getVisibleRect());
+                    Rectangle2D r1 = getPlaylistTextArea().modelToView2D(element.getStartOffset());
+                    Rectangle2D r2 = getPlaylistTextArea().modelToView2D(element.getEndOffset() - 1);
+                    Rectangle r = new Rectangle((int) r1.getX(), (int) r1.getY(), (int) (r2.getX() - r1.getX()), (int) r1.getHeight());
+                    Rectangle intersect = r.intersection(getPlaylistTextArea().getVisibleRect());
                     if (!intersect.isEmpty() && intersect.height == r.height) return i;
                 } catch (BadLocationException ex) {
                 }
@@ -984,19 +977,19 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
      * @since 23.03.2011
      */
     private int getSelectedIndexFromPoint(Point position, boolean returnNearest) {
-        final int modelPos = getPlaylistTextArea().viewToModel2D(position);
+        int modelPos = getPlaylistTextArea().viewToModel2D(position);
 
-        final HTMLDocument doc = (HTMLDocument) getPlaylistTextArea().getDocument();
-        final Element table = (doc != null) ? doc.getElement("TABLE") : null;
+        HTMLDocument doc = (HTMLDocument) getPlaylistTextArea().getDocument();
+        Element table = (doc != null) ? doc.getElement("TABLE") : null;
         if (table != null) {
             // get the index of the *nearest* element
             int index = table.getElementIndex(modelPos);
             // now lets check, if the user really hit the element or somewhere outside
-            final Element selectedElement = table.getElement(index);
+            Element selectedElement = table.getElement(index);
             try {
-                final Rectangle2D r1 = getPlaylistTextArea().modelToView2D(selectedElement.getStartOffset());
-                final Rectangle2D r2 = getPlaylistTextArea().modelToView2D(selectedElement.getEndOffset() - 1);
-                final Rectangle r = new Rectangle((int) r1.getX(), (int) r1.getY(), (int) (r2.getX() - r1.getX()), (int) r1.getHeight());
+                Rectangle2D r1 = getPlaylistTextArea().modelToView2D(selectedElement.getStartOffset());
+                Rectangle2D r2 = getPlaylistTextArea().modelToView2D(selectedElement.getEndOffset() - 1);
+                Rectangle r = new Rectangle((int) r1.getX(), (int) r1.getY(), (int) (r2.getX() - r1.getX()), (int) r1.getHeight());
                 if (!returnNearest && !r.contains(position))
                     return -1;
                 else if (returnNearest) {
@@ -1017,21 +1010,21 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
     private void doMakeIndexVisible(PlayListEntry entry) {
         if (entry != null) {
             try {
-                final Element element = getTextDocumentElementForIndex(entry.getIndexInPlaylist());
+                Element element = getTextDocumentElementForIndex(entry.getIndexInPlaylist());
                 if (element != null) {
                     try {
-                        final Rectangle2D r1 = getPlaylistTextArea().modelToView2D(element.getStartOffset());
-                        final Rectangle2D r2 = getPlaylistTextArea().modelToView2D(element.getEndOffset() - 1);
+                        Rectangle2D r1 = getPlaylistTextArea().modelToView2D(element.getStartOffset());
+                        Rectangle2D r2 = getPlaylistTextArea().modelToView2D(element.getEndOffset() - 1);
 
                         if (r1 != null && r2 != null) {
-                            final Rectangle r = new Rectangle((int) r1.getX(), (int) r1.getY(), (int) (r2.getX() - r1.getX()), (int) r1.getHeight());
+                            Rectangle r = new Rectangle((int) r1.getX(), (int) r1.getY(), (int) (r2.getX() - r1.getX()), (int) r1.getHeight());
                             getPlaylistTextArea().scrollRectToVisible(r);
                         }
                     } catch (BadLocationException e) {
                     }
                 }
             } catch (Throwable ex) {
-                Log.error("PlayListGui::doMakeIndexVisible", ex);
+                logger.log(Level.ERROR, "PlayListGui::doMakeIndexVisible", ex);
             }
         }
     }
@@ -1055,6 +1048,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
      * @see de.quippy.javamod.main.gui.tools.PlaylistDropListenerCallBack#playlistRecieved(java.awt.dnd.DropTargetDropEvent, de.quippy.javamod.main.playlist.PlayList, java.net.URL)
      * @since 08.03.2011
      */
+    @Override
     public void playlistRecieved(DropTargetDropEvent dtde, PlayList dropResult, URL addToLastLoaded) {
         if (playList == null) {
             setNewPlaylist(dropResult);
@@ -1064,10 +1058,10 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             try {
                 int index = 0;
                 Point dropCoordinates = dtde.getLocation();
-                final DropTargetContext targetContext = dtde.getDropTargetContext();
-                final Component targetComponent = targetContext.getComponent();
+                DropTargetContext targetContext = dtde.getDropTargetContext();
+                Component targetComponent = targetContext.getComponent();
                 if (!targetComponent.equals(getPlaylistTextArea())) {
-                    final int middle = targetComponent.getHeight() >> 1;
+                    int middle = targetComponent.getHeight() >> 1;
                     if (dropCoordinates.getY() < middle) index = 0;
                     else index = playList.size();
                 } else {
@@ -1093,54 +1087,54 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
     }
 
     private synchronized void fireActiveElementChanged() {
-        final int size = listeners.size();
-        for (int i = 0; i < size; i++) {
-            listeners.get(i).userSelectedPlaylistEntry();
+        int size = listeners.size();
+        for (PlaylistGUIChangeListener listener : listeners) {
+            listener.userSelectedPlaylistEntry();
         }
     }
 
     private synchronized void firePlaylistChanged() {
-        final int size = listeners.size();
-        for (int i = 0; i < size; i++) {
-            listeners.get(i).playListChanged(playList);
+        int size = listeners.size();
+        for (PlaylistGUIChangeListener listener : listeners) {
+            listener.playListChanged(playList);
         }
     }
 
-    private String getTextID(final int index) {
+    private static String getTextID(int index) {
         return "TEXT_" + index;
     }
 
-    private String getDurationID(final int index) {
+    private static String getDurationID(int index) {
         return "DURA_" + index;
     }
 
-    private String getTableRowID(final int index) {
+    private static String getTableRowID(int index) {
         return "ROW_" + index;
     }
 
-    private String getFormattedSongName(final PlayListEntry entry, boolean quick) {
-        final int digits = Integer.toString(playList.size()).length();
-        final String songName = (quick) ? entry.getQuickSongName() : entry.getFormattedName();
-        final String index = Integer.toString(entry.getIndexInPlaylist() + 1);
-        final StringBuilder sb = new StringBuilder();
-        for (int indexDigits = index.length(); indexDigits < digits; indexDigits++) sb.append('0');
-        return sb.append(index).append(". ").append(songName).toString();
+    private String getFormattedSongName(PlayListEntry entry, boolean quick) {
+        int digits = Integer.toString(playList.size()).length();
+        String songName = (quick) ? entry.getQuickSongName() : entry.getFormattedName();
+        String index = Integer.toString(entry.getIndexInPlaylist() + 1);
+        String sb = "0".repeat(Math.max(0, digits - index.length())) +
+                index + ". " + songName;
+        return sb;
     }
 
     private String getHTMLString(PlayListEntry entry, int index, String songname, String duration) {
-        StringBuilder html = new StringBuilder("<TR ID=\"").append(getTableRowID(index)).append("\" style=\"")
-                .append("background:#").append(entry.isSelected() ? markColorBackground : unmarkColorBackground).append("; ")
-                .append("color:#").append(entry.isSelected() ? markColorForeground : unmarkColorForeground).append("; ")
-                .append("font-family:").append(Helpers.getTextAreaFont().getFamily()).append("; ")
-                .append("font-size:").append(Helpers.getTextAreaFont().getSize()).append(';')
-                .append("font-weight:").append(entry.isActive() ? "bold" : "normal").append(';')
-                .append("\"><TD ID=\"").append(getTextID(index)).append("\" align=\"left\" nowrap>").append(StringUtils.encodeHtml(songname))
-                .append("</TD><TD ID=\"").append(getDurationID(index)).append("\" align=\"right\" nowrap>").append(StringUtils.encodeHtml(duration)).append("</TD></TR>");
-        return html.toString();
+        String html = "<TR ID=\"" + getTableRowID(index) + "\" style=\"" +
+                "background:#" + (entry.isSelected() ? markColorBackground : unmarkColorBackground) + "; " +
+                "color:#" + (entry.isSelected() ? markColorForeground : unmarkColorForeground) + "; " +
+                "font-family:" + Helpers.getTextAreaFont().getFamily() + "; " +
+                "font-size:" + Helpers.getTextAreaFont().getSize() + ';' +
+                "font-weight:" + (entry.isActive() ? "bold" : "normal") + ';' +
+                "\"><TD ID=\"" + getTextID(index) + "\" align=\"left\" nowrap>" + StringUtils.encodeHtml(songname) +
+                "</TD><TD ID=\"" + getDurationID(index) + "\" align=\"right\" nowrap>" + StringUtils.encodeHtml(duration) + "</TD></TR>";
+        return html;
     }
 
-    private void createList(final int makeThisIndexVisable) {
-        final StringBuilder fullText = new StringBuilder("<HTML><HEAD><TITLE>PlayList</TITLE></HEAD><BODY><TABLE ID=\"TABLE\" WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">");
+    private void createList(int makeThisIndexVisable) {
+        StringBuilder fullText = new StringBuilder("<HTML><HEAD><TITLE>PlayList</TITLE></HEAD><BODY><TABLE ID=\"TABLE\" WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">");
 
         if (playList != null) {
             Iterator<PlayListEntry> iter = playList.getIterator();
@@ -1153,21 +1147,18 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             getButton_Repeat().setIcon(buttonRepeat);
 
         fullText.append("</TABLE></FONT></BODY></HTML>");
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    getPlaylistTextArea().setText(fullText.toString());
-                    getPlaylistTextArea().select(0, 0);
-                    doMakeIndexVisible((makeThisIndexVisable < 0) ? 0 : makeThisIndexVisable);
-                } catch (Throwable ex) {
-                    Log.error("PlayListGui::createList", ex);
-                }
+        EventQueue.invokeLater(() -> {
+            try {
+                getPlaylistTextArea().setText(fullText.toString());
+                getPlaylistTextArea().select(0, 0);
+                doMakeIndexVisible((makeThisIndexVisable < 0) ? 0 : makeThisIndexVisable);
+            } catch (Throwable ex) {
+                logger.log(Level.ERROR, "PlayListGui::createList", ex);
             }
         });
     }
 
-    public void setNewPlaylist(final PlayList playList) {
+    public void setNewPlaylist(PlayList playList) {
         playlistUpdateThread.halt();
         try {
             this.playList = playList;
@@ -1184,14 +1175,9 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
      */
     private void updateLine(int index) {
         PlayListEntry entry = playList.getEntry(index);
-        final String text = getFormattedSongName(entry, false);
-        final String duration = entry.getDurationString();
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                setTextDecorationAndColorsFor(entry, text, duration);
-            }
-        });
+        String text = getFormattedSongName(entry, false);
+        String duration = entry.getDurationString();
+        EventQueue.invokeLater(() -> setTextDecorationAndColorsFor(entry, text, duration));
     }
 
     /**
@@ -1209,13 +1195,13 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
     }
 
     /**
-     * @param element
-     * @param newColor
+     * @param entry
+     * @param fast
      * @since 18.02.2011
      */
-    private void setTextDecorationAndColorsFor(final PlayListEntry entry, final boolean fast) {
+    private void setTextDecorationAndColorsFor(PlayListEntry entry, boolean fast) {
         try {
-            final int index = entry.getIndexInPlaylist();
+            int index = entry.getIndexInPlaylist();
 
             Element textElement = getTextDocumentElementForIndex(index);
             String text = (textElement != null && fast) ? getText(textElement) : getFormattedSongName(entry, false);
@@ -1225,20 +1211,20 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
 
             setTextDecorationAndColorsFor(entry, text, duration);
         } catch (Throwable ex) {
-            Log.error("PlayListGui::setTextDecorationAndColorsFor", ex);
+            logger.log(Level.ERROR, "PlayListGui::setTextDecorationAndColorsFor", ex);
         }
     }
 
-    private void setTextDecorationAndColorsFor(final PlayListEntry entry, final String text, final String duration) {
+    private void setTextDecorationAndColorsFor(PlayListEntry entry, String text, String duration) {
         try {
-            final int index = entry.getIndexInPlaylist();
+            int index = entry.getIndexInPlaylist();
             Element tableRowElement = getTableRowDocumentElementForIndex(index);
             if (tableRowElement != null) {
                 HTMLDocument doc = (HTMLDocument) tableRowElement.getDocument();
                 doc.setOuterHTML(tableRowElement, getHTMLString(entry, index, text, duration));
             }
         } catch (Throwable ex) {
-            Log.error("PlayListGui::setTextDecorationAndColorsFor", ex);
+            logger.log(Level.ERROR, "PlayListGui::setTextDecorationAndColorsFor", ex);
         }
     }
 
@@ -1247,19 +1233,17 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
      * @param newActiveElement
      * @see de.quippy.javamod.main.playlist.PlaylistChangedListener#activeElementChanged(de.quippy.javamod.main.playlist.PlayListEntry, de.quippy.javamod.main.playlist.PlayListEntry)
      */
-    public void activeElementChanged(final PlayListEntry oldActiveElement, final PlayListEntry newActiveElement) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (oldActiveElement != null) setTextDecorationAndColorsFor(oldActiveElement, true);
-                    if (newActiveElement != null) {
-                        setTextDecorationAndColorsFor(newActiveElement, true);
-                        doMakeIndexVisible(newActiveElement);
-                    }
-                } catch (Throwable ex) {
-                    Log.error("PlayListGui::activeElementChanged", ex);
+    @Override
+    public void activeElementChanged(PlayListEntry oldActiveElement, PlayListEntry newActiveElement) {
+        EventQueue.invokeLater(() -> {
+            try {
+                if (oldActiveElement != null) setTextDecorationAndColorsFor(oldActiveElement, true);
+                if (newActiveElement != null) {
+                    setTextDecorationAndColorsFor(newActiveElement, true);
+                    doMakeIndexVisible(newActiveElement);
                 }
+            } catch (Throwable ex) {
+                logger.log(Level.ERROR, "PlayListGui::activeElementChanged", ex);
             }
         });
     }
@@ -1270,19 +1254,17 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
      * @see de.quippy.javamod.main.playlist.PlaylistChangedListener#selectedElementChanged(de.quippy.javamod.main.playlist.PlayListEntry, de.quippy.javamod.main.playlist.PlayListEntry)
      * @since 23.03.2011
      */
-    public void selectedElementChanged(final PlayListEntry oldSelectedElement, final PlayListEntry newSelectedElement) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (oldSelectedElement != null) setTextDecorationAndColorsFor(oldSelectedElement, true);
-                    if (newSelectedElement != null) {
-                        setTextDecorationAndColorsFor(newSelectedElement, true);
-                        doMakeIndexVisible(newSelectedElement);
-                    }
-                } catch (Throwable ex) {
-                    Log.error("PlayListGui::selectedElementChanged", ex);
+    @Override
+    public void selectedElementChanged(PlayListEntry oldSelectedElement, PlayListEntry newSelectedElement) {
+        EventQueue.invokeLater(() -> {
+            try {
+                if (oldSelectedElement != null) setTextDecorationAndColorsFor(oldSelectedElement, true);
+                if (newSelectedElement != null) {
+                    setTextDecorationAndColorsFor(newSelectedElement, true);
+                    doMakeIndexVisible(newSelectedElement);
                 }
+            } catch (Throwable ex) {
+                logger.log(Level.ERROR, "PlayListGui::selectedElementChanged", ex);
             }
         });
     }

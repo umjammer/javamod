@@ -25,6 +25,7 @@
 
 package de.quippy.javamod.multimedia.mp3.streaming;
 
+import java.io.Serial;
 import java.util.EventObject;
 
 
@@ -35,9 +36,10 @@ import java.util.EventObject;
  */
 public class TagParseEvent extends EventObject {
 
+    @Serial
     private static final long serialVersionUID = -4050376664469621405L;
 
-    protected IcyTag tag;
+    protected final IcyTag tag;
 
     public TagParseEvent(Object source, IcyTag tag) {
         super(source);

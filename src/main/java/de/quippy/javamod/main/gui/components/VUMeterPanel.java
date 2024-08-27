@@ -24,6 +24,7 @@ package de.quippy.javamod.main.gui.components;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.io.Serial;
 
 
 /**
@@ -32,6 +33,7 @@ import java.awt.Graphics2D;
  */
 public class VUMeterPanel extends MeterPanelBase {
 
+    @Serial
     private static final long serialVersionUID = -4587795218202329414L;
 
     private float currentLevel;
@@ -55,11 +57,6 @@ public class VUMeterPanel extends MeterPanelBase {
         startThread();
     }
 
-    /**
-     * Is called when the component is resized
-     *
-     * @see de.quippy.javamod.main.gui.components.MeterPanelBase#componentWasResized()
-     */
     @Override
     protected void componentWasResized(int newTop, int newLeft, int newWidth, int newHeight) {
         rampDownValue = 2.5f / (float) getDesiredFPS();
@@ -110,18 +107,14 @@ public class VUMeterPanel extends MeterPanelBase {
         }
     }
 
-    /**
-     * @param g
-     * @see de.quippy.javamod.main.gui.components.MeterPanelBase#drawMeter(java.awt.Graphics)
-     */
     @Override
     protected void drawMeter(Graphics2D g, int newTop, int newLeft, int newWidth, int newHeight) {
-        final int level = (int) (myAnzLines * currentLevel);
-        final int maxPeakLevel = (int) (myAnzLines * currentMaxPeakLevel);
+        int level = (int) (myAnzLines * currentLevel);
+        int maxPeakLevel = (int) (myAnzLines * currentMaxPeakLevel);
 
         for (int i = 0; i < myAnzLines; i++) {
             g.setColor((i >= level && i != maxPeakLevel) ? colorLow[i] : color[i]);
-            final int ly = newHeight - (i << 1);
+            int ly = newHeight - (i << 1);
             g.drawLine(newLeft, newTop + ly, newLeft + newWidth, newTop + ly);
         }
 

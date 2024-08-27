@@ -22,9 +22,12 @@
 
 package de.quippy.javamod.main.gui.components;
 
+import java.io.Serial;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import javax.swing.JComponent;
 
-import de.quippy.javamod.system.Log;
+import static java.lang.System.getLogger;
 
 
 /**
@@ -33,9 +36,12 @@ import de.quippy.javamod.system.Log;
  */
 public abstract class ThreadUpdatePanel extends JComponent {
 
+    private static final Logger logger = getLogger(ThreadUpdatePanel.class.getName());
+
+    @Serial
     private static final long serialVersionUID = 499420014207584726L;
 
-    protected int desiredFPS;
+    protected final int desiredFPS;
 
     private volatile boolean threadRunning;
     private volatile int pause; // 0:nothing, 1:request, 2:in Pause
@@ -43,10 +49,10 @@ public abstract class ThreadUpdatePanel extends JComponent {
 
     private static final class MeterUpdateThread extends Thread {
 
-        private long nanoFPS;
+        private final long nanoFPS;
         private final ThreadUpdatePanel me;
 
-        public MeterUpdateThread(ThreadUpdatePanel me, final long desiredFPS) {
+        public MeterUpdateThread(ThreadUpdatePanel me, long desiredFPS) {
             super();
             this.me = me;
             nanoFPS = 1000000000L / desiredFPS;
@@ -65,7 +71,7 @@ public abstract class ThreadUpdatePanel extends JComponent {
         public void run() {
             long additionalWait = 0;
             while (me.threadRunning) {
-                final long now = System.nanoTime();
+                long now = System.nanoTime();
 
                 long stillToWait = nanoFPS - additionalWait;
                 if (stillToWait <= 0)
@@ -78,7 +84,7 @@ public abstract class ThreadUpdatePanel extends JComponent {
                 try {
                     me.doThreadUpdate();
                 } catch (Throwable ex) {
-                    Log.error(this.getName(), ex);
+                    logger.log(Level.ERROR, this.getName(), ex);
                 }
 
                 if (me.pause == 1) {
@@ -116,8 +122,7 @@ public abstract class ThreadUpdatePanel extends JComponent {
     }
 
     public void pauseThread() {
-        if (threadRunning && pause == 0) // not paused and running
-        {
+        if (threadRunning && pause == 0) { // not paused and running
             pause = 1; // move into status isPaused
             // wait for pause to reach status 2 (isPaused)
             while (pause == 1) try {

@@ -35,6 +35,7 @@ import de.quippy.javamod.io.RandomAccessInputStreamImpl;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
+import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.OplType;
 import de.quippy.javamod.system.Helpers;
 
 
@@ -52,7 +53,7 @@ public class DROSequence extends OPL3Sequence {
     private String magic;
     private long lengthInMilliseconds;
     private int length;
-    private EmuOPL.oplType oplType;
+    private OplType oplType;
     private int cmdDelayL;
     private int cmdDelayH;
     private int conversionTableLen;
@@ -82,7 +83,7 @@ public class DROSequence extends OPL3Sequence {
     protected void readOPL3Sequence(RandomAccessInputStreamImpl inputStream) throws IOException {
         if (inputStream == null || inputStream.available() <= 0) return;
 
-        final byte[] magicBytes = new byte[8];
+        byte[] magicBytes = new byte[8];
         inputStream.read(magicBytes, 0, 8);
         magic = Helpers.retrieveAsString(magicBytes, 0, 8);
         if (!magic.equals("DBRAWOPL")) throw new IOException("Unsupported file type (unknown magic bytes)");
@@ -98,12 +99,12 @@ public class DROSequence extends OPL3Sequence {
             if (length <= 0 || length >= 1 << 30 || length > inputStream.available())
                 throw new IOException("Unsupported file type (length read lied to us)");
 
-            lengthInMilliseconds = (long) inputStream.readIntelDWord();
-            final int OPLType = inputStream.read(); // OPL type (0 == OPL2, 1 == Dual OPL2, 2 == OPL3)
+            lengthInMilliseconds = inputStream.readIntelDWord();
+            int OPLType = inputStream.read(); // OPL type (0 == OPL2, 1 == Dual OPL2, 2 == OPL3)
             oplType = EmuOPL.getOPLTypeForIndex(OPLType);
-            final int format = inputStream.read();
+            int format = inputStream.read();
             if (format != 0) throw new IOException("Unsupported file type (unknown format)");
-            final int compression = inputStream.read();
+            int compression = inputStream.read();
             if (compression != 0) throw new IOException("Unsupported file type (compression not supported)");
             cmdDelayL = inputStream.read();
             cmdDelayH = inputStream.read();
@@ -112,12 +113,12 @@ public class DROSequence extends OPL3Sequence {
             for (int i = 0; i < conversionTableLen; i++)
                 conversionTable[i] = inputStream.read();
         } else {
-            lengthInMilliseconds = (long) inputStream.readIntelDWord();
+            lengthInMilliseconds = inputStream.readIntelDWord();
             length = inputStream.readIntelDWord();
             if (length < 3 || length > inputStream.available())
                 throw new IOException("Unsupported file type (length read lied to us)");
 
-            final int OPLType = inputStream.read(); // OPL type (0 == OPL2, 1 == Dual OPL2, 2 == OPL3)
+            int OPLType = inputStream.read(); // OPL type (0 == OPL2, 1 == Dual OPL2, 2 == OPL3)
             oplType = EmuOPL.getOPLTypeForIndex(OPLType);
             // constant values for cmdDelay
             cmdDelayL = 0x00;
@@ -134,14 +135,13 @@ public class DROSequence extends OPL3Sequence {
         data = new int[length];
         for (int i = 0; i < length; i++) data[i] = inputStream.read();
 
-        final int tagSize = inputStream.available();
+        int tagSize = inputStream.available();
         if (tagSize >= 3) {
             byte[] tagMagic = new byte[2];
             inputStream.read(tagMagic, 0, 2);
             if (tagMagic[0] == 0xFF && tagMagic[1] == 0xFF) {
-                for (int i = 0; i < 3; i++) // three chunks
-                {
-                    final int what = inputStream.read();
+                for (int i = 0; i < 3; i++) { // three chunks
+                    int what = inputStream.read();
                     if (what != -1) {
                         switch (what) {
                             case 0x1A:
@@ -166,7 +166,7 @@ public class DROSequence extends OPL3Sequence {
      */
     @Override
     public String getSongName() {
-        if (title != null && title.length() > 0)
+        if (title != null && !title.isEmpty())
             return title;
         else
             return MultimediaContainerManager.getSongNameFromURL(url);
@@ -178,24 +178,20 @@ public class DROSequence extends OPL3Sequence {
      */
     @Override
     public String getAuthor() {
-        if (author != null && author.length() != 0)
+        if (author != null && !author.isEmpty())
             return author;
         else
             return Helpers.EMPTY_STING;
     }
 
     private String getVersionString() {
-        return ((new StringBuilder()).append("V").append(version & 0xFFFF).append('.').append((version >> 16) & 0xFFFF)).toString();
+        return "V" + (version & 0xFFFF) + '.' + ((version >> 16) & 0xFFFF);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#getDescription()
-     */
     @Override
     public String getDescription() {
         StringBuilder sb = new StringBuilder();
-        if (description != null && description.length() != 0) sb.append(description).append("\n\nFile Informations:\n");
+        if (description != null && !description.isEmpty()) sb.append(description).append("\n\nFile Informations:\n");
         sb.append("ID: ").append(magic).append('\n');
         sb.append("Version: ").append(getVersionString()).append('\n');
         sb.append("Length: ").append(length).append('\n');
@@ -206,36 +202,23 @@ public class DROSequence extends OPL3Sequence {
         return sb.toString();
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#getTypeName()
-     */
     @Override
     public String getTypeName() {
-        return ((new StringBuilder()).append("DOSBox Raw OPL File ").append(getVersionString())).toString();
+        return "DOSBox Raw OPL File " + getVersionString();
     }
 
-    /**
-     * @param url
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#setURL(java.net.URL)
-     */
     @Override
     public void setURL(URL url) {
         this.url = url;
     }
 
-    /**
-     * @param opl
-     * @return
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#updateToOPL(de.quippy.opl3.OPL3)
-     */
     @Override
-    public boolean updateToOPL(final EmuOPL opl) {
+    public boolean updateToOPL(EmuOPL opl) {
         if (!isOldVersion) {
             while (pos < length) {
-                final int index = data[pos++] & 0xFF;
+                int index = data[pos++] & 0xFF;
                 if (pos >= length) return false;
-                final int value = data[pos++] & 0xFF;
+                int value = data[pos++] & 0xFF;
 
                 if (index == cmdDelayL) {
                     delay = value + 1;
@@ -245,10 +228,10 @@ public class DROSequence extends OPL3Sequence {
                     return true;
                 } else {
                     bank = (index >> 7) & 0x01;
-                    final int reg = conversionTable[index & 0x7F] & 0xFF;
-                    if (oplType == EmuOPL.oplType.OPL2)
+                    int reg = conversionTable[index & 0x7F] & 0xFF;
+                    if (oplType == OplType.OPL2)
                         opl.writeOPL2(reg, value);
-                    else if (oplType == EmuOPL.oplType.DUAL_OPL2) {
+                    else if (oplType == OplType.DUAL_OPL2) {
                         opl.writeDualOPL2(bank, reg, value);
                     } else
                         opl.writeOPL3(bank, reg, value);
@@ -260,7 +243,7 @@ public class DROSequence extends OPL3Sequence {
 
                 if (index == cmdDelayL) {
                     if (pos >= length) return false;
-                    final int value = data[pos++] & 0xFF;
+                    int value = data[pos++] & 0xFF;
                     delay = value + 1;
                     return true;
                 } else if (index == cmdDelayH) {
@@ -268,8 +251,7 @@ public class DROSequence extends OPL3Sequence {
                     delay = (data[pos] | (data[pos + 1] << 8)) + 1;
                     pos += 2;
                     return true;
-                } else if (index == 0x02 || index == 0x03) // Bankswitch
-                {
+                } else if (index == 0x02 || index == 0x03) { // Bankswitch
                     bank = index - 0x02;
                 } else {
                     if (index == 0x04) {
@@ -278,10 +260,10 @@ public class DROSequence extends OPL3Sequence {
                     }
 
                     if (pos >= length) return false;
-                    final int value = data[pos++] & 0xff;
-                    if (oplType == EmuOPL.oplType.OPL2)
+                    int value = data[pos++] & 0xff;
+                    if (oplType == OplType.OPL2)
                         opl.writeOPL2(index, value);
-                    else if (oplType == EmuOPL.oplType.DUAL_OPL2) {
+                    else if (oplType == OplType.DUAL_OPL2) {
                         opl.writeDualOPL2(bank, index, value);
                     } else
                         opl.writeOPL3(bank, index, value);
@@ -291,34 +273,22 @@ public class DROSequence extends OPL3Sequence {
         return pos < length;
     }
 
-    /**
-     * @param opl
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#initialize(de.quippy.opl3.OPL3)
-     */
     @Override
-    public void initialize(final EmuOPL opl) {
+    public void initialize(EmuOPL opl) {
         pos = 0;
         delay = 0;
         bank = 0;
         resetOPL(opl);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#getRefresh()
-     */
     @Override
     public double getRefresh() {
         if (delay != 0) return 1000d / (double) delay;
         else return 1000d;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#getOPLType()
-     */
     @Override
-    public de.quippy.javamod.multimedia.opl3.emu.EmuOPL.oplType getOPLType() {
+    public OplType getOPLType() {
         return oplType;
     }
 }

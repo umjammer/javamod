@@ -32,10 +32,10 @@ import de.quippy.opl3.FMOPL_072.FM_OPL;
  */
 public class EmuFMOPL_072 extends EmuOPL {
 
-    //private static final int CLOCK_RATE = 3579545;
+//    private static final int CLOCK_RATE = 3579545;
     private static final int CLOCK_RATE = 3579552;    // 49716 * 72, Base Clock of Chip - is said to be 3.579MHz
 
-    private FM_OPL[] opl = null;
+    private FM_OPL[] opl;
 
     /**
      * Constructor for EmuFMOPL_072
@@ -43,33 +43,30 @@ public class EmuFMOPL_072 extends EmuOPL {
      * @param ver        the OPL Version
      * @param sampleRate
      * @param OPLType
-     * @throws IllegalArgumentException if OPLType is OPL3
+     * @throws IllegalArgumentException if oplType is OPL3
      */
-    public EmuFMOPL_072(final version ver, final float sampleRate, final oplType OPLType) {
+    public EmuFMOPL_072(Version ver, float sampleRate, OplType OPLType) {
         super(ver, sampleRate, OPLType);
 
-        if (OPLType == oplType.OPL3) {
-            final String type = (ver == EmuOPL.version.FMOPL_072_YM3526) ? "YM3226" : "YM3812";
+        if (OPLType == OplType.OPL3) {
+            String type = (ver == Version.FMOPL_072_YM3526) ? "YM3226" : "YM3812";
             throw new IllegalArgumentException(type + " does not support OPL3.");
         }
 
         opl = new FM_OPL[2];
-        if (ver == EmuOPL.version.FMOPL_072_YM3526) {
+        if (ver == Version.FMOPL_072_YM3526) {
             opl[0] = FMOPL_072.init(FMOPL_072.OPL_TYPE_YM3526, CLOCK_RATE, (int) sampleRate);
-            if (OPLType == oplType.DUAL_OPL2)
+            if (OPLType == OplType.DUAL_OPL2)
                 opl[1] = FMOPL_072.init(FMOPL_072.OPL_TYPE_YM3526, CLOCK_RATE, (int) sampleRate);
-        } else if (ver == EmuOPL.version.FMOPL_072_YM3812) {
+        } else if (ver == Version.FMOPL_072_YM3812) {
             opl[0] = FMOPL_072.init(FMOPL_072.OPL_TYPE_YM3812, CLOCK_RATE, (int) sampleRate);
-            if (OPLType == oplType.DUAL_OPL2)
+            if (OPLType == OplType.DUAL_OPL2)
                 opl[1] = FMOPL_072.init(FMOPL_072.OPL_TYPE_YM3812, CLOCK_RATE, (int) sampleRate);
+//        } else if (ver == EmuOPL.version.FMOPL_072_Y8950) {
+//            opl[0] = FMOPL_072.y8950_init(CLOCK_RATE, (int) sampleRate);
+//            if (dualOPL)
+//                opl[1] = FMOPL_072.y8950_init(CLOCK_RATE, (int) sampleRate);
         }
-//		else
-//		if (ver == EmuOPL.version.FMOPL_072_Y8950)
-//		{
-//			opl[0] = FMOPL_072.y8950_init(CLOCK_RATE, (int)sampleRate);
-//			if (dualOPL)
-//				opl[1] = FMOPL_072.y8950_init(CLOCK_RATE, (int)sampleRate);
-//		}
     }
 
     /**
@@ -77,40 +74,28 @@ public class EmuFMOPL_072 extends EmuOPL {
      */
     @Override
     public void resetOPL() {
-        FMOPL_072.reset_chip(opl[0]);
+        FMOPL_072.resetChip(opl[0]);
         if (opl[1] != null)
-            FMOPL_072.reset_chip(opl[1]);
+            FMOPL_072.resetChip(opl[1]);
     }
 
-    /**
-     * @param buffer
-     * @see de.quippy.javamod.multimedia.opl3.emu.EmuOPL#read(int[])
-     */
     @Override
-    public void read(final int[] buffer) {
-//		if (ver == EmuOPL.version.FMOPL_072_Y8950)
-//		{
+    public void read(int[] buffer) {
+//		if (ver == EmuOPL.version.FMOPL_072_Y8950) {
 //			FMOPL_072.y8950_update_one(opl[0], buffer, 1);
 //			buffer[1] = buffer[0];
 //			if (opl[1]!=null) 
 //				FMOPL_072.y8950_update_one(opl[1], buffer, 1);
-//		}
-//		else
-//		{
-        FMOPL_072.update_one(opl[0], buffer, 1);
+//		} else {
+        FMOPL_072.updateOne(opl[0], buffer, 1);
         buffer[1] = buffer[0];
         if (opl[1] != null)
-            FMOPL_072.update_one(opl[1], buffer, 1);
+            FMOPL_072.updateOne(opl[1], buffer, 1);
 //		}
     }
 
-    /**
-     * @param reg
-     * @param value
-     * @see de.quippy.javamod.multimedia.opl3.emu.EmuOPL#writeOPL2(int, int)
-     */
     @Override
-    public void writeOPL2(final int reg, final int value) {
+    public void writeOPL2(int reg, int value) {
         FMOPL_072.write(opl[0], 0, reg);
         FMOPL_072.write(opl[0], 1, value);
         if (opl[1] != null) {
@@ -119,27 +104,15 @@ public class EmuFMOPL_072 extends EmuOPL {
         }
     }
 
-    /**
-     * @param bank
-     * @param reg
-     * @param value
-     * @see de.quippy.javamod.multimedia.opl3.emu.EmuOPL#writeDualOPL2(int, int, int)
-     */
     @Override
-    public void writeDualOPL2(final int bank, final int reg, final int value) {
+    public void writeDualOPL2(int bank, int reg, int value) {
         FMOPL_072.write(opl[bank], 0, reg);
         FMOPL_072.write(opl[bank], 1, value);
     }
 
-    /**
-     * @param base
-     * @param reg
-     * @param value
-     * @see de.quippy.javamod.multimedia.opl3.emu.EmuOPL#writeOPL3(int, int, int)
-     */
     @Override
-    public void writeOPL3(final int base, final int reg, final int value) {
-//		FMOPL_072.write(opl[base], 0, reg);
-//		FMOPL_072.write(opl[base], 1, value);
+    public void writeOPL3(int base, int reg, int value) {
+//        FMOPL_072.write(opl[base], 0, reg);
+//        FMOPL_072.write(opl[base], 1, value);
     }
 }

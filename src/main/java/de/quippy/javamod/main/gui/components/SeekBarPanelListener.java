@@ -27,5 +27,5 @@ package de.quippy.javamod.main.gui.components;
  */
 public interface SeekBarPanelListener {
 
-    public void valuesChanged(long milliseconds);
+    void valuesChanged(long milliseconds);
 }

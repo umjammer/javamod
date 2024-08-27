@@ -31,7 +31,7 @@ import de.quippy.javamod.main.playlist.PlayList;
  */
 public interface PlaylistGUIChangeListener {
 
-    public void userSelectedPlaylistEntry();
+    void userSelectedPlaylistEntry();
 
-    public void playListChanged(PlayList newPlayList);
+    void playListChanged(PlayList newPlayList);
 }

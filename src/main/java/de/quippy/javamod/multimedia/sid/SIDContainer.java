@@ -44,41 +44,38 @@ import libsidplay.sidtune.SidTuneInfo;
 public class SIDContainer extends MultimediaContainer {
 
     /** these are copied from libsidplay.components.sidtune.defaultFileNameExt */
-    private static final String[] SIDFILEEXTENSION = new String[]
-            {
-                    // Preferred default file extension for single-file sidtunes
-                    // or sidtune description files in SIDPLAY INFOFILE format.
-                    "sid",
-                    // Common file extension for single-file sidtunes due to SIDPLAY/DOS
-                    // displaying files *.DAT in its file selector by default.
-                    // Originally this was intended to be the extension of the raw data
-                    // file
-                    // of two-file sidtunes in SIDPLAY INFOFILE format.
-                    "dat",
-                    // Extension of Amiga Workbench tooltype icon info files, which
-                    // have been cut to MS-DOS file name length (8.3).
-                    "inf"
-            };
+    private static final String[] SIDFILEEXTENSION = {
+            // Preferred default file extension for single-file sidtunes
+            // or sidtune description files in SIDPLAY INFOFILE format.
+            "sid",
+            // Common file extension for single-file sidtunes due to SIDPLAY/DOS
+            // displaying files *.DAT in its file selector by default.
+            // Originally this was intended to be the extension of the raw data
+            // file
+            // of two-file sidtunes in SIDPLAY INFOFILE format.
+            "dat",
+            // Extension of Amiga Workbench tooltype icon info files, which
+            // have been cut to MS-DOS file name length (8.3).
+            "inf"
+    };
     public static final String PROPERTY_SID_FREQUENCY = "javamod.player.sid.frequency";
     public static final String PROPERTY_SID_MODEL = "javamod.player.sid.sidmodel";
     public static final String PROPERTY_SID_OPTIMIZATION = "javamod.player.sid.optimization";
     public static final String PROPERTY_SID_USEFILTER = "javamod.player.sid.usesidfilter";
     public static final String PROPERTY_SID_VIRTUALSTEREO = "javamod.player.sid.virtualstrereo";
-    /* GUI Constants ---------------------------------------------------------*/
+    // GUI Constants
     public static final String DEFAULT_SAMPLERATE = "44100";
     public static final String DEFAULT_SIDMODEL = "0";
     public static final String DEFAULT_OPTIMIZATION = "1";
     public static final String DEFAULT_USEFILTER = "true";
     public static final String DEFAULT_VIRTUALSTEREO = "false";
 
-    public static final String[] SAMPLERATE = new String[]
-            {
-                    "8000", "11025", "16000", "22050", "33075", DEFAULT_SAMPLERATE, "48000", "96000"
-            };
-    public static final String[] SIDMODELS = new String[]
-            {
-                    "best", "SID 6581 (old model)", "SID 8580 (new model)"
-            };
+    public static final String[] SAMPLERATE = {
+            "8000", "11025", "16000", "22050", "33075", DEFAULT_SAMPLERATE, "48000", "96000"
+    };
+    public static final String[] SIDMODELS = {
+            "best", "SID 6581 (old model)", "SID 8580 (new model)"
+    };
 
     private Properties currentProps = null;
 
@@ -87,7 +84,7 @@ public class SIDContainer extends MultimediaContainer {
     private SIDConfigPanel sidConfigPanel;
     private SIDInfoPanel sidInfoPanel;
 
-    /**
+    /*
      * Will be executed during class load
      */
     static {
@@ -101,11 +98,6 @@ public class SIDContainer extends MultimediaContainer {
         super();
     }
 
-    /**
-     * @param sidFileUrl
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInstance(java.net.URL)
-     */
     @Override
     public MultimediaContainer getInstance(URL sidFileUrl) {
         MultimediaContainer result = super.getInstance(sidFileUrl);
@@ -123,20 +115,15 @@ public class SIDContainer extends MultimediaContainer {
             return super.getSongName();
     }
 
-    /**
-     * @param url
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongInfosFor(java.net.URL)
-     */
     @Override
     public Object[] getSongInfosFor(URL url) {
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
-        Long duration = Long.valueOf(-1);
+        long duration = -1;
         try {
             SidTune sidTune = loadSidTune(url);
             if (sidTune != null) {
                 songName = getShortDescriptionFrom(sidTune);
-                duration = Long.valueOf(sidTune.getInfo().getSongs() * 1000);
+                duration = sidTune.getInfo().getSongs() * 1000;
             }
         } catch (Throwable ex) {
         }
@@ -149,10 +136,6 @@ public class SIDContainer extends MultimediaContainer {
         fireMultimediaContainerEvent(new MultimediaContainerEvent(this, MultimediaContainerEvent.SONG_NAME_CHANGED_OLD_INVALID, getSongName()));
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#canExport()
-     */
     @Override
     public boolean canExport() {
         return true;
@@ -163,32 +146,30 @@ public class SIDContainer extends MultimediaContainer {
      * @return a SIDTune
      * @since 11.10.2009
      */
-    private SidTune loadSidTune(URL sidFileURL) {
+    private static SidTune loadSidTune(URL sidFileURL) {
         InputStream in = null;
         try {
-//			in = new FileOrPackedInputStream(sidFileURL);
-//			int size = in.available();
-//			if (size<1024) size = 1024;
-//			short [] sidTuneData = new short[size];
-//			int b;
-//			int index = 0;
-//			while ((b = in.read())!=-1)
-//			{
-//				sidTuneData[index++] = (short)(b&0xFF);
-//				if (index>=sidTuneData.length)
-//				{
-//					short [] newBuffer = new short[sidTuneData.length + size];
-//					System.arraycopy(sidTuneData, 0, newBuffer, 0, sidTuneData.length);
-//					sidTuneData = newBuffer;
-//				}
-//			}
+//            in = new FileOrPackedInputStream(sidFileURL);
+//            int size = in.available();
+//            if (size < 1024) size = 1024;
+//            short[] sidTuneData = new short[size];
+//            int b;
+//            int index = 0;
+//            while ((b = in.read()) != -1) {
+//                sidTuneData[index++] = (short) (b & 0xFF);
+//                if (index >= sidTuneData.length) {
+//                    short[] newBuffer = new short[sidTuneData.length + size];
+//                    System.arraycopy(sidTuneData, 0, newBuffer, 0, sidTuneData.length);
+//                    sidTuneData = newBuffer;
+//                }
+//            }
             return SidTune.load(Path.of(sidFileURL.toURI()).toFile());
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         } finally {
             if (in != null) try {
                 in.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
     }
 
@@ -197,16 +178,12 @@ public class SIDContainer extends MultimediaContainer {
      * @return
      * @since 12.02.2011
      */
-    private String getShortDescriptionFrom(SidTune sidTune) {
+    private static String getShortDescriptionFrom(SidTune sidTune) {
         SidTuneInfo info = sidTune.getInfo();
         String[] infoString = info.getInfoString().toArray(new String[0]);
         return infoString[0] + " [" + infoString[1] + "] " + info.getCurrentSong() + '/' + info.getSongs() + " (" + infoString[2] + ')';
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#createNewMixer()
-     */
     @Override
     public Mixer createNewMixer() {
         configurationSave(currentProps); // fill with default values
@@ -225,12 +202,8 @@ public class SIDContainer extends MultimediaContainer {
         return currentMixer;
     }
 
-    /**
-     * @param newProps
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationChanged(java.util.Properties)
-     */
     @Override
-    public void configurationChanged(final Properties newProps) {
+    public void configurationChanged(Properties newProps) {
         if (currentProps == null) currentProps = new Properties();
         currentProps.setProperty(PROPERTY_SID_FREQUENCY, newProps.getProperty(PROPERTY_SID_FREQUENCY, DEFAULT_SAMPLERATE));
         currentProps.setProperty(PROPERTY_SID_MODEL, newProps.getProperty(PROPERTY_SID_MODEL, DEFAULT_SIDMODEL));
@@ -238,17 +211,13 @@ public class SIDContainer extends MultimediaContainer {
         currentProps.setProperty(PROPERTY_SID_VIRTUALSTEREO, newProps.getProperty(PROPERTY_SID_VIRTUALSTEREO, DEFAULT_VIRTUALSTEREO));
 
         if (!MultimediaContainerManager.isHeadlessMode()) {
-            final SIDConfigPanel configPanel = (SIDConfigPanel) getConfigPanel();
+            SIDConfigPanel configPanel = (SIDConfigPanel) getConfigPanel();
             configPanel.configurationChanged(newProps);
         }
     }
 
-    /**
-     * @param props
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationSave(java.util.Properties)
-     */
     @Override
-    public void configurationSave(final Properties props) {
+    public void configurationSave(Properties props) {
         if (currentProps == null) currentProps = new Properties();
         if (!MultimediaContainerManager.isHeadlessMode()) {
             SIDConfigPanel configPanel = (SIDConfigPanel) getConfigPanel();
@@ -263,10 +232,6 @@ public class SIDContainer extends MultimediaContainer {
         }
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInfoPanel()
-     */
     @Override
     public JPanel getInfoPanel() {
         if (sidInfoPanel == null) {
@@ -276,10 +241,6 @@ public class SIDContainer extends MultimediaContainer {
         return sidInfoPanel;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getConfigPanel()
-     */
     @Override
     public JPanel getConfigPanel() {
         if (sidConfigPanel == null) {
@@ -289,27 +250,16 @@ public class SIDContainer extends MultimediaContainer {
         return sidConfigPanel;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getFileExtensionList()
-     */
     @Override
     public String[] getFileExtensionList() {
         return SIDFILEEXTENSION;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getName()
-     */
     @Override
     public String getName() {
         return "SID-File";
     }
 
-    /**
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#cleanUp()
-     */
     @Override
     public void cleanUp() {
     }

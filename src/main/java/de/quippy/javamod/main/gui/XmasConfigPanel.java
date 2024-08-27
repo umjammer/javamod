@@ -25,6 +25,7 @@ package de.quippy.javamod.main.gui;
 import java.awt.DisplayMode;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.io.Serial;
 import java.util.Properties;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
@@ -40,6 +41,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class XmasConfigPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = 4069039567731397482L;
 
     private static final String BULBS_PATH = "/de/quippy/javamod/main/gui/ressources/lightbulbs/";
@@ -48,14 +50,14 @@ public class XmasConfigPanel extends JPanel {
     private JTabbedPane screenSelectionPanel = null;
     private XmasScreenConfigPanel[] xmasScreenConfigPanels = null;
 
-    private int screenFPS;
+    private final int screenFPS;
     private ImageIcon[] bulbs;
-    private GraphicsDevice[] screens;
+    private final GraphicsDevice[] screens;
 
     /**
      * Constructor for XmasConfigPanel
      */
-    public XmasConfigPanel(final int myDesiredFPS) {
+    public XmasConfigPanel(int myDesiredFPS) {
         super();
         loadBulbs();
         screenFPS = myDesiredFPS;
@@ -71,7 +73,7 @@ public class XmasConfigPanel extends JPanel {
     private void loadBulbs() {
         bulbs = new ImageIcon[ANZ_BULBS];
         for (int i = 0; i < ANZ_BULBS; i++)
-            bulbs[i] = new ImageIcon(getClass().getResource(BULBS_PATH + Integer.toString(i) + ".gif"));
+            bulbs[i] = new ImageIcon(getClass().getResource(BULBS_PATH + i + ".gif"));
     }
 
     private void initialize() {
@@ -86,14 +88,14 @@ public class XmasConfigPanel extends JPanel {
             screenSelectionPanel.setFont(Helpers.getDialogFont());
             xmasScreenConfigPanels = new XmasScreenConfigPanel[screens.length];
             for (int i = 0; i < screens.length; i++) {
-                final GraphicsDevice screen = screens[i];
+                GraphicsDevice screen = screens[i];
                 StringBuilder sb = new StringBuilder(screen.getIDstring());
                 DisplayMode dm = screen.getDisplayMode();
                 if (dm != null) sb.append(" (").append(dm.getWidth()).append('x').append(dm.getHeight()).append(')');
 
-                final JPanel xmasScreenConfigPanel = xmasScreenConfigPanels[i] = new XmasScreenConfigPanel(screenFPS, bulbs, screen);
+                JPanel xmasScreenConfigPanel = xmasScreenConfigPanels[i] = new XmasScreenConfigPanel(screenFPS, bulbs, screen);
                 JScrollPane containerScroller = new JScrollPane();
-                containerScroller.setName("scrollPane_Config_" + sb.toString());
+                containerScroller.setName("scrollPane_Config_" + sb);
                 containerScroller.setViewportView(xmasScreenConfigPanel);
                 screenSelectionPanel.add(sb.toString(), containerScroller);
             }
@@ -101,12 +103,12 @@ public class XmasConfigPanel extends JPanel {
         return screenSelectionPanel;
     }
 
-    public void readProperties(final Properties props) {
+    public void readProperties(Properties props) {
         for (int i = 0; i < xmasScreenConfigPanels.length; i++)
             xmasScreenConfigPanels[i].readProperties(props, i);
     }
 
-    public void writeProperties(final Properties props) {
+    public void writeProperties(Properties props) {
         for (int i = 0; i < xmasScreenConfigPanels.length; i++)
             xmasScreenConfigPanels[i].writeProperties(props, i);
     }

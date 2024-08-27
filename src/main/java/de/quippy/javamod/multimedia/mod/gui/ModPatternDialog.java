@@ -31,16 +31,15 @@ import java.awt.FontMetrics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.Serial;
+import java.util.Arrays;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -74,6 +73,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class ModPatternDialog extends JDialog implements ModUpdateListener {
 
+    @Serial
     private static final long serialVersionUID = 4511905120124137632L;
     // This is a kind of a hack to fill the row - and it must have contend - otherwise it does not work
     private static final int ANZ_BUTTONS = 4;
@@ -121,9 +121,9 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
     private int currentIndex;
     private int selectedChannelNumber = -1; // Popup on which channel?
 
-    private String peekMeterColorStrings[];
+    private String[] peekMeterColorStrings;
 
-    private ModInfoPanel myModInfoPanel;
+    private final ModInfoPanel myModInfoPanel;
     private Mixer currentMixer;
     private BasicModMixer currentModMixer;
     private boolean isPlaying = false;
@@ -145,8 +145,8 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         // Let's first create the normal and darker color for the meters
         peekMeterColorStrings = new String[16];
         for (int i = 0; i < 8; i++) {
-            final int r = i * 255 / 8;
-            final int g = 255 - r;
+            int r = i * 255 / 8;
+            int g = 255 - r;
             final int b = 0;
             peekMeterColorStrings[i] = "#" + ModConstants.getAsHex(r, 2) + ModConstants.getAsHex(g, 2) + ModConstants.getAsHex(b, 2);
             Color buttonColor = PatternImagePanel.getButtonColor();
@@ -156,8 +156,8 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         CHANNELBUTTON_SIZE = new Dimension(getPatternImagePanel().getRowElementPixelWidth(), getPatternImagePanel().getRowElementPixelHeight());
         CHANNELPATTERNINDEX_SIZE = new Dimension(getPatternImagePanel().getButtonPixelWidth(), getPatternImagePanel().getButtonPixelHeight() * ANZ_BUTTONS); // three buttons stacked on top of each other
 
-        final Container baseContentPane = getContentPane();
-        final FontMetrics dialogMetrics = baseContentPane.getFontMetrics(Helpers.getDialogFont());
+        Container baseContentPane = getContentPane();
+        FontMetrics dialogMetrics = baseContentPane.getFontMetrics(Helpers.getDialogFont());
         PATTERNINDEX_BUTTON = new Dimension(dialogMetrics.charWidth('0') * 6, dialogMetrics.getHeight() * 2);
 
         baseContentPane.setLayout(new java.awt.GridBagLayout());
@@ -206,12 +206,9 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
             prevPatternButton.setText("<<");
             prevPatternButton.setFont(Helpers.getDialogFont());
             prevPatternButton.setToolTipText("Show previous pattern");
-            prevPatternButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (arrangement != null && currentIndex > 0 && !isFollowSongActive())
-                        setCurrentPattern(currentIndex - 1);
-                }
+            prevPatternButton.addActionListener(e -> {
+                if (arrangement != null && currentIndex > 0 && !isFollowSongActive())
+                    setCurrentPattern(currentIndex - 1);
             });
         }
         return prevPatternButton;
@@ -224,12 +221,9 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
             nextPatternButton.setText(">>");
             nextPatternButton.setFont(Helpers.getDialogFont());
             nextPatternButton.setToolTipText("Show previous pattern");
-            nextPatternButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (arrangement != null && currentIndex < (arrangement.length - 1) && !isFollowSongActive())
-                        setCurrentPattern(currentIndex + 1);
-                }
+            nextPatternButton.addActionListener(e -> {
+                if (arrangement != null && currentIndex < (arrangement.length - 1) && !isFollowSongActive())
+                    setCurrentPattern(currentIndex + 1);
             });
         }
         return nextPatternButton;
@@ -244,13 +238,10 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
             followSongCheckBox.setToolTipText("Control whether to follow the song or not");
             followSongCheckBox.setSelected(true);
             // When "follow Song" is not selected, make the caret a bit lighter in color
-            followSongCheckBox.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
-                        // If we want to follow the song, remove current Playing row indicator
-                        if (getFollowSongCheckBox().isSelected()) setActivePlayingRow(null);
-                    }
+            followSongCheckBox.addItemListener(e -> {
+                if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
+                    // If we want to follow the song, remove current Playing row indicator
+                    if (getFollowSongCheckBox().isSelected()) setActivePlayingRow(null);
                 }
             });
         }
@@ -283,14 +274,12 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @param patternIndex
      * @since 06.02.2024
      */
-    private void setPatternNameField(final int patternIndex) {
-        final Pattern pattern = patternContainer.getPattern(patternIndex);
+    private void setPatternNameField(int patternIndex) {
+        Pattern pattern = patternContainer.getPattern(patternIndex);
         if (pattern != null) {
-            final String patternName = pattern.getPatternName();
+            String patternName = pattern.getPatternName();
             if (patternName != null) {
-                final StringBuilder sb = new StringBuilder();
-                sb.append('\n').append(patternName);
-                getPatternNameField().setText(sb.toString());
+                getPatternNameField().setText('\n' + patternName);
                 return;
             }
         }
@@ -314,7 +303,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         return arrangementPanel;
     }
 
-    private JToggleButton createButtonForIndex(final int index, final int arrangementIndex, final Dimension size) {
+    private JToggleButton createButtonForIndex(int index, int arrangementIndex, Dimension size) {
         JToggleButton newButton = new JToggleButton();
         newButton.setName("ArrangementButton_" + index);
         newButton.setText((arrangementIndex > -1) ? ModConstants.getAsHex(arrangementIndex, 2) : "--");
@@ -326,21 +315,18 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         newButton.setMaximumSize(size);
         newButton.setPreferredSize(size);
         if (arrangementIndex > -1) {
-            newButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent evt) {
-                    if (currentMixer != null && !currentMixer.isStopped() && currentModMixer != null) {
-                        Module mod = currentModMixer.getMod();
-                        if (mod != null) {
-                            final long seek = mod.getMsTimeIndex()[index];
-                            if (seek >= 0) currentMixer.setMillisecondPosition(seek);
-                        }
-                    } else {
-                        if (!isFollowSongActive())
-                            setCurrentPattern(index);
-                        else
-                            selectArrangementButton(currentIndex);
+            newButton.addActionListener(evt -> {
+                if (currentMixer != null && !currentMixer.isStopped() && currentModMixer != null) {
+                    Module mod = currentModMixer.getMod();
+                    if (mod != null) {
+                        long seek = mod.getMsTimeIndex()[index];
+                        if (seek >= 0) currentMixer.setMillisecondPosition(seek);
                     }
+                } else {
+                    if (!isFollowSongActive())
+                        setCurrentPattern(index);
+                    else
+                        selectArrangementButton(currentIndex);
                 }
             });
         }
@@ -348,7 +334,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
     }
 
     private void fillButtonsForArrangement() {
-        final int length = (arrangement == null) ? 25 : arrangement.length;
+        int length = (arrangement == null) ? 25 : arrangement.length;
 
         getArrangementPanel().removeAll();
         buttonGroup = new ButtonGroup();
@@ -361,7 +347,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         }
 
         // Set scroll bar increments to the width/height of one button.
-        final JToggleButton firstButton = buttonArrangement[0];
+        JToggleButton firstButton = buttonArrangement[0];
         getScrollPane_ArrangementData().getHorizontalScrollBar().setUnitIncrement(firstButton.getWidth());
         getScrollPane_ArrangementData().getVerticalScrollBar().setUnitIncrement(firstButton.getHeight()); // BTW: we shall never see you!!
 
@@ -401,7 +387,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
                         return;
                     }
 
-                    final PatternImagePosition position = getPatternImagePanel().getCurrentEditingRow();
+                    PatternImagePosition position = getPatternImagePanel().getCurrentEditingRow();
                     if (position != null && position.row != -1 && position.pattern != null) {
                         if (e.isAltDown() || e.isAltGraphDown()) {
                             switch (e.getKeyCode()) {
@@ -455,7 +441,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
                                     break;
                                 case KeyEvent.VK_ENTER:
                                     if (position.column == PatternImagePosition.COLUMN_INSTRUMENT && myModInfoPanel != null) {
-                                        final PatternElement element = position.pattern.getPatternElement(position.row, position.channel);
+                                        PatternElement element = position.pattern.getPatternElement(position.row, position.channel);
                                         if (element != null)
                                             myModInfoPanel.showInstrument(element.getInstrument() - 1); // 0 is no Instrument...
                                     }
@@ -517,11 +503,11 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
                     if (e.isConsumed() || isFollowSongActive()) return;
 
                     if (SwingUtilities.isLeftMouseButton(e)) {
-                        final PatternImagePosition position = getPatternImagePanel().view2Model(e.getPoint());
+                        PatternImagePosition position = getPatternImagePanel().view2Model(e.getPoint());
                         if (position != null) {
                             normalizeAndDisplayEditingRow(position);
                             if (e.getClickCount() > 1 && position.pattern != null) {
-                                final PatternElement element = position.pattern.getPatternElement(position.row, position.channel);
+                                PatternElement element = position.pattern.getPatternElement(position.row, position.channel);
                                 if (position.column == PatternImagePosition.COLUMN_INSTRUMENT && element != null) {
                                     if (myModInfoPanel != null)
                                         myModInfoPanel.showInstrument(element.getInstrument() - 1); // 0 is no Instrument...
@@ -554,11 +540,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
             popUpEntryUnMuteAll.setName("popUpEntryUnMuteAll");
             popUpEntryUnMuteAll.setText("Reset all channels");
             popUpEntryUnMuteAll.addActionListener(
-                    new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {
-                            doMute(RESET, selectedChannelNumber);
-                        }
-                    });
+                    e -> doMute(RESET, selectedChannelNumber));
         }
         return popUpEntryUnMuteAll;
     }
@@ -569,11 +551,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
             popUpEntrySoloChannel.setName("popUpEntrySoloChannel");
             popUpEntrySoloChannel.setText("Solo channel");
             popUpEntrySoloChannel.addActionListener(
-                    new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {
-                            doMute(SOLOCHANNEL, selectedChannelNumber);
-                        }
-                    });
+                    e -> doMute(SOLOCHANNEL, selectedChannelNumber));
         }
         return popUpEntrySoloChannel;
     }
@@ -584,11 +562,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
             popUpEntryMuteChannel.setName("popUpEntryMuteChannel");
             popUpEntryMuteChannel.setText("(Un-)mute channel");
             popUpEntryMuteChannel.addActionListener(
-                    new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {
-                            doMute(TOGGLEMUTE, selectedChannelNumber);
-                        }
-                    });
+                    e -> doMute(TOGGLEMUTE, selectedChannelNumber));
         }
         return popUpEntryMuteChannel;
     }
@@ -602,9 +576,9 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
             channelPopUp.add(getPopUpEntrySoloChannel());
             channelPopUp.add(getPopUpEntryMuteChannel());
         }
-//    	getPopUpEntryUnMuteAll().setEnabled(currentModMixer!=null);
-//    	getPopUpEntryMuteChannel().setEnabled(currentModMixer!=null);
-//    	getPopUpEntrySoloChannel().setEnabled(currentModMixer!=null);
+//        getPopUpEntryUnMuteAll().setEnabled(currentModMixer != null);
+//        getPopUpEntryMuteChannel().setEnabled(currentModMixer != null);
+//        getPopUpEntrySoloChannel().setEnabled(currentModMixer != null);
         return channelPopUp;
     }
 
@@ -643,7 +617,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @return
      * @since 28.11.2023
      */
-    private String createPeakMeter(final int channel, final int highLeft, final int highRight, final boolean isSurround) {
+    private String createPeakMeter(int channel, int highLeft, int highRight, boolean isSurround) {
         StringBuilder sb = new StringBuilder("<html>");
         if (isSurround) {
             for (int i = 7; i > 0; i--)
@@ -661,19 +635,19 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         return sb.append("</html>").toString();
     }
 
-    private String getChannelName(final int channel) {
+    private String getChannelName(int channel) {
         StringBuilder sb = new StringBuilder();
         sb.append(channel + 1);
         if (patternContainer != null) {
-            final String chnName = patternContainer.getChannelName(channel);
+            String chnName = patternContainer.getChannelName(channel);
             if (chnName != null) sb.append(':').append(chnName);
         }
         return sb.toString();
     }
 
-    private Color getChannelColor(final int channel) {
+    private Color getChannelColor(int channel) {
         if (patternContainer != null) {
-            final Color chnColor = patternContainer.getChannelColor(channel);
+            Color chnColor = patternContainer.getChannelColor(channel);
             if (chnColor != null) return chnColor;
         }
         return PatternImagePanel.getButtonColor();
@@ -684,13 +658,13 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @return
      * @since 28.11.2023
      */
-    private JButton createChannelButton(final int channelNumber) {
-        final JButton channelButton = new JButton();
-        channelButton.setName("Channel_" + Integer.toString(channelNumber));
+    private JButton createChannelButton(int channelNumber) {
+        JButton channelButton = new JButton();
+        channelButton.setName("Channel_" + channelNumber);
         channelButton.setText(getChannelName(channelNumber));
         channelButton.setHorizontalAlignment(SwingConstants.CENTER);
         channelButton.setFont(Helpers.getDialogFont());
-        channelButton.setToolTipText("Channel " + Integer.toString(channelNumber + 1) + " mute/unmute");
+        channelButton.setToolTipText("Channel " + (channelNumber + 1) + " mute/unmute");
         channelButton.setBackground(getChannelColor(channelNumber));
         channelButton.setBorder(null);
         channelButton.setBorderPainted(false);
@@ -699,12 +673,9 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         channelButton.setMinimumSize(CHANNELBUTTON_SIZE);
         channelButton.setMaximumSize(CHANNELBUTTON_SIZE);
         channelButton.setPreferredSize(CHANNELBUTTON_SIZE);
-        channelButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                doMute(TOGGLEMUTE, channelNumber);
-            }
-        });
+        channelButton.addActionListener(e -> doMute(TOGGLEMUTE, channelNumber));
         channelButton.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (e.isConsumed()) return;
                 if (SwingUtilities.isRightMouseButton(e)) {
@@ -717,13 +688,13 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         return channelButton;
     }
 
-    private JButton createPeakMeterButton(final int channelNumber) {
-        final JButton channelButton = new JButton();
-        channelButton.setName("Channel_" + Integer.toString(channelNumber));
+    private JButton createPeakMeterButton(int channelNumber) {
+        JButton channelButton = new JButton();
+        channelButton.setName("Channel_" + channelNumber);
         channelButton.setText(createPeakMeter(channelNumber, 0, 0, false));
         channelButton.setHorizontalAlignment(SwingConstants.CENTER);
         channelButton.setFont(Helpers.getDialogFont());
-        channelButton.setToolTipText("Channel " + Integer.toString(channelNumber + 1) + " mute/unmute");
+        channelButton.setToolTipText("Channel " + (channelNumber + 1) + " mute/unmute");
         channelButton.setBackground(PatternImagePanel.getButtonColor());
         channelButton.setBorder(null);
         channelButton.setBorderPainted(false);
@@ -732,12 +703,9 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         channelButton.setMinimumSize(CHANNELBUTTON_SIZE);
         channelButton.setMaximumSize(CHANNELBUTTON_SIZE);
         channelButton.setPreferredSize(CHANNELBUTTON_SIZE);
-        channelButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                doMute(TOGGLEMUTE, channelNumber);
-            }
-        });
+        channelButton.addActionListener(e -> doMute(TOGGLEMUTE, channelNumber));
         channelButton.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (e.isConsumed()) return;
                 if (SwingUtilities.isRightMouseButton(e)) {
@@ -750,13 +718,13 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         return channelButton;
     }
 
-    private JButton createVolEffectLabel(final int channelNumber) {
-        final JButton volEffectLabel = new JButton();
-        volEffectLabel.setName("VolEffectLabel_" + Integer.toString(channelNumber));
+    private JButton createVolEffectLabel(int channelNumber) {
+        JButton volEffectLabel = new JButton();
+        volEffectLabel.setName("VolEffectLabel_" + channelNumber);
         volEffectLabel.setText(Helpers.EMPTY_STING);
         volEffectLabel.setHorizontalAlignment(SwingConstants.LEFT);
         volEffectLabel.setFont(Helpers.getDialogFont());
-        volEffectLabel.setToolTipText("Channel " + Integer.toString(channelNumber + 1) + " current volume effect");
+        volEffectLabel.setToolTipText("Channel " + (channelNumber + 1) + " current volume effect");
         volEffectLabel.setBackground(PatternImagePanel.getButtonColor());
         volEffectLabel.setBorder(null);
         volEffectLabel.setBorderPainted(false);
@@ -765,12 +733,9 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         volEffectLabel.setMinimumSize(CHANNELBUTTON_SIZE);
         volEffectLabel.setMaximumSize(CHANNELBUTTON_SIZE);
         volEffectLabel.setPreferredSize(CHANNELBUTTON_SIZE);
-        volEffectLabel.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                doMute(TOGGLEMUTE, channelNumber);
-            }
-        });
+        volEffectLabel.addActionListener(e -> doMute(TOGGLEMUTE, channelNumber));
         volEffectLabel.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (e.isConsumed()) return;
                 if (SwingUtilities.isRightMouseButton(e)) {
@@ -783,13 +748,13 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         return volEffectLabel;
     }
 
-    private JButton createEffectLabel(final int channelNumber) {
-        final JButton effektLabel = new JButton();
-        effektLabel.setName("EffectLabel_" + Integer.toString(channelNumber));
+    private JButton createEffectLabel(int channelNumber) {
+        JButton effektLabel = new JButton();
+        effektLabel.setName("EffectLabel_" + channelNumber);
         effektLabel.setText(Helpers.EMPTY_STING);
         effektLabel.setHorizontalAlignment(SwingConstants.LEFT);
         effektLabel.setFont(Helpers.getDialogFont());
-        effektLabel.setToolTipText("Channel " + Integer.toString(channelNumber + 1) + " current effect");
+        effektLabel.setToolTipText("Channel " + (channelNumber + 1) + " current effect");
         effektLabel.setBackground(PatternImagePanel.getButtonColor());
         effektLabel.setBorder(null);
         effektLabel.setBorderPainted(false);
@@ -798,12 +763,9 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         effektLabel.setMinimumSize(CHANNELBUTTON_SIZE);
         effektLabel.setMaximumSize(CHANNELBUTTON_SIZE);
         effektLabel.setPreferredSize(CHANNELBUTTON_SIZE);
-        effektLabel.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                doMute(TOGGLEMUTE, channelNumber);
-            }
-        });
+        effektLabel.addActionListener(e -> doMute(TOGGLEMUTE, channelNumber));
         effektLabel.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (e.isConsumed()) return;
                 if (SwingUtilities.isRightMouseButton(e)) {
@@ -822,7 +784,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @param channels
      * @since 27.11.2023
      */
-    private void createChannelButtons(final int channels) {
+    private void createChannelButtons(int channels) {
         channelButtons = new JButton[channels];
         peakMeterButtons = new JButton[channels];
         effectButtons = new JButton[channels];
@@ -847,7 +809,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @param channels
      * @since 27.11.2023
      */
-    private void fillButtonsForChannels(final int patternIndex, final int channels) {
+    private void fillButtonsForChannels(int patternIndex, int channels) {
         getChannelHeadlinePanel().removeAll();
         getChannelHeadlinePanel().add(getPatternNumberLabel(), Helpers.getGridBagConstraint(0, 0, ANZ_BUTTONS, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0, Helpers.NULL_INSETS));
         for (int i = 0; i < channels; i++) {
@@ -873,11 +835,11 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
     /**
      * Update the Strings on the channelButtons with new colors depending on volume.
      *
-     * @param volLeft
-     * @param volRight
+     * @param peekVolumeLeft
+     * @param peekVolumeRight
      * @since 28.11.2023
      */
-    private void updateVolume(final int channel, final int peekVolumeLeft, final int peekVolumeRight, final boolean isSurround) {
+    private void updateVolume(int channel, int peekVolumeLeft, int peekVolumeRight, boolean isSurround) {
         // because of possible race conditions (EventQueue.invokeLater) a new mod can already be loaded while the old updater is still updating for an old mod
         // this should not happen, but occasional it does
         if (channelButtons != null && channel < channelButtons.length)
@@ -889,7 +851,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      */
     private void resetVolume() {
         if (patternContainer != null) {
-            final int channels = channelButtons.length;
+            int channels = channelButtons.length;
             for (int c = 0; c < channels; c++) {
                 updateVolume(c, 0, 0, false);
             }
@@ -900,10 +862,9 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @since 28.11.2023
      */
     private void updateMuteStatus() {
-        if (patternContainer != null) // if we do not display anything, there is nothing to update
-        {
-            final boolean muteStatus[] = (currentModMixer != null) ? currentModMixer.getMuteStatus() : null;
-            final int channels = patternContainer.getChannels();
+        if (patternContainer != null) { // if we do not display anything, there is nothing to update
+            boolean[] muteStatus = (currentModMixer != null) ? currentModMixer.getMuteStatus() : null;
+            int channels = patternContainer.getChannels();
             for (int i = 0; i < channels; i++) {
                 if (!patternContainer.getIsChannelActive(i))
                     channelButtons[i].setForeground(Color.lightGray);
@@ -931,7 +892,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      */
     private void copyFromMixerMuteStatus() {
         if (currentMixer != null) {
-            final boolean muteStatus[] = currentModMixer.getMuteStatus();
+            boolean[] muteStatus = currentModMixer.getMuteStatus();
             for (int i = 0; i < internalMuteStatus.length; i++) {
                 if (muteStatus != null && i < muteStatus.length) {
                     internalMuteStatus[i] = muteStatus[i];
@@ -945,7 +906,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @param channelNumber
      * @since 18.03.2024
      */
-    public void makeChannelSolo(final int channelNumber) {
+    public void makeChannelSolo(int channelNumber) {
         if (internalMuteStatus != null && channelNumber >= 0 && channelNumber <= internalMuteStatus.length) {
             for (int c = 0; c < internalMuteStatus.length; c++) {
                 internalMuteStatus[c] = c != channelNumber;
@@ -957,7 +918,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @param channelNumber
      * @since 18.03.2024
      */
-    public void toggleMuteChannel(final int channelNumber) {
+    public void toggleMuteChannel(int channelNumber) {
         if (internalMuteStatus != null && channelNumber >= 0 && channelNumber <= internalMuteStatus.length) {
             internalMuteStatus[channelNumber] = !internalMuteStatus[channelNumber];
         }
@@ -968,8 +929,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      */
     public void unMuteAll() {
         if (internalMuteStatus != null) {
-            for (int c = 0; c < internalMuteStatus.length; c++)
-                internalMuteStatus[c] = false;
+            Arrays.fill(internalMuteStatus, false);
         }
     }
 
@@ -978,7 +938,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @param channelNumber
      * @since 28.11.2023
      */
-    private void doMute(final int whatMute, final int channelNumber) {
+    private void doMute(int whatMute, int channelNumber) {
         selectedChannelNumber = channelNumber;
         if (internalMuteStatus != null && channelNumber <= internalMuteStatus.length) {
             switch (whatMute) {
@@ -1001,11 +961,11 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @param index
      * @since 07.01.2024
      */
-    private void selectArrangementButton(final int index) {
+    private void selectArrangementButton(int index) {
         if (index >= buttonArrangement.length) return; // just to be save
 
         // set the correct Button of the arrangement
-        final JToggleButton theButton = buttonArrangement[index];
+        JToggleButton theButton = buttonArrangement[index];
         theButton.setSelected(true);
         // now scroll to button to become visible
         getArrangementPanel().scrollRectToVisible(theButton.getBounds());
@@ -1014,60 +974,54 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         setPatternNameField(arrangement[index]);
     }
 
-    private Pattern getPrevPattern(final int index) {
+    private Pattern getPrevPattern(int index) {
         return (index - 1) >= 0 ? patternContainer.getPattern(arrangement[index - 1]) : null;
     }
 
-    private Pattern getNextPattern(final int index) {
+    private Pattern getNextPattern(int index) {
         return (index + 1) < arrangement.length ? patternContainer.getPattern(arrangement[index + 1]) : null;
     }
 
-    private void setActivePlayingRow(final PatternImagePosition position) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    getPatternImagePanel().setActivePlayingRow(position);
-                } catch (Throwable ex) { /*NOOP*/ }
-            }
+    private void setActivePlayingRow(PatternImagePosition position) {
+        EventQueue.invokeLater(() -> {
+            try {
+                getPatternImagePanel().setActivePlayingRow(position);
+            } catch (Throwable ex) { /*NOOP*/ }
         });
     }
 
-    private void setCurrentPattern(final int index) {
+    private void setCurrentPattern(int index) {
         PatternImagePosition position = getPatternImagePanel().getCurrentEditingRow();
         if (position != null) {
             position.pattern = patternContainer.getPattern(arrangement[index]);
             position.row = 0;
             setActiveEditingRow(index, position);
         } else {
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                    try {
-                        if (index != currentIndex) selectArrangementButton(currentIndex = index);
-                        getPatternImagePanel().setCurrentPattern(getPrevPattern(index), patternContainer.getPattern(arrangement[index]), getNextPattern(index));
-                    } catch (Throwable ex) { /*NOOP*/ }
-                }
+            EventQueue.invokeLater(() -> {
+                try {
+                    if (index != currentIndex) selectArrangementButton(currentIndex = index);
+                    getPatternImagePanel().setCurrentPattern(getPrevPattern(index), patternContainer.getPattern(arrangement[index]), getNextPattern(index));
+                } catch (Throwable ex) { /*NOOP*/ }
             });
         }
     }
 
-    private void setActiveEditingRow(final int index, final PatternImagePosition position) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    if (index != currentIndex) selectArrangementButton(currentIndex = index);
-                    getPatternImagePanel().setActiveEditingRow(getPrevPattern(index), patternContainer.getPattern(arrangement[index]), getNextPattern(index), position);
-                    if (position != null) {
-                        showCurrentEffectNames(position.pattern, position.row);
-                        if (!getPatternImagePanel().hasFocus()) getPatternImagePanel().requestFocusInWindow();
-                    } else {
-                        clearCurrentEffectNames();
-                    }
-                } catch (Throwable ex) { /*NOOP*/ }
-            }
+    private void setActiveEditingRow(int index, PatternImagePosition position) {
+        EventQueue.invokeLater(() -> {
+            try {
+                if (index != currentIndex) selectArrangementButton(currentIndex = index);
+                getPatternImagePanel().setActiveEditingRow(getPrevPattern(index), patternContainer.getPattern(arrangement[index]), getNextPattern(index), position);
+                if (position != null) {
+                    showCurrentEffectNames(position.pattern, position.row);
+                    if (!getPatternImagePanel().hasFocus()) getPatternImagePanel().requestFocusInWindow();
+                } else {
+                    clearCurrentEffectNames();
+                }
+            } catch (Throwable ex) { /*NOOP*/ }
         });
     }
 
-    private void normalizeAndDisplayEditingRow(final PatternImagePosition position) {
+    private void normalizeAndDisplayEditingRow(PatternImagePosition position) {
         if (position.column <= PatternImagePosition.COLUMN_BEYOND_LEFT) {
             if (position.channel > 0) {
                 position.channel--;
@@ -1111,12 +1065,12 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         setActiveEditingRow(index, position);
     }
 
-    private void showCurrentEffectNames(final Pattern pattern, final int row) {
+    private void showCurrentEffectNames(Pattern pattern, int row) {
         if (effectButtons != null) {
-            final int channels = pattern.getChannels();
-            final PatternRow patternRow = pattern.getPatternRow(row);
+            int channels = pattern.getChannels();
+            PatternRow patternRow = pattern.getPatternRow(row);
             for (int c = 0; c < channels; c++) {
-                final PatternElement element = patternRow.getPatternElement(c);
+                PatternElement element = patternRow.getPatternElement(c);
                 effectButtons[c].setText(element.getEffectName());
                 volEffectButtons[c].setText(element.getVolEffectName());
             }
@@ -1125,7 +1079,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
 
     private void clearCurrentEffectNames() {
         if (effectButtons != null) {
-            final int channels = effectButtons.length;
+            int channels = effectButtons.length;
             for (int c = 0; c < channels; c++) {
                 effectButtons[c].setText(Helpers.EMPTY_STING);
                 volEffectButtons[c].setText(Helpers.EMPTY_STING);
@@ -1139,15 +1093,15 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @param information
      * @since 07.01.2024
      */
-    private void displayPattern(final PatternPositionInformation information) {
+    private void displayPattern(PatternPositionInformation information) {
         if (information != null) {
-            final int index = information.patternIndex;
-            final Pattern pattern = patternContainer.getPattern(arrangement[index]);
+            int index = information.patternIndex;
+            Pattern pattern = patternContainer.getPattern(arrangement[index]);
 
             if (pattern != null) {
-                final int row = information.patternRow;
+                int row = information.patternRow;
                 // checks followSong: if active, the editing row moves the pattern, otherwise we will not move
-                final PatternImagePosition position = new PatternImagePosition(pattern, row);
+                PatternImagePosition position = new PatternImagePosition(pattern, row);
                 if (isFollowSongActive())
                     setActiveEditingRow(index, position);
                 else
@@ -1164,7 +1118,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @param newPatternContainer
      * @since 28.11.2023
      */
-    public void fillWithPatternArray(final int modID, final int songLength, final int[] newArrangement, final PatternContainer newPatternContainer) {
+    public void fillWithPatternArray(int modID, int songLength, int[] newArrangement, PatternContainer newPatternContainer) {
         patternContainer = newPatternContainer;
         currentIndex = -1;
 
@@ -1174,19 +1128,17 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
 
         createChannelButtons(patternContainer.getChannels());
 
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    // and then display them
-                    fillButtonsForArrangement();
-                    fillButtonsForChannels(0, patternContainer.getChannels());
-                    setCurrentPattern(0);
-                    setPreferredSize(getSize());
-                    updateMuteStatus();
-                    pack();
-                } catch (Throwable ex) {
-                    // Keep it!
-                }
+        EventQueue.invokeLater(() -> {
+            try {
+                // and then display them
+                fillButtonsForArrangement();
+                fillButtonsForChannels(0, patternContainer.getChannels());
+                setCurrentPattern(0);
+                setPreferredSize(getSize());
+                updateMuteStatus();
+                pack();
+            } catch (Throwable ex) {
+                // Keep it!
             }
         });
     }
@@ -1197,10 +1149,10 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * it is set to "null" here!
      * ModMixer must already have a BasicModMixer created when setting it here.
      *
-     * @param mixer the ModMixer. If set to NULL we deregister the listeners and stop the update thread.
+     * @param theModMixer the ModMixer. If set to NULL we deregister the listeners and stop the update thread.
      * @since 28.11.2023
      */
-    public void setMixer(final ModMixer theModMixer) {
+    public void setMixer(ModMixer theModMixer) {
         if (theModMixer != null) {
             currentMixer = theModMixer;
             currentModMixer = theModMixer.getModMixer();
@@ -1214,47 +1166,33 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         }
     }
 
-    /**
-     * @param infoObject
-     * @see de.quippy.javamod.multimedia.mod.gui.ModUpdateListener#getPatternPositionInformation(de.quippy.javamod.multimedia.mod.gui.ModUpdateListener.PatternPositionInformation)
-     */
     @Override
-    public void getPatternPositionInformation(final PatternPositionInformation infoObject) {
-        if (isVisible()) displayPattern((PatternPositionInformation) infoObject);
+    public void getPatternPositionInformation(PatternPositionInformation infoObject) {
+        if (isVisible()) displayPattern(infoObject);
     }
 
-    /**
-     * @param infoObject
-     * @see de.quippy.javamod.multimedia.mod.gui.ModUpdateListener#getPeekInformation(de.quippy.javamod.multimedia.mod.gui.ModUpdateListener.PeekInformation)
-     */
     @Override
-    public void getPeekInformation(final PeekInformation infoObject) {
+    public void getPeekInformation(PeekInformation infoObject) {
         if (isVisible())
             updateVolume(infoObject.channel, infoObject.actPeekLeft, infoObject.actPeekRight, infoObject.isSurround);
     }
 
-    /**
-     * @param infoObject
-     * @see de.quippy.javamod.multimedia.mod.gui.ModUpdateListener#getStatusInformation(de.quippy.javamod.multimedia.mod.gui.ModUpdateListener.StatusInformation)
-     */
     @Override
-    public void getStatusInformation(final StatusInformation infoObject) {
+    public void getStatusInformation(StatusInformation infoObject) {
         isPlaying = infoObject.status;
         if (isFollowSongActive()) {
             // if we start playing and follow the song, hide the editing row
             setActiveEditingRow(currentIndex, null);
         } else if (!isPlaying) {
             if (currentIndex < 0) return; // Obviously we do not display anything yet, so nothing to do
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                    try {
-                        resetVolume();
-                        clearCurrentEffectNames();
-                        setActivePlayingRow(null);
-                        setActiveEditingRow(currentIndex, null);
-                    } catch (Throwable ex) {
-                        // Keep it!
-                    }
+            EventQueue.invokeLater(() -> {
+                try {
+                    resetVolume();
+                    clearCurrentEffectNames();
+                    setActivePlayingRow(null);
+                    setActiveEditingRow(currentIndex, null);
+                } catch (Throwable ex) {
+                    // Keep it!
                 }
             });
         }

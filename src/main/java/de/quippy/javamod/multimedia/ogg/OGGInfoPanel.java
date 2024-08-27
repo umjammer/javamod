@@ -23,7 +23,7 @@
 package de.quippy.javamod.multimedia.ogg;
 
 import java.awt.LayoutManager;
-
+import java.io.Serial;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -42,6 +42,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class OGGInfoPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = -6645559669915111121L;
 
     private JLabel oggInfo_L_Filename = null;
@@ -308,7 +309,7 @@ public class OGGInfoPanel extends JPanel {
 
     private javax.swing.JComboBox<String> getV1_Genre() {
         if (v1_Genre == null) {
-            v1_Genre = new javax.swing.JComboBox<String>(NullsoftID3GenreTable.getGenres());
+            v1_Genre = new javax.swing.JComboBox<>(NullsoftID3GenreTable.getGenres());
             v1_Genre.setName("v1_Genre");
             v1_Genre.setFont(Helpers.getDialogFont());
             v1_Genre.setEditable(true);

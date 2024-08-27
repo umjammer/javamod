@@ -24,6 +24,7 @@ package de.quippy.javamod.multimedia.ape;
 
 import java.awt.LayoutManager;
 import java.io.IOException;
+import java.io.Serial;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -41,6 +42,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class APEInfoPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = 7064938824632940420L;
 
     private JLabel apeInfo_L_Filename = null;
@@ -428,7 +430,7 @@ public class APEInfoPanel extends JPanel {
 
     private javax.swing.JComboBox<String> getV1_Genre() {
         if (v1_Genre == null) {
-            v1_Genre = new javax.swing.JComboBox<String>(ID3Genre.getGenres());
+            v1_Genre = new javax.swing.JComboBox<>(ID3Genre.getGenres());
             v1_Genre.setName("v1_Genre");
             v1_Genre.setFont(Helpers.getDialogFont());
             v1_Genre.setEditable(true);
@@ -436,7 +438,7 @@ public class APEInfoPanel extends JPanel {
         return v1_Genre;
     }
 
-    public void fillInfoPanelWith(final IAPEDecompress spAPEDecompress, final String fileName, final String songName) {
+    public void fillInfoPanelWith(IAPEDecompress spAPEDecompress, String fileName, String songName) {
         getAPEInfo_Filename().setText(fileName);
         getAPEInfo_ShortDescription().setText(songName);
         getAPEInfo_Channels().setText(Integer.toString(spAPEDecompress.getApeInfoChannels()));
@@ -444,21 +446,21 @@ public class APEInfoPanel extends JPanel {
         getAPEInfo_Frequency().setText(Integer.toString(spAPEDecompress.getApeInfoSampleRate()));
         getAPEInfo_AvgBitRate().setText(Integer.toString(spAPEDecompress.getApeInfoAverageBitrate()));
         getAPEInfo_CompressionLevel().setText(Integer.toString(spAPEDecompress.getApeInfoCompressionLevel()));
-        final int apeVersion = spAPEDecompress.getApeInfoFileVersion();
-        final int v1 = apeVersion / 1000;
-        final int v2 = (apeVersion - (v1 * 1000)) / 10;
-        final int v3 = (apeVersion - (v1 * 1000) - (v2 * 10));
+        int apeVersion = spAPEDecompress.getApeInfoFileVersion();
+        int v1 = apeVersion / 1000;
+        int v2 = (apeVersion - (v1 * 1000)) / 10;
+        int v3 = (apeVersion - (v1 * 1000) - (v2 * 10));
 
         getAPEInfo_VersionInfo().setText(v1 + "." + v2 + "." + v3);
 
-        final APETag apeTag = spAPEDecompress.getApeInfoTag();
+        APETag apeTag = spAPEDecompress.getApeInfoTag();
         try {
-            getV1_Track().setText(apeTag.GetFieldString(APETag.APE_TAG_FIELD_TRACK));
-            getV1_Title().setText(apeTag.GetFieldString(APETag.APE_TAG_FIELD_TITLE));
-            getV1_Artist().setText(apeTag.GetFieldString(APETag.APE_TAG_FIELD_ARTIST));
-            getV1_Album().setText(apeTag.GetFieldString(APETag.APE_TAG_FIELD_ALBUM));
-            getV1_Year().setText(apeTag.GetFieldString(APETag.APE_TAG_FIELD_YEAR));
-            getV1_Genre().setSelectedItem(apeTag.GetFieldString(APETag.APE_TAG_FIELD_GENRE));
+            getV1_Track().setText(apeTag.getFieldString(APETag.APE_TAG_FIELD_TRACK));
+            getV1_Title().setText(apeTag.getFieldString(APETag.APE_TAG_FIELD_TITLE));
+            getV1_Artist().setText(apeTag.getFieldString(APETag.APE_TAG_FIELD_ARTIST));
+            getV1_Album().setText(apeTag.getFieldString(APETag.APE_TAG_FIELD_ALBUM));
+            getV1_Year().setText(apeTag.getFieldString(APETag.APE_TAG_FIELD_YEAR));
+            getV1_Genre().setSelectedItem(apeTag.getFieldString(APETag.APE_TAG_FIELD_GENRE));
         } catch (IOException ex) {
         }
     }

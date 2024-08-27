@@ -54,9 +54,9 @@ public class MidiMacros {
     private static final int MACRO_LEN = 32;
     public static final int SIZE_OF_SCTUCT = (ANZ_GLB + ANZ_SFX + ANZ_ZXX) * MACRO_LEN;
 
-    private String[] midiGlobal;
-    private String[] midiSFXExt;
-    private String[] midiZXXExt;
+    private final String[] midiGlobal;
+    private final String[] midiSFXExt;
+    private final String[] midiZXXExt;
 
     enum ParameteredMacroTypes {
         SFxUnused, SFxCutoff, SFxReso, SFxFltMode, SFxDryWet, SFxCC,
@@ -105,33 +105,20 @@ public class MidiMacros {
      * @since 16.06.2020
      */
     public static String createParameteredMacro(ParameteredMacroTypes macroType, int subType) {
-        switch (macroType) {
-            case SFxUnused:
-                return Helpers.EMPTY_STING;
-            case SFxCutoff:
-                return "F0F000z";
-            case SFxReso:
-                return "F0F001z";
-            case SFxFltMode:
-                return "F0F002z";
-            case SFxDryWet:
-                return "F0F003z";
-            case SFxCC:
-                return String.format("Bc%02X", Integer.valueOf(subType & 0x7F));
-            case SFxPlugParam:
-                return String.format("F0F%03X", Integer.valueOf((subType & 0x17F) + 0x80));
-            case SFxChannelAT:
-                return "Dcz";
-            case SFxPolyAT:
-                return "Acnz";
-            case SFxPitch:
-                return "Ec00z";
-            case SFxProgChange:
-                return "Ccz";
-            case SFxCustom:
-            default:
-                return Helpers.EMPTY_STING;
-        }
+        return switch (macroType) {
+            case SFxUnused -> Helpers.EMPTY_STING;
+            case SFxCutoff -> "F0F000z";
+            case SFxReso -> "F0F001z";
+            case SFxFltMode -> "F0F002z";
+            case SFxDryWet -> "F0F003z";
+            case SFxCC -> String.format("Bc%02X", subType & 0x7F);
+            case SFxPlugParam -> String.format("F0F%03X", (subType & 0x17F) + 0x80);
+            case SFxChannelAT -> "Dcz";
+            case SFxPolyAT -> "Acnz";
+            case SFxPitch -> "Ec00z";
+            case SFxProgChange -> "Ccz";
+            default -> Helpers.EMPTY_STING;
+        };
     }
 
     /**
@@ -193,7 +180,7 @@ public class MidiMacros {
                     continue;
             }
 
-            fixedMacros[i] = String.format(formatString, Integer.valueOf(param));
+            fixedMacros[i] = String.format(formatString, param);
         }
     }
 
@@ -204,7 +191,7 @@ public class MidiMacros {
      * @return
      * @since 16.06.2020
      */
-    public static String getSafeMacro(final String macroString) {
+    public static String getSafeMacro(String macroString) {
         StringBuilder sb = new StringBuilder();
         for (char c : macroString.toCharArray())
             if ("0123456789ABCDEFabchmnopsuvxyz".indexOf(c) != -1) sb.append(c);
@@ -218,8 +205,8 @@ public class MidiMacros {
      * @return
      * @since 16.06.2020
      */
-    public static int getMacroPlugCommand(final String macroString) {
-        final char[] macro = MidiMacros.getSafeMacro(macroString).toCharArray();
+    public static int getMacroPlugCommand(String macroString) {
+        char[] macro = MidiMacros.getSafeMacro(macroString).toCharArray();
         return (Character.digit(macro[0], 16) << 16) |
                 (Character.digit(macro[1], 16) << 8) |
                 (Character.digit(macro[2], 16) << 5) |
@@ -233,7 +220,7 @@ public class MidiMacros {
      * @return
      * @since 16.06.2020
      */
-    public int getMacroPlugCommand(final int macroIndex) {
+    public int getMacroPlugCommand(int macroIndex) {
         return MidiMacros.getMacroPlugCommand(midiSFXExt[macroIndex]);
     }
 
@@ -244,8 +231,8 @@ public class MidiMacros {
      * @return
      * @since 16.06.2020
      */
-    public static int getMacroPlugParam(final String macroString) {
-        final char[] macro = MidiMacros.getSafeMacro(macroString).toCharArray();
+    public static int getMacroPlugParam(String macroString) {
+        char[] macro = MidiMacros.getSafeMacro(macroString).toCharArray();
         int code = Character.digit(macro[4], 16) << 4 | Character.digit(macro[5], 16);
         if (macro.length >= 4 && macro[3] == '0')
             return (code - 128);
@@ -261,7 +248,7 @@ public class MidiMacros {
      * @return
      * @since 16.06.2020
      */
-    public int macroToPlugParam(final int macroIndex) {
+    public int macroToPlugParam(int macroIndex) {
         return MidiMacros.getMacroPlugParam(midiSFXExt[macroIndex]);
     }
 
@@ -272,8 +259,8 @@ public class MidiMacros {
      * @return
      * @since 16.06.2020
      */
-    public static int getMacroMidiCC(final String macroString) {
-        final char[] macro = MidiMacros.getSafeMacro(macroString).toCharArray();
+    public static int getMacroMidiCC(String macroString) {
+        char[] macro = MidiMacros.getSafeMacro(macroString).toCharArray();
         int code = Character.digit(macro[2], 16) << 4 | Character.digit(macro[3], 16);
         return code;
     }
@@ -320,7 +307,7 @@ public class MidiMacros {
      * @return
      * @since 16.06.2020
      */
-    public String getMidiGlobal(final int index) {
+    public String getMidiGlobal(int index) {
         if (index < 0 || index >= ANZ_GLB) return Helpers.EMPTY_STING;
         return midiGlobal[index];
     }
@@ -330,7 +317,7 @@ public class MidiMacros {
      * @return
      * @since 16.06.2020
      */
-    public String getMidiSFXExt(final int index) {
+    public String getMidiSFXExt(int index) {
         if (index < 0 || index >= ANZ_SFX) return Helpers.EMPTY_STING;
         return midiSFXExt[index];
     }
@@ -340,7 +327,7 @@ public class MidiMacros {
      * @return
      * @since 16.06.2020
      */
-    public String getMidiZXXExt(final int index) {
+    public String getMidiZXXExt(int index) {
         if (index < 0 || index >= ANZ_ZXX) return Helpers.EMPTY_STING;
         return midiZXXExt[index];
     }

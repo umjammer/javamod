@@ -23,8 +23,7 @@
 package de.quippy.javamod.main.gui;
 
 import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.io.Serial;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
@@ -38,6 +37,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class JavaModAbout extends JDialog {
 
+    @Serial
     private static final long serialVersionUID = 134421312687144510L;
 
     private static final String DEFAULTICONPATH = "ressources/quippy_the_kangaroo_about.gif";
@@ -57,7 +57,7 @@ public class JavaModAbout extends JDialog {
     private javax.swing.JLabel versionRunTime = null;
     private javax.swing.JLabel versionJDK = null;
     private JButton btn_OK = null;
-    private Frame parent;
+    private final Frame parent;
 
     /**
      * Constructor for JavaModAbout
@@ -395,11 +395,7 @@ public class JavaModAbout extends JDialog {
             btn_OK.setMnemonic('c');
             btn_OK.setText("Close");
             btn_OK.setActionCommand("Ende");
-            btn_OK.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    doClose();
-                }
-            });
+            btn_OK.addActionListener(e -> doClose());
         }
         return btn_OK;
     }

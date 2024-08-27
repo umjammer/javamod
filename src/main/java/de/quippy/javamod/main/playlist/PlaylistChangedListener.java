@@ -28,7 +28,7 @@ package de.quippy.javamod.main.playlist;
  */
 public interface PlaylistChangedListener {
 
-    public void activeElementChanged(PlayListEntry oldActiveElement, PlayListEntry newActiveElement);
+    void activeElementChanged(PlayListEntry oldActiveElement, PlayListEntry newActiveElement);
 
-    public void selectedElementChanged(PlayListEntry oldSelectedElement, PlayListEntry newSelectedElement);
+    void selectedElementChanged(PlayListEntry oldSelectedElement, PlayListEntry newSelectedElement);
 }

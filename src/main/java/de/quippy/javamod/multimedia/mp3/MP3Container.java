@@ -48,10 +48,9 @@ import javazoom.jl.decoder.Header;
  */
 public class MP3Container extends MultimediaContainer implements TagParseListener {
 
-    private static final String[] MP3FILEEXTENSION = new String[]
-            {
-                    "mp1", "mp2", "mp3"
-            };
+    private static final String[] MP3FILEEXTENSION = {
+            "mp1", "mp2", "mp3"
+    };
 
     //	private JPanel mp3ConfigPanel;
     private MP3Mixer currentMixer;
@@ -106,7 +105,7 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
             return super.getSongName();
     }
 
-    private Header getHeaderFrom(URL url) {
+    private static Header getHeaderFrom(URL url) {
         Header result = null;
         RandomAccessInputStreamImpl inputStream = null;
         Bitstream bitStream = null;
@@ -120,10 +119,10 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
         } finally {
             if (bitStream != null) try {
                 bitStream.close();
-            } catch (BitstreamException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (BitstreamException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
             if (inputStream != null) try {
                 inputStream.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
         return result;
     }
@@ -136,7 +135,7 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
     @Override
     public Object[] getSongInfosFor(URL url) {
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
-        Long duration = Long.valueOf(-1);
+        long duration = -1;
         RandomAccessInputStreamImpl inputStream = null;
         Bitstream bitStream = null;
         try {
@@ -144,7 +143,7 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
                 inputStream = new RandomAccessInputStreamImpl(url);
                 bitStream = new Bitstream(inputStream);
                 Header h = bitStream.readFrame();
-                if (h != null) duration = Long.valueOf((long) (h.totalMs(inputStream.available()) + 0.5));
+                if (h != null) duration = (long) (h.totalMs(inputStream.available()) + 0.5);
                 mp3FileIDTags = new MP3FileID3Controller(inputStream);
                 if (mp3FileIDTags != null) songName = mp3FileIDTags.getShortDescription();
             }
@@ -152,10 +151,10 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
         } finally {
             if (bitStream != null) try {
                 bitStream.close();
-            } catch (BitstreamException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (BitstreamException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
             if (inputStream != null) try {
                 inputStream.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
         return new Object[] {songName, duration};
     }
@@ -248,15 +247,16 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
      * @param tpe
      * @see de.quippy.javamod.multimedia.mp3.streaming.TagParseListener#tagParsed(de.quippy.javamod.multimedia.mp3.streaming.TagParseEvent)
      */
-    public void tagParsed(final TagParseEvent tpe) {
-        final IcyTag tag = tpe.getIcyTag();
+    @Override
+    public void tagParsed(TagParseEvent tpe) {
+        IcyTag tag = tpe.getIcyTag();
         if (tag != null) {
             if (!MultimediaContainerManager.isHeadlessMode())
                 ((MP3StreamInfoPanel) getInfoPanel()).fillInfoPanelWith(tag);
 
             if (tag.getName().equalsIgnoreCase(MP3StreamInfoPanel.SONGNAME)) {
-                final String currentSongName = tag.getValue();
-                if (currentSongName != null && currentSongName.length() != 0)
+                String currentSongName = tag.getValue();
+                if (currentSongName != null && !currentSongName.isEmpty())
                     fireMultimediaContainerEvent(new MultimediaContainerEvent(this, MultimediaContainerEvent.SONG_NAME_CHANGED, currentSongName.trim()));
             }
         }

@@ -24,6 +24,7 @@ package de.quippy.javamod.main.playlist.cuesheet;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -33,14 +34,14 @@ public class CueFile {
 
     private URL file;
     private String type;
-    private ArrayList<CueTrack> tracks;
+    private final List<CueTrack> tracks;
 
     /**
      * @since 14.02.2012
      */
     public CueFile() {
         super();
-        tracks = new ArrayList<CueTrack>();
+        tracks = new ArrayList<>();
     }
 
     /**
@@ -87,7 +88,7 @@ public class CueFile {
      * @return the tracks
      * @since 14.02.2012
      */
-    public ArrayList<CueTrack> getTracks() {
+    public List<CueTrack> getTracks() {
         return tracks;
     }
 }

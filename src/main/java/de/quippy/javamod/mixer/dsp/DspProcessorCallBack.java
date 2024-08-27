@@ -32,5 +32,5 @@ import java.util.EventListener;
 public interface DspProcessorCallBack extends EventListener {
 
     /** This method will communicate new samples 1.0<=x<=-1.0 for left and right channel */
-    public void currentSampleChanged(float[] leftSample, float[] rightSample);
+    void currentSampleChanged(float[] leftSample, float[] rightSample);
 }

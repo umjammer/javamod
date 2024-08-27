@@ -44,10 +44,9 @@ import de.quippy.javamod.multimedia.mod.midi.MidiMacros;
  */
 public class XMMod extends ProTrackerMod {
 
-    private static final String[] MODFILEEXTENSION = new String[]
-            {
-                    "xm"
-            };
+    private static final String[] MODFILEEXTENSION = {
+            "xm"
+    };
 
     /**
      * Will be executed during class load
@@ -72,43 +71,27 @@ public class XMMod extends ProTrackerMod {
     /**
      * Constructor for XMMod
      *
-     * @param fileExtension
+     * @param fileName
      */
-    protected XMMod(final String fileName) {
+    protected XMMod(String fileName) {
         super(fileName);
     }
 
-    /**
-     * @return the file extensions this loader is suitable for
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getFileExtensionList()
-     */
     @Override
     public String[] getFileExtensionList() {
         return MODFILEEXTENSION;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getFrequencyTable()
-     */
     @Override
     public int getFrequencyTable() {
         return ((songFlags & ModConstants.SONG_LINEARSLIDES) != 0) ? ModConstants.XM_LINEAR_TABLE : ModConstants.XM_AMIGA_TABLE;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getMidiConfig()
-     */
     @Override
     public MidiMacros getMidiConfig() {
         return midiMacros;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getSongMessage()
-     */
     @Override
     public String getSongMessage() {
         return songMessage;
@@ -116,41 +99,29 @@ public class XMMod extends ProTrackerMod {
 
     /**
      * @return always true for XMs
-     * @see de.quippy.javamod.multimedia.mod.loader.tracker.ProTrackerMod#getFT2Tremolo()
      */
     @Override
     public boolean getFT2Tremolo() {
         return true;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getModSpeedIsTicks()
-     */
     @Override
     public boolean getModSpeedIsTicks() {
         return false;
     }
 
     /**
-     * @param inputStream
      * @return true, if this is a FastTracker mod, false if this is not clear
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#checkLoadingPossible(de.quippy.javamod.io.ModfileInputStream)
      */
     @Override
-    public boolean checkLoadingPossible(final ModfileInputStream inputStream) throws IOException {
-        final String xmID = inputStream.readString(17);
+    public boolean checkLoadingPossible(ModfileInputStream inputStream) throws IOException {
+        String xmID = inputStream.readString(17);
         inputStream.seek(0);
         return isXMMod(xmID);
     }
 
-    /**
-     * @param fileName
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getNewInstance(java.lang.String)
-     */
     @Override
-    protected Module getNewInstance(final String fileName) {
+    protected Module getNewInstance(String fileName) {
         return new XMMod(fileName);
     }
 
@@ -160,10 +131,9 @@ public class XMMod extends ProTrackerMod {
      * @throws IOException
      * @since 26.05.2006
      */
-    private void setIntoPatternElement(final ModfileInputStream inputStream, final PatternElement currentElement) throws IOException {
+    private static void setIntoPatternElement(ModfileInputStream inputStream, PatternElement currentElement) throws IOException {
         int flags = inputStream.read();
-        if ((flags & 0x80) == 0) // is not packed
-        {
+        if ((flags & 0x80) == 0) { // is not packed
             flags = 0xFF; // read all
             inputStream.skipBack(1); // and push back the note
         }
@@ -208,11 +178,11 @@ public class XMMod extends ProTrackerMod {
      * @throws IOException
      * @since 23.01.2024
      */
-    private void readXMPattern(final ModfileInputStream inputStream) throws IOException {
+    private void readXMPattern(ModfileInputStream inputStream) throws IOException {
         PatternContainer patternContainer = new PatternContainer(this, getNPattern());
         for (int pattNum = 0; pattNum < getNPattern(); pattNum++) {
-            final long LSEEK = inputStream.getFilePointer();
-            final int patternHeaderSize = inputStream.readIntelDWord();
+            long LSEEK = inputStream.getFilePointer();
+            int patternHeaderSize = inputStream.readIntelDWord();
 
 //			We ignore the packing type - as everybody does...
             inputStream.skip(1);
@@ -221,11 +191,11 @@ public class XMMod extends ProTrackerMod {
             if (rows == 0)
                 rows = 64;
             else {
-                final int MaxPatternSize = ((getModType() & (ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT)) != 0) ? 1024 : 256;
+                int MaxPatternSize = ((getModType() & (ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT)) != 0) ? 1024 : 256;
                 if (rows > MaxPatternSize) rows = MaxPatternSize;
             }
 
-            final int packedPatternDataSize = inputStream.readIntelUnsignedWord();
+            int packedPatternDataSize = inputStream.readIntelUnsignedWord();
             if (packedPatternDataSize == 0) {
                 patternContainer.createPattern(pattNum, rows, getNChannels());
                 for (int row = 0; row < rows; row++) {
@@ -246,7 +216,7 @@ public class XMMod extends ProTrackerMod {
             for (int row = 0; row < rows; row++) {
                 patternContainer.createPatternRow(pattNum, row, getNChannels());
                 for (int channel = 0; channel < getNChannels(); channel++) {
-                    final PatternElement currentElement = patternContainer.createPatternElement(pattNum, row, channel);
+                    PatternElement currentElement = patternContainer.createPatternElement(pattNum, row, channel);
                     if (inputStream.getFilePointer() < endPos) setIntoPatternElement(inputStream, currentElement);
                 }
             }
@@ -254,8 +224,8 @@ public class XMMod extends ProTrackerMod {
             // Most XM loaders load the compressed pattern data into a separate buffer, we don't
             // so we need to seek...
             if (inputStream.getFilePointer() != endPos) {
-//				final long dif = endPos - inputStream.getFilePointer();
-//				Log.info("Read not enough bytes (" + dif + ") in pattern " + pattNum);
+//                final long dif = endPos - inputStream.getFilePointer();
+//                logger.log(Level.INFO, "Read not enough bytes (" + dif + ") in pattern " + pattNum);
                 setTrackerName(getTrackerName() + " (corrupt!)");
                 inputStream.seek(endPos);
             }
@@ -268,13 +238,12 @@ public class XMMod extends ProTrackerMod {
      * @param instrumentContainer
      * @param anzSamples
      * @param sampleOffsetIndex
-     * @param sampleLoadingFlags
      * @throws IOException
      * @since 23.01.2024
      */
-    private void readXMSampleData(final ModfileInputStream inputStream, final InstrumentsContainer instrumentContainer, final int anzSamples, final int sampleOffsetIndex) throws IOException {
+    private void readXMSampleData(ModfileInputStream inputStream, InstrumentsContainer instrumentContainer, int anzSamples, int sampleOffsetIndex) throws IOException {
         for (int samIndex = 0; samIndex < anzSamples; samIndex++) {
-            final Sample current = instrumentContainer.getSample(samIndex + sampleOffsetIndex);
+            Sample current = instrumentContainer.getSample(samIndex + sampleOffsetIndex);
             readSampleData(current, inputStream);
         }
     }
@@ -285,7 +254,7 @@ public class XMMod extends ProTrackerMod {
      * @param kennung
      * @return
      */
-    private boolean isXMMod(final String kennung) {
+    private static boolean isXMMod(String kennung) {
         if (kennung.equalsIgnoreCase("Extended Module: ")) return true;
         return false;
     }
@@ -298,41 +267,36 @@ public class XMMod extends ProTrackerMod {
      * @return
      * @since 26.07.2024
      */
-    private int getPeriod2Hz(final Sample sample, final int useTable) {
+    private static int getPeriod2Hz(Sample sample, int useTable) {
         if (sample == null) return -1;
 
         int note = (4 * 12) + sample.transpose;
         if (note < 0) return -1;
         if (note >= (10 * 12) - 1) return -1;
-        final int C4Period = ((note << 4) + ((sample.fineTune >> 3) + 16));
+        int C4Period = ((note << 4) + ((sample.fineTune >> 3) + 16));
 
         switch (useTable) {
             case ModConstants.XM_AMIGA_TABLE:
                 return (ModConstants.BASEFREQUENCY * 1712) / (ModConstants.FT2_amigaPeriods[C4Period] & 0xFFFF);
             case ModConstants.XM_LINEAR_TABLE:
-                final int period = ModConstants.FT2_linearPeriods[C4Period] & 0xFFFF;
+                int period = ModConstants.FT2_linearPeriods[C4Period] & 0xFFFF;
                 // Original FT2 method with doubles - is a bit more precise in rounding
-//				final int invPeriodDouble = ((12 * 192 * 4) - C4Period) & 0xFFFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
-//				final int quotientDouble  = invPeriodDouble / (12 * 16 * 4);
-//				final int remainderDouble = invPeriodDouble % (12 * 16 * 4);
-//				final double logValue = (ModConstants.BASEFREQUENCY * 256d) * Math.pow(2d, (double)remainderDouble / (4d * 12d * 16d));
-//				final double frequencyDouble = logValue * (1d /Math.pow(2d, (double)((14 - quotientDouble) & 0x1F)));
+//                int invPeriodDouble = ((12 * 192 * 4) - C4Period) & 0xFFFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
+//                int quotientDouble = invPeriodDouble / (12 * 16 * 4);
+//                int remainderDouble = invPeriodDouble % (12 * 16 * 4);
+//                double logValue = (ModConstants.BASEFREQUENCY * 256d) * Math.pow(2d, (double) remainderDouble / (4d * 12d * 16d));
+//                double frequencyDouble = logValue * (1d / Math.pow(2d, (double) ((14 - quotientDouble) & 0x1F)));
 
-                final int invPeriod = ((12 * 192 * 4) + 767 - period) & 0xFFFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
-                final int quotient = invPeriod / (12 * 16 * 4);
-                final int remainder = period % (12 * 16 * 4);
+                int invPeriod = ((12 * 192 * 4) + 767 - period) & 0xFFFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
+                int quotient = invPeriod / (12 * 16 * 4);
+                int remainder = period % (12 * 16 * 4);
                 return ModConstants.lintab[remainder] >> (((14 - quotient) & 0x1F) - 2); // values are 4 times bigger in FT2
         }
         return -1;
     }
 
-    /**
-     * @param inputStream
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#loadModFile(java.io.DataInputStream)
-     */
     @Override
-    protected void loadModFileInternal(final ModfileInputStream inputStream) throws IOException {
+    protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
         setBaseVolume(ModConstants.MAXGLOBALVOLUME);
         setMixingPreAmp(ModConstants.MIN_MIXING_PREAMP);
 
@@ -346,7 +310,7 @@ public class XMMod extends ProTrackerMod {
         inputStream.skip(1);
 
         // Trackername
-        final String trackerName = inputStream.readString(20);
+        String trackerName = inputStream.readString(20);
 
         // Version
         version = inputStream.readIntelUnsignedWord();
@@ -359,7 +323,7 @@ public class XMMod extends ProTrackerMod {
         setModType(ModConstants.MODTYPE_XM);
         setTrackerName(trackerName.trim());
         if (trackerName.startsWith("FastTracker v2.00") && headerSize == 276) {
-            final int highVersion = (version >> 8) & 0xFF;
+            int highVersion = (version >> 8) & 0xFF;
             setTrackerName("FastTracker II V" + ModConstants.getAsHex(highVersion, (highVersion > 0x0f) ? 2 : 1) + "." + ModConstants.getAsHex(version & 0xFF, 2));
             if (!trackerName.endsWith("   "))
                 setTrackerName(getTrackerName() + " (generic)");
@@ -376,7 +340,7 @@ public class XMMod extends ProTrackerMod {
         setSongLength(inputStream.readIntelUnsignedWord());
 
         //SongRestart
-        final int songRestart = inputStream.readIntelUnsignedWord();
+        int songRestart = inputStream.readIntelUnsignedWord();
         setSongRestart((songRestart > getSongLength()) ? 0 : songRestart);
 
         // NChannels
@@ -405,7 +369,7 @@ public class XMMod extends ProTrackerMod {
         //  255 = "---", End of song marker
         //  254 = "+++", Skip to next order
         allocArrangement(256);
-        final int[] arrangement = getArrangement();
+        int[] arrangement = getArrangement();
         for (int i = 0; i < 256; i++) arrangement[i] = inputStream.read();
 
         inputStream.seek(LSEEK + headerSize);
@@ -438,18 +402,17 @@ public class XMMod extends ProTrackerMod {
             currentIns.setInitialFilterResonance(-1);
             currentIns.setRandomPanningVariation(-1);
 
-            final int instrumentHeaderSize = inputStream.readIntelDWord();
+            int instrumentHeaderSize = inputStream.readIntelDWord();
             currentIns.setName(inputStream.readString(22));
             /*final int insType = */
             inputStream.read();
-            final int anzSamples = inputStream.readIntelWord();
+            int anzSamples = inputStream.readIntelWord();
 
-            final int[] sampleIndex = new int[96];
-            final int[] noteIndex = new int[96];
+            int[] sampleIndex = new int[96];
+            int[] noteIndex = new int[96];
             currentIns.setIndexArray(sampleIndex);
             currentIns.setNoteArray(noteIndex);
-            if (anzSamples <= 0) // if no samples, at least set to defaults
-            {
+            if (anzSamples <= 0) { // if no samples, at least set to defaults
                 for (int i = 0; i < 96; i++) {
                     sampleIndex[i] = 0;
                     noteIndex[i] = 0x80 | i;
@@ -464,24 +427,24 @@ public class XMMod extends ProTrackerMod {
                     noteIndex[i] = i;
                 }
 
-                final int[] volumeEnvelopePosition = new int[12];
-                final int[] volumeEnvelopeValue = new int[12];
+                int[] volumeEnvelopePosition = new int[12];
+                int[] volumeEnvelopeValue = new int[12];
                 for (int i = 0; i < 12; i++) {
                     volumeEnvelopePosition[i] = inputStream.readIntelUnsignedWord();
                     volumeEnvelopeValue[i] = inputStream.readIntelUnsignedWord();
                 }
-                final Envelope volumeEnvelope = new Envelope(EnvelopeType.volume);
+                Envelope volumeEnvelope = new Envelope(EnvelopeType.volume);
                 volumeEnvelope.setPositions(volumeEnvelopePosition);
                 volumeEnvelope.setValue(volumeEnvelopeValue);
                 currentIns.setVolumeEnvelope(volumeEnvelope);
 
-                final int[] panningEnvelopePosition = new int[12];
-                final int[] panningEnvelopeValue = new int[12];
+                int[] panningEnvelopePosition = new int[12];
+                int[] panningEnvelopeValue = new int[12];
                 for (int i = 0; i < 12; i++) {
                     panningEnvelopePosition[i] = inputStream.readIntelUnsignedWord();
                     panningEnvelopeValue[i] = inputStream.readIntelUnsignedWord();
                 }
-                final Envelope panningEnvelope = new Envelope(EnvelopeType.panning);
+                Envelope panningEnvelope = new Envelope(EnvelopeType.panning);
                 panningEnvelope.setPositions(panningEnvelopePosition);
                 panningEnvelope.setValue(panningEnvelopeValue);
                 currentIns.setPanningEnvelope(panningEnvelope);
@@ -586,8 +549,7 @@ public class XMMod extends ProTrackerMod {
                 current.XM_reserved = inputStream.read();
 
                 // Interpreting the loaded flags
-                if (current.XM_reserved == 0xAD && (current.flags & (0x10 | 0x20)) == 0) // ModPlug ADPCM compression
-                {
+                if (current.XM_reserved == 0xAD && (current.flags & (0x10 | 0x20)) == 0) { // ModPlug ADPCM compression
                     sampleLoadingFlags |= ModConstants.SM_ADPCM;
                     setTrackerName(getTrackerName() + " (ADPCM packed)");
                 } else
@@ -620,22 +582,18 @@ public class XMMod extends ProTrackerMod {
         boolean hasExtraInstrumentInfos = false;
         boolean hasExtraSongProperties = false;
         while (inputStream.getFilePointer() + 8 < inputStream.length()) {
-            final int marker = inputStream.readIntelDWord();
-            if (marker == 0x4D505458) // MPTX - ModPlugExtraInstrumentInfo
-            {
+            int marker = inputStream.readIntelDWord();
+            if (marker == 0x4D505458) { // MPTX - ModPlugExtraInstrumentInfo
                 inputStream.skipBack(4);
                 hasExtraInstrumentInfos = loadExtendedInstrumentProperties(inputStream);
-            } else if (marker == 0x4D505453) // MPTS - ModPlugExtraSongInfo
-            {
+            } else if (marker == 0x4D505453) { // MPTS - ModPlugExtraSongInfo
                 inputStream.skipBack(4);
                 hasExtraSongProperties = loadExtendedSongProperties(inputStream, true);
             } else {
-                final int len = inputStream.readIntelDWord();
-                if (marker == 0x74786574) // 'text'
-                {
+                int len = inputStream.readIntelDWord();
+                if (marker == 0x74786574) { // 'text'
                     if (len < inputStream.getLength()) songMessage = inputStream.readString(len);
-                } else if (marker == 0x4944494D) // 'MIDI'
-                {
+                } else if (marker == 0x4944494D) { // 'MIDI'
                     // read the MidiMacros
                     if (len == MidiMacros.SIZE_OF_SCTUCT && len < inputStream.getLength()) {
                         midiMacros.loadFrom(inputStream);

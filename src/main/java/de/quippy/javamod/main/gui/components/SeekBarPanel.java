@@ -28,7 +28,9 @@ import java.awt.FontMetrics;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.Serial;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BoundedRangeModel;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
@@ -46,6 +48,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class SeekBarPanel extends ThreadUpdatePanel {
 
+    @Serial
     private static final long serialVersionUID = -3570075762823459752L;
 
     private JTextField timeTextField = null;
@@ -58,14 +61,14 @@ public class SeekBarPanel extends ThreadUpdatePanel {
     private JLabel activeChannelsLabel = null;
     private JProgressBar timeBar = null;
 
-    private boolean showBarOnly;
+    private final boolean showBarOnly;
 
     private long maxLengthInMillis = 0;
     private int displayWhat = 0;
 
     private Mixer currentMixer;
 
-    private ArrayList<SeekBarPanelListener> listeners;
+    private final List<SeekBarPanelListener> listeners;
 
     /**
      * Constructor for SeekBarPanel
@@ -75,7 +78,7 @@ public class SeekBarPanel extends ThreadUpdatePanel {
     public SeekBarPanel(int desiredFPS, boolean showBarOnly) {
         super(desiredFPS);
         this.showBarOnly = showBarOnly;
-        listeners = new ArrayList<SeekBarPanelListener>();
+        listeners = new ArrayList<>();
         initialize();
         startThread();
     }
@@ -89,9 +92,9 @@ public class SeekBarPanel extends ThreadUpdatePanel {
     }
 
     public synchronized void fireValuesChanged(long milliseconds) {
-        final int size = listeners.size();
-        for (int i = 0; i < size; i++) {
-            listeners.get(i).valuesChanged(milliseconds);
+        int size = listeners.size();
+        for (SeekBarPanelListener listener : listeners) {
+            listener.valuesChanged(milliseconds);
         }
     }
 
@@ -128,13 +131,14 @@ public class SeekBarPanel extends ThreadUpdatePanel {
             timeTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
             // Preserve characters space - not less, not more!
-            final FontMetrics metrics = timeTextField.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(6 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = timeTextField.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(6 * metrics.charWidth('0'), metrics.getHeight());
             timeTextField.setSize(d);
             timeTextField.setMinimumSize(d);
             timeTextField.setMaximumSize(d);
             timeTextField.setPreferredSize(d);
             timeTextField.addMouseListener(new MouseAdapter() {
+                @Override
                 public void mouseClicked(MouseEvent pEvent) {
                     if (pEvent.getButton() == MouseEvent.BUTTON1) {
                         if (currentMixer != null) {
@@ -166,8 +170,8 @@ public class SeekBarPanel extends ThreadUpdatePanel {
             KBSField.setFont(Helpers.getDialogFont());
 
             // Preserve characters space - not less, not more!
-            final FontMetrics metrics = timeTextField.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = timeTextField.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             KBSField.setSize(d);
             KBSField.setMinimumSize(d);
             KBSField.setMaximumSize(d);
@@ -195,8 +199,8 @@ public class SeekBarPanel extends ThreadUpdatePanel {
             KHZField.setFont(Helpers.getDialogFont());
 
             // Preserve characters space - not less, not more!
-            final FontMetrics metrics = timeTextField.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(4 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = timeTextField.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(4 * metrics.charWidth('0'), metrics.getHeight());
             KHZField.setSize(d);
             KHZField.setMinimumSize(d);
             KHZField.setMaximumSize(d);
@@ -224,8 +228,8 @@ public class SeekBarPanel extends ThreadUpdatePanel {
             activeChannelsTextField.setFont(Helpers.getDialogFont());
 
             // Preserve characters space - not less, not more!
-            final FontMetrics metrics = timeTextField.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(4 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = timeTextField.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(4 * metrics.charWidth('0'), metrics.getHeight());
             activeChannelsTextField.setSize(d);
             activeChannelsTextField.setMinimumSize(d);
             activeChannelsTextField.setMaximumSize(d);
@@ -250,13 +254,14 @@ public class SeekBarPanel extends ThreadUpdatePanel {
             timeBar.setValue(0);
             timeBar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             timeBar.addMouseListener(new MouseAdapter() {
+                @Override
                 public void mouseClicked(MouseEvent pEvent) {
                     if (pEvent.getButton() == MouseEvent.BUTTON1) {
                         if (currentMixer != null) {
                             Point p = pEvent.getPoint();
-                            final double x = p.getX();
-                            final int width = timeBar.getWidth();
-                            final BoundedRangeModel model = getTimeBar().getModel();
+                            double x = p.getX();
+                            int width = timeBar.getWidth();
+                            BoundedRangeModel model = getTimeBar().getModel();
                             currentMixer.setMillisecondPosition((long) (model.getMaximum() * x) / width);
                         }
                     }
@@ -279,18 +284,15 @@ public class SeekBarPanel extends ThreadUpdatePanel {
         }
     }
 
-    /**
-     * @see de.quippy.javamod.main.gui.components.MeterPanelBase#doThreadUpdate()
-     */
     @Override
     protected synchronized void doThreadUpdate() {
         if (currentMixer != null) {
-            final long timeCode = currentMixer.getMillisecondPosition();
+            long timeCode = currentMixer.getMillisecondPosition();
             getTimeBar().setValue((int) timeCode);
 
-// Example of displaying the CPU Usage
-//			com.sun.management.OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-//		    System.out.print((int)(bean.getCpuLoad()*100)+"%\r");
+//            // Example of displaying the CPU Usage
+//            com.sun.management.OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+//            System.out.print((int) (bean.getCpuLoad() * 100) + "%\r");
 
             if (!showBarOnly) {
                 getTimeTextField().setText(Helpers.getTimeStringFromMilliseconds((displayWhat == 1) ? maxLengthInMillis - timeCode : timeCode));

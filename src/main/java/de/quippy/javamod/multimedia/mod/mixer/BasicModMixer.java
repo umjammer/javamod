@@ -23,6 +23,7 @@
 package de.quippy.javamod.multimedia.mod.mixer;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -100,7 +101,9 @@ public abstract class BasicModMixer {
 
         // The effect memories
         public boolean glissando;
-        public int arpeggioIndex, arpeggioNote[], arpeggioParam;
+        public int arpeggioIndex;
+        public final int[] arpeggioNote;
+        public int arpeggioParam;
         public int portaStepUp, portaStepUpEnd, portaStepDown, portaStepDownEnd;
         public int finePortaUp, finePortaDown, finePortaUpEx, finePortaDownEx;
         public int portaNoteStep, portaTargetNotePeriod, portamentoDirection_PT_FT;
@@ -205,7 +208,7 @@ public abstract class BasicModMixer {
          * @param fromMe
          * @since 11.06.2020
          */
-        protected void setUpFrom(final ChannelMemory fromMe) {
+        protected void setUpFrom(ChannelMemory fromMe) {
             channelNumber = fromMe.channelNumber;
             muted = fromMe.muted;
             muteWasITforced = fromMe.muteWasITforced;
@@ -292,7 +295,7 @@ public abstract class BasicModMixer {
     protected Random swinger;
 
     // out sample buffer for two stereo samples
-    private final long samples[] = new long[2];
+    private final long[] samples = new long[2];
 
     // Global FilterMode:
     protected boolean globalFilterMode;
@@ -332,11 +335,11 @@ public abstract class BasicModMixer {
     protected int loopingFadeOutValue;
 
     // RAMP volume interweaving
-    protected long[] interweaveBufferLeft;
-    protected long[] interweaveBufferRight;
+    protected final long[] interweaveBufferLeft;
+    protected final long[] interweaveBufferRight;
 
     // The listeners for update events - so far only one known off
-    private ArrayList<ModUpdateListener> listeners;
+    private final List<ModUpdateListener> listeners;
     private boolean fireUpdates = false;
 
     // What type of Mod is it?
@@ -345,7 +348,7 @@ public abstract class BasicModMixer {
     /**
      * Constructor for BasicModMixer
      */
-    public BasicModMixer(final Module mod, final int sampleRate, final int doISP, final int doNoLoops, final int maxNNAChannels) {
+    public BasicModMixer(Module mod, int sampleRate, int doISP, int doNoLoops, int maxNNAChannels) {
         super();
         this.mod = mod;
         this.sampleRate = sampleRate;
@@ -356,7 +359,7 @@ public abstract class BasicModMixer {
         interweaveBufferLeft = new long[ModConstants.INTERWEAVE_LEN];
         interweaveBufferRight = new long[ModConstants.INTERWEAVE_LEN];
 
-        listeners = new ArrayList<ModUpdateListener>();
+        listeners = new ArrayList<>();
 
         initializeMixer(false); // do not inform listeners, as there are no listeners registered yet
     }
@@ -368,7 +371,7 @@ public abstract class BasicModMixer {
      * @param newSampleRate
      * @since 09.07.2006
      */
-    public void changeSampleRate(final int newSampleRate) {
+    public void changeSampleRate(int newSampleRate) {
         sampleRate = newSampleRate;
         calculateSamplesPerTick();
         calculateGlobalTuning();
@@ -381,17 +384,17 @@ public abstract class BasicModMixer {
      * @param newISP
      * @since 09.07.2006
      */
-    public void changeISP(final int newISP) {
+    public void changeISP(int newISP) {
         this.doISP = newISP;
     }
 
     /**
      * Changes the interpolation routine. This can be done at any time
      *
-     * @param newISP
+     * @param newDoNoLoops
      * @since 09.07.2006
      */
-    public void changeDoNoLoops(final int newDoNoLoops) {
+    public void changeDoNoLoops(int newDoNoLoops) {
         this.doNoLoops = newDoNoLoops;
     }
 
@@ -402,9 +405,9 @@ public abstract class BasicModMixer {
      * @param newMaxNNAChannels
      * @since 23.06.2020
      */
-    public void changeMaxNNAChannels(final int newMaxNNAChannels) {
+    public void changeMaxNNAChannels(int newMaxNNAChannels) {
         maxNNAChannels = newMaxNNAChannels;
-        final int nChannels = mod.getNChannels();
+        int nChannels = mod.getNChannels();
         int newMaxChannels = nChannels;
         if (isIT)
             newMaxChannels += maxNNAChannels;
@@ -429,7 +432,7 @@ public abstract class BasicModMixer {
      * @param aktMemo
      * @since 07.03.2024
      */
-    protected abstract void setPeriodBorders(final ChannelMemory aktMemo);
+    protected abstract void setPeriodBorders(ChannelMemory aktMemo);
 
     /**
      * Do own inits
@@ -437,12 +440,12 @@ public abstract class BasicModMixer {
      *
      * @return
      */
-    protected abstract void initializeMixer(final int channel, final ChannelMemory aktMemo);
+    protected abstract void initializeMixer(int channel, ChannelMemory aktMemo);
 
     /**
      * Call this first!
      */
-    public void initializeMixer(final boolean rememberMuteStatus) {
+    public void initializeMixer(boolean rememberMuteStatus) {
         modFinished = false;
 
         // to be a bit faster, we do some pre-calculations
@@ -489,8 +492,7 @@ public abstract class BasicModMixer {
         globalFilterMode = false; // IT default: every note resets filter to current values set - flattens the filter envelope
         swinger = new Random();
 
-        if ((mod.getModType() & ModConstants.MODTYPE_MPT) != 0) // is it Legacy MPT?
-        {
+        if ((mod.getModType() & ModConstants.MODTYPE_MPT) != 0) { // is it Legacy MPT?
             // Do global Pre-Amp - with legacy ModPlug Tracker this was used...
             // legacy: that is MPT <=1.17RC2
             int channels = mod.getNChannels();
@@ -511,14 +513,12 @@ public abstract class BasicModMixer {
             extraAttenuation = 4; // set extraAttenuation
             useGlobalPreAmp = true; // with preAmp PreAmpShift is 7, otherwise 8
             useSoftPanning = false;
-        } else if ((mod.getModType() & ModConstants.MODTYPE_OMPT) != 0) // Open Modplug Tracker?
-        {
+        } else if ((mod.getModType() & ModConstants.MODTYPE_OMPT) != 0) { // Open Modplug Tracker?
             masterVolume = mod.getMixingPreAmp();
             extraAttenuation = 0;
             useGlobalPreAmp = false;
             useSoftPanning = isIT; // IT: true, FT2: false
-        } else // default ProTracker, FT2, s3m, ...
-        {
+        } else { // default ProTracker, FT2, s3m, ...
             masterVolume = mod.getMixingPreAmp();
             extraAttenuation = 1;
             useGlobalPreAmp = false;
@@ -533,7 +533,7 @@ public abstract class BasicModMixer {
         loopingFadeOutValue = ModConstants.MAXFADEOUTVOLUME;
 
         // initialize every used channel
-        final int nChannels = mod.getNChannels();
+        int nChannels = mod.getNChannels();
         maxChannels = nChannels;
         if (isIT) maxChannels += maxNNAChannels;
 
@@ -549,7 +549,7 @@ public abstract class BasicModMixer {
         channelMemory = new ChannelMemory[maxChannels];
 
         for (int c = 0; c < maxChannels; c++) {
-            final ChannelMemory aktMemo = (channelMemory[c] = new ChannelMemory());
+            ChannelMemory aktMemo = (channelMemory[c] = new ChannelMemory());
             if (c < nChannels) {
                 aktMemo.isNNA = false;
                 aktMemo.channelNumber = c;
@@ -577,14 +577,14 @@ public abstract class BasicModMixer {
      *
      * @since 25.07.2020
      */
-    public long seek(final long milliseconds) {
+    public long seek(long milliseconds) {
         long fullLength = 0;
-        final boolean fireUpdateStatus = getFireUpdates();
+        boolean fireUpdateStatus = getFireUpdates();
         try {
             setFireUpdates(false);
             initializeMixer(true);
             long currentMilliseconds = 0;
-            final long stopAt = 60L * 60L * sampleRate; // Just in case...
+            long stopAt = 60L * 60L * sampleRate; // Just in case...
             boolean finished = false;
             while (fullLength < stopAt && currentMilliseconds < milliseconds && !finished) {
                 fullLength += samplesPerTick;
@@ -593,7 +593,7 @@ public abstract class BasicModMixer {
             }
             // Silence all and everything to avoid clicks and arbitrary sounds...
             for (int c = 0; c < maxChannels; c++) {
-                final ChannelMemory aktMemo = channelMemory[c];
+                ChannelMemory aktMemo = channelMemory[c];
                 aktMemo.actVolumeLeft = aktMemo.actVolumeRight = aktMemo.currentVolume =
                         aktMemo.actRampVolLeft = aktMemo.actRampVolRight = 0;
             }
@@ -610,7 +610,7 @@ public abstract class BasicModMixer {
     public synchronized long getLengthInMilliseconds() {
         // do we need to measure it or do we already have a length?
         if (mod.getLengthInMilliseconds() == -1) {
-            final boolean fireUpdateStatus = getFireUpdates();
+            boolean fireUpdateStatus = getFireUpdates();
             try {
                 setFireUpdates(false);
                 int oldDoNoLoops = doNoLoops;
@@ -620,13 +620,13 @@ public abstract class BasicModMixer {
                 sampleRate = 44100;
                 initializeMixer(false);
 
-                final long[] msTimeIndex = mod.getMsTimeIndex();
+                long[] msTimeIndex = mod.getMsTimeIndex();
                 msTimeIndex[0] = 0;
                 int arrangementIndex = currentArrangement;
 
                 long fullLength = 0;
                 boolean finished = false;
-                final long stopAt = 60L * 60L * sampleRate;
+                long stopAt = 60L * 60L * sampleRate;
                 while (fullLength < stopAt && !finished) {
                     fullLength += samplesPerTick;
                     finished = doRowAndTickEvents();
@@ -673,7 +673,7 @@ public abstract class BasicModMixer {
     public int getCurrentUsedChannels() {
         int result = 0;
         for (int i = 0; i < maxChannels; i++) {
-            final ChannelMemory aktMemo = channelMemory[i];
+            ChannelMemory aktMemo = channelMemory[i];
             if (isChannelActive(aktMemo)) result++;
         }
         return result;
@@ -703,9 +703,9 @@ public abstract class BasicModMixer {
         switch (mod.getTempoMode()) {
             case ModConstants.TEMPOMODE_MODERN:
                 double accurateBuffer = (double) sampleRate * (60.0d / ((double) currentBPM * (double) currentTempo * (double) mod.getRowsPerBeat()));
-                final double[] tempoSwing = currentPattern.getTempoSwing();
+                double[] tempoSwing = currentPattern.getTempoSwing();
                 if (tempoSwing != null && tempoSwing.length > 0) {
-                    final double swingFactor = tempoSwing[currentRow % tempoSwing.length];
+                    double swingFactor = tempoSwing[currentRow % tempoSwing.length];
                     accurateBuffer = accurateBuffer * swingFactor / (double) ModConstants.TEMPOSWING_UNITY;
                 }
                 samplesPerTick = (int) (accurateBuffer);
@@ -760,7 +760,7 @@ public abstract class BasicModMixer {
      * @return
      * @since 28.06.2024 moved to the respective Mixers (ProTrackerMixher and ScreamTrackerMixer)
      */
-    protected int getFineTunePeriod(final ChannelMemory aktMemo, final int period) {
+    protected int getFineTunePeriod(ChannelMemory aktMemo, int period) {
         // Period is not a noteindex - this will never happen, but I once used it with protracker mods
         return (int) ((long) ModConstants.BASEFREQUENCY * (long) period / (long) aktMemo.currentFinetuneFrequency);
     }
@@ -772,7 +772,7 @@ public abstract class BasicModMixer {
      * @param aktMemo
      * @return
      */
-    protected int getFineTunePeriod(final ChannelMemory aktMemo) {
+    protected int getFineTunePeriod(ChannelMemory aktMemo) {
         if ((frequencyTableType & (ModConstants.AMIGA_TABLE | ModConstants.XM_AMIGA_TABLE | ModConstants.XM_LINEAR_TABLE)) != 0)
             return (aktMemo.assignedNoteIndex == 0) ? 0 : getFineTunePeriod(aktMemo, aktMemo.assignedNoteIndex + aktMemo.currentTranspose);
         else if ((frequencyTableType & (ModConstants.IT_LINEAR_TABLE | ModConstants.IT_AMIGA_TABLE | ModConstants.STM_S3M_TABLE)) != 0)
@@ -792,7 +792,7 @@ public abstract class BasicModMixer {
      * @param newPeriod
      * @since 28.06.2024 moved to the respective Mixers (ProTrackerMixher and ScreamTrackerMixer)
      */
-    protected void setNewPlayerTuningFor(final ChannelMemory aktMemo, final int newPeriod) {
+    protected void setNewPlayerTuningFor(ChannelMemory aktMemo, int newPeriod) {
         aktMemo.currentNotePeriodSet = newPeriod;
 
         if (newPeriod <= 0) {
@@ -800,7 +800,7 @@ public abstract class BasicModMixer {
             return;
         }
 
-        final int clampedPeriod = (newPeriod > aktMemo.portaStepDownEnd) ? aktMemo.portaStepDownEnd : (newPeriod < aktMemo.portaStepUpEnd) ? aktMemo.portaStepUpEnd : newPeriod;
+        int clampedPeriod = (newPeriod > aktMemo.portaStepDownEnd) ? aktMemo.portaStepDownEnd : (newPeriod < aktMemo.portaStepUpEnd) ? aktMemo.portaStepUpEnd : newPeriod;
         aktMemo.currentTuning = globalTuning / clampedPeriod;
     }
 
@@ -809,7 +809,7 @@ public abstract class BasicModMixer {
      *
      * @param aktMemo
      */
-    protected void setNewPlayerTuningFor(final ChannelMemory aktMemo) {
+    protected void setNewPlayerTuningFor(ChannelMemory aktMemo) {
         setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod);
         // save for IT Arpeggios. Must be done here, not above, as above
         // service is used when not changed permanently through currentNotePeriod!
@@ -822,18 +822,18 @@ public abstract class BasicModMixer {
      * @param period
      * @return
      */
-    protected int getRoundedPeriod(final ChannelMemory aktMemo, final int period) {
+    protected int getRoundedPeriod(ChannelMemory aktMemo, int period) {
         if (isMOD) {
-            final int i = ModConstants.getNoteIndexForPeriod(period);
+            int i = ModConstants.getNoteIndexForPeriod(period);
             if (i > 0) {
-                final int diff1 = ModConstants.noteValues[i - 1] - period;
-                final int diff2 = period - ModConstants.noteValues[i];
+                int diff1 = ModConstants.noteValues[i - 1] - period;
+                int diff2 = period - ModConstants.noteValues[i];
                 if (diff1 < diff2) return ModConstants.noteValues[i - 1];
             }
             return ModConstants.noteValues[i];
         } else {
             for (int i = 1; i < 180; i++) {
-                final int checkPeriod = getFineTunePeriod(aktMemo, i) >> ModConstants.PERIOD_SHIFT;
+                int checkPeriod = getFineTunePeriod(aktMemo, i) >> ModConstants.PERIOD_SHIFT;
                 if (checkPeriod > 0 && checkPeriod <= period)
                     return checkPeriod;
             }
@@ -849,7 +849,7 @@ public abstract class BasicModMixer {
      * @return true, if the current Element has a note
      * @since 11.03.2024
      */
-    protected boolean hasNewNote(final PatternElement element) {
+    protected static boolean hasNewNote(PatternElement element) {
         return element != null && (element.getPeriod() > ModConstants.NO_NOTE || element.getNoteIndex() > ModConstants.NO_NOTE);
     }
 
@@ -861,7 +861,7 @@ public abstract class BasicModMixer {
      * @return true, if the current Element has no note
      * @since 15.03.2024
      */
-    protected boolean hasNoNote(final PatternElement element) {
+    protected static boolean hasNoNote(PatternElement element) {
         return element != null && (element.getPeriod() == ModConstants.NO_NOTE && element.getNoteIndex() == ModConstants.NO_NOTE);
     }
 
@@ -869,12 +869,12 @@ public abstract class BasicModMixer {
      * Simple 2-poles resonant filter
      *
      * @param aktMemo
-     * @param bReset
-     * @param flt_modifier
+     * @param reset
+     * @param envModifier
      * @since 31.03.2010
      */
-    protected void setupChannelFilter(final ChannelMemory aktMemo, final boolean reset, final int envModifier) {
-        final PatternElement element = aktMemo.currentElement;
+    protected void setupChannelFilter(ChannelMemory aktMemo, boolean reset, int envModifier) {
+        PatternElement element = aktMemo.currentElement;
         // Z7F (plus resonance==0) disables the filter, if set next to a note - otherwise not.
         if (aktMemo.cutOff >= 0x7F && aktMemo.resonance == 0 && hasNewNote(element))
             aktMemo.filterOn = false;
@@ -887,31 +887,31 @@ public abstract class BasicModMixer {
             if (resonance < 0) resonance = 0;
             else if (resonance > 0xFF) resonance = 0xFF;
 
-            final double fac = (((mod.getSongFlags() & ModConstants.SONG_EXFILTERRANGE) != 0) ? (128.0d / (20.0d * 256.0d)) : (128.0d / (24.0d * 256.0d)));
+            double fac = (((mod.getSongFlags() & ModConstants.SONG_EXFILTERRANGE) != 0) ? (128.0d / (20.0d * 256.0d)) : (128.0d / (24.0d * 256.0d)));
             double frequency = 110.0d * Math.pow(2.0d, (double) cutOff * fac + 0.25d);
             if (frequency < 120d) frequency = 120d;
             if (frequency > 20000d) frequency = 20000d;
             if (frequency > sampleRate >> 1) frequency = sampleRate >> 1;
             frequency *= 2.0d * Math.PI;
 
-            final double dmpFac = ModConstants.ResonanceTable[resonance];
+            double dmpFac = ModConstants.ResonanceTable[resonance];
             double e, d;
             if ((mod.getSongFlags() & ModConstants.SONG_EXFILTERRANGE) == 0) {
-                final double r = ((double) sampleRate) / frequency;
+                double r = ((double) sampleRate) / frequency;
                 d = dmpFac * r + dmpFac - 1.0d;
                 e = r * r;
             } else {
-                final double d_dmpFac = 2.0d * dmpFac;
-                final double r = frequency / ((double) (sampleRate));
+                double d_dmpFac = 2.0d * dmpFac;
+                double r = frequency / ((double) (sampleRate));
                 d = (1.0d - d_dmpFac) * r;
                 if (d > 2.0d) d = 2.0d;
                 d = (d_dmpFac - d) / r;
                 e = 1.0d / (r * r);
             }
 
-            final double fg = 1.0d / (1.0d + d + e);
-            final double fb0 = (d + e + e) / (1.0d + d + e);
-            final double fb1 = -e / (1.0d + d + e);
+            double fg = 1.0d / (1.0d + d + e);
+            double fb0 = (d + e + e) / (1.0d + d + e);
+            double fb1 = -e / (1.0d + d + e);
 
             switch (aktMemo.filterMode) {
                 case ModConstants.FLTMODE_HIGHPASS:
@@ -942,7 +942,7 @@ public abstract class BasicModMixer {
      * @param buffer
      * @since 05.07.2020
      */
-    private void doResonance(final ChannelMemory aktMemo, final long buffer[]) {
+    private void doResonance(ChannelMemory aktMemo, long[] buffer) {
         long sampleAmp = buffer[0] << ModConstants.FILTER_PREAMP_BITS; // with preAmp
         long fy = ((sampleAmp * aktMemo.filter_A0) + (aktMemo.filter_Y1 * aktMemo.filter_B0) + (aktMemo.filter_Y2 * aktMemo.filter_B1) + ModConstants.HALF_FILTER_PRECISION) >> ModConstants.FILTER_SHIFT_BITS;
         aktMemo.filter_Y2 = aktMemo.filter_Y1;
@@ -965,14 +965,14 @@ public abstract class BasicModMixer {
      *
      * @param aktMemo
      */
-    protected abstract void doRowEffects(final ChannelMemory aktMemo);
+    protected abstract void doRowEffects(ChannelMemory aktMemo);
 
     /**
      * Used to process the volume column (tick==0)
      *
      * @param aktMemo
      */
-    protected abstract void doVolumeColumnRowEffekt(final ChannelMemory aktMemo);
+    protected abstract void doVolumeColumnRowEffekt(ChannelMemory aktMemo);
 
     /**
      * call doRowEffects and doVolumeColumnRowEffekt in correct order
@@ -980,21 +980,21 @@ public abstract class BasicModMixer {
      * @param aktMemo
      * @since 31.01.2024
      */
-    protected abstract void processEffekts(final ChannelMemory aktMemo);
+    protected abstract void processEffekts(ChannelMemory aktMemo);
 
     /**
      * Do the Effects during Ticks (tick!=0)
      *
      * @param aktMemo
      */
-    protected abstract void doTickEffekts(final ChannelMemory aktMemo);
+    protected abstract void doTickEffekts(ChannelMemory aktMemo);
 
     /**
      * do the volume column tick effects (tick!=0)
      *
      * @param aktMemo
      */
-    protected abstract void doVolumeColumnTickEffekt(final ChannelMemory aktMemo);
+    protected abstract void doVolumeColumnTickEffekt(ChannelMemory aktMemo);
 
     /**
      * call doTickEffekts and doVolumeColumnTickEffekt in correct order
@@ -1002,7 +1002,7 @@ public abstract class BasicModMixer {
      * @param aktMemo
      * @since 31.01.2024
      */
-    protected abstract void processTickEffekts(final ChannelMemory aktMemo);
+    protected abstract void processTickEffekts(ChannelMemory aktMemo);
 
     /**
      * Do the autovibrato
@@ -1012,63 +1012,62 @@ public abstract class BasicModMixer {
      * @param currentPeriod
      * @return currentPeriod after alternation
      */
-    protected abstract void doAutoVibratoEffekt(final ChannelMemory aktMemo, final Sample currentSample, final int currentPeriod);
+    protected abstract void doAutoVibratoEffekt(ChannelMemory aktMemo, Sample currentSample, int currentPeriod);
 
     /**
      * Returns true, if the Effekt and EffektOp indicate a NoteDelayEffekt
      *
      * @param effekt
-     * @param effektOp
      * @return
      */
-    protected abstract boolean isNoteDelayEffekt(final int effekt, final int effektParam);
+    protected abstract boolean isNoteDelayEffekt(int effekt, int effektParam);
 
     /**
      * Return true, if the Effekt and EddektOp indicate a patternFramesDelayEffejt
      *
      * @param effekt
-     * @param assignedEffektParam
+     * @param effektParam
      * @return
      */
-    protected abstract boolean isPatternFramesDelayEffekt(final int effekt, final int effektParam);
+    protected abstract boolean isPatternFramesDelayEffekt(int effekt, int effektParam);
 
     /**
      * Returns true, if the Effekt and EffektOp indicate a PortaToNoteEffekt
      *
      * @param effekt
-     * @param effektOp
+     * @param effektParam
+     * @param volEffektParam
      * @return
      */
-    protected abstract boolean isPortaToNoteEffekt(final int effekt, final int effektParam, final int volEffekt, final int volEffektParam, final int notePeriod);
+    protected abstract boolean isPortaToNoteEffekt(int effekt, int effektParam, int volEffekt, int volEffektParam, int notePeriod);
 
     /**
      * Return true, if the effekt and effektop indicate the sample offset effekt
      *
      * @param effekt
-     * @param assignedEffektParam
      * @return
      * @since 19.06.2006
      */
-    protected abstract boolean isSampleOffsetEffekt(final int effekt);
+    protected abstract boolean isSampleOffsetEffekt(int effekt);
 
     /**
      * Returns true, if the Effekt and EffektOp indicate a Note Off effect
      *
      * @param effekt
-     * @param effektOp
+     * @param effektParam
      * @return
      */
-    protected abstract boolean isKeyOffEffekt(final int effekt, final int effektParam);
+    protected abstract boolean isKeyOffEffekt(int effekt, int effektParam);
 
     /**
      * Returns true, if an NNA-Effekt is set. Than, no default instrument NNA
      * should be processed.
      *
-     * @param aktMemo
+     * @param effekt
      * @return
      * @since 11.06.2020
      */
-    protected abstract boolean isNNAEffekt(final int effekt, final int effektParam);
+    protected abstract boolean isNNAEffekt(int effekt, int effektParam);
 
     /**
      * if assignedEffektParam is 0 an effect memory will be returned - if any
@@ -1076,11 +1075,11 @@ public abstract class BasicModMixer {
      * This is basically for S00 IT Memory
      *
      * @param effekt
-     * @param assignedEffektParam
+     * @param effekt
      * @return
      * @since 28.06.2020
      */
-    protected abstract int getEffektOpMemory(final ChannelMemory aktMemo, final int effekt, final int effektParam);
+    protected abstract int getEffektOpMemory(ChannelMemory aktMemo, int effekt, int effektParam);
 
     /**
      * The parameter extension works differently to other commands. It is evaluated
@@ -1093,7 +1092,7 @@ public abstract class BasicModMixer {
      * @return
      * @since 17.01.2024
      */
-    protected abstract int calculateExtendedValue(final ChannelMemory aktMemo, final AtomicInteger extendedRowsUsed);
+    protected abstract int calculateExtendedValue(ChannelMemory aktMemo, AtomicInteger extendedRowsUsed);
 
     /**
      * Set the new note period / frequency and instrument
@@ -1103,13 +1102,13 @@ public abstract class BasicModMixer {
      * @param aktMemo
      * @since 11.06.2006
      */
-    protected abstract void setNewInstrumentAndPeriod(final ChannelMemory aktMemo);
+    protected abstract void setNewInstrumentAndPeriod(ChannelMemory aktMemo);
 
     /**
      * @param aktMemo
      * @since 19.06.2020
      */
-    protected void initNoteFade(final ChannelMemory aktMemo) {
+    protected void initNoteFade(ChannelMemory aktMemo) {
         // do not reactivate a dead channel or reactivate a
         // running noteFade
         if (!aktMemo.noteFade && isChannelActive(aktMemo)) {
@@ -1121,16 +1120,16 @@ public abstract class BasicModMixer {
     /**
      * The size of volume-ramping we intend to use
      */
-    private void calculateVolRampLen(final ChannelMemory aktMemo) {
-        final int targetVolLeft = aktMemo.actVolumeLeft;
-        final int targetVolRight = aktMemo.actVolumeRight;
+    private void calculateVolRampLen(ChannelMemory aktMemo) {
+        int targetVolLeft = aktMemo.actVolumeLeft;
+        int targetVolRight = aktMemo.actVolumeRight;
 
         if (targetVolLeft != aktMemo.actRampVolLeft || targetVolRight != aktMemo.actRampVolRight) {
-            final boolean rampUp = targetVolLeft > aktMemo.actRampVolLeft || targetVolRight > aktMemo.actRampVolRight;
+            boolean rampUp = targetVolLeft > aktMemo.actRampVolLeft || targetVolRight > aktMemo.actRampVolRight;
 
             // FT2 XMs have a default smooth VolRamp of 5ms for fastVolRamp and one tick, if not
             int rampLengthYS = (isXM) ? 5000 : (rampUp) ? ModConstants.VOLRAMPLEN_UP_YS : ModConstants.VOLRAMPLEN_DOWN_YS;
-            final int defaultRampLen = (isXM && !aktMemo.doFastVolRamp) ? samplesPerTick : (int) ((long) sampleRate * (long) rampLengthYS / 1000000L);
+            int defaultRampLen = (isXM && !aktMemo.doFastVolRamp) ? samplesPerTick : (int) ((long) sampleRate * (long) rampLengthYS / 1000000L);
 
             // Override default with settings in instruments, if any (only for ramp up!)
             boolean useCustom = false;
@@ -1186,21 +1185,21 @@ public abstract class BasicModMixer {
         // The adjustments on the periods will change currentNotePeriodSet when setting via "setNewPlayerTuningFor(..)"
         // That's bad in envelopes, because we want to "add on" here
         // and not on top of our self over and over again
-        final int resetPeriodAfterEnvelopes = currentPeriod;
+        int resetPeriodAfterEnvelopes = currentPeriod;
 
-        final Sample sample = aktMemo.currentSample;
+        Sample sample = aktMemo.currentSample;
         int insVolume = (sample != null) ? sample.globalVolume << 1 : ModConstants.MAXGLOBALVOLUME;    // max: 64, but make it equal to instrument volume (0..128)
         Envelope volumeEnv = null;
         Envelope panningEnv = null;
-        final Instrument currentInstrument = aktMemo.assignedInstrument;
+        Instrument currentInstrument = aktMemo.assignedInstrument;
         if (currentInstrument != null) {
             insVolume = (insVolume * currentInstrument.globalVolume) >> 7; // combine sample and instrument volume
 
             volumeEnv = currentInstrument.volumeEnvelope;
             if (volumeEnv != null) {
-                final boolean volEnvOn = (aktMemo.tempVolEnv != -1) ? aktMemo.tempVolEnv == 1 : volumeEnv.on;
+                boolean volEnvOn = (aktMemo.tempVolEnv != -1) ? aktMemo.tempVolEnv == 1 : volumeEnv.on;
                 if (volEnvOn) {
-                    final long volPos = volumeEnv.updatePosition(aktMemo, aktMemo.volEnvTick, aktMemo.volXMEnvPos, true);
+                    long volPos = volumeEnv.updatePosition(aktMemo, aktMemo.volEnvTick, aktMemo.volXMEnvPos, true);
                     aktMemo.volEnvTick = (int) (volPos & 0xFFFFFFFF);
                     aktMemo.volXMEnvPos = (int) (volPos >> 32);
                     int newVol = volumeEnv.getValueForPosition(aktMemo.volEnvTick, aktMemo.volXMEnvPos); // 0..512
@@ -1211,12 +1210,12 @@ public abstract class BasicModMixer {
             // set the panning envelope
             panningEnv = currentInstrument.panningEnvelope;
             if (panningEnv != null) {
-                final boolean panEnvOn = (aktMemo.tempPanEnv != -1) ? aktMemo.tempPanEnv == 1 : panningEnv.on;
+                boolean panEnvOn = (aktMemo.tempPanEnv != -1) ? aktMemo.tempPanEnv == 1 : panningEnv.on;
                 if (panEnvOn) {
-                    final long panPos = panningEnv.updatePosition(aktMemo, aktMemo.panEnvTick, aktMemo.panXMEnvPos, false);
+                    long panPos = panningEnv.updatePosition(aktMemo, aktMemo.panEnvTick, aktMemo.panXMEnvPos, false);
                     aktMemo.panEnvTick = (int) (panPos & 0xFFFFFFFF);
                     aktMemo.panXMEnvPos = (int) (panPos >> 32);
-                    final int newPanValue = panningEnv.getValueForPosition(aktMemo.panEnvTick, aktMemo.panXMEnvPos) - 256; // result -256..256
+                    int newPanValue = panningEnv.getValueForPosition(aktMemo.panEnvTick, aktMemo.panXMEnvPos) - 256; // result -256..256
                     currentPanning += (newPanValue * ((currentPanning >= 128) ? (256 - currentPanning) : currentPanning)) >> 8;
                 }
             }
@@ -1228,11 +1227,10 @@ public abstract class BasicModMixer {
                 currentPanning += ((currentPeriod - ((currentInstrument.pitchPanCenter + 1) << ModConstants.PERIOD_SHIFT)) * currentInstrument.pitchPanSeparation) >> 7; // / 8 + >>ModConstants.PERIOD_SHIFT for note period
             }
 
-            final Envelope pitchEnv = currentInstrument.pitchEnvelope;
+            Envelope pitchEnv = currentInstrument.pitchEnvelope;
             if (pitchEnv != null) {
-                final boolean pitchEnvOn = (aktMemo.tempPitchEnv != -1) ? aktMemo.tempPitchEnv == 1 : pitchEnv.on;
-                if (pitchEnvOn) // only IT...
-                {
+                boolean pitchEnvOn = (aktMemo.tempPitchEnv != -1) ? aktMemo.tempPitchEnv == 1 : pitchEnv.on;
+                if (pitchEnvOn) { // only IT...
                     aktMemo.pitchEnvTick = (int) (pitchEnv.updatePosition(aktMemo, aktMemo.pitchEnvTick, 0, false) & 0xFFFFFFFF);
                     int pitchValue = pitchEnv.getValueForPosition(aktMemo.pitchEnvTick, 0) - 256; // result -256..256
                     if (pitchEnv.filter)
@@ -1242,10 +1240,10 @@ public abstract class BasicModMixer {
                         if (pitchValue < 0) {
                             pitchValue = -pitchValue;
                             if (pitchValue > 255) pitchValue = 255;
-                            newPitch = (long) ModConstants.LinearSlideDownTable[pitchValue];
+                            newPitch = ModConstants.LinearSlideDownTable[pitchValue];
                         } else {
                             if (pitchValue > 255) pitchValue = 255;
-                            newPitch = (long) ModConstants.LinearSlideUpTable[pitchValue];
+                            newPitch = ModConstants.LinearSlideUpTable[pitchValue];
                         }
                         currentPeriod = (int) ((((long) currentPeriod) * newPitch) >> 16);
                     }
@@ -1291,8 +1289,7 @@ public abstract class BasicModMixer {
         else if (currentPanning > 256) currentPanning = 256;
 
         int panSep = mod.getPanningSeparation();
-        if (panSep < 128) // skip calculation if not needed...
-        {
+        if (panSep < 128) { // skip calculation if not needed...
             currentPanning -= 128;
             currentPanning = (currentPanning * panSep) >> 7;
             currentPanning += 128;
@@ -1308,8 +1305,7 @@ public abstract class BasicModMixer {
 //		aktMemo.actRampVolRight = aktMemo.actVolumeRight;
 
         // calculate new channel volume depending on currentVolume and panning
-        if (currentInstrument != null && currentInstrument.mute) // maybe this is a way to implement MPTs mute setting
-        {
+        if (currentInstrument != null && currentInstrument.mute) { // maybe this is a way to implement MPTs mute setting
             aktMemo.actVolumeLeft = aktMemo.actVolumeRight = 0;
         } else if ((mod.getSongFlags() & ModConstants.SONG_ISSTEREO) == 0) {
             aktMemo.actVolumeLeft = aktMemo.actVolumeRight = currentVolume << ModConstants.VOLRAMPLEN_FRAC;
@@ -1322,8 +1318,7 @@ public abstract class BasicModMixer {
                 if (currentPanning > 255) currentPanning = 255;
                 aktMemo.actVolumeLeft = (currentVolume * ModConstants.XMPanningTable[256 - currentPanning]) >> 16;
                 aktMemo.actVolumeRight = (currentVolume * ModConstants.XMPanningTable[currentPanning]) >> 16;
-            } else if (useSoftPanning) // OpenModPlug has this.
-            {
+            } else if (useSoftPanning) { // OpenModPlug has this.
                 if (currentPanning < 128) {
                     aktMemo.actVolumeLeft = (currentVolume * 128) >> 8;
                     aktMemo.actVolumeRight = (currentVolume * currentPanning) >> 8; // max:256
@@ -1339,8 +1334,7 @@ public abstract class BasicModMixer {
             aktMemo.actVolumeRight <<= ModConstants.VOLRAMPLEN_FRAC;
         }
 
-        if (extraAttenuation > 0) // for legacy MPT
-        {
+        if (extraAttenuation > 0) { // for legacy MPT
             aktMemo.actVolumeLeft >>= extraAttenuation;
             aktMemo.actVolumeRight >>= extraAttenuation;
         }
@@ -1368,30 +1362,26 @@ public abstract class BasicModMixer {
      * @param param
      * @param bits
      */
-    protected void doPanning(final ChannelMemory aktMemo, int param, final ModConstants.PanBits bits) {
+    protected void doPanning(ChannelMemory aktMemo, int param, ModConstants.PanBits bits) {
         if (isMOD)
             return; // No panning set effect with ProTrackers - DMP played MODs with s3m effect logic. We don't do that!
 
         aktMemo.doSurround = false;
-        if (bits == ModConstants.PanBits.Pan4Bit) // 0..15
-        {
+        if (bits == ModConstants.PanBits.Pan4Bit) { // 0..15
             if (param > 15) param = 15;
             if (isXM && !isModPlug)
                 aktMemo.currentInstrumentPanning = aktMemo.panning = (param & 0xF) << 4;
             else
                 aktMemo.currentInstrumentPanning = aktMemo.panning = (((param & 0xF) << 8) + 8) / 15;
-        } else if (bits == ModConstants.PanBits.Pan6Bit) // 0..64
-        {
+        } else if (bits == ModConstants.PanBits.Pan6Bit) { // 0..64
             if (param > 64) param = 64;
             aktMemo.currentInstrumentPanning = aktMemo.panning = (param & 0x7F) << 2;
         } else if (isS3M) {
             // This is special operation for S3M
             // ModConstants.PanBits.Pan8Bit now // 0..128
-            if (param <= 0x80) // 7 Bit plus surround
-            {
+            if (param <= 0x80) { // 7 Bit plus surround
                 aktMemo.currentInstrumentPanning = aktMemo.panning = param << 1;
-            } else if (param == 0xA4) // magic!
-            {
+            } else if (param == 0xA4) { // magic!
                 aktMemo.doSurround = true;
                 aktMemo.currentInstrumentPanning = aktMemo.panning = 0x80;
             }
@@ -1409,7 +1399,7 @@ public abstract class BasicModMixer {
      * @return
      * @since 17.01.2022
      */
-    protected float calculateSmoothParamChange(final ChannelMemory aktMemo, final float currentValue, final float param) {
+    protected float calculateSmoothParamChange(ChannelMemory aktMemo, float currentValue, float param) {
         // currentTick is counted down from currentTempo (aka currentTicksPerRow) - so it is automatically "ticks left"
         if (currentTick > 1) // currentTick == 1 results in value of param - no need for calculation
             return currentValue + ((param - currentValue) / (float) currentTick);
@@ -1424,9 +1414,9 @@ public abstract class BasicModMixer {
      * @param param
      * @since 16.06.2020
      */
-    protected void processMIDIMacro(final ChannelMemory aktMemo, final boolean isSmoothMidi, final String midiMacro, final int param) {
+    protected void processMIDIMacro(ChannelMemory aktMemo, boolean isSmoothMidi, String midiMacro, int param) {
         if (midiMacro == null) return;
-        final char[] midiMacroArray = midiMacro.toCharArray();
+        char[] midiMacroArray = midiMacro.toCharArray();
         if (midiMacroArray.length == 0) return;
 
         int macroCommand = ((midiMacroArray[0] & 0xFF) << 16) |
@@ -1435,12 +1425,11 @@ public abstract class BasicModMixer {
                 ((midiMacroArray[3] & 0xFF) << 8);
         macroCommand &= 0x7F5F7F5F;
 
-        if (macroCommand == 0x30463046) // internal code
-        {
+        if (macroCommand == 0x30463046) { // internal code
             int internalCode = -256;
             // Java supports Character.digit(char, radix) - but this will be slightly faster...
             // It's a bit of a risk because of unicode characters...
-            //internalCode = (Character.digit(midiMacroArray[4], 16)<<4) | Character.digit(midiMacroArray[5], 16);
+//            internalCode = (Character.digit(midiMacroArray[4], 16)<<4) | Character.digit(midiMacroArray[5], 16);
             if ((midiMacroArray[4] >= '0') && (midiMacroArray[4] <= '9')) internalCode = (midiMacroArray[4] - '0') << 4;
             else if ((midiMacroArray[4] >= 'A') && (midiMacroArray[4] <= 'F'))
                 internalCode = (midiMacroArray[4] - 'A' + 0x0A) << 4;
@@ -1497,7 +1486,7 @@ public abstract class BasicModMixer {
      * @return
      * @since 30.03.2010
      */
-    protected boolean isChannelActive(final ChannelMemory aktMemo) {
+    protected boolean isChannelActive(ChannelMemory aktMemo) {
         return (aktMemo != null) ? (!aktMemo.instrumentFinished && aktMemo.currentTuning != 0 && aktMemo.currentSample != null && aktMemo.channelNumber != -1) : false;
     }
 
@@ -1510,21 +1499,21 @@ public abstract class BasicModMixer {
      * @param ins
      * @since 21.03.2024
      */
-    protected void resetEnvelopes(final ChannelMemory aktMemo, final Instrument ins) {
+    protected void resetEnvelopes(ChannelMemory aktMemo, Instrument ins) {
         if (ins != null) {
-            final Envelope volumeEnvelope = ins.volumeEnvelope;
+            Envelope volumeEnvelope = ins.volumeEnvelope;
             if (volumeEnvelope != null && !volumeEnvelope.carry) {
                 aktMemo.volEnvTick = volumeEnvelope.getInitPosition();
                 aktMemo.volXMEnvPos = 0;
             }
 
-            final Envelope panningEnvelope = ins.panningEnvelope;
+            Envelope panningEnvelope = ins.panningEnvelope;
             if (panningEnvelope != null && !panningEnvelope.carry) {
                 aktMemo.panEnvTick = panningEnvelope.getInitPosition();
                 aktMemo.panXMEnvPos = 0;
             }
 
-            final Envelope pitchEnvelope = ins.pitchEnvelope;
+            Envelope pitchEnvelope = ins.pitchEnvelope;
             if (pitchEnvelope != null && !pitchEnvelope.carry) aktMemo.pitchEnvTick = pitchEnvelope.getInitPosition();
         }
     }
@@ -1537,7 +1526,7 @@ public abstract class BasicModMixer {
      * @param aktMemo
      * @since 19.06.2020
      */
-    protected void resetEnvelopes(final ChannelMemory aktMemo) {
+    protected void resetEnvelopes(ChannelMemory aktMemo) {
         resetEnvelopes(aktMemo, aktMemo.assignedInstrument);
     }
 
@@ -1549,7 +1538,7 @@ public abstract class BasicModMixer {
      * @param forceS3MZero set to true at S3M re-trigger to not use sampleOffset Memo but zero in that case
      * @since 19.06.2006
      */
-    protected void resetInstrumentPointers(final ChannelMemory aktMemo, final boolean forceS3MZero) {
+    protected void resetInstrumentPointers(ChannelMemory aktMemo, boolean forceS3MZero) {
         aktMemo.EFxOffset =
                 aktMemo.currentTuningPos =
                         aktMemo.interpolationMagic = 0;
@@ -1558,11 +1547,10 @@ public abstract class BasicModMixer {
 
         // special MOD sample offset handling
         if (isMOD && aktMemo.prevSampleOffset > 0 && aktMemo.currentSample != null) {
-            final int max = aktMemo.currentSample.length - 1;
+            int max = aktMemo.currentSample.length - 1;
             aktMemo.currentSamplePos = (aktMemo.prevSampleOffset > max) ? max : aktMemo.prevSampleOffset;
-        } else if (isS3M) // special S3M sample offset handling
-        {
-            final int offset = (!forceS3MZero) ? ((ScreamTrackerMixer) this).validateNewSampleOffset(aktMemo, aktMemo.prevSampleOffset) : 0;
+        } else if (isS3M) { // special S3M sample offset handling
+            int offset = (!forceS3MZero) ? ((ScreamTrackerMixer) this).validateNewSampleOffset(aktMemo, aktMemo.prevSampleOffset) : 0;
             aktMemo.currentSamplePos = offset;
             // prevSampleOffset is set zero in setNewInstrumentAndPeriod with a new instrument
         } else {
@@ -1575,7 +1563,7 @@ public abstract class BasicModMixer {
      * @param aktMemo
      * @since 21.03.2024
      */
-    protected void resetFineTune(final ChannelMemory aktMemo, final Sample currentSample) {
+    protected void resetFineTune(ChannelMemory aktMemo, Sample currentSample) {
         if (currentSample != null) {
             aktMemo.currentFinetuneFrequency = currentSample.baseFrequency;
             aktMemo.currentFineTune = currentSample.fineTune;
@@ -1591,7 +1579,7 @@ public abstract class BasicModMixer {
      * @param newSample
      * @since 24.12.2023
      */
-    protected void resetVolumeAndPanning(final ChannelMemory aktMemo, final Instrument newInstrument, final Sample newSample) {
+    protected void resetVolumeAndPanning(ChannelMemory aktMemo, Instrument newInstrument, Sample newSample) {
         if (newInstrument != null && newInstrument.setPanning) {
             aktMemo.currentInstrumentPanning = aktMemo.panning = newInstrument.defaultPanning;
             //aktMemo.muted = newInstrument.mute;
@@ -1615,7 +1603,7 @@ public abstract class BasicModMixer {
      * @param aktMemo
      * @since 27.03.2024
      */
-    protected void reset_VibTremPan_TablePositions(final ChannelMemory aktMemo) {
+    protected void reset_VibTremPan_TablePositions(ChannelMemory aktMemo) {
         if (!aktMemo.vibratoNoRetrig) aktMemo.vibratoTablePos = 0;
         if (!isScreamTrackerFamily && !aktMemo.tremoloNoRetrig) aktMemo.tremoloTablePos = 0;
         if (!isScreamTrackerFamily && !aktMemo.panbrelloNoRetrig) aktMemo.panbrelloTablePos = 0;
@@ -1628,7 +1616,7 @@ public abstract class BasicModMixer {
      * @param sample
      * @since 28.03.2024
      */
-    protected void resetAutoVibrato(final ChannelMemory aktMemo, final Sample sample) {
+    protected void resetAutoVibrato(ChannelMemory aktMemo, Sample sample) {
         if (isXM && sample != null) {
             if (sample.vibratoDepth > 0) {
                 aktMemo.autoVibratoTablePos = 0;
@@ -1654,7 +1642,7 @@ public abstract class BasicModMixer {
      * @param aktMemo
      * @param currentElement
      */
-    protected void resetAllEffects(final ChannelMemory aktMemo, final PatternElement currentElement) {
+    protected void resetAllEffects(ChannelMemory aktMemo, PatternElement currentElement) {
 //		// From playVoice in PT code - obviously not necessary with us
 //		// because we have the same effect with the logic downwards
 //		if (isMOD && hasNoNote(currentElement) && currentElement.getEffekt()==0 && currentElement.getEffektOp()==0)
@@ -1669,15 +1657,14 @@ public abstract class BasicModMixer {
                 if (currentElement.getEffekt() == 0x05 || currentElement.getEffekt() == 0x06)
                     aktMemo.currentNotePeriod = aktMemo.currentNotePeriodSet;
             } else {
-                final int baseNotePeriod = aktMemo.arpeggioNote[0];
+                int baseNotePeriod = aktMemo.arpeggioNote[0];
                 if (baseNotePeriod != 0) {
                     setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod = baseNotePeriod);
                 }
             }
         }
 
-        if (aktMemo.vibratoOn || aktMemo.vibratoVolOn) // We have a vibrato for reset
-        {
+        if (aktMemo.vibratoOn || aktMemo.vibratoVolOn) { // We have a vibrato for reset
             // With FastTracker, do not reset volumeColumn vibrato freq (VibratoOn is only set with effect column)
             if ((!isXM && aktMemo.vibratoOn) ||
                     (isXM && aktMemo.vibratoOn && currentElement.getEffekt() != 4 && currentElement.getEffekt() != 6))
@@ -1686,15 +1673,13 @@ public abstract class BasicModMixer {
             aktMemo.vibratoVolOn = false; // only set with XMs
         }
 
-        if (aktMemo.tremoloOn) // We have a tremolo for reset
-        {
+        if (aktMemo.tremoloOn) { // We have a tremolo for reset
             aktMemo.tremoloOn = false;
             if (!isXM) aktMemo.currentVolume = aktMemo.currentInstrumentVolume;
             aktMemo.doFastVolRamp = true;
         }
 
-        if (aktMemo.panbrelloOn) // We have a panbrello for reset
-        {
+        if (aktMemo.panbrelloOn) { // We have a panbrello for reset
             aktMemo.panbrelloOn = false;
             if (!isIT) {
                 aktMemo.panning = aktMemo.currentInstrumentPanning;
@@ -1710,7 +1695,7 @@ public abstract class BasicModMixer {
      * @param inst
      * @since 29.12.2023
      */
-    protected boolean setFilterAndRandomVariations(final ChannelMemory aktMemo, final Instrument inst, boolean useFilter) {
+    protected boolean setFilterAndRandomVariations(ChannelMemory aktMemo, Instrument inst, boolean useFilter) {
         // Set Resonance!
         if ((inst.initialFilterResonance & 0x80) != 0) {
             aktMemo.resonance = inst.initialFilterResonance & 0x7F;
@@ -1734,14 +1719,14 @@ public abstract class BasicModMixer {
             aktMemo.swingVolume = (((((inst.randomVolumeVariation * (swinger.nextInt() % 0xFF)) >> 6) + 1) * aktMemo.currentInstrumentVolume) / 199);
         }
         if (inst.randomPanningVariation >= 0) {
-            aktMemo.swingPanning = (int) ((inst.randomPanningVariation << 2) * (swinger.nextInt() % 0x80)) >> 7;
+            aktMemo.swingPanning = ((inst.randomPanningVariation << 2) * (swinger.nextInt() % 0x80)) >> 7;
         }
         // ModPlugTracker extended instruments.
         if (inst.randomResonanceVariation >= 0) {
-            aktMemo.swingResonance = (((int) (inst.randomResonanceVariation * (swinger.nextInt() % 0x80)) >> 7) * aktMemo.resonance + 1) >> 7;
+            aktMemo.swingResonance = (((inst.randomResonanceVariation * (swinger.nextInt() % 0x80)) >> 7) * aktMemo.resonance + 1) >> 7;
         }
         if (inst.randomCutOffVariation >= 0) {
-            aktMemo.swingCutOff = (((int) (inst.randomCutOffVariation * (swinger.nextInt() % 0x80)) >> 7) * aktMemo.cutOff + 1) >> 7;
+            aktMemo.swingCutOff = (((inst.randomCutOffVariation * (swinger.nextInt() % 0x80)) >> 7) * aktMemo.cutOff + 1) >> 7;
         }
 
         return useFilter;
@@ -1756,9 +1741,8 @@ public abstract class BasicModMixer {
      * @param aktMemo
      * @since 18.09.2010
      */
-    protected void processEffektsInTick(final ChannelMemory aktMemo) {
-        if (!aktMemo.isNNA) // no effects for NNA Channel, only envelopes
-        {
+    protected void processEffektsInTick(ChannelMemory aktMemo) {
+        if (!aktMemo.isNNA) { // no effects for NNA Channel, only envelopes
             // XM is weird: current Tick effects are performed during a note delay.
             // First vol column, than effect column (that is then the note delay, which is evaluated there)
             // if the note delay finishes, Note, Instrument and volume are set
@@ -1801,11 +1785,11 @@ public abstract class BasicModMixer {
         processEnvelopes(aktMemo);
     }
 
-    protected boolean isInfiniteLoop(final int currentArrangement, final PatternRow patternRow) {
+    protected boolean isInfiniteLoop(int currentArrangement, PatternRow patternRow) {
         return (mod.isArrangementPositionPlayed(currentArrangement) && patternRow.isRowPlayed());
     }
 
-    protected boolean isInfiniteLoop(final int currentArrangement, final int currentRow) {
+    protected boolean isInfiniteLoop(int currentArrangement, int currentRow) {
         return isInfiniteLoop(currentArrangement, currentPattern.getPatternRow(currentRow));
     }
 
@@ -1815,7 +1799,7 @@ public abstract class BasicModMixer {
      * @return true, if finished!
      */
     protected void doRowEvents() {
-        final PatternRow patternRow = currentPattern.getPatternRow(currentRow);
+        PatternRow patternRow = currentPattern.getPatternRow(currentRow);
         if (patternRow == null) return;
 
         patternRow.setRowPlayed();
@@ -1824,12 +1808,11 @@ public abstract class BasicModMixer {
         firePatternPositionUpdate(sampleRate, samplesMixed, getCurrentPatternPosition());
 
         for (int c = 0; c < maxChannels; c++) {
-            final ChannelMemory aktMemo = channelMemory[c];
+            ChannelMemory aktMemo = channelMemory[c];
 
-            if (!aktMemo.isNNA) // no NNA Channel
-            {
+            if (!aktMemo.isNNA) { // no NNA Channel
                 // get pattern and channel memory data for current channel
-                final PatternElement element = aktMemo.currentElement = patternRow.getPatternElement(c);
+                PatternElement element = aktMemo.currentElement = patternRow.getPatternElement(c);
 
                 // reset all effects on this channel
                 resetAllEffects(aktMemo, element);
@@ -1857,8 +1840,7 @@ public abstract class BasicModMixer {
 
                 // Now check for noteDelay effect and handle it accordingly
                 // With ProTracker, Note delay is handled easy
-                if (isMOD || !isNoteDelayEffekt(aktMemo.currentAssignedEffekt, aktMemo.currentAssignedEffektParam)) // If this is a noteDelay, we cannot call processEffekts
-                {
+                if (isMOD || !isNoteDelayEffekt(aktMemo.currentAssignedEffekt, aktMemo.currentAssignedEffektParam)) { // If this is a noteDelay, we cannot call processEffekts
                     setNewInstrumentAndPeriod(aktMemo);
                     processEffekts(aktMemo); // Tick 0
                 } else { // !isMOD && isNoteDelay
@@ -1866,7 +1848,7 @@ public abstract class BasicModMixer {
                         aktMemo.assignedEffekt = aktMemo.currentAssignedEffekt;
                         aktMemo.assignedEffektParam = aktMemo.currentAssignedEffektParam;
                         aktMemo.assignedVolumeEffekt = aktMemo.currentAssignedVolumeEffekt;
-                        aktMemo.currentAssignedVolumeEffektOp = aktMemo.currentAssignedVolumeEffektOp;
+                        aktMemo.assignedVolumeEffektOp = aktMemo.currentAssignedVolumeEffektOp;
                         doRowEffects(aktMemo);
                     } else {
                         // In a NoteDelay things are special - we want to set the note delay as trackers want it.
@@ -1874,8 +1856,8 @@ public abstract class BasicModMixer {
                         // We cannot call processEffekts as that would also do VolumeColumnRowEffects - and those are for later.
                         // However, to avoid a double implementation and to call doRowEffekts then, we need to set the effekt/effektOp, call it,
                         // and set the effect back. That way we can use the Tracker-specific implementations
-                        final int retEffekt = aktMemo.assignedEffekt;
-                        final int retEffektOp = aktMemo.assignedEffektParam;
+                        int retEffekt = aktMemo.assignedEffekt;
+                        int retEffektOp = aktMemo.assignedEffektParam;
                         aktMemo.assignedEffekt = aktMemo.currentAssignedEffekt;
                         aktMemo.assignedEffektParam = aktMemo.currentAssignedEffektParam;
                         doRowEffects(aktMemo);
@@ -1922,8 +1904,7 @@ public abstract class BasicModMixer {
      * @since 24.07.2024
      */
     protected void proceedToNextRow() {
-        if (patternJumpSet) // Perform the jump
-        {
+        if (patternJumpSet) { // Perform the jump
             patternJumpSet = false;
             currentRow = patternJumpRowIndex;
             // PT/FT uses pBreakPosition/pBreakPos for all: Jump Position set and Pattern breaks row set
@@ -1938,11 +1919,11 @@ public abstract class BasicModMixer {
             patternBreakSet = false;
             mod.setArrangementPositionPlayed(currentArrangement);
 
-            final boolean ignoreLoop = (doNoLoops & ModConstants.PLAYER_LOOP_IGNORE) != 0;
-            final boolean fadeOutLoop = (doNoLoops & ModConstants.PLAYER_LOOP_FADEOUT) != 0;
-            final boolean loopSong = (doNoLoops & ModConstants.PLAYER_LOOP_LOOPSONG) != 0;
+            boolean ignoreLoop = (doNoLoops & ModConstants.PLAYER_LOOP_IGNORE) != 0;
+            boolean fadeOutLoop = (doNoLoops & ModConstants.PLAYER_LOOP_FADEOUT) != 0;
+            boolean loopSong = (doNoLoops & ModConstants.PLAYER_LOOP_LOOPSONG) != 0;
             if (patternBreakPatternIndex != -1) {
-                final boolean infiniteLoop = isInfiniteLoop(patternBreakPatternIndex, patternBreakRowIndex);
+                boolean infiniteLoop = isInfiniteLoop(patternBreakPatternIndex, patternBreakRowIndex);
                 if (infiniteLoop && ignoreLoop) {
                     patternBreakRowIndex = patternBreakPatternIndex = -1;
                     currentArrangement++;
@@ -1968,8 +1949,8 @@ public abstract class BasicModMixer {
 
             // sanity check FT2.09 style
             if (isXM && currentArrangement < mod.getSongLength()) {
-                final int patIndex = mod.getArrangement()[currentArrangement];
-                final Pattern pat = mod.getPatternContainer().getPattern(patIndex);
+                int patIndex = mod.getArrangement()[currentArrangement];
+                Pattern pat = mod.getPatternContainer().getPattern(patIndex);
                 if (currentRow >= pat.getRowCount()) {
                     currentArrangement--;
                     currentRow = 0;
@@ -2032,8 +2013,7 @@ public abstract class BasicModMixer {
             calculateSamplesPerTick();
         }
 
-        if (patternTicksDelayCount > 0) // Fine Pattern Delay in # ticks
-        {
+        if (patternTicksDelayCount > 0) { // Fine Pattern Delay in # ticks
             for (int c = 0; c < maxChannels; c++)
                 processEffektsInTick(channelMemory[c]);
             patternTicksDelayCount--;
@@ -2054,14 +2034,14 @@ public abstract class BasicModMixer {
             if (patternDelayCount > 0) {
                 // Process effects
                 for (int c = 0; c < maxChannels; c++) {
-                    final ChannelMemory aktMemo = channelMemory[c];
+                    ChannelMemory aktMemo = channelMemory[c];
 
                     processEffektsInTick(aktMemo);
 
                     // for IT and S3M (not STM!) re-set note delays, but do not call doRowEvents (is for tick=0 only)
                     if (isIT || isS3M || isModPlug) {
                         if (isNoteDelayEffekt(aktMemo.currentAssignedEffekt, aktMemo.currentAssignedEffektParam) && aktMemo.noteDelayCount < 0) {
-                            final int effektOpEx = aktMemo.currentAssignedEffektParam & 0x0F;
+                            int effektOpEx = aktMemo.currentAssignedEffektParam & 0x0F;
 
                             if (isIT && effektOpEx == 0)
                                 aktMemo.noteDelayCount = 1;
@@ -2103,13 +2083,13 @@ public abstract class BasicModMixer {
      * @param aktMemo
      * @since 18.06.2006
      */
-    protected void fitIntoLoops(final ChannelMemory aktMemo) {
-        final Sample sample = aktMemo.currentSample;
+    protected void fitIntoLoops(ChannelMemory aktMemo) {
+        Sample sample = aktMemo.currentSample;
         if (sample.length <= 0) return;
 
         aktMemo.currentTuningPos += aktMemo.currentTuning;
         if (aktMemo.currentTuningPos >= ModConstants.SHIFT_MAX) {
-            final int addToSamplePos = aktMemo.currentTuningPos >> ModConstants.SHIFT;
+            int addToSamplePos = aktMemo.currentTuningPos >> ModConstants.SHIFT;
             aktMemo.currentTuningPos &= ModConstants.SHIFT_MASK;
 
             // Set the start/end loop position to check against...
@@ -2119,8 +2099,7 @@ public abstract class BasicModMixer {
             int inLoop = 0;
             boolean interpolateLoop = false;
 
-            if ((sample.loopType & ModConstants.LOOP_SUSTAIN_ON) != 0 && !aktMemo.keyOff) // Sustain Loop on?
-            {
+            if ((sample.loopType & ModConstants.LOOP_SUSTAIN_ON) != 0 && !aktMemo.keyOff) { // Sustain Loop on?
                 loopStart = sample.sustainLoopStart;
                 loopEnd = sample.sustainLoopStop;
                 loopLength = sample.sustainLoopLength;
@@ -2152,15 +2131,14 @@ public abstract class BasicModMixer {
                     } else
                         // We need to check against a loop set - maybe a sustain loop is finished
                         // but no normal loop is set:
-                        if (inLoop == 0) // if no loop, loopEnd is sampleLength - we are finished.
-                        {
+                        if (inLoop == 0) { // if no loop, loopEnd is sampleLength - we are finished.
                             aktMemo.instrumentFinished = true;
                             aktMemo.interpolationMagic = 0;
                             // if this is a NNA channel, free it
                             if (aktMemo.isNNA) aktMemo.channelNumber = -1;
                             return;
                         } else {
-                            final int overShoot = (aktMemo.currentSamplePos - loopEnd) % loopLength;
+                            int overShoot = (aktMemo.currentSamplePos - loopEnd) % loopLength;
 
                             // check if loop, that was enabled, is a ping pong
                             if ((inLoop == ModConstants.LOOP_ON && (sample.loopType & ModConstants.LOOP_IS_PINGPONG) != 0) ||
@@ -2173,8 +2151,7 @@ public abstract class BasicModMixer {
                             interpolateLoop = true;
                         }
                 }
-            } else // Backwards in Ping Pong
-            {
+            } else { // Backwards in Ping Pong
                 aktMemo.currentSamplePos -= addToSamplePos;
 
                 if (aktMemo.currentSamplePos < loopStart) {
@@ -2185,8 +2162,7 @@ public abstract class BasicModMixer {
             }
 
             // after reposition of sample pointer, check for interpolation magic
-            if (inLoop == ModConstants.LOOP_SUSTAIN_ON && !aktMemo.keyOff) // Sustain Loop on?
-            {
+            if (inLoop == ModConstants.LOOP_SUSTAIN_ON && !aktMemo.keyOff) { // Sustain Loop on?
                 aktMemo.interpolationMagic = sample.getSustainLoopMagic(aktMemo.currentSamplePos, interpolateLoop);
             } else if (inLoop == ModConstants.LOOP_ON) {
                 aktMemo.interpolationMagic = sample.getLoopMagic(aktMemo.currentSamplePos, interpolateLoop);
@@ -2201,16 +2177,16 @@ public abstract class BasicModMixer {
      * @param leftBuffer
      * @param rightBuffer
      * @param startIndex
-     * @param amount
+     * @param endIndex
      * @param aktMemo
      * @since 18.06.2006
      */
-    protected void mixChannelIntoBuffers(final long[] leftBuffer, final long[] rightBuffer, final int startIndex, final int endIndex, final ChannelMemory aktMemo) {
+    protected void mixChannelIntoBuffers(long[] leftBuffer, long[] rightBuffer, int startIndex, int endIndex, ChannelMemory aktMemo) {
         for (int i = startIndex; i < endIndex; i++) {
             // Retrieve the sample data for this point (interpolated, if necessary)
             // the array "samples" is created with 2 elements per default
             // we will receive 2 long values even with mono samples
-            final int doISPhere = (aktMemo.assignedInstrument != null && aktMemo.assignedInstrument.resampling > -1) ? aktMemo.assignedInstrument.resampling : doISP;
+            int doISPhere = (aktMemo.assignedInstrument != null && aktMemo.assignedInstrument.resampling > -1) ? aktMemo.assignedInstrument.resampling : doISP;
             aktMemo.currentSample.getInterpolatedSample(samples, doISPhere, aktMemo.currentTuning, aktMemo.currentSamplePos, aktMemo.currentTuningPos, !aktMemo.isForwardDirection, aktMemo.interpolationMagic);
 
             // Resonance Filters
@@ -2276,23 +2252,23 @@ public abstract class BasicModMixer {
      * @since 18.06.2006
      */
 //	private ChannelMemory memory = new ChannelMemory();
-    private void fillRampDataIntoBuffers(final long[] leftBuffer, final long[] rightBuffer, final ChannelMemory aktMemo) {
+    private void fillRampDataIntoBuffers(long[] leftBuffer, long[] rightBuffer, ChannelMemory aktMemo) {
         // Remember changeable values
-        final long filter_Y1 = aktMemo.filter_Y1;
-        final long filter_Y2 = aktMemo.filter_Y2;
-        final long filter_Y3 = aktMemo.filter_Y3;
-        final long filter_Y4 = aktMemo.filter_Y4;
-        final int actRampVolLeft = aktMemo.actRampVolLeft;
-        final int actRampVolRight = aktMemo.actRampVolRight;
-        final int deltaVolLeft = aktMemo.deltaVolLeft;
-        final int deltaVolRight = aktMemo.deltaVolRight;
-        final boolean instrumentFinished = aktMemo.instrumentFinished;
-        final int currentTuningPos = aktMemo.currentTuningPos;
-        final int currentSamplePos = aktMemo.currentSamplePos;
-        final boolean isForwardDirection = aktMemo.isForwardDirection;
-        final int interpolationMagic = aktMemo.interpolationMagic;
-        final Sample currentSample = aktMemo.currentSample;
-        final Sample assignedSample = aktMemo.assignedSample;
+        long filter_Y1 = aktMemo.filter_Y1;
+        long filter_Y2 = aktMemo.filter_Y2;
+        long filter_Y3 = aktMemo.filter_Y3;
+        long filter_Y4 = aktMemo.filter_Y4;
+        int actRampVolLeft = aktMemo.actRampVolLeft;
+        int actRampVolRight = aktMemo.actRampVolRight;
+        int deltaVolLeft = aktMemo.deltaVolLeft;
+        int deltaVolRight = aktMemo.deltaVolRight;
+        boolean instrumentFinished = aktMemo.instrumentFinished;
+        int currentTuningPos = aktMemo.currentTuningPos;
+        int currentSamplePos = aktMemo.currentSamplePos;
+        boolean isForwardDirection = aktMemo.isForwardDirection;
+        int interpolationMagic = aktMemo.interpolationMagic;
+        Sample currentSample = aktMemo.currentSample;
+        Sample assignedSample = aktMemo.assignedSample;
         aktMemo.assignedSample = null; // no sample swap here!
 
 //		memory.setUpFrom(aktMemo);
@@ -2326,14 +2302,14 @@ public abstract class BasicModMixer {
      * @param bufferSize
      * @return #of samples mixed, -1 if mixing finished
      */
-    public int mixIntoBuffer(final long[] leftBuffer, final long[] rightBuffer, final int bufferSize) {
+    public int mixIntoBuffer(long[] leftBuffer, long[] rightBuffer, int bufferSize) {
         if (modFinished) return -1;
 
         int startIndex = 0; // we start at zero
         int endIndex = 0; // where to finish mixing
 
         // is there something left for interweaving?
-        final int samplesAlreadMixed = samplesPerTick - leftOverSamplesPerTick;
+        int samplesAlreadMixed = samplesPerTick - leftOverSamplesPerTick;
         int interweaveStartIndex = (samplesAlreadMixed < ModConstants.INTERWEAVE_LEN) ? samplesAlreadMixed : 0;
         boolean interweave = interweaveStartIndex != 0;
 
@@ -2341,7 +2317,7 @@ public abstract class BasicModMixer {
             if (leftOverSamplesPerTick <= 0) {
                 // Stepping over a tick, so prepare interweaving ramp buffer
                 for (int c = 0; c < maxChannels; c++) {
-                    final ChannelMemory aktMemo = channelMemory[c];
+                    ChannelMemory aktMemo = channelMemory[c];
                     if (!aktMemo.instrumentFinished && aktMemo.currentSample != null)
                         fillRampDataIntoBuffers(interweaveBufferLeft, interweaveBufferRight, aktMemo);
                 }
@@ -2352,13 +2328,13 @@ public abstract class BasicModMixer {
                 leftOverSamplesPerTick = samplesPerTick; // speed changes also change samplesPerTick - so reset after doTickEvents!
             }
 
-            final int mixAmount = ((endIndex + leftOverSamplesPerTick) >= bufferSize) ? bufferSize - endIndex : leftOverSamplesPerTick;
+            int mixAmount = ((endIndex + leftOverSamplesPerTick) >= bufferSize) ? bufferSize - endIndex : leftOverSamplesPerTick;
 
             endIndex += mixAmount;
             leftOverSamplesPerTick -= mixAmount;
 
             for (int c = 0; c < maxChannels; c++) {
-                final ChannelMemory aktMemo = channelMemory[c];
+                ChannelMemory aktMemo = channelMemory[c];
 
                 aktMemo.bigSampleLeft = aktMemo.bigSampleRight = 0;
                 // Mix this channel?
@@ -2367,9 +2343,9 @@ public abstract class BasicModMixer {
 
                 if (!aktMemo.isNNA) {
                     // This is only for eye-candy
-                    final boolean setZero = aktMemo.instrumentFinished || globalVolume == 0 || masterVolume == 0;
-                    final int sampleL = (setZero) ? 0 : (int) (((((aktMemo.bigSampleLeft << (7 + ((useGlobalPreAmp) ? ModConstants.PREAMP_SHIFT - 1 : ModConstants.PREAMP_SHIFT))) / (long) globalVolume / (long) masterVolume) << extraAttenuation) + 0x8000000) >> 28);
-                    final int sampleR = (setZero) ? 0 : (int) (((((aktMemo.bigSampleRight << (7 + ((useGlobalPreAmp) ? ModConstants.PREAMP_SHIFT - 1 : ModConstants.PREAMP_SHIFT))) / (long) globalVolume / (long) masterVolume) << extraAttenuation) + 0x8000000) >> 28);
+                    boolean setZero = aktMemo.instrumentFinished || globalVolume == 0 || masterVolume == 0;
+                    int sampleL = (setZero) ? 0 : (int) (((((aktMemo.bigSampleLeft << (7 + ((useGlobalPreAmp) ? ModConstants.PREAMP_SHIFT - 1 : ModConstants.PREAMP_SHIFT))) / (long) globalVolume / (long) masterVolume) << extraAttenuation) + 0x8000000) >> 28);
+                    int sampleR = (setZero) ? 0 : (int) (((((aktMemo.bigSampleRight << (7 + ((useGlobalPreAmp) ? ModConstants.PREAMP_SHIFT - 1 : ModConstants.PREAMP_SHIFT))) / (long) globalVolume / (long) masterVolume) << extraAttenuation) + 0x8000000) >> 28);
                     firePeekUpdate(sampleRate, samplesMixed, c, sampleL, sampleR, aktMemo.doSurround);
                 }
             }
@@ -2378,10 +2354,10 @@ public abstract class BasicModMixer {
             if (interweave) {
                 // check for space left in target buffer
                 // if not, in the next round, interweaveStartIndex will be set accordingly
-                final int interweaveBufferLen = (mixAmount < ModConstants.INTERWEAVE_LEN) ? mixAmount : ModConstants.INTERWEAVE_LEN;
+                int interweaveBufferLen = (mixAmount < ModConstants.INTERWEAVE_LEN) ? mixAmount : ModConstants.INTERWEAVE_LEN;
                 for (int n = interweaveStartIndex; n < interweaveBufferLen; n++) {
-                    final long difFade = (long) (ModConstants.INTERWEAVE_LEN - n);
-                    final int bufferIndex = startIndex + n - interweaveStartIndex;
+                    long difFade = ModConstants.INTERWEAVE_LEN - n;
+                    int bufferIndex = startIndex + n - interweaveStartIndex;
 
                     leftBuffer[bufferIndex] = ((leftBuffer[bufferIndex] * (long) n) + (interweaveBufferLeft[n] * difFade)) >> ModConstants.INTERWEAVE_FRAC;
                     rightBuffer[bufferIndex] = ((rightBuffer[bufferIndex] * (long) n) + (interweaveBufferRight[n] * difFade)) >> ModConstants.INTERWEAVE_FRAC;
@@ -2406,9 +2382,8 @@ public abstract class BasicModMixer {
      */
     private void setNNAMuteStatus() {
         for (int c = mod.getNChannels(); c < maxChannels; c++) {
-            final ChannelMemory aktMemo = channelMemory[c];
-            if (aktMemo.channelNumber > -1) // aktive NNA-Channel
-            {
+            ChannelMemory aktMemo = channelMemory[c];
+            if (aktMemo.channelNumber > -1) { // aktive NNA-Channel
                 aktMemo.muted = channelMemory[aktMemo.channelNumber].muted;
             }
         }
@@ -2420,9 +2395,9 @@ public abstract class BasicModMixer {
      * @param channelNumber
      * @since 27.11.2023
      */
-    public void toggleMuteChannel(final int channelNumber) {
+    public void toggleMuteChannel(int channelNumber) {
         if (channelNumber >= 0 && channelNumber <= mod.getNChannels()) {
-            final ChannelMemory aktMemo = channelMemory[channelNumber];
+            ChannelMemory aktMemo = channelMemory[channelNumber];
             if (!aktMemo.muteWasITforced) aktMemo.muted = !aktMemo.muted;
             setNNAMuteStatus();
         }
@@ -2434,9 +2409,9 @@ public abstract class BasicModMixer {
      * @param channelNumber
      * @since 16.03.2024
      */
-    public void setMuteChannel(final int channelNumber, final boolean muted) {
+    public void setMuteChannel(int channelNumber, boolean muted) {
         if (channelNumber >= 0 && channelNumber <= mod.getNChannels()) {
-            final ChannelMemory aktMemo = channelMemory[channelNumber];
+            ChannelMemory aktMemo = channelMemory[channelNumber];
             if (!aktMemo.muteWasITforced) aktMemo.muted = muted;
             setNNAMuteStatus();
         }
@@ -2449,7 +2424,7 @@ public abstract class BasicModMixer {
      */
     public void unMuteAll() {
         for (int c = 0; c < mod.getNChannels(); c++) {
-            final ChannelMemory aktMemo = channelMemory[c];
+            ChannelMemory aktMemo = channelMemory[c];
             aktMemo.muted = aktMemo.muteWasITforced;
         }
         setNNAMuteStatus();
@@ -2461,10 +2436,10 @@ public abstract class BasicModMixer {
      * @param channelNumber
      * @since 27.11.2023
      */
-    public void makeChannelSolo(final int channelNumber) {
+    public void makeChannelSolo(int channelNumber) {
         if (channelNumber >= 0 && channelNumber <= maxChannels) {
             for (int c = 0; c < maxChannels; c++) {
-                final ChannelMemory aktMemo = channelMemory[c];
+                ChannelMemory aktMemo = channelMemory[c];
                 if (!aktMemo.muteWasITforced) aktMemo.muted = c != channelNumber;
             }
             setNNAMuteStatus();
@@ -2476,7 +2451,7 @@ public abstract class BasicModMixer {
      * @since 28.11.2023
      */
     public boolean[] getMuteStatus() {
-        final boolean[] mutedChannels = new boolean[maxChannels];
+        boolean[] mutedChannels = new boolean[maxChannels];
         for (int c = 0; c < maxChannels; c++) {
             mutedChannels[c] = channelMemory[c].muted;
         }
@@ -2487,7 +2462,7 @@ public abstract class BasicModMixer {
      * @param listener
      * @since 28.11.2023
      */
-    public void registerUpdateListener(final ModUpdateListener listener) {
+    public void registerUpdateListener(ModUpdateListener listener) {
         if (listeners != null && !listeners.contains(listener)) listeners.add(listener);
     }
 
@@ -2495,7 +2470,7 @@ public abstract class BasicModMixer {
      * @param listener
      * @since 28.11.2023
      */
-    public void deregisterUpdateListener(final ModUpdateListener listener) {
+    public void deregisterUpdateListener(ModUpdateListener listener) {
         if (listeners != null && listeners.contains(listener)) listeners.remove(listener);
     }
 
@@ -2503,7 +2478,7 @@ public abstract class BasicModMixer {
      * @param newFireUpdates
      * @since 28.11.2023
      */
-    public void setFireUpdates(final boolean newFireUpdates) {
+    public void setFireUpdates(boolean newFireUpdates) {
         fireUpdates = newFireUpdates;
         fireInformationUpdate(fireUpdates);
     }
@@ -2524,7 +2499,7 @@ public abstract class BasicModMixer {
      * @param position
      * @since 28.11.2023
      */
-    public void firePatternPositionUpdate(final int sampleRate, final long samplesMixed, final long position) {
+    public void firePatternPositionUpdate(int sampleRate, long samplesMixed, long position) {
         if (listeners != null && fireUpdates) {
             PatternPositionInformation information = new PatternPositionInformation(sampleRate, samplesMixed, position);
             for (ModUpdateListener listener : listeners) {
@@ -2543,7 +2518,7 @@ public abstract class BasicModMixer {
      * @param actPeekRight
      * @since 28.11.2023
      */
-    public void firePeekUpdate(final int sampleRate, final long samplesMixed, final int channel, final int actPeekLeft, final int actPeekRight, final boolean isSurround) {
+    public void firePeekUpdate(int sampleRate, long samplesMixed, int channel, int actPeekLeft, int actPeekRight, boolean isSurround) {
         if (listeners != null && fireUpdates) {
             PeekInformation information = new PeekInformation(sampleRate, samplesMixed, channel, actPeekLeft, actPeekRight, isSurround);
             for (ModUpdateListener listener : listeners) {
@@ -2558,7 +2533,7 @@ public abstract class BasicModMixer {
      * @param newStatus
      * @since 28.11.2023
      */
-    public void fireInformationUpdate(final boolean newStatus) {
+    public void fireInformationUpdate(boolean newStatus) {
         if (listeners != null) {
             StatusInformation information = new StatusInformation(newStatus);
             for (ModUpdateListener listener : listeners) {

@@ -57,7 +57,7 @@ public class Kaiser {
         super();
     }
 
-    private static double iZero(final double y) {
+    private static double iZero(double y) {
         double s = 1, ds = 1, d = 0;
         do {
             d = d + 2;
@@ -69,14 +69,14 @@ public class Kaiser {
         return s;
     }
 
-    private static void getSinc(final int[] lut, final double beta, double cutoff) {
+    private static void getSinc(int[] lut, double beta, double cutoff) {
         if (cutoff > 0.999) {
             // Avoid mixer overflows.
             // 1.0 itself does not make much sense.
             cutoff = 0.999;
         }
-        final double izeroBeta = iZero(beta);
-        final double kPi = 4.0 * Math.atan(1.0) * cutoff;
+        double izeroBeta = iZero(beta);
+        double kPi = 4.0 * Math.atan(1.0) * cutoff;
         for (int isrc = 0; isrc < SINC_PHASES_ALL; isrc++) {
             double fsinc;
             int ix = 7 - (isrc & 7);
@@ -84,11 +84,11 @@ public class Kaiser {
             if (ix == ((SINC_WIDTH / 2) * SINC_PHASES)) {
                 fsinc = 1.0;
             } else {
-                final double x = (double) (ix - ((SINC_WIDTH / 2) * SINC_PHASES)) * (double) (1.0 / SINC_PHASES);
-                final double xPi = x * kPi;
+                double x = (double) (ix - ((SINC_WIDTH / 2) * SINC_PHASES)) * (1.0 / SINC_PHASES);
+                double xPi = x * kPi;
                 fsinc = Math.sin(xPi) * iZero(beta * Math.sqrt(1 - x * x * (1.0 / 16.0))) / (izeroBeta * xPi); // Kaiser window
             }
-            final double coeff = fsinc * cutoff;
+            double coeff = fsinc * cutoff;
             lut[isrc] = (int) Math.floor(coeff * (1 << SINC_QUANTSHIFT));
         }
     }

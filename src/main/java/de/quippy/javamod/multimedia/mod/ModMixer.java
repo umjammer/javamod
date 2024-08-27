@@ -69,12 +69,12 @@ public class ModMixer extends BasicMixer {
 
     private long currentSamplesWritten;
 
-    private ModDSP modDSP = new ModDSP();
+    private final ModDSP modDSP = new ModDSP();
 
     /**
      * Constructor for ModMixer
      */
-    public ModMixer(final Module mod, final int sampleSizeInBits, final int channels, final int sampleRate, final int doISP, final boolean doWideStereoMix, final boolean doNoiseReduction, final boolean doMegaBass, final boolean doDCremoval, final int doNoLoops, final int maxNNAChannels, final int msBufferSize, final int ditherFilter, final int ditherType, final boolean ditherByPass) {
+    public ModMixer(Module mod, int sampleSizeInBits, int channels, int sampleRate, int doISP, boolean doWideStereoMix, boolean doNoiseReduction, boolean doMegaBass, boolean doDCremoval, int doNoLoops, int maxNNAChannels, int msBufferSize, int ditherFilter, int ditherType, boolean ditherByPass) {
         super();
         this.mod = mod;
         this.sampleSizeInBits = sampleSizeInBits;
@@ -102,7 +102,7 @@ public class ModMixer extends BasicMixer {
         outputBufferSize = bufferSize * channels; // For each channel!
 
         // Now for the bits (linebuffer):
-        final int bytesPerSample = sampleSizeInBits >> 3; // DIV 8;
+        int bytesPerSample = sampleSizeInBits >> 3; // DIV 8;
         outputBufferSize *= bytesPerSample;
         output = new byte[outputBufferSize];
         setSourceLineBufferSize(outputBufferSize);
@@ -126,7 +126,7 @@ public class ModMixer extends BasicMixer {
     /**
      * @param doNoiseReduction The doNoiseReduction to set.
      */
-    public void setDoNoiseReduction(final boolean doNoiseReduction) {
+    public void setDoNoiseReduction(boolean doNoiseReduction) {
         this.doNoiseReduction = doNoiseReduction;
         if (doNoiseReduction) modDSP.initNoiseReduction();
     }
@@ -134,7 +134,7 @@ public class ModMixer extends BasicMixer {
     /**
      * @param doWideStereoMix The doWideStereoMix to set.
      */
-    public void setDoWideStereoMix(final boolean doWideStereoMix) {
+    public void setDoWideStereoMix(boolean doWideStereoMix) {
         this.doWideStereoMix = doWideStereoMix;
 //		if (doWideStereoMix) modDSP.initWideStereo(sampleRate);
         if (doWideStereoMix) modDSP.initSurround(sampleRate);
@@ -143,7 +143,7 @@ public class ModMixer extends BasicMixer {
     /**
      * @param doMegaBass The doMegaBass to set.
      */
-    public void setDoMegaBass(final boolean doMegaBass) {
+    public void setDoMegaBass(boolean doMegaBass) {
         this.doMegaBass = doMegaBass;
         if (doMegaBass) modDSP.initMegaBass(sampleRate);
     }
@@ -158,25 +158,25 @@ public class ModMixer extends BasicMixer {
     /**
      * @param doNoLoops the loop to set
      */
-    public void setDoNoLoops(final int doNoLoops) {
+    public void setDoNoLoops(int doNoLoops) {
         modMixer.changeDoNoLoops(doNoLoops);
     }
 
     /**
      * @param doISP The doISP to set.
      */
-    public void setDoISP(final int doISP) {
+    public void setDoISP(int doISP) {
         modMixer.changeISP(doISP);
     }
 
     /**
-     * @param myBufferSize
+     * @param msBufferSize
      */
-    public void setBufferSize(final int msBufferSize) {
-        final int oldMsBufferSize = this.msBufferSize;
+    public void setBufferSize(int msBufferSize) {
+        int oldMsBufferSize = this.msBufferSize;
 
-        final boolean wasPaused = isPaused();
-        final boolean wasPlaying = isPlaying();
+        boolean wasPaused = isPaused();
+        boolean wasPlaying = isPlaying();
         if (wasPlaying && !wasPaused) pausePlayback();
 
         this.msBufferSize = msBufferSize;
@@ -196,11 +196,11 @@ public class ModMixer extends BasicMixer {
     /**
      * @param sampleRate The sampleRate to set.
      */
-    public void setSampleRate(final int sampleRate) {
-        final int oldSampleRate = this.sampleRate;
+    public void setSampleRate(int sampleRate) {
+        int oldSampleRate = this.sampleRate;
 
-        final boolean wasPaused = isPaused();
-        final boolean wasPlaying = isPlaying();
+        boolean wasPaused = isPaused();
+        boolean wasPlaying = isPlaying();
         if (wasPlaying && !wasPaused) pausePlayback();
 
         this.sampleRate = sampleRate;
@@ -221,11 +221,11 @@ public class ModMixer extends BasicMixer {
     /**
      * @param sampleSizeInBits The sampleSizeInBits to set.
      */
-    public void setSampleSizeInBits(final int sampleSizeInBits) {
-        final int oldsampleSizeInBits = this.sampleSizeInBits;
+    public void setSampleSizeInBits(int sampleSizeInBits) {
+        int oldsampleSizeInBits = this.sampleSizeInBits;
 
-        final boolean wasPaused = isPaused();
-        final boolean wasPlaying = isPlaying();
+        boolean wasPaused = isPaused();
+        boolean wasPlaying = isPlaying();
         if (wasPlaying && !wasPaused) pausePlayback();
 
         this.sampleSizeInBits = sampleSizeInBits;
@@ -245,10 +245,10 @@ public class ModMixer extends BasicMixer {
     /**
      * @param channels The channels to set.
      */
-    public void setChannels(final int channels) {
-        final int oldChannels = this.channels;
+    public void setChannels(int channels) {
+        int oldChannels = this.channels;
 
-        final boolean wasPlaying = !isPaused();
+        boolean wasPlaying = !isPaused();
         if (wasPlaying) pausePlayback();
 
         this.channels = channels;
@@ -266,10 +266,10 @@ public class ModMixer extends BasicMixer {
     /**
      * @param maxNNAChannels the maxNNAChannels to set
      */
-    public void setMaxNNAChannels(final int maxNNAChannels) {
-        final int oldMaxNNAChannels = this.maxNNAChannels;
+    public void setMaxNNAChannels(int maxNNAChannels) {
+        int oldMaxNNAChannels = this.maxNNAChannels;
 
-        final boolean wasPlaying = !isPaused();
+        boolean wasPlaying = !isPaused();
         if (wasPlaying) pausePlayback();
 
         modMixer.changeMaxNNAChannels(this.maxNNAChannels = maxNNAChannels);
@@ -285,12 +285,12 @@ public class ModMixer extends BasicMixer {
     }
 
     /**
-     * @param ditherFilterType the ditherFilterType to set
+     * @param newDitherFilterType the ditherFilterType to set
      */
-    public void setDitherFilterType(final int newDitherFilterType) {
-        final int oldDitherFilterType = ditherFilterType;
+    public void setDitherFilterType(int newDitherFilterType) {
+        int oldDitherFilterType = ditherFilterType;
 
-        final boolean wasPlaying = !isPaused();
+        boolean wasPlaying = !isPaused();
         if (wasPlaying) pausePlayback();
 
         ditherFilterType = newDitherFilterType;
@@ -308,12 +308,12 @@ public class ModMixer extends BasicMixer {
     }
 
     /**
-     * @param ditherType the ditherType to set
+     * @param newDitherType the ditherType to set
      */
-    public void setDitherType(final int newDitherType) {
-        final int oldDitherType = ditherType;
+    public void setDitherType(int newDitherType) {
+        int oldDitherType = ditherType;
 
-        final boolean wasPlaying = !isPaused();
+        boolean wasPlaying = !isPaused();
         if (wasPlaying) pausePlayback();
 
         ditherType = newDitherType;
@@ -331,9 +331,9 @@ public class ModMixer extends BasicMixer {
     }
 
     /**
-     * @param ditherByPass set if dither is bypass
+     * @param newByPassDither set if dither is bypass
      */
-    public void setDitherByPass(final boolean newByPassDither) {
+    public void setDitherByPass(boolean newByPassDither) {
         ditherByPass = newByPassDither;
         if (dither != null) dither.setBypass(ditherByPass);
     }
@@ -374,7 +374,7 @@ public class ModMixer extends BasicMixer {
      * @since 13.02.2012
      */
     @Override
-    protected void seek(final long milliseconds) {
+    protected void seek(long milliseconds) {
         currentSamplesWritten = modMixer.seek(milliseconds);
     }
 
@@ -438,10 +438,10 @@ public class ModMixer extends BasicMixer {
 
         if (getSeekPosition() > 0) seek(getSeekPosition());
 
-        final long[] samples = new long[2];
+        long[] samples = new long[2];
 
         // how many Samples can we write out? We will need that to reset the currentSamplesWritten if MOD is looped.
-        final long allSamplesWritten = (getLengthInMilliseconds() != -1) ? getLengthInMilliseconds() * sampleRate / 1000L : -1;
+        long allSamplesWritten = (getLengthInMilliseconds() != -1) ? getLengthInMilliseconds() * sampleRate / 1000L : -1;
 
         try {
             openAudioDevice();
@@ -479,10 +479,9 @@ public class ModMixer extends BasicMixer {
                         if (doWideStereoMix && channels > 1) modDSP.processStereoSurround(samples);
 
                         // Reduce to sample size by dithering - if necessary!
-                        if (sampleSizeInBits < 32) // our maximum - no dithering needed
-                        {
-                            samples[0] = (long) ((dither.process((double) samples[0] / (double) (0x7FFFFFFFL), 0) * (double) maximum) + 0.5d);
-                            samples[1] = (long) ((dither.process((double) samples[1] / (double) (0x7FFFFFFFL), 1) * (double) maximum) + 0.5d);
+                        if (sampleSizeInBits < 32) { // our maximum - no dithering needed
+                            samples[0] = (long) ((dither.process((double) samples[0] / (double) (0x7FFF_FFFFL), 0) * (double) maximum) + 0.5d);
+                            samples[1] = (long) ((dither.process((double) samples[1] / (double) (0x7FFF_FFFFL), 1) * (double) maximum) + 0.5d);
                         }
 
                         // Clip the values to target:

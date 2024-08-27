@@ -82,9 +82,9 @@ public class FastMath {
     }
 
     public static double pow(double a, double b) {
-        long x = (long) (Double.doubleToLongBits(a) >> 32);
+        long x = Double.doubleToLongBits(a) >> 32;
         long y = (long) (b * (double) (x - 1072632447) + 1072632447D);
-        return Double.longBitsToDouble((long) y << 32);
+        return Double.longBitsToDouble(y << 32);
     }
 
     public static float floor(float value) {

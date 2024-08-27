@@ -23,9 +23,8 @@
 package de.quippy.javamod.multimedia.midi;
 
 import java.io.File;
-
-import javax.sound.midi.MetaEventListener;
-import javax.sound.midi.MetaMessage;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
@@ -46,7 +45,8 @@ import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 
 import de.quippy.javamod.mixer.BasicMixer;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -55,8 +55,10 @@ import de.quippy.javamod.system.Log;
  */
 public class MidiMixer extends BasicMixer {
 
-    private boolean capture;
-    private Mixer.Info mixerInfo;
+    private static final Logger logger = getLogger(MidiMixer.class.getName());
+
+    private final boolean capture;
+    private final Mixer.Info mixerInfo;
 
     private long seekPosition;
 
@@ -70,11 +72,11 @@ public class MidiMixer extends BasicMixer {
     private int frameCalc;
     private TargetDataLine targetDataLine;
 
-    private Sequence sequence;
+    private final Sequence sequence;
     private Sequencer sequencer;
     private MidiDevice midiOutput;
-    private MidiDevice.Info outputDeviceInfo;
-    private File soundBankFile;
+    private final MidiDevice.Info outputDeviceInfo;
+    private final File soundBankFile;
 
     /**
      * Constructor for MidiMixer
@@ -119,10 +121,9 @@ public class MidiMixer extends BasicMixer {
 
                 targetDataLine.open();
                 // Now for some rediculous programming - the interfaces do not provide anything good...
-                Control controles[] = targetDataLine.getControls();
+                Control[] controles = targetDataLine.getControls();
                 for (int i = 0; i < controles.length; i++) {
-                    if (controles[i] instanceof CompoundControl) // Found it...
-                    {
+                    if (controles[i] instanceof CompoundControl) { // Found it...
                         Control[] children = ((CompoundControl) controles[i]).getMemberControls();
                         for (int j = 0; j < children.length; j++) {
                             if (children[i] instanceof BooleanControl) {
@@ -139,17 +140,11 @@ public class MidiMixer extends BasicMixer {
         }
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#isSeekSupported()
-     */
     @Override
     public boolean isSeekSupported() {
         return true;
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#getMillisecondPosition()
-     */
     @Override
     public long getMillisecondPosition() {
         if (sequencer != null) {
@@ -159,10 +154,9 @@ public class MidiMixer extends BasicMixer {
     }
 
     /**
-     * @param milliseconds
-     * @see de.quippy.javamod.mixer.BasicMixer#seek(long)
      * @since 13.02.2012
      */
+    @Override
     protected void seek(long milliseconds) {
         if (sequencer != null)
             sequencer.setMicrosecondPosition(milliseconds * 1000L);
@@ -170,9 +164,6 @@ public class MidiMixer extends BasicMixer {
             seekPosition = milliseconds;
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#setMillisecondPosition(long)
-     */
     @Override
     public void setMillisecondPosition(long milliseconds) {
         if (!isPlaying())
@@ -181,18 +172,11 @@ public class MidiMixer extends BasicMixer {
             seek(milliseconds);
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#getLengthInMilliseconds()
-     */
     @Override
     public long getLengthInMilliseconds() {
         return (sequence != null) ? sequence.getMicrosecondLength() / 1000L : 0L;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getChannelCount()
-     */
     @Override
     public int getChannelCount() {
         if (sequencer != null) {
@@ -204,19 +188,11 @@ public class MidiMixer extends BasicMixer {
         return 0;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getCurrentKBperSecond()
-     */
     @Override
     public int getCurrentKBperSecond() {
         return (44100 * 16 * 2) / 1000;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getCurrentSampleRate()
-     */
     @Override
     public int getCurrentSampleRate() {
         return 44100; // sampleRate is only for capture
@@ -241,7 +217,7 @@ public class MidiMixer extends BasicMixer {
                     Soundbank bank = MidiSystem.getSoundbank(soundBankFile);
                     ((Synthesizer) midiOutput).loadAllInstruments(bank);
                 } catch (Exception ex) {
-                    Log.error("Error occured when opening soundfont bank", ex);
+                    logger.log(Level.ERROR, "Error occured when opening soundfont bank", ex);
                 }
             }
             Receiver synthReceiver = midiOutput.getReceiver();
@@ -250,13 +226,10 @@ public class MidiMixer extends BasicMixer {
             if (isPlaying) startLine(false);
         } catch (MidiUnavailableException ex) {
             closeAudioDevice();
-            Log.error("Error occured when opening midi device", ex);
+            logger.log(Level.ERROR, "Error occured when opening midi device", ex);
         }
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#openAudioDevice()
-     */
     @Override
     protected void openAudioDevice() {
         if (capture && targetDataLine != null) {
@@ -266,20 +239,17 @@ public class MidiMixer extends BasicMixer {
                 targetDataLine.open();
             } catch (LineUnavailableException ex) {
                 closeAudioDevice();
-                Log.error("[MidiMixer]: TargetDataLine", ex);
+                logger.log(Level.ERROR, "[MidiMixer]: TargetDataLine", ex);
             }
         } else
             closeAudioDevice();
 
         try {
             sequencer = MidiSystem.getSequencer(false); // get an unconnected sequencer
-            sequencer.addMetaEventListener(new MetaEventListener() {
-                public void meta(MetaMessage event) {
-                    if (event.getType() == 47) // Song finished
-                    {
-                        setHasFinished();
-                        stopPlayback();
-                    }
+            sequencer.addMetaEventListener(event -> {
+                if (event.getType() == 47) { // Song finished
+                    setHasFinished();
+                    stopPlayback();
                 }
             });
 
@@ -290,13 +260,10 @@ public class MidiMixer extends BasicMixer {
                 setNewOutputDevice(outputDeviceInfo);
             }
         } catch (Exception ex) {
-            Log.error("[MidiMixer]", ex);
+            logger.log(Level.ERROR, "[MidiMixer]", ex);
         }
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#closeAudioDevice()
-     */
     @Override
     protected void closeAudioDevice() {
         stopLine(false);
@@ -311,20 +278,14 @@ public class MidiMixer extends BasicMixer {
         super.fullyCloseAudioDevice();
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#startLine()
-     */
     @Override
-    protected void startLine(final boolean flushOrDrain) {
+    protected void startLine(boolean flushOrDrain) {
         if (targetDataLine != null) targetDataLine.start();
         if (sequencer != null) sequencer.start();
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#stopLine()
-     */
     @Override
-    protected void stopLine(final boolean flushOrDrain) {
+    protected void stopLine(boolean flushOrDrain) {
         if (sequencer != null) sequencer.stop();
         if (targetDataLine != null) {
             // if (targetDataLine.isRunning()) targetDataLine.drain(); // Not good, if data is not fetched!
@@ -332,19 +293,12 @@ public class MidiMixer extends BasicMixer {
         }
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#isInitialized()
-     */
     @Override
     protected boolean isInitialized() {
         if (capture && targetDataLine == null) return false;
         return sequencer != null;
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#startPlayback()
-     */
     @Override
     public void startPlayback() {
         initialize();

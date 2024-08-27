@@ -25,12 +25,10 @@ package de.quippy.javamod.multimedia.wav;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
-
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JPanel;
 
 import de.quippy.javamod.io.FileOrPackedInputStream;
@@ -68,11 +66,6 @@ public class WavContainer extends MultimediaContainer {
         super();
     }
 
-    /**
-     * @param url
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInstance(java.net.URL)
-     */
     @Override
     public MultimediaContainer getInstance(URL waveFileUrl) {
         MultimediaContainer result = super.getInstance(waveFileUrl);
@@ -86,51 +79,38 @@ public class WavContainer extends MultimediaContainer {
         } finally {
             if (audioInputStream != null) try {
                 audioInputStream.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
         return result;
     }
 
-    /**
-     * @param url
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongInfosFor(java.net.URL)
-     */
     @Override
     public Object[] getSongInfosFor(URL url) {
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
-        Long duration = Long.valueOf(-1);
+        long duration = -1;
         try {
             AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new FileOrPackedInputStream(url));
             AudioFormat audioFormat = audioInputStream.getFormat();
             float frameRate = audioFormat.getFrameRate();
             if (frameRate != AudioSystem.NOT_SPECIFIED) {
-                duration = Long.valueOf((long) (((float) audioInputStream.getFrameLength() * 1000f / frameRate) + 0.5));
+                duration = (long) (((float) audioInputStream.getFrameLength() * 1000f / frameRate) + 0.5);
             } else {
                 int channels = audioFormat.getChannels();
                 int sampleSizeInBits = audioFormat.getSampleSizeInBits();
                 int sampleSizeInBytes = sampleSizeInBits >> 3;
                 int sampleRate = (int) audioFormat.getSampleRate();
-                duration = Long.valueOf(((long) audioInputStream.available() / ((long) sampleSizeInBytes) / (long) channels) * 1000L / (long) sampleRate);
+                duration = ((long) audioInputStream.available() / ((long) sampleSizeInBytes) / (long) channels) * 1000L / (long) sampleRate;
             }
         } catch (Throwable ex) {
         }
         return new Object[] {songName, duration};
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#canExport()
-     */
     @Override
     public boolean canExport() {
         return false;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInfoPanel()
-     */
     @Override
     public JPanel getInfoPanel() {
         if (wavInfoPanel == null) {
@@ -140,63 +120,35 @@ public class WavContainer extends MultimediaContainer {
         return wavInfoPanel;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getConfigPanel()
-     */
     @Override
     public JPanel getConfigPanel() {
         return null;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getFileExtensionList()
-     */
     @Override
     public String[] getFileExtensionList() {
         return wavefile_Extensions;
     }
 
-    /**
-     * @return the name of the group of files this container knows
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getName()
-     */
     @Override
     public String getName() {
         return "Wave-File";
     }
 
-    /**
-     * @param newProps
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationChanged(java.util.Properties)
-     */
     @Override
     public void configurationChanged(Properties newProps) {
     }
 
-    /**
-     * @param props
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationSave(java.util.Properties)
-     */
     @Override
     public void configurationSave(Properties props) {
     }
 
-    /**
-     * @return
-     * @throws UnsupportedAudioFileException
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#createNewMixer()
-     */
     @Override
     public Mixer createNewMixer() {
         currentMixer = new WavMixer(getFileURL());
         return currentMixer;
     }
 
-    /**
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#cleanUp()
-     */
     @Override
     public void cleanUp() {
     }

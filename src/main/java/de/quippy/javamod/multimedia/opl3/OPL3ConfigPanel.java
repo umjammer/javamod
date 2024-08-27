@@ -25,10 +25,9 @@ package de.quippy.javamod.multimedia.opl3;
 import java.awt.GridBagLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
+import java.io.Serial;
 import java.util.Properties;
-
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -41,6 +40,7 @@ import javax.swing.filechooser.FileFilter;
 import de.quippy.javamod.main.gui.tools.FileChooserFilter;
 import de.quippy.javamod.main.gui.tools.FileChooserResult;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
+import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.Version;
 import de.quippy.javamod.system.Helpers;
 
 
@@ -50,6 +50,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class OPL3ConfigPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = 2068150448569323448L;
 
     private JPanel checkboxConfigPanel = null;
@@ -144,15 +145,13 @@ public class OPL3ConfigPanel extends JPanel {
             virtualStereo.setName("virtualStereo");
             virtualStereo.setText("Virtual Stereo Mix (not with OPL2)");
             virtualStereo.setFont(Helpers.getDialogFont());
-            virtualStereo.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
-                        OPL3Container parent = getParentContainer();
-                        if (parent != null) {
-                            OPL3Mixer currentMixer = parent.getCurrentMixer();
-                            if (currentMixer != null)
-                                currentMixer.setDoVirtualSereoMix(getVirtualStereo().isSelected());
-                        }
+            virtualStereo.addItemListener(e -> {
+                if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
+                    OPL3Container parent = getParentContainer();
+                    if (parent != null) {
+                        OPL3Mixer currentMixer = parent.getCurrentMixer();
+                        if (currentMixer != null)
+                            currentMixer.setDoVirtualSereoMix(getVirtualStereo().isSelected());
                     }
                 }
             });
@@ -172,10 +171,10 @@ public class OPL3ConfigPanel extends JPanel {
 
     private JComboBox<String> getOplVersion() {
         if (oplVersion == null) {
-            oplVersion = new JComboBox<String>();
+            oplVersion = new JComboBox<>();
             oplVersion.setName("oplVersion");
 
-            DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<String>(EmuOPL.versionNames);
+            DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<>(EmuOPL.versionNames);
             oplVersion.setModel(theModel);
             oplVersion.setFont(Helpers.getDialogFont());
             oplVersion.setEnabled(true);
@@ -216,35 +215,31 @@ public class OPL3ConfigPanel extends JPanel {
             searchButton.setText("Search");
             searchButton.setFont(Helpers.getDialogFont());
             searchButton.setToolTipText("Search an AdLib soundbank file for the ROL synthesizer");
-            searchButton.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    doSelectSoundbankFile();
-                }
-            });
+            searchButton.addActionListener(evt -> doSelectSoundbankFile());
         }
         return searchButton;
     }
 
-    private EmuOPL.version getOPLVersion() {
-        final int index = getOplVersion().getSelectedIndex();
+    private Version getOPLVersion() {
+        int index = getOplVersion().getSelectedIndex();
         return EmuOPL.getVersionForIndex(index);
     }
 
-    private void setOPLVersion(final EmuOPL.version version) {
+    private void setOPLVersion(Version version) {
         int index = EmuOPL.getIndexForVersion(version);
         if (index == -1)
-            index = EmuOPL.getIndexForVersion(Enum.valueOf(EmuOPL.version.class, OPL3Container.DEFAULT_OPLVERSION));
+            index = EmuOPL.getIndexForVersion(Enum.valueOf(Version.class, OPL3Container.DEFAULT_OPLVERSION));
         getOplVersion().setSelectedIndex(index);
     }
 
-    public void configurationChanged(final Properties newProps) {
+    public void configurationChanged(Properties newProps) {
         getRolSoundBankURL().setText(newProps.getProperty(OPL3Container.PROPERTY_OPL3PLAYER_SOUNDBANK, OPL3Container.DEFAULT_SOUNDBANKURL));
         getVirtualStereo().setSelected(Boolean.parseBoolean(newProps.getProperty(OPL3Container.PROPERTY_OPL3PLAYER_VIRTUAL_STEREO, OPL3Container.DEFAULT_VIRTUAL_STEREO)));
-        EmuOPL.version version = Enum.valueOf(EmuOPL.version.class, newProps.getProperty(OPL3Container.PROPERTY_OPL3PLAYER_OPLVERSION, OPL3Container.DEFAULT_OPLVERSION));
+        Version version = Enum.valueOf(Version.class, newProps.getProperty(OPL3Container.PROPERTY_OPL3PLAYER_OPLVERSION, OPL3Container.DEFAULT_OPLVERSION));
         setOPLVersion(version);
     }
 
-    public void configurationSave(final Properties props) {
+    public void configurationSave(Properties props) {
         props.setProperty(OPL3Container.PROPERTY_OPL3PLAYER_SOUNDBANK, getRolSoundBankURL().getText());
         props.setProperty(OPL3Container.PROPERTY_OPL3PLAYER_VIRTUAL_STEREO, Boolean.toString(getVirtualStereo().isSelected()));
         props.setProperty(OPL3Container.PROPERTY_OPL3PLAYER_OPLVERSION, getOPLVersion().toString());

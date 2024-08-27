@@ -32,7 +32,7 @@ import de.quippy.opl3.OPL3;
 public class EmuOPL3 extends EmuOPL {
 
     private OPL3 opl3 = null;
-    private int[] outbuffer = null;
+    private int[] outBuffer = null;
 
     /**
      * Constructor for EmuOPL3
@@ -40,66 +40,42 @@ public class EmuOPL3 extends EmuOPL {
      * @param ver
      * @param sampleRate
      */
-    public EmuOPL3(final version ver, final float sampleRate, final oplType OPLType) {
-        super(ver, sampleRate, OPLType);
+    public EmuOPL3(Version ver, float sampleRate, OplType oplType) {
+        super(ver, sampleRate, oplType);
         opl3 = new OPL3();
-        outbuffer = new int[4];
+        outBuffer = new int[4];
     }
 
-    /**
-     * @see de.quippy.javamod.multimedia.opl3.emu.EmuOPL#resetOPL()
-     */
     @Override
     public void resetOPL() {
         for (int register = 0; register < 256; register++) {
             writeOPL3(0, register, 0);
             writeOPL3(1, register, 0);
         }
-        if (OPLType == oplType.OPL3)
+        if (oplType == OplType.OPL3)
             writeOPL3(1, 5, 1);
     }
 
-    /**
-     * @param buffer
-     * @see de.quippy.javamod.multimedia.opl3.emu.EmuOPL#read(int[])
-     */
     @Override
-    public void read(final int[] buffer) {
+    public void read(int[] buffer) {
         buffer[0] = buffer[1] = 0;
-        opl3.read(outbuffer, 1);
+        opl3.read(outBuffer, 1);
         for (int i = 0; i < 4; i++)
-            buffer[i & 1] += outbuffer[i];
+            buffer[i & 1] += outBuffer[i];
     }
 
-    /**
-     * @param reg
-     * @param value
-     * @see de.quippy.javamod.multimedia.opl3.emu.EmuOPL#writeOPL2(int, int)
-     */
     @Override
-    public void writeOPL2(final int reg, final int value) {
+    public void writeOPL2(int reg, int value) {
         opl3.write(0, reg, value);
     }
 
-    /**
-     * @param bank
-     * @param reg
-     * @param value
-     * @see de.quippy.javamod.multimedia.opl3.emu.EmuOPL#writeDualOPL2(int, int, int)
-     */
     @Override
-    public void writeDualOPL2(final int bank, final int reg, final int value) {
+    public void writeDualOPL2(int bank, int reg, int value) {
         opl3.write(bank, reg, value);
     }
 
-    /**
-     * @param base
-     * @param reg
-     * @param value
-     * @see de.quippy.javamod.multimedia.opl3.emu.EmuOPL#writeOPL3(int, int, int)
-     */
     @Override
-    public void writeOPL3(final int base, final int reg, final int value) {
+    public void writeOPL3(int base, int reg, int value) {
         opl3.write(base, reg, value);
     }
 }

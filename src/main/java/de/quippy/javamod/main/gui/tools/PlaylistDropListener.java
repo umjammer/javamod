@@ -25,7 +25,8 @@ package de.quippy.javamod.main.gui.tools;
 import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDropEvent;
 import java.io.File;
-import java.io.FilenameFilter;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +34,8 @@ import java.util.List;
 import de.quippy.javamod.main.playlist.PlayList;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import de.quippy.javamod.system.Helpers;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -41,7 +43,9 @@ import de.quippy.javamod.system.Log;
  */
 public class PlaylistDropListener extends DropTargetAdapter {
 
-    private PlaylistDropListenerCallBack callBack;
+    private static final Logger logger = getLogger(PlaylistDropListener.class.getName());
+
+    private final PlaylistDropListenerCallBack callBack;
 
     /**
      * @since 08.03.2011
@@ -50,21 +54,19 @@ public class PlaylistDropListener extends DropTargetAdapter {
         this.callBack = callBack;
     }
 
-    private void fillWithPlayableFiles(ArrayList<URL> urls, File startDir) {
-        String[] files = startDir.list(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                File fullFileName = new File(dir.getAbsolutePath() + File.separatorChar + name);
-                if (fullFileName.isDirectory()) return true;
-                try {
-                    return MultimediaContainerManager.getMultimediaContainerSingleton(fullFileName.toURI().toURL()) != null;
-                } catch (Exception ex) {
-                    //NOOP;
-                }
-                return false;
+    private static void fillWithPlayableFiles(List<URL> urls, File startDir) {
+        String[] files = startDir.list((dir, name) -> {
+            File fullFileName = new File(dir.getAbsolutePath() + File.separatorChar + name);
+            if (fullFileName.isDirectory()) return true;
+            try {
+                return MultimediaContainerManager.getMultimediaContainerSingleton(fullFileName.toURI().toURL()) != null;
+            } catch (Exception ex) {
+                //NOOP;
             }
+            return false;
         });
-        for (int i = 0; i < files.length; i++) {
-            File fullFileName = new File(startDir.getAbsolutePath() + File.separatorChar + files[i]);
+        for (String file : files) {
+            File fullFileName = new File(startDir.getAbsolutePath() + File.separatorChar + file);
             if (fullFileName.isDirectory())
                 fillWithPlayableFiles(urls, fullFileName);
             else {
@@ -78,36 +80,34 @@ public class PlaylistDropListener extends DropTargetAdapter {
     }
 
     /**
-     * @param dtde
-     * @see java.awt.dnd.DropTargetListener#drop(java.awt.dnd.DropTargetDropEvent)
      * @since 08.03.2011
      */
+    @Override
     public void drop(DropTargetDropEvent dtde) {
         try {
             URL addToLastLoaded = null;
             List<?> files = Helpers.getDropData(dtde);
             if (files != null) {
-                final ArrayList<URL> urls = new ArrayList<URL>(files.size());
+                List<URL> urls = new ArrayList<>(files.size());
 
                 for (int i = 0; i < files.size(); i++) {
-                    final String fileName = files.get(i).toString(); // can be files, can be strings...
+                    String fileName = files.get(i).toString(); // can be files, can be strings...
                     File f = new File(fileName);
                     if (f.isDirectory()) {
                         fillWithPlayableFiles(urls, f);
                     } else {
-                        final URL url = f.toURI().toURL();
+                        URL url = f.toURI().toURL();
                         if (files.size() == 1) addToLastLoaded = url;
                         urls.add(url);
                     }
                 }
-                PlayList playList = PlayList.createNewListWithFiles(urls.toArray(new URL[urls.size()]), false, false);
+                PlayList playList = PlayList.createNewListWithFiles(urls.toArray(URL[]::new), false, false);
                 callBack.playlistRecieved(dtde, playList, addToLastLoaded);
             }
         } catch (Exception ex) {
-            Log.error("[MainForm::DropListener]", ex);
+            logger.log(Level.ERROR, "[MainForm::DropListener]", ex);
         } finally {
             dtde.dropComplete(true);
         }
     }
-
 }

@@ -34,7 +34,7 @@ import de.quippy.javamod.multimedia.mod.loader.Module;
  */
 public class PatternContainer {
 
-    protected Module parentMod;
+    protected final Module parentMod;
     protected Pattern[] patterns;
 
     // MPTP specific information
@@ -45,18 +45,18 @@ public class PatternContainer {
     /**
      * Constructor for PatternContainer
      */
-    public PatternContainer(final Module newParentMod, final int anzPattern) {
+    public PatternContainer(Module newParentMod, int anzPattern) {
         super();
         patterns = new Pattern[anzPattern];
         parentMod = newParentMod;
     }
 
-    public PatternContainer(final Module parentMod, final int anzPattern, final int rows) {
+    public PatternContainer(Module parentMod, int anzPattern, int rows) {
         this(parentMod, anzPattern);
         for (int i = 0; i < anzPattern; i++) createPattern(i, rows);
     }
 
-    public PatternContainer(final Module parentMod, final int anzPattern, final int rows, final int channels) {
+    public PatternContainer(Module parentMod, int anzPattern, int rows, int channels) {
         this(parentMod, anzPattern);
         for (int i = 0; i < anzPattern; i++) createPattern(i, rows, channels);
     }
@@ -82,7 +82,7 @@ public class PatternContainer {
      * @param nChannels
      * @since 24.11.2023
      */
-    public void setToChannels(final int nChannels) {
+    public void setToChannels(int nChannels) {
         for (int i = 0; i < patterns.length; i++) {
             if (patterns[i] != null) patterns[i].setToChannels(i, nChannels);
         }
@@ -103,8 +103,7 @@ public class PatternContainer {
      * @since 23.08.2008
      */
     public void resetRowsPlayed() {
-        for (int i = 0; i < patterns.length; i++)
-            if (patterns[i] != null) patterns[i].resetRowsPlayed();
+        for (Pattern pattern : patterns) if (pattern != null) pattern.resetRowsPlayed();
     }
 
     /**
@@ -117,82 +116,82 @@ public class PatternContainer {
     /**
      * @return Returns the pattern.
      */
-    public Pattern getPattern(final int patternIndex) {
+    public Pattern getPattern(int patternIndex) {
         return patterns[patternIndex];
     }
 
     /**
      * @return Returns the pattern.
      */
-    public PatternRow getPatternRow(final int patternIndex, final int row) {
+    public PatternRow getPatternRow(int patternIndex, int row) {
         return (patterns[patternIndex] != null) ? patterns[patternIndex].getPatternRow(row) : null;
     }
 
     /**
      * @return Returns the pattern.
      */
-    public PatternElement getPatternElement(final int patternIndex, final int row, int channel) {
+    public PatternElement getPatternElement(int patternIndex, int row, int channel) {
         return (patterns[patternIndex] != null) ? patterns[patternIndex].getPatternElement(row, channel) : null;
     }
 
     /**
-     * @param pattern The pattern to set.
+     * @param newPatterns The pattern to set.
      */
-    public void setPatterns(final Pattern[] newPatterns) {
+    public void setPatterns(Pattern[] newPatterns) {
         patterns = newPatterns;
     }
 
     /**
-     * @param patterns The patterns to set.
+     * @param newPattern The patterns to set.
      */
-    public void setPattern(final int patternIndex, final Pattern newPattern) {
+    public void setPattern(int patternIndex, Pattern newPattern) {
         patterns[patternIndex] = newPattern;
     }
 
-    public Pattern createPattern(final int patternIndex, final int rows) {
-        final Pattern newPattern = new Pattern(parentMod, this, rows);
+    public Pattern createPattern(int patternIndex, int rows) {
+        Pattern newPattern = new Pattern(parentMod, this, rows);
         patterns[patternIndex] = newPattern;
         return newPattern;
     }
 
-    public Pattern createPattern(final int patternIndex, final int rows, final int channels) {
-        final Pattern newPattern = new Pattern(parentMod, this, rows, channels);
+    public Pattern createPattern(int patternIndex, int rows, int channels) {
+        Pattern newPattern = new Pattern(parentMod, this, rows, channels);
         patterns[patternIndex] = newPattern;
         return newPattern;
     }
 
     /**
-     * @param patterns The patterns to set.
+     * @param patternRow The patterns to set.
      */
-    public void setPatternRow(final int patternIndex, final int row, final PatternRow patternRow) {
+    public void setPatternRow(int patternIndex, int row, PatternRow patternRow) {
         patterns[patternIndex].setPatternRow(row, patternRow);
     }
 
-    public PatternRow createPatternRow(final int patternIndex, final int row, final int channels) {
+    public PatternRow createPatternRow(int patternIndex, int row, int channels) {
         Pattern currentPattern = getPattern(patternIndex);
         currentPattern.setPatternRow(row, new PatternRow(parentMod, currentPattern, channels));
         return getPatternRow(patternIndex, row);
     }
 
     /**
-     * @param patterns The patterns to set.
+     * @param patternElement The patterns to set.
      */
-    public void setPatternElement(final int patternIndex, final int row, final int channel, final PatternElement patternElement) {
+    public void setPatternElement(int patternIndex, int row, int channel, PatternElement patternElement) {
         patterns[patternIndex].setPatternElement(row, channel, patternElement);
     }
 
-    public PatternElement createPatternElement(final int patternIndex, final int row, final int channel) {
+    public PatternElement createPatternElement(int patternIndex, int row, int channel) {
         PatternRow currentPatternRow = getPatternRow(patternIndex, row);
-        final boolean isImpulseTracker = (parentMod.getModType() & ModConstants.MODTYPE_IMPULSETRACKER) != 0;
-        final PatternElement newElement = (isImpulseTracker) ? new PatternElementIT(parentMod, currentPatternRow, patternIndex, row, channel) : new PatternElementXM(parentMod, currentPatternRow, patternIndex, row, channel);
+        boolean isImpulseTracker = (parentMod.getModType() & ModConstants.MODTYPE_IMPULSETRACKER) != 0;
+        PatternElement newElement = (isImpulseTracker) ? new PatternElementIT(parentMod, currentPatternRow, patternIndex, row, channel) : new PatternElementXM(parentMod, currentPatternRow, patternIndex, row, channel);
         currentPatternRow.setPatternElement(channel, newElement);
         return newElement;
     }
 
     /**
-     * @param patterns The patterns to set.
+     * @param patternElement The patterns to set.
      */
-    public void setPatternElement(final PatternElement patternElement) {
+    public void setPatternElement(PatternElement patternElement) {
         patterns[patternElement.getPatternIndex()].setPatternElement(patternElement.getRow(), patternElement.getChannel(), patternElement);
     }
 
@@ -202,10 +201,10 @@ public class PatternContainer {
      * @param chnNames
      * @since 06.02.2024
      */
-    public void setChannelNames(final String[] chnNames) {
+    public void setChannelNames(String[] chnNames) {
         if (chnNames == null) return;
 
-        final int anzChannels = (patterns != null && patterns[0] != null) ? patterns[0].getChannels() : chnNames.length;
+        int anzChannels = (patterns != null && patterns[0] != null) ? patterns[0].getChannels() : chnNames.length;
         channelNames = new String[anzChannels];
         for (int c = 0; c < anzChannels; c++) {
             channelNames[c] = (c < chnNames.length) ? chnNames[c] : null;
@@ -225,7 +224,7 @@ public class PatternContainer {
      * @return
      * @since 06.02.2024
      */
-    public String getChannelName(final int channel) {
+    public String getChannelName(int channel) {
         if (channelNames != null && channel < channelNames.length) return channelNames[channel];
         return null;
     }
@@ -237,10 +236,10 @@ public class PatternContainer {
      * @param panningValues
      * @since 19.07.2024
      */
-    public void setChannelActiveStatus(final int[] panningValues) {
+    public void setChannelActiveStatus(int[] panningValues) {
         if (panningValues == null) return;
 
-        final int anzChannels = (patterns != null && patterns[0] != null) ? patterns[0].getChannels() : panningValues.length;
+        int anzChannels = (patterns != null && patterns[0] != null) ? patterns[0].getChannels() : panningValues.length;
         channelIsActive = new boolean[anzChannels];
         for (int c = 0; c < anzChannels; c++) {
             channelIsActive[c] = (c < panningValues.length) ? ((panningValues[c] & ModConstants.CHANNEL_IS_MUTED) == 0) : false;
@@ -260,7 +259,7 @@ public class PatternContainer {
      * @return
      * @since 19.07.2024
      */
-    public boolean getIsChannelActive(final int channel) {
+    public boolean getIsChannelActive(int channel) {
         if (channelIsActive != null && channel < channelIsActive.length) return channelIsActive[channel];
         return true;
     }
@@ -268,11 +267,11 @@ public class PatternContainer {
     /**
      * Copies the Channel Names, if any
      *
-     * @param chnNames
+     * @param chnColors
      * @since 07.02.2024
      */
-    public void setChannelColor(final Color[] chnColors) {
-        final int anzChannels = (patterns != null && patterns[0] != null) ? patterns[0].getChannels() : chnColors.length;
+    public void setChannelColor(Color[] chnColors) {
+        int anzChannels = (patterns != null && patterns[0] != null) ? patterns[0].getChannels() : chnColors.length;
         channelColors = new Color[anzChannels];
         for (int c = 0; c < anzChannels; c++) {
             channelColors[c] = (c < chnColors.length) ? chnColors[c] : null;
@@ -292,7 +291,7 @@ public class PatternContainer {
      * @return
      * @since 07.02.2024
      */
-    public Color getChannelColor(final int channel) {
+    public Color getChannelColor(int channel) {
         if (channelColors != null && channel < channelColors.length) return channelColors[channel];
         return null;
     }
@@ -311,19 +310,19 @@ public class PatternContainer {
         int numGroups = 0;
         if (rainbow) {
             for (int c = 1; c < channelColors.length; c++)
-                if (channelNames == null || channelNames[c] == null || channelNames[c].length() == 0 || !channelNames[c].equals(channelNames[c - 1]))
+                if (channelNames == null || channelNames[c] == null || channelNames[c].isEmpty() || !channelNames[c].equals(channelNames[c - 1]))
                     numGroups++;
         }
-        final double hueFactor = (rainbow) ? (1.5d * Math.PI) / (double) ((numGroups > 1) ? numGroups - 1 : 1) : 1000d;  // Three quarters of the color wheel, red to purple
+        double hueFactor = (rainbow) ? (1.5d * Math.PI) / (double) ((numGroups > 1) ? numGroups - 1 : 1) : 1000d;  // Three quarters of the color wheel, red to purple
         for (int c = 0, group = 0; c < channelColors.length; c++) {
-            if (c > 0 && (channelNames == null || channelNames[c] == null || channelNames[c].length() == 0 || !channelNames[c].equals(channelNames[c - 1])))
+            if (c > 0 && (channelNames == null || channelNames[c] == null || channelNames[c].isEmpty() || !channelNames[c].equals(channelNames[c - 1])))
                 group++;
-            final double hue = group * hueFactor;    // 0...2pi
+            double hue = group * hueFactor;    // 0...2pi
             final double saturation = 0.3d;            // 0...2/3
             final double brightness = 1.2d;            // 0...4/3
-            final int r = (int) Math.min(brightness * (1 + saturation * (Math.cos(hue) - 1.0)) * 255d, 255d);
-            final int g = (int) Math.min(brightness * (1 + saturation * (Math.cos(hue - 2.09439) - 1.0)) * 255d, 255d);
-            final int b = (int) Math.min(brightness * (1 + saturation * (Math.cos(hue + 2.09439) - 1.0)) * 255d, 255d);
+            int r = (int) Math.min(brightness * (1 + saturation * (Math.cos(hue) - 1.0)) * 255d, 255d);
+            int g = (int) Math.min(brightness * (1 + saturation * (Math.cos(hue - 2.09439) - 1.0)) * 255d, 255d);
+            int b = (int) Math.min(brightness * (1 + saturation * (Math.cos(hue + 2.09439) - 1.0)) * 255d, 255d);
             channelColors[c] = new Color(r, g, b);
         }
     }

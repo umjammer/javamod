@@ -28,7 +28,8 @@ import java.net.URL;
 
 import de.quippy.javamod.io.RandomAccessInputStreamImpl;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.oplType;
+import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.OplType;
+import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.Version;
 import de.quippy.javamod.system.Helpers;
 
 
@@ -49,7 +50,7 @@ public abstract class OPL3Sequence {
      * @param fileName
      * @return
      */
-    public static OPL3Sequence createOPL3Sequence(final String fileName, final String bnkFileName) throws IOException {
+    public static OPL3Sequence createOPL3Sequence(String fileName, String bnkFileName) throws IOException {
         return createOPL3Sequence(new File(fileName), new File(bnkFileName));
     }
 
@@ -57,7 +58,7 @@ public abstract class OPL3Sequence {
      * @param file
      * @return
      */
-    public static OPL3Sequence createOPL3Sequence(final File file, final File bnkFile) throws IOException {
+    public static OPL3Sequence createOPL3Sequence(File file, File bnkFile) throws IOException {
         if (file == null || bnkFile == null) return null;
         return createOPL3Sequence(file.toURI().toURL(), bnkFile.toURI().toURL());
     }
@@ -66,7 +67,7 @@ public abstract class OPL3Sequence {
      * @param url
      * @return
      */
-    public static OPL3Sequence createOPL3Sequence(final URL url, final URL bnkURL) throws IOException {
+    public static OPL3Sequence createOPL3Sequence(URL url, URL bnkURL) throws IOException {
         OPL3Sequence newSequence = getOPL3SequenceInstanceFor(url);
         if (newSequence != null) {
             if (newSequence instanceof ROLSequence) {
@@ -81,7 +82,7 @@ public abstract class OPL3Sequence {
             } finally {
                 if (inputStream != null) try {
                     inputStream.close();
-                } catch (Exception ex) { /* Log.error("IGNORED", ex); */ }
+                } catch (Exception ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
             }
         } else
             throw new IOException("Unsupported OPL3 Sequence");
@@ -99,21 +100,19 @@ public abstract class OPL3Sequence {
      */
     private static OPL3Sequence getOPL3SequenceInstanceFor(URL url) {
         String extension = Helpers.getExtensionFromURL(url).toUpperCase();
-        if (extension.equals("DRO"))
-            return new DROSequence();
-        else if (extension.equals("LAA") || extension.equals("CMF") || extension.equals("SCI"))
-            return new MIDSequence();
-        else if (extension.equals("ROL"))
-            return new ROLSequence();
-        else
-            return null;
+        return switch (extension) {
+            case "DRO" -> new DROSequence();
+            case "LAA", "CMF", "SCI" -> new MIDSequence();
+            case "ROL" -> new ROLSequence();
+            default -> null;
+        };
     }
 
     /**
      * @param opl
      * @since 03.08.2020
      */
-    protected void resetOPL(final EmuOPL opl) {
+    protected static void resetOPL(EmuOPL opl) {
         opl.resetOPL();
     }
 
@@ -123,7 +122,7 @@ public abstract class OPL3Sequence {
      */
     public long getLengthInMilliseconds() {
         double ms = 0d;
-        final EmuOPL measureOPL = EmuOPL.createInstance(EmuOPL.version.OPL3, 49712, getOPLType());
+        EmuOPL measureOPL = EmuOPL.createInstance(Version.OPL3, 49712, getOPLType());
         initialize(measureOPL);
         while (updateToOPL(measureOPL) && ms < 60d * 60d * 1000d)
             ms += 1000d / getRefresh();
@@ -135,7 +134,7 @@ public abstract class OPL3Sequence {
      * @throws IOException
      * @since 03.08.2020
      */
-    protected abstract void readOPL3Sequence(final RandomAccessInputStreamImpl inputStream) throws IOException;
+    protected abstract void readOPL3Sequence(RandomAccessInputStreamImpl inputStream) throws IOException;
 
     /**
      * @param url
@@ -148,13 +147,13 @@ public abstract class OPL3Sequence {
      * @return
      * @since 03.08.2020
      */
-    public abstract boolean updateToOPL(final EmuOPL opl);
+    public abstract boolean updateToOPL(EmuOPL opl);
 
     /**
      * @param opl
      * @since 03.08.2020
      */
-    public abstract void initialize(final EmuOPL opl);
+    public abstract void initialize(EmuOPL opl);
 
     /**
      * @return
@@ -187,10 +186,10 @@ public abstract class OPL3Sequence {
     public abstract String getTypeName();
 
     /**
-     * Return the needed OPLType: OPL2, DUAL_OPL2 or OPL3
+     * Return the needed oplType: OPL2, DUAL_OPL2 or OPL3
      *
      * @return
      * @since 16.08.2020
      */
-    public abstract oplType getOPLType();
+    public abstract OplType getOPLType();
 }

@@ -22,6 +22,7 @@
 
 package de.quippy.javamod.multimedia;
 
+import java.io.Serial;
 import java.util.EventObject;
 
 
@@ -31,13 +32,14 @@ import java.util.EventObject;
  */
 public class MultimediaContainerEvent extends EventObject {
 
+    @Serial
     private static final long serialVersionUID = 5125318726800658845L;
 
-    public static int SONG_NAME_CHANGED = 1;
-    public static int SONG_NAME_CHANGED_OLD_INVALID = 3;
+    public static final int SONG_NAME_CHANGED = 1;
+    public static final int SONG_NAME_CHANGED_OLD_INVALID = 3;
 
-    private int type;
-    private Object event;
+    private final int type;
+    private final Object event;
 
     /**
      * Constructor for MultimediaContainerEvent

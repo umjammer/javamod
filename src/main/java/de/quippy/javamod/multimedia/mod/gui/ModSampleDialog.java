@@ -32,9 +32,9 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.io.Serial;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -49,8 +49,6 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerListModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import de.quippy.javamod.main.gui.components.FixedStateCheckBox;
 import de.quippy.javamod.multimedia.mod.ModConstants;
@@ -66,10 +64,11 @@ import de.quippy.javamod.system.Helpers;
  */
 public class ModSampleDialog extends JDialog {
 
+    @Serial
     private static final long serialVersionUID = -9058637708283713743L;
 
-    private static String[] AUTOVIBRATO_TYPES = new String[] {"Sine", "Square", "Ramp Up", "Ramp Down", "Random"};
-    private static String[] ZOOM_TYPES = new String[] {"Auto", "1:1", "2:1", "4:1", "8:1", "16:1", "32:1"};
+    private static final String[] AUTOVIBRATO_TYPES = new String[] {"Sine", "Square", "Ramp Up", "Ramp Down", "Random"};
+    private static final String[] ZOOM_TYPES = new String[] {"Auto", "1:1", "2:1", "4:1", "8:1", "16:1", "32:1"};
 
     public static final String BUTTONPLAY_INACTIVE = "/de/quippy/javamod/main/gui/ressources/play.gif";
     public static final String BUTTONPLAY_ACTIVE = "/de/quippy/javamod/main/gui/ressources/play_aktiv.gif";
@@ -88,21 +87,19 @@ public class ModSampleDialog extends JDialog {
     private static final int WAVEFORM_POS = 17;
     private static final int VIBRATO_POS = 18;
     private static final int TREMOLO_POS = 19;
-    private static final String[] LABELS =
-            {
-                    "Attack rate:", "Decay rate:", "Sustain level:", "Release level:",
-                    "Sustain sound",
-                    "Volume:",
-                    "Scale envelopes with keys", "Key scale level:", "Frequence multiplier:",
-                    "Waveform:",
-                    "Vibrato", "Tremolo"
-            };
-    private static final String[] WAVEFORMS =
-            {
-                    "Sine", "Half Sine", "Absolute Sine", "Pulse Sine",
-                    // OPL3 specific
-                    "Sine (even periods)", "Absolute Sine (even periods)", "Square", "Derived Square"
-            };
+    private static final String[] LABELS = {
+            "Attack rate:", "Decay rate:", "Sustain level:", "Release level:",
+            "Sustain sound",
+            "Volume:",
+            "Scale envelopes with keys", "Key scale level:", "Frequence multiplier:",
+            "Waveform:",
+            "Vibrato", "Tremolo"
+    };
+    private static final String[] WAVEFORMS = {
+            "Sine", "Half Sine", "Absolute Sine", "Pulse Sine",
+            // OPL3 specific
+            "Sine (even periods)", "Absolute Sine (even periods)", "Square", "Derived Square"
+    };
 
     private ImageIcon buttonPlay_Active = null;
     private ImageIcon buttonPlay_Inactive = null;
@@ -171,9 +168,9 @@ public class ModSampleDialog extends JDialog {
 
     private SampleInstrumentPlayer player = null;
     private Sample[] samples;
-    private ArrayList<String> spinnerModelData = null;
+    private List<String> spinnerModelData = null;
 
-    private ModInfoPanel myModInfoPanel;
+    private final ModInfoPanel myModInfoPanel;
 
     /**
      * Constructor for ModSampleDialog
@@ -189,7 +186,7 @@ public class ModSampleDialog extends JDialog {
     }
 
     private void initialize() {
-        final Container baseContentPane = getContentPane();
+        Container baseContentPane = getContentPane();
         baseContentPane.setLayout(new java.awt.GridBagLayout());
 
         baseContentPane.add(getLabelSelectSample(), Helpers.getGridBagConstraint(0, 0, 1, 1, GridBagConstraints.NONE, GridBagConstraints.WEST, 0.0, 0.0));
@@ -244,47 +241,41 @@ public class ModSampleDialog extends JDialog {
             selectSample.setName("playerSetUp_Channels");
             selectSample.setFont(Helpers.getDialogFont());
             selectSample.setEnabled(true);
-            final FontMetrics metrics = selectSample.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(6 * metrics.charWidth('0'), metrics.getHeight() + 5);
+            FontMetrics metrics = selectSample.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(6 * metrics.charWidth('0'), metrics.getHeight() + 5);
             selectSample.setSize(d);
             selectSample.setMinimumSize(d);
             selectSample.setMaximumSize(d);
             selectSample.setPreferredSize(d);
 
-            selectSample.addChangeListener(new ChangeListener() {
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    if (samples != null) {
-                        fillWithSample(samples[getCurrentSampleIndex()]);
-                    }
+            selectSample.addChangeListener(e -> {
+                if (samples != null) {
+                    fillWithSample(samples[getCurrentSampleIndex()]);
                 }
             });
         }
         return selectSample;
     }
 
-    private JComboBox getZoomSelector() {
+    private JComboBox<String> getZoomSelector() {
         if (zoomSelector == null) {
-            zoomSelector = new JComboBox<String>();
+            zoomSelector = new JComboBox<>();
             zoomSelector.setName("zoomSelector");
             zoomSelector.setFont(Helpers.getDialogFont());
 
-            for (int i = 0; i < ZOOM_TYPES.length; i++) zoomSelector.addItem(ZOOM_TYPES[i]);
-            zoomSelector.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    if (samples == null) return;
-                    changeZoom(getZoomSelector().getSelectedIndex());
-                }
+            for (String zoomType : ZOOM_TYPES) zoomSelector.addItem(zoomType);
+            zoomSelector.addItemListener(e -> {
+                if (samples == null) return;
+                changeZoom(getZoomSelector().getSelectedIndex());
             });
         }
 
         return zoomSelector;
     }
 
-    private JComboBox getNoteSelector() {
+    private JComboBox<String> getNoteSelector() {
         if (noteSelector == null) {
-            noteSelector = new JComboBox<String>();
+            noteSelector = new JComboBox<>();
             noteSelector.setName("noteSelector");
             noteSelector.setFont(Helpers.getDialogFont());
 
@@ -315,6 +306,7 @@ public class ModSampleDialog extends JDialog {
             button_Play.addActionListener(new ActionListener() {
                 boolean playing = false;
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (playing) {
                         if (player != null && player.isPlaying()) player.stopPlayback();
@@ -325,13 +317,11 @@ public class ModSampleDialog extends JDialog {
                         getButton_Play().setIcon(buttonPlay_Active);
                         player = new SampleInstrumentPlayer(myModInfoPanel.getParentContainer().createNewMixer0());
                         // play inside a thread, so we do not block anything...
-                        new Thread(new Runnable() {
-                            public void run() {
-                                player.startPlayback(null, samples[getCurrentSampleIndex()], getNoteSelector().getSelectedIndex() + 1);
-                                getButton_Play().setIcon(buttonPlay_normal);
-                                player = null;
-                                playing = false;
-                            }
+                        new Thread(() -> {
+                            player.startPlayback(null, samples[getCurrentSampleIndex()], getNoteSelector().getSelectedIndex() + 1);
+                            getButton_Play().setIcon(buttonPlay_normal);
+                            player = null;
+                            playing = false;
                         }).start();
                     }
                 }
@@ -347,8 +337,8 @@ public class ModSampleDialog extends JDialog {
             sampleType.setName("sampleType");
             sampleType.setEditable(false);
             sampleType.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = sampleType.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(40 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = sampleType.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(40 * metrics.charWidth('0'), metrics.getHeight());
             sampleType.setSize(d);
             sampleType.setMinimumSize(d);
             sampleType.setMaximumSize(d);
@@ -459,8 +449,8 @@ public class ModSampleDialog extends JDialog {
             defaultVolume.setName("defaultVolume");
             defaultVolume.setEditable(false);
             defaultVolume.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = defaultVolume.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = defaultVolume.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             defaultVolume.setSize(d);
             defaultVolume.setMinimumSize(d);
             defaultVolume.setMaximumSize(d);
@@ -485,8 +475,8 @@ public class ModSampleDialog extends JDialog {
             globalVolume.setName("globalVolume");
             globalVolume.setEditable(false);
             globalVolume.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = globalVolume.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = globalVolume.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             globalVolume.setSize(d);
             globalVolume.setMinimumSize(d);
             globalVolume.setMaximumSize(d);
@@ -511,8 +501,8 @@ public class ModSampleDialog extends JDialog {
             setPanValue.setName("globalVolume");
             setPanValue.setEditable(false);
             setPanValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = setPanValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = setPanValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             setPanValue.setSize(d);
             setPanValue.setMinimumSize(d);
             setPanValue.setMaximumSize(d);
@@ -537,8 +527,8 @@ public class ModSampleDialog extends JDialog {
             fineTuneValue.setName("fineTuneValue");
             fineTuneValue.setEditable(false);
             fineTuneValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = fineTuneValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = fineTuneValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             fineTuneValue.setSize(d);
             fineTuneValue.setMinimumSize(d);
             fineTuneValue.setMaximumSize(d);
@@ -563,8 +553,8 @@ public class ModSampleDialog extends JDialog {
             baseFreqValue.setName("baseFreqValue");
             baseFreqValue.setEditable(false);
             baseFreqValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = baseFreqValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = baseFreqValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             baseFreqValue.setSize(d);
             baseFreqValue.setMinimumSize(d);
             baseFreqValue.setMaximumSize(d);
@@ -589,8 +579,8 @@ public class ModSampleDialog extends JDialog {
             transposeValue.setName("transposeValue");
             transposeValue.setEditable(false);
             transposeValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = transposeValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = transposeValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             transposeValue.setSize(d);
             transposeValue.setMinimumSize(d);
             transposeValue.setMaximumSize(d);
@@ -630,8 +620,8 @@ public class ModSampleDialog extends JDialog {
             loopTypeValue.setName("loopTypeValue");
             loopTypeValue.setEditable(false);
             loopTypeValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = loopTypeValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = loopTypeValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             loopTypeValue.setSize(d);
             loopTypeValue.setMinimumSize(d);
             loopTypeValue.setMaximumSize(d);
@@ -656,8 +646,8 @@ public class ModSampleDialog extends JDialog {
             loopStartValue.setName("loopStartValue");
             loopStartValue.setEditable(false);
             loopStartValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = loopStartValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = loopStartValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             loopStartValue.setSize(d);
             loopStartValue.setMinimumSize(d);
             loopStartValue.setMaximumSize(d);
@@ -682,8 +672,8 @@ public class ModSampleDialog extends JDialog {
             loopEndValue.setName("loopEndValue");
             loopEndValue.setEditable(false);
             loopEndValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = loopEndValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = loopEndValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             loopEndValue.setSize(d);
             loopEndValue.setMinimumSize(d);
             loopEndValue.setMaximumSize(d);
@@ -723,8 +713,8 @@ public class ModSampleDialog extends JDialog {
             sustainLoopTypeValue.setName("sustainLoopTypeValue");
             sustainLoopTypeValue.setEditable(false);
             sustainLoopTypeValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = sustainLoopTypeValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = sustainLoopTypeValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             sustainLoopTypeValue.setSize(d);
             sustainLoopTypeValue.setMinimumSize(d);
             sustainLoopTypeValue.setMaximumSize(d);
@@ -749,8 +739,8 @@ public class ModSampleDialog extends JDialog {
             sustainLoopStartValue.setName("sustainLoopStartValue");
             sustainLoopStartValue.setEditable(false);
             sustainLoopStartValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = sustainLoopStartValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = sustainLoopStartValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             sustainLoopStartValue.setSize(d);
             sustainLoopStartValue.setMinimumSize(d);
             sustainLoopStartValue.setMaximumSize(d);
@@ -775,8 +765,8 @@ public class ModSampleDialog extends JDialog {
             sustainLoopEndValue.setName("sustainLoopEndValue");
             sustainLoopEndValue.setEditable(false);
             sustainLoopEndValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = sustainLoopEndValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = sustainLoopEndValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             sustainLoopEndValue.setSize(d);
             sustainLoopEndValue.setMinimumSize(d);
             sustainLoopEndValue.setMaximumSize(d);
@@ -818,8 +808,8 @@ public class ModSampleDialog extends JDialog {
             autoVibTypeValue.setName("autoVibTypeValue");
             autoVibTypeValue.setEditable(false);
             autoVibTypeValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = autoVibTypeValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = autoVibTypeValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             autoVibTypeValue.setSize(d);
             autoVibTypeValue.setMinimumSize(d);
             autoVibTypeValue.setMaximumSize(d);
@@ -844,8 +834,8 @@ public class ModSampleDialog extends JDialog {
             autoVibDepthValue.setName("autoVibDepthValue");
             autoVibDepthValue.setEditable(false);
             autoVibDepthValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = autoVibDepthValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = autoVibDepthValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             autoVibDepthValue.setSize(d);
             autoVibDepthValue.setMinimumSize(d);
             autoVibDepthValue.setMaximumSize(d);
@@ -870,8 +860,8 @@ public class ModSampleDialog extends JDialog {
             autoVibSweepValue.setName("autoVibSweepValue");
             autoVibSweepValue.setEditable(false);
             autoVibSweepValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = autoVibSweepValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = autoVibSweepValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             autoVibSweepValue.setSize(d);
             autoVibSweepValue.setMinimumSize(d);
             autoVibSweepValue.setMaximumSize(d);
@@ -896,8 +886,8 @@ public class ModSampleDialog extends JDialog {
             autoVibRateValue.setName("autoVibRateValue");
             autoVibRateValue.setEditable(false);
             autoVibRateValue.setFont(Helpers.getDialogFont());
-            final FontMetrics metrics = autoVibRateValue.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = autoVibRateValue.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(8 * metrics.charWidth('0'), metrics.getHeight());
             autoVibRateValue.setSize(d);
             autoVibRateValue.setMinimumSize(d);
             autoVibRateValue.setMaximumSize(d);
@@ -923,16 +913,16 @@ public class ModSampleDialog extends JDialog {
         return imageBufferPanel;
     }
 
-    private void changeZoom(final int newZoom) {
-        final Dimension d = getImageBufferPanel().getSize();
+    private void changeZoom(int newZoom) {
+        Dimension d = getImageBufferPanel().getSize();
         if (newZoom == 0) {
             getContentPane().remove(getImageBufferScrollPane());
             getContentPane().add(getImageBufferPanel(), Helpers.getGridBagConstraint(0, 3, 1, 0, GridBagConstraints.BOTH, GridBagConstraints.WEST, 1.0, 1.0));
         } else {
-            final Sample theSample = getImageBufferPanel().getSample();
+            Sample theSample = getImageBufferPanel().getSample();
             if (theSample != null) {
-                final int scrollBarHeight = getImageBufferScrollPane().getHorizontalScrollBar().getPreferredSize().height;
-                final Insets inset = getImageBufferScrollPane().getInsets();
+                int scrollBarHeight = getImageBufferScrollPane().getHorizontalScrollBar().getPreferredSize().height;
+                Insets inset = getImageBufferScrollPane().getInsets();
                 d.height = getImageBufferScrollPane().getHeight() - inset.top - inset.bottom - (scrollBarHeight << 1);
                 d.width = theSample.length << (newZoom - 1);
                 getContentPane().remove(getImageBufferPanel());
@@ -940,17 +930,15 @@ public class ModSampleDialog extends JDialog {
                 getContentPane().add(getImageBufferScrollPane(), Helpers.getGridBagConstraint(0, 3, 1, 0, GridBagConstraints.BOTH, GridBagConstraints.WEST, 1.0, 1.0));
             }
         }
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    getImageBufferPanel().setSize(d);
-                    getImageBufferPanel().setMinimumSize(d);
-                    getImageBufferPanel().setMaximumSize(d);
-                    getImageBufferPanel().setPreferredSize(d);
-                    pack();
-                } catch (Throwable ex) {
-                    // Keep it!
-                }
+        EventQueue.invokeLater(() -> {
+            try {
+                getImageBufferPanel().setSize(d);
+                getImageBufferPanel().setMinimumSize(d);
+                getImageBufferPanel().setMaximumSize(d);
+                getImageBufferPanel().setPreferredSize(d);
+                pack();
+            } catch (Throwable ex) {
+                // Keep it!
             }
         });
     }
@@ -976,8 +964,8 @@ public class ModSampleDialog extends JDialog {
             additiveSynthesis.setText("Additive Synthesis");
             additiveSynthesis.setFont(Helpers.getDialogFont());
 
-            final FontMetrics metrics = globalVolume.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension(ADLIB_SIZE * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = globalVolume.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension(ADLIB_SIZE * metrics.charWidth('0'), metrics.getHeight());
             additiveSynthesis.setSize(d);
             additiveSynthesis.setMinimumSize(d);
             additiveSynthesis.setMaximumSize(d);
@@ -1003,8 +991,8 @@ public class ModSampleDialog extends JDialog {
             modulationFeedBack.setEditable(false);
             modulationFeedBack.setFont(Helpers.getDialogFont());
 
-            final FontMetrics metrics = globalVolume.getFontMetrics(Helpers.getDialogFont());
-            final Dimension d = new Dimension((ADLIB_SIZE - 19) * metrics.charWidth('0'), metrics.getHeight());
+            FontMetrics metrics = globalVolume.getFontMetrics(Helpers.getDialogFont());
+            Dimension d = new Dimension((ADLIB_SIZE - 19) * metrics.charWidth('0'), metrics.getHeight());
             modulationFeedBack.setSize(d);
             modulationFeedBack.setMinimumSize(d);
             modulationFeedBack.setMaximumSize(d);
@@ -1013,10 +1001,9 @@ public class ModSampleDialog extends JDialog {
         return modulationFeedBack;
     }
 
-    private JComponent[] createComponents() {
-        ArrayList<JComponent> list = new ArrayList<JComponent>();
-        for (int i = 0; i < LABELS.length; i++) {
-            final String label = LABELS[i];
+    private static JComponent[] createComponents() {
+        List<JComponent> list = new ArrayList<>();
+        for (String label : LABELS) {
             if (label.endsWith(":")) {
                 JLabel newLabel = new JLabel();
                 newLabel.setName("adLibLabel_" + label);
@@ -1036,10 +1023,10 @@ public class ModSampleDialog extends JDialog {
                 list.add(newChkBox);
             }
         }
-        return list.toArray(new JComponent[list.size()]);
+        return list.toArray(JComponent[]::new);
     }
 
-    private JComponent[] addComponentsToPanel(JComponent[] components, JPanel panel) {
+    private static JComponent[] addComponentsToPanel(JComponent[] components, JPanel panel) {
         if (components == null) {
             components = createComponents();
             panel.add(components[0], Helpers.getGridBagConstraint(0, 0, 1, 1, GridBagConstraints.NONE, GridBagConstraints.WEST, 0.0, 0.0));
@@ -1066,7 +1053,7 @@ public class ModSampleDialog extends JDialog {
         return components;
     }
 
-    private void fillComponents(final JComponent[] components, final Sample sample, final int cm) {
+    private static void fillComponents(JComponent[] components, Sample sample, int cm) {
         ((JTextField) components[ATTACK_POS]).setText(Integer.toString(sample.getAdlibAttackRate(cm)));
         ((JTextField) components[DECAY_POS]).setText(Integer.toString(sample.getAdlibDecaykRate(cm)));
         ((JTextField) components[SUSTAIN_POS]).setText(Integer.toString(0xF - sample.getAdlibSustainLevel(cm)));
@@ -1102,7 +1089,7 @@ public class ModSampleDialog extends JDialog {
     }
 
     private void clearSample() {
-        spinnerModelData = new ArrayList<String>(1);
+        spinnerModelData = new ArrayList<>(1);
         spinnerModelData.add(ModConstants.getAsHex(0, 2));
         getSelectSample().setModel(new SpinnerListModel(spinnerModelData));
 
@@ -1140,7 +1127,7 @@ public class ModSampleDialog extends JDialog {
         ((DefaultEditor) getSelectSample().getEditor()).getTextField().setEditable(false);
     }
 
-    private void fillWithSample(final Sample sample) {
+    private void fillWithSample(Sample sample) {
         getButton_Play().setEnabled(true);
         getZoomSelector().setEnabled(true);
 
@@ -1185,14 +1172,14 @@ public class ModSampleDialog extends JDialog {
         }
     }
 
-    public void showSample(final int sampleIndex) {
+    public void showSample(int sampleIndex) {
         if (samples != null) getSelectSample().setValue(spinnerModelData.get(sampleIndex));
     }
 
-    public void fillWithSamples(final Sample[] samples) {
+    public void fillWithSamples(Sample[] samples) {
         this.samples = samples;
         if (samples != null) {
-            spinnerModelData = new ArrayList<String>(samples.length);
+            spinnerModelData = new ArrayList<>(samples.length);
             for (int i = 0; i < samples.length; i++) spinnerModelData.add(ModConstants.getAsHex(i + 1, 2));
             getSelectSample().setModel(new SpinnerListModel(spinnerModelData));
             getSelectSample().setValue(spinnerModelData.get(0)); // in some unknown cases, the index is not really set.

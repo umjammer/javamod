@@ -25,13 +25,16 @@ package de.quippy.javamod.io.wav;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Sequence;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import de.quippy.javamod.io.FileOrPackedInputStream;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -40,6 +43,8 @@ import de.quippy.javamod.system.Log;
  */
 public class RMIFile extends RiffFile {
 
+    private static final Logger logger = getLogger(RMIFile.class.getName());
+
     /**
      * Constructor for RMIFile
      */
@@ -47,7 +52,7 @@ public class RMIFile extends RiffFile {
         super();
     }
 
-    private static int fourCC(byte br[]) {
+    private static int fourCC(byte[] br) {
         return ((br[0] << 24) & 0xFF000000) | ((br[1] << 16) & 0x00FF0000) | ((br[2] << 8) & 0x0000FF00) | (br[3] & 0x000000FF);
     }
 
@@ -84,18 +89,18 @@ public class RMIFile extends RiffFile {
                 Sequence result = MidiSystem.getSequence(input);
                 return result;
             } catch (Exception ex) {
-                Log.error("[RMIFile]", ex);
+                logger.log(Level.ERROR, "[RMIFile]", ex);
             } finally {
                 if (input != null) try {
                     input.close();
-                } catch (Exception ex) { /* Log.error("IGNORED", ex); */ }
+                } catch (Exception ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
             }
         } catch (IOException ex) {
-            Log.error("[RMIFile]", ex);
+            logger.log(Level.ERROR, "[RMIFile]", ex);
         } finally {
             if (rmiInput != null) try {
                 rmiInput.close();
-            } catch (Exception ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (Exception ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
         return null;
     }

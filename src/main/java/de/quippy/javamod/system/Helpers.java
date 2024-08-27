@@ -48,6 +48,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -73,12 +75,16 @@ import de.quippy.javamod.main.gui.components.ProgressDialog;
 import de.quippy.javamod.main.gui.tools.FileChooserResult;
 import de.quippy.javamod.main.gui.tools.PlaylistDropListener;
 
+import static java.lang.System.getLogger;
+
 
 /**
  * @author Daniel Becker
  * @since 22.04.2006
  */
 public class Helpers {
+
+    private static final Logger logger = getLogger(Helpers.class.getName());
 
     /**
      * Constructor for Helpers, not used!
@@ -130,7 +136,7 @@ public class Helpers {
             try {
                 HOMEDIR = System.getProperty("java.io.tmpdir");
             } catch (Throwable ex2) {
-                Log.error("Could not set home dir", ex2);
+                logger.log(Level.ERROR, "Could not set home dir", ex2);
                 HOMEDIR = EMPTY_STING;
             }
         }
@@ -149,7 +155,7 @@ public class Helpers {
                 Font font = Font.createFont(Font.TRUETYPE_FONT, is);
                 TEXTAREA_FONT = font.deriveFont(10.0f);
             } catch (Exception ex) {
-                Log.error("Could not load font!", ex);
+                logger.log(Level.ERROR, "Could not load font!", ex);
                 TEXTAREA_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 10);
             }
         }
@@ -199,7 +205,7 @@ public class Helpers {
      * @param length
      * @return
      */
-    public static String retrieveAsString(final byte[] input, final int start, final int length) {
+    public static String retrieveAsString(byte[] input, int start, int length) {
         return retrieveAsString(input, start, length, currentCoding);
     }
 
@@ -215,7 +221,7 @@ public class Helpers {
      * @param coding
      * @return
      */
-    public static String retrieveAsString(final byte[] input, final int start, final int len, final String coding) {
+    public static String retrieveAsString(byte[] input, int start, int len, String coding) {
         int length = len;
         if (length <= 0) return EMPTY_STING;
         // keep in bounds of the source array...
@@ -257,7 +263,7 @@ public class Helpers {
      * @return the array of bytes converted from the string
      * @since 23.12.2008
      */
-    public static byte[] getBytesFromString(final String str, final int length, final String coding) {
+    public static byte[] getBytesFromString(String str, int length, String coding) {
         byte[] result = new byte[length];
         int len = str.length();
         if (len > length) len = length;
@@ -281,7 +287,7 @@ public class Helpers {
      */
     public static int indexOf(byte[] data, int start, int stop, byte[] pattern) {
         if (data == null || pattern == null) return -1;
-        final int[] failure = computeFailure(pattern);
+        int[] failure = computeFailure(pattern);
         int j = 0;
         for (int i = start; i < stop; i++) {
             while (j > 0 && (pattern[j] != '*' && pattern[j] != data[i])) j = failure[j - 1];
@@ -296,7 +302,7 @@ public class Helpers {
      * where the pattern is matched against itself.
      */
     private static int[] computeFailure(byte[] pattern) {
-        final int[] failure = new int[pattern.length];
+        int[] failure = new int[pattern.length];
 
         int j = 0;
         for (int i = 1; i < pattern.length; i++) {
@@ -315,8 +321,8 @@ public class Helpers {
         return htmlColor;
     }
 
-    private static Insets DEFAULT_INSETS = new Insets(4, 4, 4, 4);
-    public static Insets NULL_INSETS = new Insets(0, 0, 0, 0);
+    private static final Insets DEFAULT_INSETS = new Insets(4, 4, 4, 4);
+    public static final Insets NULL_INSETS = new Insets(0, 0, 0, 0);
 
     /**
      * @param gridx
@@ -330,7 +336,7 @@ public class Helpers {
      * @return
      * @since 22.06.2006
      */
-    public static GridBagConstraints getGridBagConstraint(final int gridx, final int gridy, final int gridheight, final int gridwidth, final int fill, final int anchor, final double weightx, final double weighty) {
+    public static GridBagConstraints getGridBagConstraint(int gridx, int gridy, int gridheight, int gridwidth, int fill, int anchor, double weightx, double weighty) {
         return getGridBagConstraint(gridx, gridy, gridheight, gridwidth, fill, anchor, weightx, weighty, DEFAULT_INSETS);
     }
 
@@ -347,7 +353,7 @@ public class Helpers {
      * @return
      * @since 22.07.2015
      */
-    public static GridBagConstraints getGridBagConstraint(final int gridx, final int gridy, final int gridheight, final int gridwidth, final int fill, final int anchor, final double weightx, final double weighty, final Insets insets) {
+    public static GridBagConstraints getGridBagConstraint(int gridx, int gridy, int gridheight, int gridwidth, int fill, int anchor, double weightx, double weighty, Insets insets) {
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = gridx;
         constraints.gridy = gridy;
@@ -368,7 +374,7 @@ public class Helpers {
      * @return
      * @since 22.06.2006
      */
-    public static java.awt.Point getFrameCenteredLocation(final java.awt.Component centerThis, final Component parent) {
+    public static java.awt.Point getFrameCenteredLocation(java.awt.Component centerThis, Component parent) {
         java.awt.Dimension screenSize = (parent == null) ? java.awt.Toolkit.getDefaultToolkit().getScreenSize() : parent.getSize();
 
         int x = (screenSize.width - centerThis.getWidth()) >> 1;
@@ -389,10 +395,10 @@ public class Helpers {
      * @return DisplayMode of graphical context of given component
      * @since 25.01.2022
      */
-    public static DisplayMode getScreenInfoOf(final Component c) {
-        final GraphicsConfiguration gc = c.getGraphicsConfiguration();
+    public static DisplayMode getScreenInfoOf(Component c) {
+        GraphicsConfiguration gc = c.getGraphicsConfiguration();
         if (gc != null) {
-            final GraphicsDevice gd = gc.getDevice();
+            GraphicsDevice gd = gc.getDevice();
             if (gd != null)
                 return gd.getDisplayMode();
         }
@@ -404,7 +410,7 @@ public class Helpers {
      * @return array if GraphicsDevices
      * @since 25.01.2022
      */
-    public static GraphicsDevice[] getScreenInfos(final Component c) {
+    public static GraphicsDevice[] getScreenInfos(Component c) {
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
         if (env != null)
             return env.getScreenDevices();
@@ -417,14 +423,13 @@ public class Helpers {
      * @param list       ArrayList of resulting DropTarget-Classes
      * @param basePanel
      * @param myListener
-     * @since: 12.10.2007
+     * @since 12.10.2007
      */
-    public static void registerDropListener(final ArrayList<DropTarget> list, final Container basePanel, final PlaylistDropListener myListener) {
+    public static void registerDropListener(List<DropTarget> list, Container basePanel, PlaylistDropListener myListener) {
         list.add(new DropTarget(basePanel, DnDConstants.ACTION_COPY_OR_MOVE, myListener));
 
         Component[] components = basePanel.getComponents();
-        for (int i = 0; i < components.length; i++) {
-            Component component = components[i];
+        for (Component component : components) {
             if (component instanceof Container)
                 registerDropListener(list, (Container) component, myListener);
             else
@@ -438,7 +443,7 @@ public class Helpers {
      * @since 11.07.2020
      */
     public static List<File> readLinesFromFlavor(BufferedReader bReader) {
-        List<File> list = new ArrayList<File>();
+        List<File> list = new ArrayList<>();
         try {
             String line;
             while ((line = bReader.readLine()) != null) {
@@ -455,11 +460,11 @@ public class Helpers {
                     File file = new File(fileString);
                     list.add(file);
                 } catch (Exception ex) {
-                    Log.error("Error with " + line + ": ", ex);
+                    logger.log(Level.ERROR, "Error with " + line + ": ", ex);
                 }
             }
         } catch (IOException ex) {
-            Log.error("Helpers:readLinesFromFlavor", ex);
+            logger.log(Level.ERROR, "Helpers:readLinesFromFlavor", ex);
         }
         return list;
     }
@@ -467,7 +472,7 @@ public class Helpers {
     /**
      * Because of a KDE bug, preventing some files to be correctly
      * URL encoded, we need to do some things by hand
-     * Therefore we first try to read the files ourself and convert
+     * Therefore we first try to read the files ourselves and convert
      * back manually.
      * On Windows however, we only get a javaFileListFlavor
      *
@@ -479,7 +484,7 @@ public class Helpers {
         List<?> files = null;
         boolean handled = false;
         try {
-            final Transferable transferable = dtde.getTransferable();
+            Transferable transferable = dtde.getTransferable();
             if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor) && (dtde.getDropAction() & DnDConstants.ACTION_COPY_OR_MOVE) != 0) {
                 dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
 
@@ -495,9 +500,8 @@ public class Helpers {
                         handled = true; // we are already satisfied
                     }
                 }
-                if (!handled) // no readable flavor was found - use the javaFileListFlavor
-                {
-                    final Object userObject = transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                if (!handled) { // no readable flavor was found - use the javaFileListFlavor
+                    Object userObject = transferable.getTransferData(DataFlavor.javaFileListFlavor);
                     if (userObject != null && userObject instanceof List<?>) {
                         files = ((List<?>) userObject);
                         handled = true;
@@ -506,7 +510,7 @@ public class Helpers {
             } else
                 dtde.rejectDrop();
         } catch (Throwable ex) {
-            Log.error("Helpers::handleDrop", ex);
+            logger.log(Level.ERROR, "Helpers::handleDrop", ex);
         } finally {
             dtde.dropComplete(handled);
         }
@@ -521,10 +525,9 @@ public class Helpers {
      * @param url1
      * @param url2
      * @return
-     * @throws URISyntaxException
      * @since 01.04.2012
      */
-    public static boolean isEqualURL(final URL url1, final URL url2) {
+    public static boolean isEqualURL(URL url1, URL url2) {
         if (url1 != null && url2 != null) {
             try {
                 URI uri1 = url1.toURI();
@@ -542,7 +545,7 @@ public class Helpers {
      * @return
      * @since 14.02.2012
      */
-    public static URL createURLfromFile(final File file) {
+    public static URL createURLfromFile(File file) {
         if (!file.exists()) {
             try {
                 String path = file.getPath();
@@ -570,9 +573,9 @@ public class Helpers {
      * @return a URL in correct form
      * @since 01.05.2011
      */
-    public static URL createURLfromString(final String urlLine) {
+    public static URL createURLfromString(String urlLine) {
         try {
-            if (urlLine == null || urlLine.length() == 0) return null;
+            if (urlLine == null || urlLine.isEmpty()) return null;
             URI uri = new URI(urlLine);
             return uri.toURL();
         } catch (Exception ex) {
@@ -585,7 +588,7 @@ public class Helpers {
      * @return a decoded version of the URL - cannot be reversed to an URI
      * @since 22.07.2015
      */
-    public static String createStringFomURL(final URL url) {
+    public static String createStringFomURL(URL url) {
         if (url == null) return EMPTY_STING;
         return createStringFromURLString(url.toExternalForm());
     }
@@ -595,11 +598,11 @@ public class Helpers {
      * @return a decoded version of the URL type string
      * @since 22.07.2015
      */
-    public static String createStringFromURLString(final String url) {
+    public static String createStringFromURLString(String url) {
         try {
             return URLDecoder.decode(url, CODING_HTTP);
         } catch (UnsupportedEncodingException ex) {
-            Log.error("Helpers::createStringRomURLString", ex);
+            logger.log(Level.ERROR, "Helpers::createStringRomURLString", ex);
         }
         return url;
     }
@@ -609,7 +612,7 @@ public class Helpers {
      * @return
      * @since 22.07.2015
      */
-    public static String getFileNameFrom(final String fileName) {
+    public static String getFileNameFrom(String fileName) {
         return fileName.substring(fileName.lastIndexOf('/') + 1);
     }
 
@@ -618,7 +621,7 @@ public class Helpers {
      * @return
      * @since 22.07.2015
      */
-    public static String getFileNameFromURL(final URL url) {
+    public static String getFileNameFromURL(URL url) {
         return getFileNameFrom(createStringFomURL(url));
     }
 
@@ -627,7 +630,7 @@ public class Helpers {
      * @return
      * @since 22.07.2015
      */
-    public static String getExtensionFrom(final String fileName) {
+    public static String getExtensionFrom(String fileName) {
         return fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
     }
 
@@ -636,7 +639,7 @@ public class Helpers {
      * @return
      * @since 22.07.2015
      */
-    public static String getExtensionFromURL(final URL url) {
+    public static String getExtensionFromURL(URL url) {
         return getExtensionFrom(createStringFomURL(url));
     }
 
@@ -660,7 +663,7 @@ public class Helpers {
      * @return
      * @since 22.07.2015
      */
-    public static String getPreceedingExtensionFromURL(final URL url) {
+    public static String getPreceedingExtensionFromURL(URL url) {
         return getPreceedingExtensionFrom(url.getPath());
     }
 
@@ -672,7 +675,7 @@ public class Helpers {
      * @param name
      * @return
      */
-    public static String sanitizeFilename(final String name) {
+    public static String sanitizeFilename(String name) {
         return name.replaceAll("[:\\\\/*?|<>]", "_");
     }
 
@@ -681,7 +684,7 @@ public class Helpers {
      * @return
      * @since 05.01.2018
      */
-    public static boolean isHTTP(final String protocol) {
+    public static boolean isHTTP(String protocol) {
         return protocol.equalsIgnoreCase("http") || protocol.equalsIgnoreCase("https");
     }
 
@@ -690,7 +693,7 @@ public class Helpers {
      * @return
      * @since 05.01.2018
      */
-    public static boolean isHTTP(final URL url) {
+    public static boolean isHTTP(URL url) {
         return isHTTP(url.getProtocol());
     }
 
@@ -699,7 +702,7 @@ public class Helpers {
      * @return
      * @since 05.01.2018
      */
-    public static boolean isFile(final String protocol) {
+    public static boolean isFile(String protocol) {
         return protocol.equalsIgnoreCase("file");
     }
 
@@ -708,7 +711,7 @@ public class Helpers {
      * @return
      * @since 05.01.2018
      */
-    public static boolean isFile(final URL url) {
+    public static boolean isFile(URL url) {
         return isFile(url.getProtocol());
     }
 
@@ -718,7 +721,7 @@ public class Helpers {
      * @return
      * @since 22.07.2015
      */
-    public static String createLocalFileStringFromURL(final URL url, final boolean stayLocal) {
+    public static String createLocalFileStringFromURL(URL url, boolean stayLocal) {
         String suggestedPath = createStringFomURL(url);
 
         if (url != null) {
@@ -726,13 +729,13 @@ public class Helpers {
                 try {
                     suggestedPath = new File(url.toURI()).toString();
                 } catch (URISyntaxException ex) {
-                    Log.error("Helpers::createLocalFileStringFromURL", ex);
+                    logger.log(Level.ERROR, "Helpers::createLocalFileStringFromURL", ex);
                 }
             } else if (!isHTTP(url) && stayLocal) {
                 try {
                     suggestedPath = HOMEDIR + File.pathSeparator + getFileNameFromURL(url);
                 } catch (SecurityException ex) {
-                    Log.error("Helpers::createLocalFileStringFromURL", ex);
+                    logger.log(Level.ERROR, "Helpers::createLocalFileStringFromURL", ex);
                 }
             }
         }
@@ -744,7 +747,7 @@ public class Helpers {
      * @return
      * @since 22.07.2015
      */
-    public static boolean urlExists(final URL url) {
+    public static boolean urlExists(URL url) {
         if (url == null) return false;
 
         if (isFile(url)) {
@@ -779,7 +782,7 @@ public class Helpers {
      * @return
      * @since 01.05.2011
      */
-    public static boolean urlExists(final String url) {
+    public static boolean urlExists(String url) {
         return urlExists(Helpers.createURLfromString(url));
     }
 
@@ -795,7 +798,7 @@ public class Helpers {
      * @return
      * @since 05.01.2018
      */
-    public static String createRelativePathForFile(final String basePathName, final String inputFileName) {
+    public static String createRelativePathForFile(String basePathName, String inputFileName) {
         try {
             Path basePath = Paths.get(basePathName);
             Path inputFilePath = Paths.get(inputFileName);
@@ -811,13 +814,13 @@ public class Helpers {
      * This works only for protocol "file"!!
      *
      * @param baseURL
-     * @param fileName
+     * @param inputFileName
      * @return
      * @since 23.03.2011
      */
-    public static URL createAbsolutePathForFile(final URL baseURL, final String inputFileName) {
+    public static URL createAbsolutePathForFile(URL baseURL, String inputFileName) {
         String fileName = inputFileName;
-        final URL fileURL = createURLfromString(inputFileName);
+        URL fileURL = createURLfromString(inputFileName);
         if (!isFile(fileURL)) return fileURL;
         try {
             if (Helpers.urlExists(fileName))
@@ -836,28 +839,28 @@ public class Helpers {
                 if (fileName.charAt(0) == '/') fileName = fileName.substring(1);
 
                 int iterations = 0;
-                URL fullURL = Helpers.createURLfromString(((new StringBuilder(relPath)).append(fileName)).toString());
+                URL fullURL = Helpers.createURLfromString(relPath + fileName);
                 while (fullURL != null && !urlExists(fullURL) && iterations < 256) {
                     relPath.append("../");
-                    fullURL = Helpers.createURLfromString(((new StringBuilder(relPath)).append(fileName)).toString());
+                    fullURL = Helpers.createURLfromString(relPath + fileName);
                     iterations++;
                 }
                 if (iterations < 256 && fullURL != null) {
                     try {
                         return (fullURL.toURI().normalize()).toURL();
                     } catch (URISyntaxException x) {
-                        Log.error("[createAbsolutePathForFile]", x);
+                        logger.log(Level.ERROR, "[createAbsolutePathForFile]", x);
                     }
                     return fullURL;
                 } else {
-                    Log.info("File not found: " + inputFileName + " in relation to " + baseURL);
+                    logger.log(Level.INFO, "File not found: " + inputFileName + " in relation to " + baseURL);
                     return Helpers.createURLfromString(inputFileName);
                 }
             }
         } catch (Throwable ex) {
-            Log.error("[createAbsolutePathForFile]", ex);
+            logger.log(Level.ERROR, "[createAbsolutePathForFile]", ex);
         }
-        Log.info("Illegal filename specification: " + inputFileName + " in playlist " + baseURL);
+        logger.log(Level.INFO, "Illegal filename specification: " + inputFileName + " in playlist " + baseURL);
         return null;
     }
 
@@ -875,22 +878,22 @@ public class Helpers {
      * @since 01.07.2006
      * @since 23.03.2011
      */
-    public static FileChooserResult selectFileNameFor(final java.awt.Component parent, final String showDir, final String action, final FileFilter[] filter, final boolean acceptAllFiles, final int type, final boolean multiFileSelection, final boolean directoryOnly) {
+    public static FileChooserResult selectFileNameFor(java.awt.Component parent, String showDir, String action, FileFilter[] filter, boolean acceptAllFiles, int type, boolean multiFileSelection, boolean directoryOnly) {
         String dir = (showDir == null) ? HOMEDIR : showDir;
         // Try to work with URL - map "dir" to a local File
         try {
-            final File f = new File(dir);
+            File f = new File(dir);
             dir = f.getCanonicalPath();
         } catch (Exception ex) {
-            Log.error("Helpers::selectFileNameFor", ex);
+            logger.log(Level.ERROR, "Helpers::selectFileNameFor", ex);
         }
 
-        final File theFile = new File(dir);
+        File theFile = new File(dir);
         File theDirectory = new File(dir);
         while (theDirectory != null && (!theDirectory.isDirectory() || !theDirectory.exists())) {
             theDirectory = theDirectory.getParentFile();
         }
-        final javax.swing.JFileChooser chooser = new javax.swing.JFileChooser(theDirectory);
+        javax.swing.JFileChooser chooser = new javax.swing.JFileChooser(theDirectory);
         if (filter != null) {
             chooser.setAcceptAllFileFilterUsed(false);
             for (int i = filter.length - 1; i >= 0; i--) // count downwards 'cause the last one is the default
@@ -901,7 +904,7 @@ public class Helpers {
         chooser.setApproveButtonText(action);
         chooser.setMultiSelectionEnabled(multiFileSelection);
         chooser.setFileSelectionMode((directoryOnly) ? JFileChooser.DIRECTORIES_ONLY : JFileChooser.FILES_ONLY);
-        final int result = (type == 0) ? chooser.showOpenDialog(parent) : chooser.showSaveDialog(parent);
+        int result = (type == 0) ? chooser.showOpenDialog(parent) : chooser.showSaveDialog(parent);
 
         if (result == javax.swing.JFileChooser.APPROVE_OPTION) {
             File[] selectedFiles = (multiFileSelection) ? chooser.getSelectedFiles() : new File[] {chooser.getSelectedFile()};
@@ -915,8 +918,8 @@ public class Helpers {
      * @return a string representing the point class
      * @since 05.01.2008
      */
-    public static String getStringFromPoint(final java.awt.Point location) {
-        return ((new StringBuilder()).append((int) location.getX()).append('x').append((int) location.getY())).toString();
+    public static String getStringFromPoint(java.awt.Point location) {
+        return String.valueOf((int) location.getX()) + 'x' + (int) location.getY();
     }
 
     /**
@@ -924,31 +927,31 @@ public class Helpers {
      * @return a Point class from the string
      * @since 05.01.2008
      */
-    public static java.awt.Point getPointFromString(final String point) {
-        final int xIndex = point.indexOf('x');
-        final String x = point.substring(0, xIndex);
-        final String y = point.substring(xIndex + 1);
+    public static java.awt.Point getPointFromString(String point) {
+        int xIndex = point.indexOf('x');
+        String x = point.substring(0, xIndex);
+        String y = point.substring(xIndex + 1);
         return new java.awt.Point(Integer.parseInt(x), Integer.parseInt(y));
     }
 
     /**
-     * @param location
+     * @param dimension
      * @return a string representing the point class
      * @since 05.01.2008
      */
-    public static String getStringFromDimension(final java.awt.Dimension dimension) {
-        return ((new StringBuilder()).append((int) dimension.getWidth()).append('x').append((int) dimension.getHeight())).toString();
+    public static String getStringFromDimension(java.awt.Dimension dimension) {
+        return String.valueOf((int) dimension.getWidth()) + 'x' + (int) dimension.getHeight();
     }
 
     /**
-     * @param point
+     * @param dimension
      * @return a Point class from the string
      * @since 05.01.2008
      */
-    public static java.awt.Dimension getDimensionFromString(final String dimension) {
-        final int xIndex = dimension.indexOf('x');
-        final String width = dimension.substring(0, xIndex);
-        final String height = dimension.substring(xIndex + 1);
+    public static java.awt.Dimension getDimensionFromString(String dimension) {
+        int xIndex = dimension.indexOf('x');
+        String width = dimension.substring(0, xIndex);
+        String height = dimension.substring(xIndex + 1);
         return new java.awt.Dimension(Integer.parseInt(width), Integer.parseInt(height));
     }
 
@@ -957,12 +960,12 @@ public class Helpers {
      * @return
      * @since 12.07.2009
      */
-    public static java.awt.Insets getInsetsFromString(final String insets) {
-        final StringTokenizer tok = new StringTokenizer(insets, ",");
-        final int left = Integer.parseInt(tok.nextToken().trim());
-        final int top = Integer.parseInt(tok.nextToken().trim());
-        final int right = Integer.parseInt(tok.nextToken().trim());
-        final int bottom = Integer.parseInt(tok.nextToken().trim());
+    public static java.awt.Insets getInsetsFromString(String insets) {
+        StringTokenizer tok = new StringTokenizer(insets, ",");
+        int left = Integer.parseInt(tok.nextToken().trim());
+        int top = Integer.parseInt(tok.nextToken().trim());
+        int right = Integer.parseInt(tok.nextToken().trim());
+        int bottom = Integer.parseInt(tok.nextToken().trim());
         return new Insets(top, left, bottom, right);
     }
 
@@ -971,11 +974,11 @@ public class Helpers {
      * @return
      * @since 12.07.2009
      */
-    public static java.awt.Color getColorFromString(final String color) {
-        final StringTokenizer tok = new StringTokenizer(color, ",");
-        final int r = Integer.parseInt(tok.nextToken().trim());
-        final int g = Integer.parseInt(tok.nextToken().trim());
-        final int b = Integer.parseInt(tok.nextToken().trim());
+    public static java.awt.Color getColorFromString(String color) {
+        StringTokenizer tok = new StringTokenizer(color, ",");
+        int r = Integer.parseInt(tok.nextToken().trim());
+        int g = Integer.parseInt(tok.nextToken().trim());
+        int b = Integer.parseInt(tok.nextToken().trim());
         return new Color(r, g, b);
     }
 
@@ -986,7 +989,7 @@ public class Helpers {
      * @return
      * @since 14.01.2012
      */
-    public static double getDecimalValueFrom(final double dbValue) {
+    public static double getDecimalValueFrom(double dbValue) {
         return Math.pow(10, dbValue / 20.0d);
     }
 
@@ -997,7 +1000,7 @@ public class Helpers {
      * @return
      * @since 14.01.2012
      */
-    public static double getDBValueFrom(final double decimalValue) {
+    public static double getDBValueFrom(double decimalValue) {
         return Math.log10(decimalValue) * 20.0d;
     }
 
@@ -1006,10 +1009,10 @@ public class Helpers {
      * @return
      * @since 06.02.2011
      */
-    public static String getTimeStringFromMilliseconds(final long millis) {
-        final int sec = (int) ((millis / 1000L) % 60L);
-        final int min = (int) (millis / 60000L);
-        final StringBuilder sb = new StringBuilder();
+    public static String getTimeStringFromMilliseconds(long millis) {
+        int sec = (int) ((millis / 1000L) % 60L);
+        int min = (int) (millis / 60000L);
+        StringBuilder sb = new StringBuilder();
         if (min < 10) sb.append(' ');
         sb.append(min).append(':');
         if (sec < 10) sb.append('0');
@@ -1022,13 +1025,13 @@ public class Helpers {
      * @return
      * @since 03.04.2011
      */
-    public static long getMillisecondsFromTimeString(final String timeString) {
-        final int minIndex = timeString.indexOf(':');
-        final int min = Integer.parseInt(timeString.substring(0, minIndex).trim());
-        final String secString = timeString.substring(minIndex + 1);
+    public static long getMillisecondsFromTimeString(String timeString) {
+        int minIndex = timeString.indexOf(':');
+        int min = Integer.parseInt(timeString.substring(0, minIndex).trim());
+        String secString = timeString.substring(minIndex + 1);
         int secIndex = secString.indexOf(':');
         if (secIndex == -1) secIndex = secString.length();
-        final int sec = Integer.parseInt(secString.substring(0, secIndex).trim());
+        int sec = Integer.parseInt(secString.substring(0, secIndex).trim());
         return (min * 60 + sec) * 1000L;
     }
 
@@ -1041,12 +1044,12 @@ public class Helpers {
 
     public static String getAudioInfos() {
         if (AudioInfos == null) {
-            final StringBuilder result = (new StringBuilder("Running on ")).append(System.getProperty("os.arch"));
+            StringBuilder result = (new StringBuilder("Running on ")).append(System.getProperty("os.arch"));
             result.append("\nMixerInfo:\n");
-            final Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
-            for (int i = 0; i < mixerInfo.length; i++) {
-                result.append("MixerInfo: ").append(mixerInfo[i]).append('\n');
-                Mixer mixer = AudioSystem.getMixer(mixerInfo[i]);
+            Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
+            for (Mixer.Info value : mixerInfo) {
+                result.append("MixerInfo: ").append(value).append('\n');
+                Mixer mixer = AudioSystem.getMixer(value);
                 result.append("Mixer: ").append(mixer).append('\n');
                 result.append("Devices for recording:\n");
                 Line.Info[] targetLineInfos = mixer.getTargetLineInfo();
@@ -1056,7 +1059,7 @@ public class Helpers {
                     for (int j = 0; j < targetLineInfos.length; j++) {
                         result.append("\tTargetline(").append(j).append("): ").append(targetLineInfos[j]).append('\n');
                         if (targetLineInfos[j] instanceof DataLine.Info) {
-                            AudioFormat audioFormats[] = ((DataLine.Info) targetLineInfos[j]).getFormats();
+                            AudioFormat[] audioFormats = ((DataLine.Info) targetLineInfos[j]).getFormats();
                             for (int u = 0; u < audioFormats.length; u++) {
                                 result.append("\t\tAudioformat(").append(u).append("): ").append(audioFormats[u]);
                                 DataLine.Info info = new DataLine.Info(TargetDataLine.class, audioFormats[u]);
@@ -1077,7 +1080,7 @@ public class Helpers {
                     for (int j = 0; j < sourceLineInfos.length; j++) {
                         result.append("\tSourceline(").append(j).append("): ").append(sourceLineInfos[j]).append('\n');
                         if (sourceLineInfos[j] instanceof DataLine.Info) {
-                            AudioFormat audioFormats[] = ((DataLine.Info) sourceLineInfos[j]).getFormats();
+                            AudioFormat[] audioFormats = ((DataLine.Info) sourceLineInfos[j]).getFormats();
                             for (int u = 0; u < audioFormats.length; u++) {
                                 result.append("\t\tAudioformat(").append(u).append("): ").append(audioFormats[u]);
                                 DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormats[u]);
@@ -1107,73 +1110,68 @@ public class Helpers {
     public static void registerAllClasses() {
         // Just load these in advance
         try {
-            Class.forName("de.quippy.javamod.system.Log");
-        } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
-        }
-        try {
             Class.forName("de.quippy.javamod.system.Helpers");
         } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
+            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
 
         // Interpolation Routines - doing pre-calculations through class loading
         try {
             Class.forName("de.quippy.javamod.multimedia.mod.mixer.interpolation.CubicSpline");
         } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
+            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.mod.mixer.interpolation.Kaiser");
         } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
+            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.mod.mixer.interpolation.WindowedFIR");
         } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
+            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
 
         // The following are essential for registration at the ModuleFactory
         try {
             Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.ProTrackerMod");
         } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
+            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.XMMod");
         } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
+            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.ScreamTrackerOldMod");
         } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
+            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.ScreamTrackerSTXMod");
         } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
+            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.ScreamTrackerMod");
         } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
+            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.ImpulseTrackerMod");
         } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
+            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.FarandoleTrackerMod");
         } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
+            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.MultiTrackerMod");
         } catch (ClassNotFoundException ex) {
-            Log.error("JavaModMainBase: a class moved!", ex);
+            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
 
         // The following are essential for registration at the MultimediaContainerManager
@@ -1181,54 +1179,54 @@ public class Helpers {
         try {
             Class.forName("de.quippy.javamod.multimedia.mod.ModContainer");
         } catch (ClassNotFoundException ex) {
-            Log.info("No MOD file support!");
+            logger.log(Level.INFO, "No MOD file support!");
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.wav.WavContainer");
         } catch (ClassNotFoundException ex) {
-            Log.info("No WAV file support!");
+            logger.log(Level.INFO, "No WAV file support!");
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.mp3.MP3Container");
         } catch (ClassNotFoundException ex) {
-            Log.info("No MP3 file support!");
+            logger.log(Level.INFO, "No MP3 file support!");
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.ogg.OGGContainer");
         } catch (ClassNotFoundException ex) {
-            Log.info("No OGG file support!");
+            logger.log(Level.INFO, "No OGG file support!");
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.ape.APEContainer");
         } catch (ClassNotFoundException ex) {
-            Log.info("No APE file support!");
+            logger.log(Level.INFO, "No APE file support!");
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.flac.FLACContainer");
         } catch (ClassNotFoundException ex) {
-            Log.info("No FLAC file support!");
+            logger.log(Level.INFO, "No FLAC file support!");
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.midi.MidiContainer");
         } catch (ClassNotFoundException ex) {
-            Log.info("No MIDI file support!");
+            logger.log(Level.INFO, "No MIDI file support!");
         }
         try {
             Class.forName("de.quippy.javamod.multimedia.opl3.OPL3Container");
         } catch (ClassNotFoundException ex) {
-            Log.info("No OPL file support!");
+            logger.log(Level.INFO, "No OPL file support!");
         }
 
         // SID and SID WAVE Loading
         try {
             Class.forName("de.quippy.javamod.multimedia.sid.SIDContainer");
         } catch (ClassNotFoundException ex) {
-            Log.info("No SID file support!");
+            logger.log(Level.INFO, "No SID file support!");
         }
         try {
             Class.forName("de.quippy.sidplay.resid_builder.resid.Wave");
         } catch (ClassNotFoundException ex) {
-            Log.info("No SID WAVE support!");
+            logger.log(Level.INFO, "No SID WAVE support!");
         }
     }
 
@@ -1243,7 +1241,7 @@ public class Helpers {
     public static String getCurrentServerVersion() {
         BufferedReader reader = null;
         try {
-            final URL version_url = createURLfromString(Helpers.VERSION_URL);
+            URL version_url = createURLfromString(Helpers.VERSION_URL);
             reader = new BufferedReader(new InputStreamReader(version_url.openStream(), Helpers.CODING_HTTP));
             String version = reader.readLine();
             reader.close();
@@ -1254,7 +1252,7 @@ public class Helpers {
         } finally {
             if (reader != null) try {
                 reader.close();
-            } catch (Exception ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (Exception ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
         return null;
     }
@@ -1291,12 +1289,12 @@ public class Helpers {
      * @return
      * @since 19.10.2008
      */
-    public static int downloadJavaMod(final File destination, final ProgressDialog bar) {
+    public static int downloadJavaMod(File destination, ProgressDialog bar) {
         try {
-            final URL javamod_url = createURLfromString(JAVAMOD_URL);
+            URL javamod_url = createURLfromString(JAVAMOD_URL);
             return copyFromURL(javamod_url, destination, bar);
         } catch (Throwable ex) {
-            Log.error("CheckForUpdate failed", ex);
+            logger.log(Level.ERROR, "CheckForUpdate failed", ex);
         }
         return -1;
     }
@@ -1306,7 +1304,7 @@ public class Helpers {
      * @param fromURL
      * @since 22.04.2012
      */
-    public static int copyFromURL(final URL fromURL, final File destination, final ProgressDialog bar) {
+    public static int copyFromURL(URL fromURL, File destination, ProgressDialog bar) {
         int copied = 0;
         InputStream in = null;
         OutputStream out = null;
@@ -1319,7 +1317,7 @@ public class Helpers {
                 }
                 in = new BufferedInputStream(conn.getInputStream());
                 out = new BufferedOutputStream(new FileOutputStream(destination));
-                final byte[] input = new byte[8192];
+                byte[] input = new byte[8192];
                 int len;
                 while ((len = in.read(input, 0, 8192)) != -1) {
                     out.write(input, 0, len);
@@ -1329,7 +1327,7 @@ public class Helpers {
                 out.flush();
             }
         } catch (Throwable ex) {
-            Log.error("CopyFromURL failed", ex);
+            logger.log(Level.ERROR, "CopyFromURL failed", ex);
         } finally {
             if (in != null) try {
                 in.close();
@@ -1341,19 +1339,19 @@ public class Helpers {
         return copied;
     }
 
-    public static int limit(final int value, final int minValue, final int maxValue) {
+    public static int limit(int value, int minValue, int maxValue) {
         return (value > maxValue) ? maxValue : ((value > minValue) ? minValue : value);
     }
 
-    public static int limitMax(final int value, final int maxValue) {
+    public static int limitMax(int value, int maxValue) {
         return (value > maxValue) ? maxValue : value;
     }
 
-    public static long limit(final long value, final long minValue, final long maxValue) {
+    public static long limit(long value, long minValue, long maxValue) {
         return (value > maxValue) ? maxValue : ((value > minValue) ? minValue : value);
     }
 
-    public static long limitMax(final long value, final long maxValue) {
+    public static long limitMax(long value, long maxValue) {
         return (value > maxValue) ? maxValue : value;
     }
 }

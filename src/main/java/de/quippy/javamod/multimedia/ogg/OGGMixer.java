@@ -24,8 +24,9 @@ package de.quippy.javamod.multimedia.ogg;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
-
 import javax.sound.sampled.AudioFormat;
 
 import com.jcraft.jogg.Packet;
@@ -38,7 +39,8 @@ import com.jcraft.jorbis.DspState;
 import com.jcraft.jorbis.Info;
 import de.quippy.javamod.io.FileOrPackedInputStream;
 import de.quippy.javamod.mixer.BasicMixer;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -46,6 +48,8 @@ import de.quippy.javamod.system.Log;
  * @since 01.11.2010
  */
 public class OGGMixer extends BasicMixer {
+
+    private static final Logger logger = getLogger(OGGMixer.class.getName());
 
     private static final int STATE_INITIAL = 0;
     private static final int STATE_READHEADER = 1;
@@ -78,10 +82,10 @@ public class OGGMixer extends BasicMixer {
     private int samplesProcessed;
 
     private long currentSamplesWritten;
-    private int lengthInMilliseconds;
+    private final int lengthInMilliseconds;
 
     private InputStream inputStream;
-    private URL oggFileUrl;
+    private final URL oggFileUrl;
 
     /**
      * Constructor for OGGMixer
@@ -97,7 +101,7 @@ public class OGGMixer extends BasicMixer {
             if (inputStream != null) try {
                 inputStream.close();
                 inputStream = null;
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
 
             inputStream = new FileOrPackedInputStream(oggFileUrl);
 
@@ -110,8 +114,8 @@ public class OGGMixer extends BasicMixer {
             if (inputStream != null) try {
                 inputStream.close();
                 inputStream = null;
-            } catch (IOException e) { /* Log.error("IGNORED", e); */ }
-            Log.error("[OGGMixer]", ex);
+            } catch (IOException e) { /* logger.log(Level.ERROR, "IGNORED", e); */ }
+            logger.log(Level.ERROR, "[OGGMixer]", ex);
         }
     }
 
@@ -165,7 +169,7 @@ public class OGGMixer extends BasicMixer {
     @Override
     public long getMillisecondPosition() {
         if (vorbisInfo != null && vorbisInfo.rate != 0)
-            return (long) currentSamplesWritten * 1000L / (long) vorbisInfo.rate;
+            return currentSamplesWritten * 1000L / (long) vorbisInfo.rate;
         else
             return 0;
     }
@@ -195,7 +199,7 @@ public class OGGMixer extends BasicMixer {
             while (getMillisecondPosition() < milliseconds && byteCount > 0)
                 byteCount = decodeFrame();
         } catch (Exception ex) {
-            Log.error("[OGGMixer]", ex);
+            logger.log(Level.ERROR, "[OGGMixer]", ex);
         }
     }
 
@@ -242,8 +246,8 @@ public class OGGMixer extends BasicMixer {
 
     private void fetchMoreData() throws IOException {
         if (!oggEOS) {
-            final int oggIndex = oggSyncState.buffer(CHUNKSIZE);
-            final int bytesRead = inputStream.read(oggSyncState.data, oggIndex, CHUNKSIZE);
+            int oggIndex = oggSyncState.buffer(CHUNKSIZE);
+            int bytesRead = inputStream.read(oggSyncState.data, oggIndex, CHUNKSIZE);
             if (bytesRead <= 0) {
                 oggEOS = true;
             } else {
@@ -404,7 +408,7 @@ public class OGGMixer extends BasicMixer {
         return STATE_PREPARE;
     }
 
-    private final int doStatePrepare() throws Exception {
+    private int doStatePrepare() throws Exception {
         vorbisDSPState.synthesis_init(vorbisInfo);
         vorbisBlock.init(vorbisDSPState);
 
@@ -452,7 +456,7 @@ public class OGGMixer extends BasicMixer {
         if (inputStream != null) try {
             inputStream.close();
             inputStream = null;
-        } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+        } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
     }
 
     /**
@@ -469,7 +473,7 @@ public class OGGMixer extends BasicMixer {
             int byteCount = 0;
 
             do {
-                final long bytesToWrite = (hasStopPosition()) ? getSamplesToWriteLeft() * getChannelCount() * 2 : -1;
+                long bytesToWrite = (hasStopPosition()) ? getSamplesToWriteLeft() * getChannelCount() * 2 : -1;
                 byteCount = decodeFrame();
                 if (byteCount > 0 && isInitialized()) {
                     // find out, if all decoded samples are to write

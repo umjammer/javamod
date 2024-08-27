@@ -30,13 +30,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
 import de.quippy.javamod.system.Helpers;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -45,6 +49,8 @@ import de.quippy.javamod.system.Log;
  */
 public class CueSheet {
 
+    private static final Logger logger = getLogger(CueSheet.class.getName());
+
     private static final String QUOTATION_MARK = "\"";
 
     private URL cueSheedFileName;
@@ -52,11 +58,11 @@ public class CueSheet {
     private String title;
     private String performer;
     private String songwriter;
-    private ArrayList<CueFile> cueFiles;
+    private final List<CueFile> cueFiles;
 
     public CueSheet() {
         super();
-        cueFiles = new ArrayList<CueFile>();
+        cueFiles = new ArrayList<>();
     }
 
     /**
@@ -74,7 +80,7 @@ public class CueSheet {
     }
 
     /**
-     * @param fileName
+     * @param file
      * @since 14.02.2012
      */
     public CueSheet(String file) {
@@ -145,7 +151,7 @@ public class CueSheet {
      * @return the cueFiles
      * @since 14.02.2012
      */
-    public ArrayList<CueFile> getCueFiles() {
+    public List<CueFile> getCueFiles() {
         return cueFiles;
     }
 
@@ -153,14 +159,14 @@ public class CueSheet {
         cueFiles.add(cueFile);
     }
 
-    private void writeCommentBlock(Writer writer, String title, String performer, String songWriter, int column) throws IOException {
+    private static void writeCommentBlock(Writer writer, String title, String performer, String songWriter, int column) throws IOException {
         StringBuilder columnString = new StringBuilder();
-        for (int i = 0; i < column; i++) columnString.append("  ");
-        if (performer != null && performer.length() != 0)
-            writer.write(columnString.toString() + "PERFORMER \"" + performer + "\"\r\n");
-        if (title != null && title.length() != 0) writer.write(columnString.toString() + "TITLE \"" + title + "\"\r\n");
-        if (songWriter != null && songWriter.length() != 0)
-            writer.write(columnString.toString() + "SONGWRITER \"" + songWriter + "\"\r\n");
+        columnString.append("  ".repeat(Math.max(0, column)));
+        if (performer != null && !performer.isEmpty())
+            writer.write(columnString + "PERFORMER \"" + performer + "\"\r\n");
+        if (title != null && !title.isEmpty()) writer.write(columnString + "TITLE \"" + title + "\"\r\n");
+        if (songWriter != null && !songWriter.isEmpty())
+            writer.write(columnString + "SONGWRITER \"" + songWriter + "\"\r\n");
     }
 
     public void writeCueSheet(File toFile) {
@@ -173,49 +179,43 @@ public class CueSheet {
             bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(toFile)));
             bw.write("REM COMMENT \"" + Helpers.FULLVERSION + "\"\r\n");
             writeCommentBlock(bw, getTitle(), getPerformer(), getSongwriter(), 0);
-            ArrayList<CueFile> cueFiles = getCueFiles();
-            final int filesSize = cueFiles.size();
-            for (int i = 0; i < filesSize; i++) {
-                CueFile cueFile = cueFiles.get(i);
-
+            List<CueFile> cueFiles = getCueFiles();
+            int filesSize = cueFiles.size();
+            for (CueFile cueFile : cueFiles) {
                 String fileString = Helpers.createLocalFileStringFromURL(cueFile.getFile(), true);
                 if (fileString.toLowerCase().startsWith(prefix)) fileString = fileString.substring(prefixLen);
 
                 bw.write("FILE \"" + fileString + "\" " + cueFile.getType() + "\r\n");
 
-                ArrayList<CueTrack> cueTracks = cueFile.getTracks();
-                final int tracksSize = cueTracks.size();
-                for (int j = 0; j < tracksSize; j++) {
-                    CueTrack cueTrack = cueTracks.get(j);
-
+                List<CueTrack> cueTracks = cueFile.getTracks();
+                int tracksSize = cueTracks.size();
+                for (CueTrack cueTrack : cueTracks) {
                     int trackNo = cueTrack.getTrackNo();
                     String track = (trackNo < 10) ? "0" + trackNo : String.valueOf(trackNo);
                     bw.write("  TRACK " + track + " " + cueTrack.getFormat() + "\r\n");
                     writeCommentBlock(bw, cueTrack.getTitle(), cueTrack.getPerformer(), cueTrack.getSongwriter(), 2);
 
-                    ArrayList<CueIndex> indexes = cueTrack.getIndexes();
-                    final int indexSize = indexes.size();
-                    for (int k = 0; k < indexSize; k++) {
-                        CueIndex cueIndex = indexes.get(k);
-
+                    List<CueIndex> indexes = cueTrack.getIndexes();
+                    int indexSize = indexes.size();
+                    for (CueIndex cueIndex : indexes) {
                         int indexNo = cueIndex.getIndexNo();
                         String index = (indexNo < 10) ? "0" + indexNo : String.valueOf(indexNo);
                         long milliIndex = cueIndex.getMillisecondIndex();
-                        Integer min = Integer.valueOf((int) (milliIndex / 60000L));
-                        Integer sec = Integer.valueOf((int) ((milliIndex / 1000L) % 60L));
+                        Integer min = (int) (milliIndex / 60000L);
+                        Integer sec = (int) ((milliIndex / 1000L) % 60L);
                         milliIndex -= (min.longValue() * 60L + sec.longValue()) * 1000;
-                        Integer frame = Integer.valueOf((int) (((milliIndex * 75) + 500L) / 1000L));
+                        Integer frame = (int) (((milliIndex * 75) + 500L) / 1000L);
                         String timeIndex = String.format("%02d:%02d:%02d", min, sec, frame);
                         bw.write("    INDEX " + index + " " + timeIndex + "\r\n");
                     }
                 }
             }
         } catch (Throwable ex) {
-            Log.error("[CueSheet]: Writing to \"" + toFile.getAbsolutePath() + "\" failed", ex);
+            logger.log(Level.ERROR, "[CueSheet]: Writing to \"" + toFile.getAbsolutePath() + "\" failed", ex);
         } finally {
             if (bw != null) try {
                 bw.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
     }
 
@@ -254,10 +254,10 @@ public class CueSheet {
         try {
             br = new BufferedReader(new InputStreamReader(fromFile.openStream(), Helpers.CODING_M3U));
             while ((line = br.readLine()) != null) {
-                if (line.length() == 0) continue;
+                if (line.isEmpty()) continue;
                 tok = new Scanner(line);
                 if (!tok.hasNext()) continue;
-                final String token = tok.next();
+                String token = tok.next();
 
                 // Skipping CATALOG, CDTEXTFILE, FLAGS, ISRC, POSTGAP, PREGAP, REM
                 if (token.equalsIgnoreCase("FILE")) {
@@ -307,11 +307,11 @@ public class CueSheet {
                 }
             }
         } catch (Throwable ex) {
-            Log.error("[CueSheet]: Loading failed", ex);
+            logger.log(Level.ERROR, "[CueSheet]: Loading failed", ex);
         } finally {
             if (br != null) try {
                 br.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
             if (tok != null) tok.close();
         }
     }

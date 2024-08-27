@@ -24,6 +24,7 @@ package de.quippy.javamod.main.playlist;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Objects;
 
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import de.quippy.javamod.system.Helpers;
@@ -99,7 +100,7 @@ public class PlayListEntry {
      * @since 27.02.2011
      */
     public synchronized void setDuration(long duration) {
-        this.duration = Long.valueOf(duration);
+        this.duration = duration;
     }
 
     /**
@@ -115,7 +116,7 @@ public class PlayListEntry {
      * @since 13.02.2012
      */
     public synchronized void setTimeIndexInFile(long timeIndex) {
-        this.timeIndexInFile = Long.valueOf(timeIndex);
+        this.timeIndexInFile = timeIndex;
     }
 
     public synchronized String getFormattedName() {
@@ -133,7 +134,7 @@ public class PlayListEntry {
             duration = (Long) infos[1];
             if (songName == null) songName = (String) infos[0];
         }
-        return duration.longValue();
+        return duration;
     }
 
     public synchronized String getDurationString() {
@@ -148,7 +149,7 @@ public class PlayListEntry {
         if (timeIndexInFile == null)
             return " ";
         else
-            return Helpers.getTimeStringFromMilliseconds(timeIndexInFile.longValue());
+            return Helpers.getTimeStringFromMilliseconds(timeIndexInFile);
     }
 
     /**
@@ -156,10 +157,7 @@ public class PlayListEntry {
      * @since 13.02.2012
      */
     public synchronized long getTimeIndex() {
-        if (timeIndexInFile == null)
-            return 0L;
-        else
-            return timeIndexInFile.longValue();
+        return Objects.requireNonNullElse(timeIndexInFile, 0L);
     }
 
     /**
@@ -206,7 +204,7 @@ public class PlayListEntry {
     }
 
     /**
-     * @param isActive the isActive to set
+     * @param isSelected the isActive to set
      */
     public void setSelected(boolean isSelected) {
         this.isSelected = isSelected;
@@ -230,10 +228,6 @@ public class PlayListEntry {
         this.playList = playList;
     }
 
-    /**
-     * @return
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         return this.file.toString();

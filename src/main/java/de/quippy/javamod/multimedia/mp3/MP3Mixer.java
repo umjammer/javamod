@@ -29,7 +29,7 @@ import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.HashMap;
-
+import java.util.Map;
 import javax.sound.sampled.AudioFormat;
 
 import de.quippy.javamod.io.FileOrPackedInputStream;
@@ -38,7 +38,6 @@ import de.quippy.javamod.mixer.BasicMixer;
 import de.quippy.javamod.multimedia.mp3.streaming.IcyInputStream;
 import de.quippy.javamod.multimedia.mp3.streaming.TagParseListener;
 import de.quippy.javamod.system.Helpers;
-import de.quippy.javamod.system.Log;
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.BitstreamException;
 import javazoom.jl.decoder.Decoder;
@@ -63,7 +62,7 @@ public class MP3Mixer extends BasicMixer {
     private Bitstream bitStream;
     private Decoder decoder;
 
-    private URL mp3FileUrl;
+    private final URL mp3FileUrl;
 
     private TagParseListener tagParseListener;
 
@@ -89,13 +88,13 @@ public class MP3Mixer extends BasicMixer {
         this.tagParseListener = tagParseListener;
     }
 
-    private InputStream createHttpRessource(final URL mp3FileUrl) throws IOException {
+    private InputStream createHttpRessource(URL mp3FileUrl) throws IOException {
         InputStream result = null;
         if (httpResource != null) httpResource.close();
         httpResource = new HttpResource(mp3FileUrl);
         httpResource.setUser_agent(Helpers.USER_AGENT);
         httpResource.setAccept_charset(Helpers.CODING_ICY);
-        HashMap<String, String> additionalHeaders = new HashMap<String, String>();
+        Map<String, String> additionalHeaders = new HashMap<>();
         additionalHeaders.put("Ultravox-transport-type", "TCP");
         additionalHeaders.put("Icy-MetaData", "1");
         result = httpResource.getResource(additionalHeaders, true);
@@ -125,8 +124,8 @@ public class MP3Mixer extends BasicMixer {
             if (inputStream != null) try {
                 inputStream.close();
                 inputStream = null;
-            } catch (IOException e) { /* Log.error("IGNORED", ex); */ }
-            Log.error("[MP3Mixer]", ex);
+            } catch (IOException e) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
+            logger.log(Level.ERROR, "[MP3Mixer]", ex);
         }
     }
 
@@ -141,24 +140,20 @@ public class MP3Mixer extends BasicMixer {
             else {
                 if (Helpers.isHTTP(mp3FileUrl)) {
                     isStreaming = Boolean.TRUE;
-//					try
-//					{
-//						InputStream inputStream = createHttpRessource(mp3FileUrl);
-//						if (inputStream!=null)
-//						{
-//							inputStream.close();
-//							return (isStreaming = Boolean.TRUE).booleanValue();
-//						}
-//					}
-//					catch (Throwable ex)
-//					{
-//						Log.error("[MP3Mixer::isStreamaing]", ex);
-//					}
+//                    try {
+//                        InputStream inputStream = createHttpRessource(mp3FileUrl);
+//                        if (inputStream != null) {
+//                            inputStream.close();
+//                            return (isStreaming = Boolean.TRUE).booleanValue();
+//                        }
+//                    } catch (Throwable ex) {
+//                        logger.log(Level.ERROR, "[MP3Mixer::isStreamaing]", ex);
+//                    }
                 } else
                     isStreaming = Boolean.FALSE;
             }
         }
-        return isStreaming.booleanValue();
+        return isStreaming;
     }
 
     /**
@@ -192,7 +187,7 @@ public class MP3Mixer extends BasicMixer {
                 if (h != null)
                     return (long) (h.totalMs(inputStream.available()) + 0.5);
             } catch (Throwable ex) {
-                //Log.error("IGNORED", ex);
+                //logger.log(Level.ERROR, "IGNORED", ex);
             }
         }
         return 0;
@@ -207,15 +202,15 @@ public class MP3Mixer extends BasicMixer {
         if (bitStream != null) try {
             bitStream.close();
             bitStream = null;
-        } catch (BitstreamException ex) { /* Log.error("IGNORED", ex); */ }
+        } catch (BitstreamException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         if (inputStream != null) try {
             inputStream.close();
             inputStream = null;
-        } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+        } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         if (httpResource != null) try {
             httpResource.close();
             httpResource = null;
-        } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+        } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         isStreaming = null;
     }
 
@@ -255,7 +250,7 @@ public class MP3Mixer extends BasicMixer {
                 samplesWritten = (long) (played_ms * (float) sampleRate / 1000.0);
             }
         } catch (Throwable ex) {
-            Log.error("[MP3Mixer]", ex);
+            logger.log(Level.ERROR, "[MP3Mixer]", ex);
         }
     }
 
@@ -331,7 +326,7 @@ public class MP3Mixer extends BasicMixer {
             do {
                 h = bitStream.readFrame();
                 if (h != null) {
-                    final SampleBuffer output = (SampleBuffer) decoder.decodeFrame(h, bitStream);
+                    SampleBuffer output = (SampleBuffer) decoder.decodeFrame(h, bitStream);
                     bitStream.closeFrame();
 
                     if (isFirstFrame) {
@@ -342,16 +337,16 @@ public class MP3Mixer extends BasicMixer {
                         if (!isInitialized()) return;
                     }
 
-                    final long samplesToWrite = (hasStopPosition() && channels != -1) ? getSamplesToWriteLeft() * getChannelCount() : -1;
+                    long samplesToWrite = (hasStopPosition() && channels != -1) ? getSamplesToWriteLeft() * getChannelCount() : -1;
 
-                    final short[] samples = output.getBuffer();
+                    short[] samples = output.getBuffer();
                     int origLen = output.getBufferLength();
                     // find out, if all decoded samples are to write
                     if (samplesToWrite > 0 && (long) (origLen) > samplesToWrite)
                         origLen = (int) samplesToWrite;
                     samplesWritten += origLen / (long) decoder.getOutputChannels();
                     played_ms = samplesWritten * 1000L / (long) decoder.getOutputFrequency();
-                    final int len = origLen << 1;
+                    int len = origLen << 1;
                     byte[] b = getOutputBuffer(len);
 
                     int idx = 0;

@@ -41,7 +41,7 @@ public class PatternElementIT extends PatternElement {
      * @param patternRow
      * @param channel
      */
-    public PatternElementIT(final Module parentMod, final PatternRow parentPatternRow, final int patternIndex, final int patternRow, final int channel) {
+    public PatternElementIT(Module parentMod, PatternRow parentPatternRow, int patternIndex, int patternRow, int channel) {
         super(parentMod, parentPatternRow, patternIndex, patternRow, channel);
     }
 
@@ -100,7 +100,7 @@ public class PatternElementIT extends PatternElement {
             case 0x12:
                 return "Tremolo";
             case 0x13:        // Extended
-                final int effektOpEx = effektOp & 0x0F;
+                int effektOpEx = effektOp & 0x0F;
                 switch (effektOp >> 4) {
                     case 0x1:
                         return "Glissando";
@@ -153,14 +153,14 @@ public class PatternElementIT extends PatternElement {
                             case 0x1:
                                 return "Enabl. Surround";
                             // MPT Effects only
-//							case 0x8: // Disable reverb for this channel
-//								break;
-//							case 0x9: // Force reverb for this channel
-//								break;
-//							case 0xA: // Select mono surround mode (center channel). This is the default
-//								break;
-//							case 0xB: // Select quad surround mode: this allows you to pan in the rear channels, especially useful for 4-speakers playback. Note that S9A and S9B do not activate the surround for the current channel, it is a global setting that will affect the behavior of the surround for all channels. You can enable or disable the surround for individual channels by using the S90 and S91 effects. In quad surround mode, the channel surround will stay active until explicitely disabled by a S90 effect
-//								break;
+//                            case 0x8: // Disable reverb for this channel
+//                                break;
+//                            case 0x9: // Force reverb for this channel
+//                                break;
+//                            case 0xA: // Select mono surround mode (center channel). This is the default
+//                                break;
+//                            case 0xB: // Select quad surround mode: this allows you to pan in the rear channels, especially useful for 4-speakers playback. Note that S9A and S9B do not activate the surround for the current channel, it is a global setting that will affect the behavior of the surround for all channels. You can enable or disable the surround for individual channels by using the S90 and S91 effects. In quad surround mode, the channel surround will stay active until explicitely disabled by a S90 effect
+//                                break;
                             case 0xC:
                                 return "Global FilterMode Off";
                             case 0xD:
@@ -211,7 +211,7 @@ public class PatternElementIT extends PatternElement {
             case 0x1C:
                 return "Smooth Midi Macro";
         }
-        //Log.error("Unknown: " + ModConstants.getAsHex(effekt, 2) + "/" + ModConstants.getAsHex(effektOp, 2));
+        //logger.log(Level.ERROR, "Unknown: " + ModConstants.getAsHex(effekt, 2) + "/" + ModConstants.getAsHex(effektOp, 2));
         return Helpers.EMPTY_STING;
     }
 
@@ -260,8 +260,8 @@ public class PatternElementIT extends PatternElement {
                 return EFFECT_NORMAL;
             case 0x12:
                 return EFFECT_VOLUME;
-            case 0x13:        // Extended
-                final int effektOpEx = effektOp & 0x0F;
+            case 0x13: // Extended
+                int effektOpEx = effektOp & 0x0F;
                 switch (effektOp >> 4) {
                     case 0x1:
                         return EFFECT_PITCH;
@@ -275,7 +275,7 @@ public class PatternElementIT extends PatternElement {
                         return EFFECT_PANNING;
                     case 0x6:
                         return EFFECT_GLOBAL;
-                    case 0x7:    // set NNA and others
+                    case 0x7: // set NNA and others
                         switch (effektOpEx) {
                             case 0x0:
                                 return EFFECT_NORMAL;
@@ -307,21 +307,21 @@ public class PatternElementIT extends PatternElement {
                         break;
                     case 0x8:
                         return EFFECT_PANNING;
-                    case 0x9:    // Sound Control
+                    case 0x9: // Sound Control
                         switch (effektOpEx) {
                             case 0x0:
                                 return EFFECT_PANNING;
                             case 0x1:
                                 return EFFECT_PANNING;
                             // MPT Effects only
-//							case 0x8: // Disable reverb for this channel
-//								break;
-//							case 0x9: // Force reverb for this channel
-//								break;
-//							case 0xA: // Select mono surround mode (center channel). This is the default
-//								break;
-//							case 0xB: // Select quad surround mode: this allows you to pan in the rear channels, especially useful for 4-speakers playback. Note that S9A and S9B do not activate the surround for the current channel, it is a global setting that will affect the behavior of the surround for all channels. You can enable or disable the surround for individual channels by using the S90 and S91 effects. In quad surround mode, the channel surround will stay active until explicitely disabled by a S90 effect
-//								break;
+//                            case 0x8: // Disable reverb for this channel
+//                                break;
+//                            case 0x9: // Force reverb for this channel
+//                                break;
+//                            case 0xA: // Select mono surround mode (center channel). This is the default
+//                                break;
+//                            case 0xB: // Select quad surround mode: this allows you to pan in the rear channels, especially useful for 4-speakers playback. Note that S9A and S9B do not activate the surround for the current channel, it is a global setting that will affect the behavior of the surround for all channels. You can enable or disable the surround for individual channels by using the S90 and S91 effects. In quad surround mode, the channel surround will stay active until explicitely disabled by a S90 effect
+//                                break;
                             case 0xC:
                                 return EFFECT_GLOBAL;
                             case 0xD:
@@ -374,37 +374,24 @@ public class PatternElementIT extends PatternElement {
      */
     @Override
     public char getVolumeColumEffektChar() {
-        switch (volumeEffekt) {
-            case 0x01:
-                return 'v';
-            case 0x02:
-                return 'd';
-            case 0x03:
-                return 'c';
-            case 0x04:
-                return 'b';
-            case 0x05:
-                return 'a';
-            case 0x06:
-                return 'u';
-            case 0x07:
-                return 'h';
-            case 0x08:
-                return 'p';
-            case 0x09:
-                return 'l';
-            case 0x0A:
-                return 'r';
-            case 0x0B:
-                return 'g';
-            case 0x0C:
-                return 'e';
-            case 0x0D:
-                return 'f';
-            case 0x0E:
-                return 'o'; // MPT Specific, not supported
-        }
-        return '?';
+        return switch (volumeEffekt) {
+            case 0x01 -> 'v';
+            case 0x02 -> 'd';
+            case 0x03 -> 'c';
+            case 0x04 -> 'b';
+            case 0x05 -> 'a';
+            case 0x06 -> 'u';
+            case 0x07 -> 'h';
+            case 0x08 -> 'p';
+            case 0x09 -> 'l';
+            case 0x0A -> 'r';
+            case 0x0B -> 'g';
+            case 0x0C -> 'e';
+            case 0x0D -> 'f';
+            case 0x0E -> 'o';
+            default -> // MPT Specific, not supported
+                    '?';
+        };
     }
 
     /**
@@ -446,7 +433,7 @@ public class PatternElementIT extends PatternElement {
             case 0x0E:
                 return "Sample cues";
         }
-        //Log.error("Unknown: " + ModConstants.getAsHex(assignedVolumeEffekt, 2) + "/" + ModConstants.getAsHex(assignedVolumeEffektOp, 2));
+        //logger.log(Level.ERROR, "Unknown: " + ModConstants.getAsHex(assignedVolumeEffekt, 2) + "/" + ModConstants.getAsHex(assignedVolumeEffektOp, 2));
         return Helpers.EMPTY_STING;
     }
 
@@ -456,38 +443,23 @@ public class PatternElementIT extends PatternElement {
      */
     @Override
     public int getVolEffectCategory() {
-        switch (volumeEffekt) {
-            case 0x00:
-                return EFFECT_NORMAL;
-            case 0x01:
-                return EFFECT_VOLUME;
-            case 0x02:
-                return EFFECT_VOLUME;
-            case 0x03:
-                return EFFECT_VOLUME;
-            case 0x04:
-                return EFFECT_VOLUME;
-            case 0x05:
-                return EFFECT_VOLUME;
-            case 0x06:
-                return EFFECT_UNKNOWN; // normally not existent with IT
-            case 0x07:
-                return EFFECT_PITCH;
-            case 0x08:
-                return EFFECT_PANNING;
-            case 0x09:
-                return EFFECT_PANNING;
-            case 0x0A:
-                return EFFECT_PANNING;
-            case 0x0B:
-                return EFFECT_PITCH;
-            case 0x0C:
-                return EFFECT_PITCH;
-            case 0x0D:
-                return EFFECT_PITCH;
-            case 0x0E:
-                return EFFECT_UNKNOWN;
-        }
-        return EFFECT_UNKNOWN;
+        return switch (volumeEffekt) {
+            case 0x00 -> EFFECT_NORMAL;
+            case 0x01 -> EFFECT_VOLUME;
+            case 0x02 -> EFFECT_VOLUME;
+            case 0x03 -> EFFECT_VOLUME;
+            case 0x04 -> EFFECT_VOLUME;
+            case 0x05 -> EFFECT_VOLUME;
+            case 0x06 -> EFFECT_UNKNOWN; // normally not existent with IT
+            case 0x07 -> EFFECT_PITCH;
+            case 0x08 -> EFFECT_PANNING;
+            case 0x09 -> EFFECT_PANNING;
+            case 0x0A -> EFFECT_PANNING;
+            case 0x0B -> EFFECT_PITCH;
+            case 0x0C -> EFFECT_PITCH;
+            case 0x0D -> EFFECT_PITCH;
+            case 0x0E -> EFFECT_UNKNOWN;
+            default -> EFFECT_UNKNOWN;
+        };
     }
 }

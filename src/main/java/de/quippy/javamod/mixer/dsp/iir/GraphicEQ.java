@@ -40,12 +40,11 @@ import de.quippy.javamod.mixer.dsp.iir.filter.IIRFilterBase;
 public class GraphicEQ implements DSPEffekt {
 
     private static final float Q = 1.4f;
-    private static final int[] CENTER_FREQUENCIES =
-            {
-                    60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000
-            };
+    private static final int[] CENTER_FREQUENCIES = {
+            60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000
+    };
     private int usedBands;
-    private IIRFilter theFilter;
+    private final IIRFilter theFilter;
     private boolean isActive;
 
     /**
@@ -62,12 +61,11 @@ public class GraphicEQ implements DSPEffekt {
     }
 
     /**
-     * @param audioFormat
-     * @see de.quippy.javamod.mixer.dsp.DSPEffekt#initialize(javax.sound.sampled.AudioFormat)
      * @since 09.01.2012
      */
-    public void initialize(final AudioFormat audioFormat, final int sampleBufferSize) {
-        final int currentSampleRate = (int) audioFormat.getSampleRate();
+    @Override
+    public void initialize(AudioFormat audioFormat, int sampleBufferSize) {
+        int currentSampleRate = (int) audioFormat.getSampleRate();
         int breakFreq = currentSampleRate >> 1;
         IIRFilterBase[] filters = theFilter.getFilters();
         for (int i = 0; i < CENTER_FREQUENCIES.length; i++) {
@@ -81,18 +79,12 @@ public class GraphicEQ implements DSPEffekt {
         usedBands = bands;
     }
 
-    /**
-     * @param active
-     * @see de.quippy.javamod.mixer.dsp.DSPEffekt#setIsActive(boolean)
-     */
+    @Override
     public void setIsActive(boolean active) {
         isActive = active;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.dsp.DSPEffekt#isActive()
-     */
+    @Override
     public boolean isActive() {
         return isActive;
     }
@@ -155,7 +147,8 @@ public class GraphicEQ implements DSPEffekt {
      * @see de.quippy.javamod.mixer.dsp.DSPEffekt#doEffekt(float[], int, int)
      * @since 09.01.2012
      */
-    public int doEffekt(final float[] buffer, final int start, final int length) {
+    @Override
+    public int doEffekt(float[] buffer, int start, int length) {
         if (!isActive) return length;
         return theFilter.doFilter(buffer, start, length, usedBands);
     }

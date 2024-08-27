@@ -53,7 +53,7 @@ public class Envelope {
     /**
      * Constructor for Envelope
      */
-    public Envelope(final EnvelopeType envType) {
+    public Envelope(EnvelopeType envType) {
         super();
         envelopeType = envType;
         on = sustain = loop = carry = filter = xm_style = false;
@@ -63,13 +63,13 @@ public class Envelope {
      * Get the new positions
      *
      * @param currentTick
-     * @param keyOff
+     * @param currentXMPosition
      * @param initKeyOff
      * @param aktMemo
      * @return Hi int: current position (XM) | Lo int: current tick
      * @since 19.06.2006
      */
-    public long updatePosition(final ChannelMemory aktMemo, final int currentTick, final int currentXMPosition, final boolean initKeyOff) {
+    public long updatePosition(ChannelMemory aktMemo, int currentTick, int currentXMPosition, boolean initKeyOff) {
         int tick = currentTick + 1;
         int envPos = currentXMPosition;
 
@@ -102,10 +102,9 @@ public class Envelope {
 
                 if (!copyBack) envPos = currentXMPosition;
             }
-        } else // IT, OMPT, MPT...
-        {
+        } else { // IT, OMPT, MPT...
             int start = 0;
-            int end = 0x7fffffff;
+            int end = 0x7fff_ffff;
             boolean fade_flag = initKeyOff;
             if (sustain && !aktMemo.keyOff) {
                 start = positions[sustainStartPoint];
@@ -126,7 +125,7 @@ public class Envelope {
             }
         }
 
-        return (long) ((((long) envPos) << 32) | (long) tick);
+        return (((long) envPos) << 32) | (long) tick;
     }
 
     /**
@@ -137,7 +136,7 @@ public class Envelope {
      * @return
      * @since 19.06.2006
      */
-    public int getValueForPosition(final int tick, final int xmEnvPos) {
+    public int getValueForPosition(int tick, int xmEnvPos) {
         // XM continues to update the ticks but sets "f???EnvDelta" to zero
         // and stays on the envPos value.
         // Releasing of sustain is then done with "getXMResetPosition"
@@ -191,11 +190,11 @@ public class Envelope {
      * a key off event - that is to release a sustained envelope
      * Because of a bug in the panning envelope, it stays in sustain
      *
-     * @param tick
+     * @param envTick
      * @return
      * @since 20.06.2024
      */
-    public int getXMResetPosition(final int envTick, final int envPos) {
+    public int getXMResetPosition(int envTick, int envPos) {
         // uint16 cast...
         return (envTick >= (positions[envPos] & 0xFFFF)) ? positions[envPos] - 1 : envTick;
     }
@@ -207,7 +206,7 @@ public class Envelope {
      * @param flag
      * @since 19.06.2006
      */
-    public void setXMType(final int flag) {
+    public void setXMType(int flag) {
         on = (flag & 0x01) != 0;
         sustain = (flag & 0x02) != 0;
         loop = (flag & 0x04) != 0;
@@ -222,7 +221,7 @@ public class Envelope {
      * @param flag
      * @since 12.11.2006
      */
-    public void setITType(final int flag) {
+    public void setITType(int flag) {
         on = (flag & 0x01) != 0;
         loop = (flag & 0x02) != 0;
         sustain = (flag & 0x04) != 0;
@@ -239,7 +238,7 @@ public class Envelope {
      * @param maxValue the maximum value
      * @since 22.01.2022
      */
-    public void sanitize(final int maxValue) {
+    public void sanitize(int maxValue) {
         if (positions != null && positions.length > 0) {
             // limit endPoint to the smallest possible array index
             // and consider arrays of different length
@@ -275,63 +274,63 @@ public class Envelope {
     /**
      * @param loopEndPoint The loopEndPoint to set.
      */
-    public void setLoopEndPoint(final int loopEndPoint) {
+    public void setLoopEndPoint(int loopEndPoint) {
         this.loopEndPoint = loopEndPoint;
     }
 
     /**
      * @param loopStartPoint The loopStartPoint to set.
      */
-    public void setLoopStartPoint(final int loopStartPoint) {
+    public void setLoopStartPoint(int loopStartPoint) {
         this.loopStartPoint = loopStartPoint;
     }
 
     /**
      * @param points The nPoints to set.
      */
-    public void setNPoints(final int points) {
+    public void setNPoints(int points) {
         endPoint = (nPoints = points) - 1;
     }
 
     /**
      * @param positions The positions to set.
      */
-    public void setPositions(final int[] positions) {
+    public void setPositions(int[] positions) {
         this.positions = positions;
     }
 
     /**
      * @param value The value to set.
      */
-    public void setValue(final int[] value) {
+    public void setValue(int[] value) {
         this.value = value;
     }
 
     /**
      * @param sustainPoint The sustainPoint to set. (XM-Version)
      */
-    public void setSustainPoint(final int sustainPoint) {
+    public void setSustainPoint(int sustainPoint) {
         this.sustainStartPoint = this.sustainEndPoint = sustainPoint;
     }
 
     /**
      * @param sustainEndPoint the sustainEndPoint to set (IT-Version)
      */
-    public void setSustainEndPoint(final int sustainEndPoint) {
+    public void setSustainEndPoint(int sustainEndPoint) {
         this.sustainEndPoint = sustainEndPoint;
     }
 
     /**
      * @param sustainStartPoint the sustainStartPoint to set (IT-Version)
      */
-    public void setSustainStartPoint(final int sustainStartPoint) {
+    public void setSustainStartPoint(int sustainStartPoint) {
         this.sustainStartPoint = sustainStartPoint;
     }
 
     /**
      * @param envelopeType the envelopeType to set
      */
-    public void setEnvelopeType(final EnvelopeType envelopeType) {
+    public void setEnvelopeType(EnvelopeType envelopeType) {
         this.envelopeType = envelopeType;
     }
 
@@ -350,7 +349,7 @@ public class Envelope {
      *
      * @param oldITVolumeEnvelope the oldITVolumeEnvelope to set
      */
-    public void setOldITVolumeEnvelope(final byte[] oldITVolumeEnvelope) {
+    public void setOldITVolumeEnvelope(byte[] oldITVolumeEnvelope) {
         this.oldITVolumeEnvelope = oldITVolumeEnvelope;
     }
 }

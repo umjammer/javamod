@@ -30,11 +30,11 @@ import javax.sound.sampled.AudioFormat;
  */
 public interface DSPEffekt {
 
-    public void initialize(final AudioFormat audioFormat, final int sampleBufferLength);
+    void initialize(AudioFormat audioFormat, int sampleBufferLength);
 
-    public int doEffekt(final float[] buffer, final int start, final int length);
+    int doEffekt(float[] buffer, int start, int length);
 
-    public void setIsActive(boolean active);
+    void setIsActive(boolean active);
 
-    public boolean isActive();
+    boolean isActive();
 }

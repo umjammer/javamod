@@ -23,6 +23,7 @@
 
 package de.quippy.javamod.main.gui;
 
+import java.io.Serial;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 
@@ -34,6 +35,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class UrlDialog extends JDialog {
 
+    @Serial
     private static final long serialVersionUID = 6551932234216134125L;
 
     private javax.swing.JButton cancelButton;
@@ -105,22 +107,14 @@ public class UrlDialog extends JDialog {
         openButton.setText("Open");
         openButton.setFont(Helpers.getDialogFont());
         openButton.setToolTipText("Open");
-        openButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                doOpen();
-            }
-        });
+        openButton.addActionListener(evt -> doOpen());
         jPanel1.add(openButton);
         cancelButton = new javax.swing.JButton();
         cancelButton.setMnemonic('C');
         cancelButton.setText("Cancel");
         cancelButton.setToolTipText("Cancel");
         cancelButton.setFont(Helpers.getDialogFont());
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                doCancel();
-            }
-        });
+        cancelButton.addActionListener(evt -> doCancel());
         jPanel1.add(cancelButton);
 
         gridBagConstraints = new java.awt.GridBagConstraints();

@@ -43,10 +43,9 @@ import de.quippy.javamod.multimedia.mod.mixer.ProTrackerMixer;
  */
 public class MultiTrackerMod extends ProTrackerMod {
 
-    private static final String[] MODFILEEXTENSION = new String[]
-            {
-                    "mtm"
-            };
+    private static final String[] MODFILEEXTENSION = {
+            "mtm"
+    };
 
     /**
      * Will be executed during class load
@@ -75,108 +74,61 @@ public class MultiTrackerMod extends ProTrackerMod {
 
     }
 
-    /**
-     * @return the file extensions this loader is suitable for
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getFileExtensionList()
-     */
     @Override
     public String[] getFileExtensionList() {
         return MODFILEEXTENSION;
     }
 
-    /**
-     * @param sampleRate
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getModMixer(int)
-     */
     @Override
-    public BasicModMixer getModMixer(final int sampleRate, final int doISP, final int doNoLoops, final int maxNNAChannels) {
+    public BasicModMixer getModMixer(int sampleRate, int doISP, int doNoLoops, int maxNNAChannels) {
         return new ProTrackerMixer(this, sampleRate, doISP, doNoLoops, maxNNAChannels);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getPanningSeparation()
-     */
     @Override
     public int getPanningSeparation() {
         return 128;
     }
 
-    /**
-     * @param channel
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getPanningValue(int)
-     */
     @Override
     public int getPanningValue(int channel) {
         return panningValue[channel];
     }
 
-    /**
-     * @param channel
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getChannelVolume(int)
-     */
     @Override
     public int getChannelVolume(int channel) {
         return 64;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getFrequencyTable()
-     */
     @Override
     public int getFrequencyTable() {
         return ModConstants.XM_AMIGA_TABLE;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getSongMessage()
-     */
     @Override
     public String getSongMessage() {
         return songMessage;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getMidiConfig()
-     */
     @Override
     public MidiMacros getMidiConfig() {
         return null;
     }
 
     /**
-     * @param inputStream
      * @return true, if this is a protracker mod, false if this is not clear
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#checkLoadingPossible(de.quippy.javamod.io.ModfileInputStream)
      */
     @Override
     public boolean checkLoadingPossible(ModfileInputStream inputStream) throws IOException {
-        final String id = inputStream.readString(3);
+        String id = inputStream.readString(3);
         inputStream.seek(0);
         return id.equals("MTM");
     }
 
-    /**
-     * @param fileName
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getNewInstance(java.lang.String)
-     */
     @Override
     protected Module getNewInstance(String fileName) {
         return new MultiTrackerMod(fileName);
     }
 
-    /**
-     * @param inputStream
-     * @throws IOException
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#loadModFileInternal(de.quippy.javamod.io.ModfileInputStream)
-     */
     @Override
     protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
         songFlags = ModConstants.SONG_AMIGALIMITS;
@@ -186,39 +138,39 @@ public class MultiTrackerMod extends ProTrackerMod {
         setBPMSpeed(125);
 
         // ID
-        final String id = inputStream.readString(3);
+        String id = inputStream.readString(3);
         setModID(id);
         // Tracker version
-        final int version = inputStream.read();
+        int version = inputStream.read();
         // ASCIIZ songname
-        final String songname = inputStream.readString(20);
+        String songname = inputStream.readString(20);
         setSongName(songname);
         // Number of tracks saved
-        final int numTracks = inputStream.readIntelUnsignedWord();
+        int numTracks = inputStream.readIntelUnsignedWord();
         // Last pattern number saved
-        final int lastPattern = inputStream.read();
+        int lastPattern = inputStream.read();
         setNPattern(lastPattern + 1);
         // Last order number to play (songlength-1)
-        final int lastOrder = inputStream.read();
+        int lastOrder = inputStream.read();
         setSongLength(lastOrder + 1);
         // Length of comment field
-        final int commentSize = inputStream.readIntelUnsignedWord();
+        int commentSize = inputStream.readIntelUnsignedWord();
         // Number of samples saved
-        final int numSamples = inputStream.read();
+        int numSamples = inputStream.read();
         setNSamples(numSamples);
         // Attribute byte (unused)
-        /*final int attribute = */
+        //final int attribute =
         inputStream.read();
         // Numbers of rows in every pattern (MultiTrackerMod itself does not seem to support values != 64)
         int beatsPerTrack = inputStream.read();
         if (beatsPerTrack == 0) beatsPerTrack = 64;
         // Number of channels used
-        final int numChannels = inputStream.read();
+        int numChannels = inputStream.read();
         setNChannels(numChannels);
         // Channel pan positions
         panningValue = new int[32];
         for (int ch = 0; ch < 32; ch++) {
-            final int readByte = inputStream.read();
+            int readByte = inputStream.read();
             panningValue[ch] = ((readByte & 0x0F) << 4) + 8;
         }
 
@@ -227,7 +179,7 @@ public class MultiTrackerMod extends ProTrackerMod {
             throw new IOException("Unsupported MultiTrackerMod MOD");
 
         setBaseVolume(ModConstants.MAXGLOBALVOLUME);
-        final int preAmp = ModConstants.MAX_MIXING_PREAMP / getNChannels();
+        int preAmp = ModConstants.MAX_MIXING_PREAMP / getNChannels();
         setMixingPreAmp((preAmp < ModConstants.MIN_MIXING_PREAMP) ? ModConstants.MIN_MIXING_PREAMP : (preAmp > 0x80) ? 0x80 : preAmp);
 
         setTrackerName("MultiTrackerMod V" + ((version >> 4) & 0x0F) + '.' + (version & 0xF));
@@ -238,7 +190,7 @@ public class MultiTrackerMod extends ProTrackerMod {
         for (int i = 0; i < getNSamples(); i++) {
             Sample current = new Sample();
             // Samplename
-            final String sampleName = inputStream.readString(22);
+            String sampleName = inputStream.readString(22);
 
             // Length
             int length = inputStream.readIntelDWord();
@@ -254,8 +206,7 @@ public class MultiTrackerMod extends ProTrackerMod {
             int vol = inputStream.read();
 
             int sampleType = inputStream.read();
-            if ((sampleType & 0x01) != 0) //16Bit:
-            {
+            if ((sampleType & 0x01) != 0) { // 16Bit:
                 length >>= 1;
                 repeatStart >>= 1;
                 repeatStop >>= 1;
@@ -308,36 +259,34 @@ public class MultiTrackerMod extends ProTrackerMod {
 
         // now follow #tracks of 192 bytes, we will seek to them
         // during read, so memorize this file pointer...
-        final long tracksStart = inputStream.getFilePointer();
+        long tracksStart = inputStream.getFilePointer();
         // and skip to pattern data:
         inputStream.skip(192 * numTracks);
 
         PatternContainer patternContainer = new PatternContainer(this, getNPattern(), beatsPerTrack, getNChannels());
         setPatternContainer(patternContainer);
         for (int pattNum = 0; pattNum < getNPattern(); pattNum++) {
-            for (int chn = 0; chn < 32; chn++) // always read 32 track pointers!
-            {
-                final int track = inputStream.readIntelUnsignedWord();
+            for (int chn = 0; chn < 32; chn++) { // always read 32 track pointers!
+                int track = inputStream.readIntelUnsignedWord();
                 if (track == 0 || track > numTracks || chn >= getNChannels()) {
-                    if (chn < getNChannels()) // we need to fill with empty patternData:
-                    {
+                    if (chn < getNChannels()) { // we need to fill with empty patternData:
                         for (int row = 0; row < beatsPerTrack; row++) {
                             patternContainer.createPatternElement(pattNum, row, chn);
                         }
                     }
                 } else {
-                    final long resetToPos = inputStream.getFilePointer();
+                    long resetToPos = inputStream.getFilePointer();
                     inputStream.seek(tracksStart + (192 * (track - 1)));
                     for (int row = 0; row < beatsPerTrack; row++) {
                         PatternElement pe = patternContainer.createPatternElement(pattNum, row, chn);
 
                         int readArray = (inputStream.readByte() & 0xFF) << 16 | (inputStream.readByte() & 0xFF) << 8 | (inputStream.readByte() & 0xFF);
-                        final int note = (readArray & 0xFC0000) >> 18;
-                        final int instr = (readArray & 0x03F000) >> 12;
-                        final int effekt = (readArray & 0x000F00) >> 8;
-                        final int effektOp = (readArray & 0x0000FF);
+                        int note = (readArray & 0xFC0000) >> 18;
+                        int instr = (readArray & 0x03F000) >> 12;
+                        int effekt = (readArray & 0x000F00) >> 8;
+                        int effektOp = (readArray & 0x0000FF);
                         if (note > 0 && note < 72) {
-                            final int noteIndex = note + 25;
+                            int noteIndex = note + 25;
                             if (noteIndex < ModConstants.noteValues.length) {
                                 pe.setNoteIndex(noteIndex);
                                 pe.setPeriod(ModConstants.noteValues[noteIndex]);
@@ -359,10 +308,10 @@ public class MultiTrackerMod extends ProTrackerMod {
         if (commentSize > 0) {
             int start = 0;
             int rest = 40;
-            final int rows = commentSize / rest;
+            int rows = commentSize / rest;
             StringBuilder b = new StringBuilder(commentSize + rows); // length plus "\n"
             for (int i = 0; i < rows; i++) {
-                final String line = inputStream.readString(rest);
+                String line = inputStream.readString(rest);
                 b.append(line).append('\n');
                 start += rest;
                 if ((start + rest) > commentSize) rest = commentSize - start;
@@ -372,7 +321,7 @@ public class MultiTrackerMod extends ProTrackerMod {
 
         // read the sampleData
         for (int i = 0; i < getNSamples(); i++) {
-            final Sample current = getInstrumentContainer().getSample(i);
+            Sample current = getInstrumentContainer().getSample(i);
             readSampleData(current, inputStream);
         }
     }

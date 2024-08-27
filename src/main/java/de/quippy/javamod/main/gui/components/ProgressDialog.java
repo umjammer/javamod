@@ -28,9 +28,9 @@ package de.quippy.javamod.main.gui.components;
  */
 public interface ProgressDialog {
 
-    public void setDetailMinimum(final int minValue);
+    void setDetailMinimum(int minValue);
 
-    public void setDetailMaximum(final int maxValue);
+    void setDetailMaximum(int maxValue);
 
-    public void setDetailValue(final int value);
+    void setDetailValue(int value);
 }

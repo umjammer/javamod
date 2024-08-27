@@ -55,12 +55,12 @@ public class ModDSP {
     private long leftNR;
     private long rightNR;
 
-//	// Wide Stereo Mix
-//	private int maxWideStereo;
-//	private long[] wideLBuffer;
-//	private long[] wideRBuffer;
-//	private int readPointer;
-//	private int writePointer;
+//    // Wide Stereo Mix
+//    private int maxWideStereo;
+//    private long[] wideLBuffer;
+//    private long[] wideRBuffer;
+//    private int readPointer;
+//    private int writePointer;
 
     // Surround Mix
     // Surround Encoding: 1 delay line + low-pass filter + high-pass filter
@@ -79,7 +79,7 @@ public class ModDSP {
     private long nDolbyLP_B1;
     private long nDolbyLP_A1;
 
-    private long surroundBuffer[];
+    private long[] surroundBuffer;
 
 
     /**
@@ -95,7 +95,7 @@ public class ModDSP {
      * @param sampleFreq
      * @since 25.01.2022
      */
-    public void initModDSP(final int sampleFreq) {
+    public void initModDSP(int sampleFreq) {
         initMegaBass(sampleFreq);
         initDCRemoval();
         initNoiseReduction();
@@ -117,7 +117,7 @@ public class ModDSP {
      * @param gainPI
      * @since 25.01.2022
      */
-    private void shelfEQ(final int scale, final long[] out, final long F_c, final int F_s, final double gainDC, final double gainFT, final double gainPI) {
+    private static void shelfEQ(int scale, long[] out, long F_c, int F_s, double gainDC, double gainFT, double gainPI) {
         double a1, b0, b1;
         double gainFT2, gainDC2, gainPI2;
         double alpha, beta0, beta1, rho;
@@ -156,15 +156,15 @@ public class ModDSP {
      * @param sampleFreq
      * @since 25.01.2022
      */
-    public void initMegaBass(final int sampleFreq) {
+    public void initMegaBass(int sampleFreq) {
         nXBassFlt_Y1 = 0;
         nXBassFlt_X1 = 0;
 
         long nXBassCutOff = 50 + (DEFAULT_XBASS_RANGE + 2) * 20;
         long nXBassGain = DEFAULT_XBASS_DEPTH;
         // because of defaults we do not need to check this
-        //if (nXBassGain<2) nXBassGain=1; else if (nXBassGain>8) nXBassGain=8;
-        //if (nXBassCutOff<60) nXBassCutOff=60; else if (nXBassCutOff>600) nXBassCutOff=600;
+//        if (nXBassGain < 2) nXBassGain = 1; else if (nXBassGain > 8) nXBassGain = 8;
+//        if (nXBassCutOff < 60) nXBassCutOff = 60; else if (nXBassCutOff > 600) nXBassCutOff = 600;
 
         long[] result = new long[3];
         shelfEQ(1024, result, nXBassCutOff, sampleFreq,
@@ -185,11 +185,11 @@ public class ModDSP {
      * @param sample
      * @since 25.01.2022
      */
-    public void processMegaBass(final long[] sample) {
+    public void processMegaBass(long[] sample) {
         long x1 = nXBassFlt_X1;
         long y1 = nXBassFlt_Y1;
 
-        final long x_m = (sample[0] + sample[1] + 0x100) >> 9;
+        long x_m = (sample[0] + sample[1] + 0x100) >> 9;
         y1 = (nXBassFlt_B0 * x_m + nXBassFlt_B1 * x1 + nXBassFlt_A1 * y1) >> (10 - 8);
         x1 = x_m;
         sample[0] += y1;
@@ -215,7 +215,7 @@ public class ModDSP {
      * @param sample
      * @since 25.01.2022
      */
-    public void processDCRemoval(final long[] sample) {
+    public void processDCRemoval(long[] sample) {
         long y1l = nDCRFlt_Y1l, x1l = nDCRFlt_X1l;
         long y1r = nDCRFlt_Y1r, x1r = nDCRFlt_X1r;
 
@@ -250,7 +250,7 @@ public class ModDSP {
      * @param sample
      * @since 25.01.2022
      */
-    public void processNoiseReduction(final long[] sample) {
+    public void processNoiseReduction(long[] sample) {
         long vnr = sample[0] >> 1;
         sample[0] = vnr + leftNR;
         leftNR = vnr;
@@ -259,42 +259,43 @@ public class ModDSP {
         sample[1] = vnr + rightNR;
         rightNR = vnr;
     }
-////////////////////////////////////////////////////////////////////////////////
-// SIMPLE WIDE STEREO REMOVED, REPLACED BY Surround
-//	/**
-//	 * @since 25.01.2022
-//	 * @param sampleFreq
-//	 */
-//	public void initWideStereo(final int sampleFreq)
-//	{
-//		// initialize the wide stereo mix
-//		maxWideStereo = (DEFAULT_WIDE_MS * sampleFreq) / 1000;
-//		wideLBuffer = new long[maxWideStereo];
-//		wideRBuffer = new long[maxWideStereo];
-//		readPointer = 0;
-//		writePointer=maxWideStereo-1;
-//	}
-//	/**
-//	 * @since 25.01.2022
-//	 * @param sample
-//	 */
-//	public void processWideStereo(final long[] sample)
-//	{
-//		wideLBuffer[writePointer]=sample[0];
-//		wideRBuffer[writePointer++]=sample[1];
-//		if (writePointer>=maxWideStereo) writePointer=0;
+
+//#region SIMPLE WIDE STEREO REMOVED, REPLACED BY Surround
+
+//    /**
+//     * @param sampleFreq
+//     * @since 25.01.2022
+//     */
+//    public void initWideStereo(final int sampleFreq) {
+//        // initialize the wide stereo mix
+//        maxWideStereo = (DEFAULT_WIDE_MS * sampleFreq) / 1000;
+//        wideLBuffer = new long[maxWideStereo];
+//        wideRBuffer = new long[maxWideStereo];
+//        readPointer = 0;
+//        writePointer = maxWideStereo - 1;
+//    }
 //
-//		sample[1]+=(wideLBuffer[readPointer]>>1);
-//		sample[0]+=(wideRBuffer[readPointer++]>>1);
-//		if (readPointer>=maxWideStereo) readPointer=0;
-//	}
-////////////////////////////////////////////////////////////////////////////////
+//    /**
+//     * @param sample
+//     * @since 25.01.2022
+//     */
+//    public void processWideStereo(final long[] sample) {
+//        wideLBuffer[writePointer] = sample[0];
+//        wideRBuffer[writePointer++] = sample[1];
+//        if (writePointer >= maxWideStereo) writePointer = 0;
+//
+//        sample[1] += (wideLBuffer[readPointer] >> 1);
+//        sample[0] += (wideRBuffer[readPointer++] >> 1);
+//        if (readPointer >= maxWideStereo) readPointer = 0;
+//    }
+
+//#endregion
 
     /**
      * @param sampleFreq
      * @since 05.02.2022
      */
-    public void initSurround(final int sampleFreq) {
+    public void initSurround(int sampleFreq) {
         nSurroundSize = (DEFAULT_SURROUND_MS * sampleFreq) / 1000;
         surroundBuffer = new long[nSurroundSize];
 
@@ -327,17 +328,17 @@ public class ModDSP {
      * @param sample
      * @since 05.02.2022
      */
-    public void processStereoSurround(final long[] sample) {
+    public void processStereoSurround(long[] sample) {
         // Delay
-        final long sEcho = surroundBuffer[nSurroundPos];
+        long sEcho = surroundBuffer[nSurroundPos];
         surroundBuffer[nSurroundPos++] = (sample[0] + sample[1] + 256) >> 9;
         if (nSurroundPos >= nSurroundSize) nSurroundPos = 0;
 
         // High-pass
-        final long v0 = (nDolbyHP_B0 * sEcho + nDolbyHP_B1 * nDolbyHP_X1 + nDolbyHP_A1 * nDolbyHP_Y1) >> 10;
+        long v0 = (nDolbyHP_B0 * sEcho + nDolbyHP_B1 * nDolbyHP_X1 + nDolbyHP_A1 * nDolbyHP_Y1) >> 10;
 
         // Low-pass
-        final long v = (nDolbyLP_B0 * v0 + nDolbyLP_B1 * nDolbyHP_Y1 + nDolbyLP_A1 * nDolbyLP_Y1) >> (10 - 8);
+        long v = (nDolbyLP_B0 * v0 + nDolbyLP_B1 * nDolbyHP_Y1 + nDolbyLP_A1 * nDolbyLP_Y1) >> (10 - 8);
 
         // Add echo
         sample[0] += v;

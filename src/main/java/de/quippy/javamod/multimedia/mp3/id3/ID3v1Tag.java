@@ -35,7 +35,7 @@ import de.quippy.javamod.system.Helpers;
  * Description:
  * This class reads and writes id3v1 tags from/to files.
  *
- * @author: Jonathan Hilliker modified by Daniel Becker
+ * @author Jonathan Hilliker modified by Daniel Becker
  * <p>
  * ID3v1: 128 bytes
  * Field 		Length 		Description
@@ -88,7 +88,7 @@ public class ID3v1Tag {
      * Create an id3v1tag from the file specified.  If the file contains a
      * tag, the information is automatically extracted.
      *
-     * @param mp3 the file to read/write the tag to
+     * @param raf the file to read/write the tag to
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
      */
@@ -104,7 +104,7 @@ public class ID3v1Tag {
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
      */
-    private boolean checkHeader(RandomAccessInputStream raf) throws FileNotFoundException, IOException {
+    private static boolean checkHeader(RandomAccessInputStream raf) throws FileNotFoundException, IOException {
         boolean retval = false;
 
         if (raf.length() > TAG_SIZE) {
@@ -139,8 +139,8 @@ public class ID3v1Tag {
         album = tag.substring(start, start += ALBUM_SIZE);
         year = tag.substring(start, start += YEAR_SIZE);
         comment = tag.substring(start, start += COMMENT_SIZE);
-        track = (int) tag.charAt(TRACK_LOCATION);
-        genre = (int) tag.charAt(GENRE_LOCATION);
+        track = tag.charAt(TRACK_LOCATION);
+        genre = tag.charAt(GENRE_LOCATION);
     }
 
     /**

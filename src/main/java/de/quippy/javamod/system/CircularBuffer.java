@@ -22,6 +22,7 @@
 
 package de.quippy.javamod.system;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 
@@ -44,6 +45,7 @@ import java.io.Serializable;
  */
 public class CircularBuffer<E> implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 5285069332735206260L;
 
     private volatile Object[] elements;
@@ -54,7 +56,7 @@ public class CircularBuffer<E> implements Serializable {
     /**
      * Constructor for CircularBuffer
      */
-    public CircularBuffer(final int capacity) {
+    public CircularBuffer(int capacity) {
         super();
         elements = new Object[size = capacity];
         popPointer = pushPointer = 0;
@@ -87,17 +89,15 @@ public class CircularBuffer<E> implements Serializable {
      * @param addSize
      * @since 02.12.2023
      */
-    public void growBy(final int addSize) {
+    public void growBy(int addSize) {
         Object[] newBuffer = new Object[size + addSize];
 
-        if (pushPointer >= popPointer) // just add new space at the end
-        {
+        if (pushPointer >= popPointer) { // just add new space at the end
             System.arraycopy(elements, 0, newBuffer, 0, size);
-        } else // enlarge space between push- and popPointer
-        {
+        } else { // enlarge space between push- and popPointer
             // copy pop-able elements to the end
-            final int popElementsTillWrap = size - popPointer;
-            final int newPopPointer = newBuffer.length - popElementsTillWrap;
+            int popElementsTillWrap = size - popPointer;
+            int newPopPointer = newBuffer.length - popElementsTillWrap;
             System.arraycopy(elements, popPointer, newBuffer, newPopPointer, popElementsTillWrap);
             popPointer = newPopPointer;
             // and copy the rest to the front
@@ -183,7 +183,7 @@ public class CircularBuffer<E> implements Serializable {
      * @since 16.11.2023
      */
     @SuppressWarnings("unchecked")
-    public E peek(final int add) {
+    public E peek(int add) {
         if (isEmpty()) return null;
 
         return (E) elements[(popPointer + add) % size];
@@ -213,13 +213,13 @@ public class CircularBuffer<E> implements Serializable {
      * @see java.lang.Object#toString()
      */
     public String toString() {
-        StringBuffer sb = new StringBuffer('{');
-        sb.append(String.valueOf(pushPointer)).append('/').append(String.valueOf(popPointer)).append(',')
-                .append(String.valueOf(getSize())).append('/').append(String.valueOf(getFree()))
+        StringBuilder sb = new StringBuilder("{");
+        sb.append(pushPointer).append('/').append(popPointer).append(',')
+                .append(getSize()).append('/').append(getFree())
                 .append(", {");
         if (elements == null) sb.append("NULL");
         else {
-            final int printMe = (size < 10) ? size : 10;
+            int printMe = (size < 10) ? size : 10;
             for (int i = 0; i < printMe; i++) {
                 if (i > 0) sb.append(',');
                 if (elements[i] == null) sb.append("NULL");

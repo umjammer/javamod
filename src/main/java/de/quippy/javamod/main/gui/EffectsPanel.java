@@ -23,7 +23,7 @@
 package de.quippy.javamod.main.gui;
 
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.io.Serial;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -39,15 +39,16 @@ import de.quippy.javamod.system.Helpers;
  */
 public class EffectsPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = -3590575857860754245L;
 
     private JCheckBox passThrough = null;
     private JCheckBox useGaplessAudio = null;
     private JTabbedPane tabbedPane = null;
-    private JPanel[] effectPanels;
+    private final JPanel[] effectPanels;
 
     private AudioProcessor audioProcessor;
-    private MainForm parent;
+    private final MainForm parent;
 
     /**
      * Constructor for EffectsPanel
@@ -60,7 +61,7 @@ public class EffectsPanel extends JPanel {
     }
 
     /**
-     * @param audioProcessor the audioProcessor to set
+     * @param newAudioProcessor the audioProcessor to set
      */
     public void setAudioProcessor(AudioProcessor newAudioProcessor) {
         audioProcessor = newAudioProcessor;
@@ -82,12 +83,10 @@ public class EffectsPanel extends JPanel {
             passThrough.setToolTipText("If not activated, the downard settings are bypassed completely. Gains performance, if needed.");
             passThrough.setFont(Helpers.getDialogFont());
             if (audioProcessor != null) passThrough.setSelected(audioProcessor.isDspEnabled());
-            passThrough.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
-                        if (audioProcessor != null)
-                            audioProcessor.setDspEnabled(getPassThrough().isSelected());
-                    }
+            passThrough.addItemListener(e -> {
+                if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
+                    if (audioProcessor != null)
+                        audioProcessor.setDspEnabled(getPassThrough().isSelected());
                 }
             });
         }
@@ -102,12 +101,10 @@ public class EffectsPanel extends JPanel {
             useGaplessAudio.setToolTipText("A re-use if the output stream enables replay of pieces without gaps. However, on some sound hardware this results in scrambled sound.");
             useGaplessAudio.setFont(Helpers.getDialogFont());
             if (parent != null) useGaplessAudio.setSelected(parent.useGaplessAudio());
-            useGaplessAudio.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
-                        if (parent != null)
-                            parent.setUseGaplessAudio(getUseGaplessAudio().isSelected());
-                    }
+            useGaplessAudio.addItemListener(e -> {
+                if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
+                    if (parent != null)
+                        parent.setUseGaplessAudio(getUseGaplessAudio().isSelected());
                 }
             });
         }
@@ -118,8 +115,7 @@ public class EffectsPanel extends JPanel {
         if (tabbedPane == null) {
             tabbedPane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
             tabbedPane.setFont(Helpers.getDialogFont());
-            for (int i = 0; i < effectPanels.length; i++) {
-                JPanel effectPanel = effectPanels[i];
+            for (JPanel effectPanel : effectPanels) {
                 if (effectPanel != null) {
                     JScrollPane containerScroller = new JScrollPane();
                     containerScroller.setName("scrollPane_Effect_" + effectPanel.getName());

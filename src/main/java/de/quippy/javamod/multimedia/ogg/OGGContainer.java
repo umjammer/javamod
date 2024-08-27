@@ -24,7 +24,6 @@ package de.quippy.javamod.multimedia.ogg;
 
 import java.net.URL;
 import java.util.Properties;
-
 import javax.swing.JPanel;
 
 import de.quippy.javamod.mixer.Mixer;
@@ -39,10 +38,9 @@ import de.quippy.javamod.multimedia.ogg.metadata.OggMetaData;
  */
 public class OGGContainer extends MultimediaContainer {
 
-    private static final String[] OGGFILEEXTENSION = new String[]
-            {
-                    "ogg", "oga"
-            };
+    private static final String[] OGGFILEEXTENSION = {
+            "ogg", "oga"
+    };
     private OGGInfoPanel oggInfoPanel;
     private OggMetaData oggMetaData = null;
 
@@ -94,11 +92,11 @@ public class OGGContainer extends MultimediaContainer {
     @Override
     public Object[] getSongInfosFor(URL url) {
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
-        Long duration = Long.valueOf(-1);
+        long duration = -1;
         try {
             OggMetaData metaData = new OggMetaData(url);
             songName = metaData.getShortDescription();
-            duration = Long.valueOf(metaData.getLengthInMilliseconds());
+            duration = metaData.getLengthInMilliseconds();
         } catch (Throwable ex) {
         }
         return new Object[] {songName, duration};

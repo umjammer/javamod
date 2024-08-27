@@ -25,8 +25,8 @@ package de.quippy.javamod.multimedia;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
-
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
@@ -35,16 +35,16 @@ import de.quippy.javamod.system.Helpers;
 
 
 /**
- * @author: Daniel Becker
- * @since: 12.10.2007
+ * @author Daniel Becker
+ * @since 12.10.2007
  */
 public abstract class MultimediaContainer {
 
-    private ArrayList<MultimediaContainerEventListener> listeners = new ArrayList<MultimediaContainerEventListener>();
+    private final List<MultimediaContainerEventListener> listeners = new ArrayList<>();
     private URL fileURL = null;
 
     /**
-     * @since: 12.10.2007
+     * @since 12.10.2007
      */
     public MultimediaContainer() {
         super();
@@ -57,7 +57,7 @@ public abstract class MultimediaContainer {
      * @return
      * @since 13.10.2007
      */
-    public MultimediaContainer getInstance(final URL url) {
+    public MultimediaContainer getInstance(URL url) {
         setFileURL(url);
         return this;
     }
@@ -74,7 +74,7 @@ public abstract class MultimediaContainer {
      * @param url
      * @since 19.12.2022
      */
-    public void setFileURL(final URL url) {
+    public void setFileURL(URL url) {
         this.fileURL = url;
     }
 
@@ -86,7 +86,7 @@ public abstract class MultimediaContainer {
         return getPrintableFileUrl(getFileURL());
     }
 
-    public String getPrintableFileUrl(final URL urlName) {
+    public String getPrintableFileUrl(URL urlName) {
         if (urlName == null) return Helpers.EMPTY_STING;
         try {
             java.io.File f = new java.io.File(urlName.toURI());
@@ -107,17 +107,16 @@ public abstract class MultimediaContainer {
         if (configPanel != null) SwingUtilities.updateComponentTreeUI(configPanel);
     }
 
-    public void addListener(final MultimediaContainerEventListener listener) {
+    public void addListener(MultimediaContainerEventListener listener) {
         listeners.add(listener);
     }
 
-    public void removeListener(final MultimediaContainerEventListener listener) {
+    public void removeListener(MultimediaContainerEventListener listener) {
         listeners.remove(listener);
     }
 
-    protected void fireMultimediaContainerEvent(final MultimediaContainerEvent event) {
-        for (int i = 0; i < listeners.size(); i++)
-            listeners.get(i).multimediaContainerEventOccured(event);
+    protected void fireMultimediaContainerEvent(MultimediaContainerEvent event) {
+        for (MultimediaContainerEventListener listener : listeners) listener.multimediaContainerEventOccurred(event);
     }
 
     /**
@@ -138,7 +137,7 @@ public abstract class MultimediaContainer {
      * @return Object [] { String SongName, Long duration }
      * @since 12.02.2011
      */
-    public abstract Object[] getSongInfosFor(final URL url);
+    public abstract Object[] getSongInfosFor(URL url);
 
     /**
      * Returns true if this mixers supports the export function
@@ -168,7 +167,7 @@ public abstract class MultimediaContainer {
      * The file extensions this container is responsible for
      *
      * @return
-     * @since: 12.10.2007
+     * @since 12.10.2007
      */
     public abstract String[] getFileExtensionList();
 
@@ -184,13 +183,13 @@ public abstract class MultimediaContainer {
      * @param newProps
      * @since 13.10.2007
      */
-    public abstract void configurationChanged(final Properties newProps);
+    public abstract void configurationChanged(Properties newProps);
 
     /**
      * @param props
      * @since 14.10.2007
      */
-    public abstract void configurationSave(final Properties props);
+    public abstract void configurationSave(Properties props);
 
     /**
      * Clean up
@@ -203,7 +202,7 @@ public abstract class MultimediaContainer {
      * Get the mixer of this container
      *
      * @return
-     * @since: 12.10.2007
+     * @since 12.10.2007
      */
     public abstract Mixer createNewMixer();
 }

@@ -27,8 +27,7 @@ import java.awt.EventQueue;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.LayoutManager;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.io.Serial;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -45,8 +44,9 @@ import de.quippy.javamod.system.Helpers;
  */
 public class EnvelopePanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = 5511415780545189305L;
-    private static String[] ZOOM_TYPES = new String[] {"Auto", "2:1", "4:1", "8:1", "16:1", "32:1"};
+    private static final String[] ZOOM_TYPES = new String[] {"Auto", "2:1", "4:1", "8:1", "16:1", "32:1"};
 
     private EnvelopeImagePanel envelopeImagePanel = null;
 
@@ -158,20 +158,17 @@ public class EnvelopePanel extends JPanel {
         return isSustainEnabled;
     }
 
-    private JComboBox getZoomSelector() {
+    private JComboBox<String> getZoomSelector() {
         if (zoomSelector == null) {
-            zoomSelector = new JComboBox<String>();
+            zoomSelector = new JComboBox<>();
             zoomSelector.setName("zoomSelector");
             zoomSelector.setFont(Helpers.getDialogFont());
 
-            for (int i = 0; i < ZOOM_TYPES.length; i++) zoomSelector.addItem(ZOOM_TYPES[i]);
-            zoomSelector.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    final Envelope theEnvelope = getEnvelopeImagePanel().getEnvelope();
-                    if (theEnvelope == null) return;
-                    changeZoom(getZoomSelector().getSelectedIndex());
-                }
+            for (String zoomType : ZOOM_TYPES) zoomSelector.addItem(zoomType);
+            zoomSelector.addItemListener(e -> {
+                Envelope theEnvelope = getEnvelopeImagePanel().getEnvelope();
+                if (theEnvelope == null) return;
+                changeZoom(getZoomSelector().getSelectedIndex());
             });
         }
 
@@ -195,30 +192,28 @@ public class EnvelopePanel extends JPanel {
         return envelopeImagePanel;
     }
 
-    private void changeZoom(final int newZoom) {
-        final Dimension d = getEnvelopeImagePanel().getSize();
-        final Envelope theEnvelope = getEnvelopeImagePanel().getEnvelope();
+    private void changeZoom(int newZoom) {
+        Dimension d = getEnvelopeImagePanel().getSize();
+        Envelope theEnvelope = getEnvelopeImagePanel().getEnvelope();
         if (theEnvelope != null) {
-            final int scrollBarHeight = getImageBufferScrollPane().getHorizontalScrollBar().getPreferredSize().height;
-            final Insets inset = getImageBufferScrollPane().getInsets();
+            int scrollBarHeight = getImageBufferScrollPane().getHorizontalScrollBar().getPreferredSize().height;
+            Insets inset = getImageBufferScrollPane().getInsets();
             d.height = getImageBufferScrollPane().getHeight() - inset.top - inset.bottom - (scrollBarHeight << 1);
             d.width = (getImageBufferScrollPane().getWidth() - inset.left - inset.right) << newZoom;
         }
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    getEnvelopeImagePanel().setSize(d);
-                    getEnvelopeImagePanel().setMinimumSize(d);
-                    getEnvelopeImagePanel().setMaximumSize(d);
-                    getEnvelopeImagePanel().setPreferredSize(d);
-                } catch (Throwable ex) {
-                    // Keep it!
-                }
+        EventQueue.invokeLater(() -> {
+            try {
+                getEnvelopeImagePanel().setSize(d);
+                getEnvelopeImagePanel().setMinimumSize(d);
+                getEnvelopeImagePanel().setMaximumSize(d);
+                getEnvelopeImagePanel().setPreferredSize(d);
+            } catch (Throwable ex) {
+                // Keep it!
             }
         });
     }
 
-    public void setEnvelope(final Envelope envelope) {
+    public void setEnvelope(Envelope envelope) {
         if (envelope != null) {
             getIsEnabled().setFixedState(envelope.on);
             getIsCarryEnabled().setFixedState(envelope.carry);

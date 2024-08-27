@@ -24,6 +24,8 @@ package de.quippy.javamod.multimedia.ogg.metadata;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 
 import com.jcraft.jogg.Packet;
 import com.jcraft.jogg.Page;
@@ -31,7 +33,8 @@ import com.jcraft.jogg.StreamState;
 import com.jcraft.jogg.SyncState;
 import com.jcraft.jorbis.Comment;
 import com.jcraft.jorbis.Info;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 class State {
@@ -52,7 +55,7 @@ class State {
 
     private int prevW;
 
-    private Page og;
+    private final Page og;
 
     public State() {
         super();
@@ -97,6 +100,8 @@ class State {
 
 public class JOrbisComment {
 
+    private static final Logger logger = getLogger(State.class.getName());
+
     protected static final int CHUNKSIZE = 4096;
     private State state = null;
 
@@ -130,16 +135,16 @@ public class JOrbisComment {
         try {
             bytes = state.in.read(buffer, index, CHUNKSIZE);
         } catch (Exception e) {
-            Log.error("[JOrbisComment]", e);
+            logger.log(Level.ERROR, "[JOrbisComment]", e);
             return;
         }
         state.oy.wrote(bytes);
 
         if (state.oy.pageout(og) != 1) {
             if (bytes < CHUNKSIZE) {
-                Log.error("Input truncated or empty.");
+                logger.log(Level.ERROR, "Input truncated or empty.");
             } else {
-                Log.error("Input is not an Ogg bitstream.");
+                logger.log(Level.ERROR, "Input is not an Ogg bitstream.");
             }
             // goto err;
             return;
@@ -156,7 +161,7 @@ public class JOrbisComment {
         state.vc.init();
 
         if (state.os.pagein(og) < 0) {
-            Log.error("Error reading first page of Ogg bitstream data.");
+            logger.log(Level.ERROR, "Error reading first page of Ogg bitstream data.");
             // goto err
             return;
         }
@@ -164,13 +169,13 @@ public class JOrbisComment {
         Packet header_main = new Packet();
 
         if (state.os.packetout(header_main) != 1) {
-            Log.error("Error reading initial header packet.");
+            logger.log(Level.ERROR, "Error reading initial header packet.");
             // goto err
             return;
         }
 
         if (state.vi.synthesis_headerin(state.vc, header_main) < 0) {
-            Log.error("This Ogg bitstream does not contain Vorbis data.");
+            logger.log(Level.ERROR, "This Ogg bitstream does not contain Vorbis data.");
             // goto err
             return;
         }
@@ -195,7 +200,7 @@ public class JOrbisComment {
                         result = state.os.packetout(header);
                         if (result == 0) break;
                         if (result == -1) {
-                            Log.error("Corrupt secondary header.");
+                            logger.log(Level.ERROR, "Corrupt secondary header.");
                             // goto err;
                             return;
                         }
@@ -216,12 +221,12 @@ public class JOrbisComment {
             try {
                 bytes = state.in.read(buffer, index, CHUNKSIZE);
             } catch (Exception e) {
-                Log.error("[JOrbisComment]", e);
+                logger.log(Level.ERROR, "[JOrbisComment]", e);
                 return;
             }
 
             if (bytes <= 0 && i < 2) {
-                Log.error("EOF before end of vorbis headers.");
+                logger.log(Level.ERROR, "EOF before end of vorbis headers.");
                 // goto err;
                 return;
             }
@@ -229,7 +234,7 @@ public class JOrbisComment {
         }
 //		int repeat = 0;
         while (true) {
-            /*int result = */
+            //int result =
             state.oy.pageout(og);
             index = state.oy.buffer(CHUNKSIZE);
             buffer = state.oy.data;
@@ -237,16 +242,15 @@ public class JOrbisComment {
                 state.pcmLength = og.granulepos();
                 break;
             }
-//			repeat++;
-//			if (repeat>16) // Stop just once - no endless loop!! 
-//			{
-//				state.pcmLength = og.granulepos();
-//				break;
-//			}
+//            repeat++;
+//            if (repeat > 16) { // Stop just once - no endless loop!!
+//                state.pcmLength = og.granulepos();
+//                break;
+//            }
             try {
                 bytes = state.in.read(buffer, index, CHUNKSIZE);
             } catch (Exception e) {
-                Log.error("[JOrbisComment]", e);
+                logger.log(Level.ERROR, "[JOrbisComment]", e);
                 break;
             }
             if (bytes <= 0) {
@@ -322,14 +326,14 @@ public class JOrbisComment {
                         out.write(ogout.header_base, ogout.header, ogout.header_len);
                         out.flush();
                     } catch (Exception e) {
-                        Log.error("[JOrbisComment]", e);
+                        logger.log(Level.ERROR, "[JOrbisComment]", e);
                         return -1;
                     }
                     try {
                         out.write(ogout.body_base, ogout.body, ogout.body_len);
                         out.flush();
                     } catch (Exception e) {
-                        Log.error("[JOrbisComment]", e);
+                        logger.log(Level.ERROR, "[JOrbisComment]", e);
                         return -1;
                     }
                 }
@@ -339,14 +343,14 @@ public class JOrbisComment {
                         out.write(ogout.header_base, ogout.header, ogout.header_len);
                         out.flush();
                     } catch (Exception e) {
-                        Log.error("[JOrbisComment]", e);
+                        logger.log(Level.ERROR, "[JOrbisComment]", e);
                         return -1;
                     }
                     try {
                         out.write(ogout.body_base, ogout.body, ogout.body_len);
                         out.flush();
                     } catch (Exception e) {
-                        Log.error("[JOrbisComment]", e);
+                        logger.log(Level.ERROR, "[JOrbisComment]", e);
                         return -1;
                     }
                 }
@@ -375,14 +379,14 @@ public class JOrbisComment {
                 out.write(ogout.header_base, ogout.header, ogout.header_len);
                 out.flush();
             } catch (Exception e) {
-                Log.error("[JOrbisComment]", e);
+                logger.log(Level.ERROR, "[JOrbisComment]", e);
                 return -1;
             }
             try {
                 out.write(ogout.body_base, ogout.body, ogout.body_len);
                 out.flush();
             } catch (Exception e) {
-                Log.error("[JOrbisComment]", e);
+                logger.log(Level.ERROR, "[JOrbisComment]", e);
                 return -1;
             }
         }
@@ -399,7 +403,7 @@ public class JOrbisComment {
                 result = state.oy.pageout(ogout);
                 if (result == 0) break;
                 if (result < 0) {
-                    Log.error("Corrupt or missing data, continuing...");
+                    logger.log(Level.ERROR, "Corrupt or missing data, continuing...");
                 } else {
                     /*
                      * Don't bother going through the rest, we can just
@@ -409,14 +413,14 @@ public class JOrbisComment {
                         out.write(ogout.header_base, ogout.header, ogout.header_len);
                         out.flush();
                     } catch (Exception e) {
-                        Log.error("[JOrbisComment]", e);
+                        logger.log(Level.ERROR, "[JOrbisComment]", e);
                         return -1;
                     }
                     try {
                         out.write(ogout.body_base, ogout.body, ogout.body_len);
                         out.flush();
                     } catch (Exception e) {
-                        Log.error("[JOrbisComment]", e);
+                        logger.log(Level.ERROR, "[JOrbisComment]", e);
                         return -1;
                     }
                 }
@@ -427,7 +431,7 @@ public class JOrbisComment {
             try {
                 bytes = state.in.read(buffer, index, CHUNKSIZE);
             } catch (Exception e) {
-                Log.error("[JOrbisComment]", e);
+                logger.log(Level.ERROR, "[JOrbisComment]", e);
                 return -1;
             }
             state.oy.wrote(bytes);

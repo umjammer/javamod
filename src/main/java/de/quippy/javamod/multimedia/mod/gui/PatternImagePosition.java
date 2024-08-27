@@ -53,26 +53,22 @@ public class PatternImagePosition {
         pattern = null;
     }
 
-    public PatternImagePosition(final Pattern newPattern, final int newRow) {
+    public PatternImagePosition(Pattern newPattern, int newRow) {
         this();
         pattern = newPattern;
         row = newRow;
     }
-//	public PatternImagePosition(final Pattern newPattern, final int newRow, final int newChannel)
-//	{
-//		this(newPattern, newRow);
-//		channel = newChannel;
-//	}
-//	public PatternImagePosition(final Pattern newPattern, final int newRow, final int newChannel, final int newColumn)
-//	{
-//		this(newPattern, newRow, newChannel);
-//		column = newColumn;
-//	}
 
-    /**
-     * @return
-     * @see java.lang.Object#toString()
-     */
+//    public PatternImagePosition(final Pattern newPattern, final int newRow, final int newChannel) {
+//        this(newPattern, newRow);
+//        channel = newChannel;
+//    }
+//
+//    public PatternImagePosition(final Pattern newPattern, final int newRow, final int newChannel, final int newColumn) {
+//        this(newPattern, newRow, newChannel);
+//        column = newColumn;
+//    }
+
     @Override
     public String toString() {
         if (channel < 0) return "Row indicator " + row;

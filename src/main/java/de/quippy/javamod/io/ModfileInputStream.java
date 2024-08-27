@@ -25,11 +25,14 @@ package de.quippy.javamod.io;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 import de.quippy.javamod.system.Helpers;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -40,7 +43,9 @@ import de.quippy.javamod.system.Log;
  */
 public class ModfileInputStream extends RandomAccessInputStreamImpl {
 
-    private String fileName;
+    private static final Logger logger = getLogger(ModfileInputStream.class.getName());
+
+    private final String fileName;
 
     /**
      * Constructor for ModfileInputStream
@@ -103,7 +108,7 @@ public class ModfileInputStream extends RandomAccessInputStreamImpl {
                 fullFileCache_readPointer = 0;
             }
         } catch (IOException ex) {
-            Log.error("ModfileInputStream::checkForPowerPackerFile", ex);
+            logger.log(Level.ERROR, "ModfileInputStream::checkForPowerPackerFile", ex);
         }
     }
 }

@@ -31,15 +31,15 @@ import de.quippy.javamod.multimedia.mod.loader.Module;
  */
 public class PatternRow {
 
-    protected Module parentMod;
-    protected Pattern parentPattern;
+    protected final Module parentMod;
+    protected final Pattern parentPattern;
     protected PatternElement[] patternElements;
     protected boolean rowPlayed;
 
     /**
      * Constructor for PatternRow
      */
-    public PatternRow(final Module parentMod, final Pattern parentPattern, final int channels) {
+    public PatternRow(Module parentMod, Pattern parentPattern, int channels) {
         super();
         patternElements = new PatternElement[channels];
         this.parentMod = parentMod;
@@ -53,7 +53,7 @@ public class PatternRow {
      */
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         addToStringBuilder(sb);
         return sb.toString();
     }
@@ -62,12 +62,11 @@ public class PatternRow {
      * Add to patternRow string representation to a StringBuilder
      *
      * @param sb
-     * @param isIT
      * @since 22.12.2023
      */
-    public void addToStringBuilder(final StringBuilder sb) {
-        for (int channel = 0; channel < patternElements.length; channel++) {
-            if (patternElements[channel] != null) patternElements[channel].addToStringBuilder(sb);
+    public void addToStringBuilder(StringBuilder sb) {
+        for (PatternElement patternElement : patternElements) {
+            if (patternElement != null) patternElement.addToStringBuilder(sb);
             sb.append("|");
         }
     }
@@ -75,11 +74,11 @@ public class PatternRow {
     /**
      * Set this row to have nChannels channels
      *
-     * @param nChannels
+     * @param channels
      * @since 24.11.2023
      */
-    public void setToChannels(final int patternIndex, final int row, final int channels) {
-        final PatternElement[] oldPatternElements = patternElements;
+    public void setToChannels(int patternIndex, int row, int channels) {
+        PatternElement[] oldPatternElements = patternElements;
         patternElements = new PatternElement[channels];
         for (int channel = 0; channel < channels; channel++) {
             if (channel < oldPatternElements.length && oldPatternElements[channel] != null)
@@ -148,14 +147,14 @@ public class PatternRow {
     }
 
     /**
-     * @param patternElements The patternElements to set.
+     * @param patternElement The patternElements to set.
      */
     public void setPatternElement(PatternElement[] patternElement) {
         this.patternElements = patternElement;
     }
 
     /**
-     * @param patternElements The patternElements to set.
+     * @param patternElement The patternElements to set.
      */
     public void setPatternElement(int channel, PatternElement patternElement) {
         this.patternElements[channel] = patternElement;

@@ -23,8 +23,9 @@
 package de.quippy.javamod.multimedia.wav;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
-
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -33,7 +34,8 @@ import javax.sound.sampled.SourceDataLine;
 
 import de.quippy.javamod.io.FileOrPackedInputStream;
 import de.quippy.javamod.mixer.BasicMixer;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -41,6 +43,8 @@ import de.quippy.javamod.system.Log;
  * @since 14.10.2007
  */
 public class WavMixer extends BasicMixer {
+
+    private static final Logger logger = getLogger(WavMixer.class.getName());
 
     private int bufferSize;
     private byte[] output;
@@ -51,7 +55,7 @@ public class WavMixer extends BasicMixer {
     private int sampleRate;
     private int lengthInMilliseconds;
 
-    private URL waveFileUrl;
+    private final URL waveFileUrl;
     private AudioInputStream audioInputStream;
 
     private long currentSamplesWritten;
@@ -69,7 +73,7 @@ public class WavMixer extends BasicMixer {
         try {
             if (audioInputStream != null) try {
                 audioInputStream.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
             audioInputStream = AudioSystem.getAudioInputStream(new FileOrPackedInputStream(waveFileUrl));
             AudioFormat audioFormat = audioInputStream.getFormat();
 
@@ -81,7 +85,7 @@ public class WavMixer extends BasicMixer {
                 try {
                     lengthInMilliseconds = (int) (((long) audioInputStream.available() / ((long) (audioFormat.getSampleSizeInBits() >> 3)) / (long) audioFormat.getChannels()) * 1000L / (long) audioFormat.getSampleRate());
                 } catch (IOException ex) {
-                    Log.error("[WavMixer] No data available!", ex);
+                    logger.log(Level.ERROR, "[WavMixer] No data available!", ex);
                 }
             }
 
@@ -92,7 +96,7 @@ public class WavMixer extends BasicMixer {
                 if (possibleFormats != null && possibleFormats.length != 0) {
                     audioInputStream = AudioSystem.getAudioInputStream(possibleFormats[0], audioInputStream);
                     audioFormat = audioInputStream.getFormat();
-                    //Log.info("Converting input data to " + audioFormat.toString());
+                    //logger.log(Level.INFO, "Converting input data to " + audioFormat.toString());
                 }
             }
             setAudioFormat(audioFormat);
@@ -109,7 +113,7 @@ public class WavMixer extends BasicMixer {
             output = new byte[bufferSize];
             setSourceLineBufferSize(bufferSize);
         } catch (Throwable ex) {
-            Log.error("[WavMixer]", ex);
+            logger.log(Level.ERROR, "[WavMixer]", ex);
         }
     }
 
@@ -127,7 +131,7 @@ public class WavMixer extends BasicMixer {
     @Override
     public long getMillisecondPosition() {
         if (sampleRate != 0)
-            return ((long) currentSamplesWritten * 1000L) / (long) sampleRate;
+            return (currentSamplesWritten * 1000L) / (long) sampleRate;
         else
             return 0;
     }
@@ -143,7 +147,7 @@ public class WavMixer extends BasicMixer {
             if (getMillisecondPosition() > milliseconds) {
                 if (audioInputStream != null) try {
                     audioInputStream.close();
-                } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+                } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
                 audioInputStream = AudioSystem.getAudioInputStream(waveFileUrl);
                 currentSamplesWritten = 0;
             }
@@ -154,7 +158,7 @@ public class WavMixer extends BasicMixer {
             }
             currentSamplesWritten += skipSamples;
         } catch (Exception ex) {
-            Log.error("[WavMixer]: error while seeking", ex);
+            logger.log(Level.ERROR, "[WavMixer]: error while seeking", ex);
         }
     }
 
@@ -216,7 +220,7 @@ public class WavMixer extends BasicMixer {
                 if (byteCount > 0) {
                     // find out, if all samples are to write
                     if (hasStopPosition()) {
-                        final long bytesToWrite = getSamplesToWriteLeft() * getChannelCount() * sampleSizeInBytes;
+                        long bytesToWrite = getSamplesToWriteLeft() * getChannelCount() * sampleSizeInBytes;
                         if ((long) (byteCount) > bytesToWrite) byteCount = (int) bytesToWrite;
                     }
                     writeSampleDataToLine(output, 0, byteCount);
@@ -257,7 +261,7 @@ public class WavMixer extends BasicMixer {
             if (audioInputStream != null) try {
                 audioInputStream.close();
                 audioInputStream = null;
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
     }
 }

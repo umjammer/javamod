@@ -32,12 +32,12 @@ import de.quippy.javamod.system.Helpers;
  */
 public interface ModUpdateListener {
 
-    public class TimedInformation {
+    class TimedInformation {
 
-        public long samplesMixed;
-        public long timeCode;
+        public final long samplesMixed;
+        public final long timeCode;
 
-        public TimedInformation(final int sampleRate, final long samplesMixed) {
+        public TimedInformation(int sampleRate, long samplesMixed) {
             this.samplesMixed = samplesMixed;
             this.timeCode = (samplesMixed * 1000L) / (long) sampleRate;
         }
@@ -47,13 +47,13 @@ public interface ModUpdateListener {
         }
     }
 
-    public class PatternPositionInformation extends TimedInformation {
+    class PatternPositionInformation extends TimedInformation {
 
         public boolean active;
-        public int patternIndex;
-        public int patternRow;
+        public final int patternIndex;
+        public final int patternRow;
 
-        public PatternPositionInformation(final int sampleRate, final long samplesMixed, final long position) {
+        public PatternPositionInformation(int sampleRate, long samplesMixed, long position) {
             super(sampleRate, samplesMixed);
             this.patternIndex = (int) ((position >> 48) & 0xFFFF);
             this.patternRow = (int) ((position >> 16) & 0xFFFF);
@@ -64,14 +64,14 @@ public interface ModUpdateListener {
         }
     }
 
-    public class PeekInformation extends TimedInformation {
+    class PeekInformation extends TimedInformation {
 
-        public int channel;
-        public int actPeekLeft;
-        public int actPeekRight;
-        public boolean isSurround;
+        public final int channel;
+        public final int actPeekLeft;
+        public final int actPeekRight;
+        public final boolean isSurround;
 
-        public PeekInformation(final int sampleRate, final long samplesMixed, final int channel, final int actPeekLeft, final int actPeekRight, final boolean isSurround) {
+        public PeekInformation(int sampleRate, long samplesMixed, int channel, int actPeekLeft, int actPeekRight, boolean isSurround) {
             super(sampleRate, samplesMixed);
             this.channel = channel;
             this.actPeekLeft = actPeekLeft;
@@ -84,16 +84,16 @@ public interface ModUpdateListener {
         }
     }
 
-    public class StatusInformation {
+    class StatusInformation {
 
-        public boolean status;
+        public final boolean status;
 
-        public StatusInformation(final boolean newStatus) {
+        public StatusInformation(boolean newStatus) {
             status = newStatus;
         }
 
         public String toString() {
-            return "Status: " + Boolean.toString(status);
+            return "Status: " + status;
         }
     }
 
@@ -108,7 +108,7 @@ public interface ModUpdateListener {
      * @param infoObject
      * @since 13.11.2023
      */
-    public void getPatternPositionInformation(final PatternPositionInformation infoObject);
+    void getPatternPositionInformation(PatternPositionInformation infoObject);
 
     /**
      * This method is called to inform listeners about peek informations on
@@ -122,7 +122,7 @@ public interface ModUpdateListener {
      * @param infoObject
      * @since 13.11.2023
      */
-    public void getPeekInformation(final PeekInformation infoObject);
+    void getPeekInformation(PeekInformation infoObject);
 
     /**
      * This method will inform any listener, that status informations will
@@ -132,5 +132,5 @@ public interface ModUpdateListener {
      * @param infoObject
      * @since 13.11.2023
      */
-    public void getStatusInformation(final StatusInformation infoObject);
+    void getStatusInformation(StatusInformation infoObject);
 }

@@ -28,6 +28,7 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.Transparency;
 import java.awt.image.BufferedImage;
+import java.io.Serial;
 import java.util.Random;
 import javax.swing.ImageIcon;
 
@@ -38,6 +39,7 @@ import javax.swing.ImageIcon;
  */
 public class XmasDecorationPanel extends MeterPanelBase {
 
+    @Serial
     private static final long serialVersionUID = -3507211484792572812L;
 
     private static final int SYNC2FPS_BITS = 16;
@@ -54,16 +56,15 @@ public class XmasDecorationPanel extends MeterPanelBase {
     private static final int FLICKERTYPE_SOME_FLICKER = 6;
     private static final int FLICKERTYPE_ALL_FLASH = 7;
 
-    public static String[] FLICKER_TYPES =
-            {
-                    "All off", "All on", "Alternating", "Chase bulbs", "Random on/off", "Some on/off", "Some flash", "All flash"
-            };
+    public static final String[] FLICKER_TYPES = {
+            "All off", "All on", "Alternating", "Chase bulbs", "Random on/off", "Some on/off", "Some flash", "All flash"
+    };
 
-    private ImageIcon[] bulbs;
+    private final ImageIcon[] bulbs;
     private int[] useIndex;
     private BufferedImage imageBuffer;
 
-    private Random rand;
+    private final Random rand;
 
     private int flickerType; // 0: all off, 1: all On, 2: alternate, 3: chase, 4: random
     private boolean withSpace;
@@ -77,7 +78,7 @@ public class XmasDecorationPanel extends MeterPanelBase {
      *
      * @param desiredFPS
      */
-    public XmasDecorationPanel(final int desiredFPS, final ImageIcon[] useBulbs) {
+    public XmasDecorationPanel(int desiredFPS, ImageIcon[] useBulbs) {
         super(desiredFPS);
 
         bulbs = useBulbs;
@@ -104,7 +105,7 @@ public class XmasDecorationPanel extends MeterPanelBase {
         dontDraw--;
     }
 
-    private void createBulbIndex(final int forWidth) {
+    private void createBulbIndex(int forWidth) {
         enterCritical();
         if (bulbs != null && bulbs[0] != null) {
             int anz = forWidth / bulbs[0].getIconWidth();
@@ -117,7 +118,7 @@ public class XmasDecorationPanel extends MeterPanelBase {
                 else {
                     int newIndex = oldIndex;
                     while (newIndex == oldIndex) newIndex = (rand.nextInt(7) << 1) + 1;
-                    final int bulbNumber = (withSpace) ? (i >> 1) : i;
+                    int bulbNumber = (withSpace) ? (i >> 1) : i;
                     if (flickerType == FLICKERTYPE_ALTERNATE && (bulbNumber % 2) == 0) newIndex++;
                     if (flickerType == FLICKERTYPE_CHASE && (bulbNumber % 4) == 0) newIndex++;
                     useIndex[i] = (oldIndex = newIndex);
@@ -132,35 +133,31 @@ public class XmasDecorationPanel extends MeterPanelBase {
         leaveCritical();
     }
 
-    public void setFlickerType(final int newFlickerType) {
+    public void setFlickerType(int newFlickerType) {
         enterCritical();
         flickerType = newFlickerType;
         createBulbIndex(getWidth());
         leaveCritical();
     }
 
-    public void setUpdateFPS(final int updateFPS) {
+    public void setUpdateFPS(int updateFPS) {
         syncToFPSAdd = (updateFPS << SYNC2FPS_BITS) / desiredFPS;
     }
 
-    public void setWithSpace(final boolean newWithSpace) {
+    public void setWithSpace(boolean newWithSpace) {
         enterCritical();
         withSpace = newWithSpace;
         createBulbIndex(getWidth());
         leaveCritical();
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.main.gui.components.MeterPanelBase#getDoubleBuffer()
-     */
     @Override
-    protected synchronized BufferedImage getDoubleBuffer(final int myWidth, final int myHeight) {
+    protected synchronized BufferedImage getDoubleBuffer(int myWidth, int myHeight) {
         if (imageBuffer == null && myWidth > 0 && myHeight > 0) {
             GraphicsConfiguration graConf = getGraphicsConfiguration();
             if (graConf != null) {
                 imageBuffer = graConf.createCompatibleImage(myWidth, myHeight, Transparency.TRANSLUCENT);
-                final Graphics2D g2d = (Graphics2D) imageBuffer.getGraphics();
+                Graphics2D g2d = (Graphics2D) imageBuffer.getGraphics();
                 g2d.setColor(new Color(0, true));
                 g2d.setComposite(AlphaComposite.Clear);
                 g2d.fillRect(0, 0, myWidth, myHeight);
@@ -171,9 +168,9 @@ public class XmasDecorationPanel extends MeterPanelBase {
         return imageBuffer;
     }
 
-    private int drawBulbAt(final Graphics2D g2d, final int x, final int bulbIndex) {
+    private int drawBulbAt(Graphics2D g2d, int x, int bulbIndex) {
         if (bulbs != null) {
-            final ImageIcon imageIcon = bulbs[bulbIndex];
+            ImageIcon imageIcon = bulbs[bulbIndex];
             if (imageIcon != null) {
                 g2d.drawImage(imageIcon.getImage(), x, 0, null);
                 return imageIcon.getIconWidth();
@@ -182,14 +179,6 @@ public class XmasDecorationPanel extends MeterPanelBase {
         return 0;
     }
 
-    /**
-     * @param g
-     * @param newTop
-     * @param newLeft
-     * @param newWidth
-     * @param newHeight
-     * @see de.quippy.javamod.main.gui.components.MeterPanelBase#drawMeter(java.awt.Graphics, int, int, int, int)
-     */
     @Override
     protected void drawMeter(Graphics2D g, int newTop, int newLeft, int newWidth, int newHeight) {
         syncToFPScounter += syncToFPSAdd;
@@ -200,9 +189,8 @@ public class XmasDecorationPanel extends MeterPanelBase {
                 int x = 0;
                 for (int index = 0; index < useIndex.length; index++) {
                     int bulbIndex = useIndex[index];
-                    if (bulbIndex != 0) // 0 is the hanger
-                    {
-                        final boolean isLit = (bulbIndex % 2) == 0;
+                    if (bulbIndex != 0) { // 0 is the hanger
+                        boolean isLit = (bulbIndex % 2) == 0;
                         if (bulbIndex > 0) {
                             switch (flickerType) {
                                 case FLICKERTYPE_ALL_OFF:
@@ -259,13 +247,6 @@ public class XmasDecorationPanel extends MeterPanelBase {
         }
     }
 
-    /**
-     * @param newTop
-     * @param newLeft
-     * @param newWidth
-     * @param newHeight
-     * @see de.quippy.javamod.main.gui.components.MeterPanelBase#componentWasResized(int, int, int, int)
-     */
     @Override
     protected void componentWasResized(int newTop, int newLeft, int newWidth, int newHeight) {
         createBulbIndex(newWidth);

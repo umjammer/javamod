@@ -32,12 +32,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.UTFDataFormatException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
 import de.quippy.javamod.system.Helpers;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -56,6 +59,8 @@ import de.quippy.javamod.system.Log;
  * @since 31.12.2007
  */
 public class RandomAccessInputStreamImpl extends InputStream implements RandomAccessInputStream {
+
+    private static final Logger logger = getLogger(RandomAccessInputStreamImpl.class.getName());
 
     private RandomAccessFile raFile = null;
     private File localFile = null;
@@ -95,11 +100,11 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @param fileName
      * @throws FileNotFoundException
      */
-    public RandomAccessInputStreamImpl(final String fileName) throws IOException, FileNotFoundException {
+    public RandomAccessInputStreamImpl(String fileName) throws IOException, FileNotFoundException {
         this(new File(fileName));
     }
 
-    public RandomAccessInputStreamImpl(final URL fromUrl) throws IOException, FileNotFoundException {
+    public RandomAccessInputStreamImpl(URL fromUrl) throws IOException, FileNotFoundException {
         super();
         if (Helpers.isFile(fromUrl)) {
             try {
@@ -118,7 +123,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
                 tmpFile = copyFullStream(inputStream);
                 try {
                     inputStream.close();
-                } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+                } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
                 openRandomAccessStream(localFile = tmpFile);
             } catch (Throwable ex) {
                 int size = inputStream.available();
@@ -129,7 +134,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
 
                 try {
                     inputStream.close();
-                } catch (IOException e) { /* Log.error("IGNORED", e); */ }
+                } catch (IOException e) { /* logger.log(Level.ERROR, "IGNORED", e); */ }
                 out.close();
 
                 fullFileCache = out.toByteArray();
@@ -148,7 +153,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @throws IOException
      * @throws FileNotFoundException
      */
-    public RandomAccessInputStreamImpl(final byte[] fromByteArray) throws IOException, FileNotFoundException {
+    public RandomAccessInputStreamImpl(byte[] fromByteArray) throws IOException, FileNotFoundException {
         super();
         fullFileCache = fromByteArray;
         fullFileCache_length = fullFileCache.length;
@@ -158,7 +163,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
     }
 
     /**
-     * @param file
+     * @param fromUrl
      * @return
      * @throws IOException
      * @since 04.01.2011
@@ -191,7 +196,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @throws IOException
      * @since 02.01.2008
      */
-    private void copyFullStream(InputStream inputStream, OutputStream out) throws IOException {
+    private static void copyFullStream(InputStream inputStream, OutputStream out) throws IOException {
         byte[] input = new byte[STANDARD_LENGTH];
         int len;
         while ((len = inputStream.read(input, 0, STANDARD_LENGTH)) != -1) {
@@ -206,6 +211,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @return
      * @since 09.01.2011
      */
+    @Override
     public File getFile() {
         return localFile;
     }
@@ -216,7 +222,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @throws IOException
      * @since 18.01.2022
      */
-    private void openRandomAccessStream(final File theFile) throws FileNotFoundException, IOException {
+    private void openRandomAccessStream(File theFile) throws FileNotFoundException, IOException {
         raFile = new RandomAccessFile(theFile, "r");
 
         randomAccessBuffer = new byte[STANDARD_LENGTH];
@@ -230,7 +236,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @throws IOException
      * @since 18.01.2022
      */
-    private int fillRandomAccessBuffer(final long fromWhere) throws IOException {
+    private int fillRandomAccessBuffer(long fromWhere) throws IOException {
         if (raFile != null) {
             if (fromWhere != raFile.getFilePointer()) raFile.seek(fromWhere);
             randomAccessFilePosition = raFile.getFilePointer();
@@ -249,7 +255,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @throws IOException
      * @since 18.01.2022
      */
-    private int readBytes_internal(byte b[], int off, int len) throws IOException {
+    private int readBytes_internal(byte[] b, int off, int len) throws IOException {
         if (randomAccessBuffer_endPointer < 0) return -1; // already at end of stream, nothing more to read!
 
         int read = len;
@@ -305,7 +311,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
         super.close();
         if (tmpFile != null) {
             boolean ok = tmpFile.delete();
-            if (!ok) Log.error("Could not delete temporary file: " + tmpFile.getCanonicalPath());
+            if (!ok) logger.log(Level.ERROR, "Could not delete temporary file: " + tmpFile.getCanonicalPath());
         }
 
         raFile = null;
@@ -367,7 +373,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
     public long skip(long n) throws IOException {
         if (raFile != null) {
             if (n <= 0) return 0;
-            final long pos = randomAccessFilePosition + randomAccessBuffer_readPointer;
+            long pos = randomAccessFilePosition + randomAccessBuffer_readPointer;
             long newpos = pos + n;
             if (newpos > randomAccessFileLength) newpos = randomAccessFileLength;
             this.seek(newpos);
@@ -390,7 +396,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      */
     @Override
     public int skipBack(int n) throws IOException {
-        final long currentPos = getFilePointer();
+        long currentPos = getFilePointer();
         seek(currentPos - n);
         return (int) (currentPos - getFilePointer());
     }
@@ -603,7 +609,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      */
     @Override
     public String readLine() throws IOException {
-        StringBuffer input = new StringBuffer();
+        StringBuilder input = new StringBuilder();
         int c = -1;
         boolean eol = false;
 
@@ -615,7 +621,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
                     break;
                 case '\r':
                     eol = true;
-                    final long cur = getFilePointer();
+                    long cur = getFilePointer();
                     if ((read()) != '\n') seek(cur);
                     break;
                 default:
@@ -624,7 +630,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
             }
         }
 
-        if ((c == -1) && (input.length() == 0)) {
+        if ((c == -1) && (input.isEmpty())) {
             return null;
         }
         return input.toString();
@@ -709,7 +715,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
                     /* 110x xxxx 10xx xxxx */
                     count += 2;
                     if (count > utflen) throw new UTFDataFormatException("malformed input: partial character at end");
-                    char2 = (int) bytearr[count - 1];
+                    char2 = bytearr[count - 1];
                     if ((char2 & 0xC0) != 0x80)
                         throw new UTFDataFormatException("malformed input around byte " + count);
                     chararr[chararr_count++] = (char) (((c & 0x1F) << 6) | (char2 & 0x3F));
@@ -718,8 +724,8 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
                     /* 1110 xxxx 10xx xxxx 10xx xxxx */
                     count += 3;
                     if (count > utflen) throw new UTFDataFormatException("malformed input: partial character at end");
-                    char2 = (int) bytearr[count - 2];
-                    char3 = (int) bytearr[count - 1];
+                    char2 = bytearr[count - 2];
+                    char3 = bytearr[count - 1];
                     if (((char2 & 0xC0) != 0x80) || ((char3 & 0xC0) != 0x80))
                         throw new UTFDataFormatException("malformed input around byte " + (count - 1));
                     chararr[chararr_count++] = (char) (((c & 0x0F) << 12) | ((char2 & 0x3F) << 6) | ((char3 & 0x3F) << 0));
@@ -740,7 +746,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @since 31.12.2007
      */
     public String readString(int strLength) throws IOException {
-        final byte[] buffer = new byte[strLength];
+        byte[] buffer = new byte[strLength];
         int read = read(buffer, 0, strLength);
         return Helpers.retrieveAsString(buffer, 0, read);
     }
@@ -767,14 +773,14 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @since 31.12.2007
      */
     public int readMotorolaUnsignedWord() throws IOException {
-        return ((int) (((readByte() & 0xFF) << 8) | (readByte() & 0xFF))) & 0xFFFF;
+        return (((readByte() & 0xFF) << 8) | (readByte() & 0xFF)) & 0xFFFF;
     }
 
     /**
      * @since 31.12.2007
      */
     public int readIntelUnsignedWord() throws IOException {
-        return ((int) ((readByte() & 0xFF) | ((readByte() & 0xFF) << 8))) & 0xFFFF;
+        return ((readByte() & 0xFF) | ((readByte() & 0xFF) << 8)) & 0xFFFF;
     }
 
     /**
@@ -833,10 +839,10 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @throws IOException
      * @since 03.02.2024
      */
-    public long readMotorolaBytes(final int size) throws IOException {
+    public long readMotorolaBytes(int size) throws IOException {
         long result = 0;
         if (size != 0) {
-            final int readBytes = (size > 8) ? 8 : size;
+            int readBytes = (size > 8) ? 8 : size;
             for (int i = 0; i < readBytes; i++)
                 result = (result << 8) | (read() & 0xFF);
             skip(size - readBytes);
@@ -854,10 +860,10 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @throws IOException
      * @since 03.02.2024
      */
-    public long readIntelBytes(final int size) throws IOException {
+    public long readIntelBytes(int size) throws IOException {
         long result = 0;
         if (size != 0) {
-            final int readBytes = (size > 8) ? 8 : size;
+            int readBytes = (size > 8) ? 8 : size;
             int shift = 0;
             for (int i = 0; i < readBytes; i++) {
                 result |= (read() << shift);

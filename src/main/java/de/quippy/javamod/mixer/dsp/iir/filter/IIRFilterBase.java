@@ -83,7 +83,7 @@ public abstract class IIRFilterBase {
      *
      * @since 09.01.2012
      */
-    public void initialize(final int sampleRate, final int channels, final int frequency, final float parameter) {
+    public void initialize(int sampleRate, int channels, int frequency, float parameter) {
         this.frequency = frequency;
         this.sampleRate = sampleRate;
         inArray = new float[channels][HISTORYSIZE];
@@ -124,7 +124,7 @@ public abstract class IIRFilterBase {
      * @return
      * @since 14.01.2012
      */
-    public static float getIIRDBValueFrom(final float decimalValue) {
+    public static float getIIRDBValueFrom(float decimalValue) {
         return (float) Math.log10((decimalValue < 0) ? -decimalValue : decimalValue) * 20.0f;
     }
 
@@ -153,7 +153,7 @@ public abstract class IIRFilterBase {
      * Set the amplitude adjustment to be applied to filtered data
      * Values typically range from -.25 to +4.0.
      *
-     * @param amplitudeAdj
+     * @param newAmplitudeAdj
      * @since 09.01.2012
      */
     public void setAmplitudeAdj(float newAmplitudeAdj) {
@@ -194,5 +194,5 @@ public abstract class IIRFilterBase {
      * @return
      * @since 12.01.2012
      */
-    protected abstract float performFilterCalculation(final float sample, final int channel, final int iIndex, final int jIndex, final int kIndex);
+    protected abstract float performFilterCalculation(float sample, int channel, int iIndex, int jIndex, int kIndex);
 }

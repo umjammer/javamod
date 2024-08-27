@@ -20,113 +20,6 @@
  *----------------------------------------------------------------------
  */
 
-/* The C Routine for PowerPacking
-typedef struct _PPBITBUFFER
-{
-	UINT bitcount;
-	ULONG bitbuffer;
-	LPCBYTE pStart;
-	LPCBYTE pSrc;
-
-	ULONG GetBits(UINT n);
-} PPBITBUFFER;
-
-
-ULONG PPBITBUFFER::GetBits(UINT n)
-{
-	ULONG result = 0;
-
-	for (UINT i=0; i<n; i++)
-	{
-		if (!bitcount)
-		{
-			bitcount = 8;
-			if (pSrc != pStart) pSrc--;
-			bitbuffer = *pSrc;
-		}
-		result = (result<<1) | (bitbuffer&1);
-		bitbuffer >>= 1;
-		bitcount--;
-    }
-    return result;
-}
-
-
-VOID PP20_DoUnpack(const BYTE *pSrc, UINT nSrcLen, BYTE *pDst, UINT nDstLen)
-{
-	PPBITBUFFER BitBuffer;
-	ULONG nBytesLeft;
-
-	BitBuffer.pStart = pSrc;
-	BitBuffer.pSrc = pSrc + nSrcLen - 4;
-	BitBuffer.bitbuffer = 0;
-	BitBuffer.bitcount = 0;
-	BitBuffer.GetBits(pSrc[nSrcLen-1]);
-	nBytesLeft = nDstLen;
-	while (nBytesLeft > 0)
-	{
-		if (!BitBuffer.GetBits(1))
-		{
-			UINT n = 1;
-			while (n < nBytesLeft)
-			{
-				UINT code = BitBuffer.GetBits(2);
-				n += code;
-				if (code != 3) break;
-			}
-			for (UINT i=0; i<n; i++)
-			{
-				pDst[--nBytesLeft] = (BYTE)BitBuffer.GetBits(8);
-			}
-			if (!nBytesLeft) break;
-		}
-		{
-			UINT n = BitBuffer.GetBits(2)+1;
-			UINT nbits = pSrc[n-1];
-			UINT nofs;
-			if (n==4)
-			{
-				nofs = BitBuffer.GetBits( (BitBuffer.GetBits(1)) ? nbits : 7 );
-				while (n < nBytesLeft)
-				{
-					UINT code = BitBuffer.GetBits(3);
-					n += code;
-					if (code != 7) break;
-				}
-			} else
-			{
-				nofs = BitBuffer.GetBits(nbits);
-			}
-			for (UINT i=0; i<=n; i++)
-			{
-				pDst[nBytesLeft-1] = (nBytesLeft+nofs < nDstLen) ? pDst[nBytesLeft+nofs] : 0;
-				if (!--nBytesLeft) break;
-			}
-		}
-	}
-}
-
-
-BOOL PP20_Unpack(LPCBYTE *ppMemFile, LPDWORD pdwMemLength)
-{
-	DWORD dwMemLength = *pdwMemLength;
-	LPCBYTE lpMemFile = *ppMemFile;
-	DWORD dwDstLen;
-	LPBYTE pBuffer;
-
-	if ((!lpMemFile) || (dwMemLength < 256) || (*(DWORD *)lpMemFile != '02PP')) return FALSE;
-	dwDstLen = (lpMemFile[dwMemLength-4]<<16) | (lpMemFile[dwMemLength-3]<<8) | (lpMemFile[dwMemLength-2]);
-	//Log("PP20 detected: Packed length=%d, Unpacked length=%d\n", dwMemLength, dwDstLen);
-	if ((dwDstLen < 512) || (dwDstLen > 0x400000) || (dwDstLen > 16*dwMemLength)) return FALSE;
-	if ((pBuffer = (LPBYTE)GlobalAllocPtr(GHND, (dwDstLen + 31) & ~15)) == NULL) return FALSE;
-	PP20_DoUnpack(lpMemFile+4, dwMemLength-4, pBuffer, dwDstLen);
-	*ppMemFile = pBuffer;
-	*pdwMemLength = dwDstLen;
-	return TRUE;
-}
- 
- */
-
 package de.quippy.javamod.io;
 
 import java.io.IOException;
@@ -137,12 +30,14 @@ import java.io.IOException;
  * buffer with the powerpacker algorithem and give access to this buffer
  * as an RandomAccessInputStream
  *
+ * @author Olivier Lapicque &lt;olivierl@jps.net&gt;
  * @author Daniel Becker
  * @since 06.01.2010
+ * @see "https://github.com/USBhost/MX_FFmpeg/blob/2d04e5e816ea9f820bd406d21810a4d416f487b7/ffmpeg/JNI/libmodplug/src/mmcmp.cpp"
  */
 public class PowerPackerFile {
 
-    private byte[] buffer;
+    private final byte[] buffer;
 
     /**
      * Will read n bits from a file
@@ -152,7 +47,7 @@ public class PowerPackerFile {
      */
     private static class BitBuffer {
 
-        private RandomAccessInputStream source;
+        private final RandomAccessInputStream source;
         private int filePointer;
         private int bitCount;
         private int bitBuffer;
@@ -208,7 +103,7 @@ public class PowerPackerFile {
     public static boolean isPowerPacker(RandomAccessInputStream input) throws IOException {
         long pos = input.getFilePointer();
         input.seek(0);
-        final int PP20ID = input.read() << 24 | input.read() << 16 | input.read() << 8 | input.read();
+        int PP20ID = input.read() << 24 | input.read() << 16 | input.read() << 8 | input.read();
         input.seek(pos);
         return PP20ID == 0x50503230;
     }
@@ -222,7 +117,7 @@ public class PowerPackerFile {
      * @throws IOException
      * @since 06.01.2010
      */
-    private void pp20DoUnpack(RandomAccessInputStream source, final int srcLen, byte[] buffer, final int dstLen) throws IOException {
+    private static void pp20DoUnpack(RandomAccessInputStream source, int srcLen, byte[] buffer, int dstLen) throws IOException {
         BitBuffer bitBuffer = new BitBuffer(source, srcLen - 4);
         source.seek(srcLen - 1);
         int skip = source.read();
@@ -232,7 +127,7 @@ public class PowerPackerFile {
             if (bitBuffer.getBits(1) == 0) {
                 int n = 1;
                 while (n <= nBytesLeft) {
-                    final int code = bitBuffer.getBits(2);
+                    int code = bitBuffer.getBits(2);
                     n += code;
                     if (code != 3) break;
                 }
@@ -266,29 +161,26 @@ public class PowerPackerFile {
         }
     }
 
-    private byte[] readAndUnpack(RandomAccessInputStream source) throws IOException {
+    private static byte[] readAndUnpack(RandomAccessInputStream source) throws IOException {
         source.seek(0); // Just in case...
-        final int PP20ID = source.read() << 24 | source.read() << 16 | source.read() << 8 | source.read();
-        final int srcLen = (int) source.getLength();
+        int PP20ID = source.read() << 24 | source.read() << 16 | source.read() << 8 | source.read();
+        int srcLen = (int) source.getLength();
         if (srcLen < 256 || PP20ID != 0x50503230) throw new IOException("Not a powerpacker file!");
         // Destination Length at the end of file:
         source.seek(srcLen - 4);
-        final int destLen = source.read() << 16 | source.read() << 8 | source.read();
+        int destLen = source.read() << 16 | source.read() << 8 | source.read();
         if (destLen < 512 || destLen > 0x400000 || destLen > (srcLen << 3))
             throw new IOException("Length of " + srcLen + " is not supported!");
-        final byte[] dstBuffer = new byte[destLen];
+        byte[] dstBuffer = new byte[destLen];
         pp20DoUnpack(source, srcLen, dstBuffer, destLen);
-//		// Debug - write buffer to disc		
-//		try
-//		{
-//			File f = new File("test.mod");
-//			FileOutputStream outputStream = new FileOutputStream(f);
-//			outputStream.write(dstBuffer);
-//			outputStream.close();
-//		}
-//		catch (Exception ex)
-//		{
-//		}
+//        // Debug - write buffer to disc
+//        try {
+//            File f = new File("test.mod");
+//            FileOutputStream outputStream = new FileOutputStream(f);
+//            outputStream.write(dstBuffer);
+//            outputStream.close();
+//        } catch (Exception ex) {
+//        }
 
         return dstBuffer;
     }

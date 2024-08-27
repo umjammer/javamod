@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
@@ -38,7 +40,8 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import de.quippy.javamod.system.Helpers;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -50,6 +53,8 @@ import de.quippy.javamod.system.Log;
  */
 public class HttpResource implements Closeable {
 
+    private static final Logger logger = getLogger(HttpResource.class.getName());
+
     private static final String HEADER_LOCATION = "LOCATION";
     private static final String HEADER_CONTENTTYPE = "CONTENT-TYPE";
     private static final String HEADER_CONTENTLENGTH = "CONTENT-LENGTH";
@@ -60,7 +65,7 @@ public class HttpResource implements Closeable {
     private int port;
     private String path;
 
-    private HashMap<String, String> resourceHeaders;
+    private Map<String, String> resourceHeaders;
     private int httpCode;
     private URL newLocation;
     private String contentType;
@@ -72,7 +77,7 @@ public class HttpResource implements Closeable {
     /**
      * Constructor for HttpResource
      *
-     * @param in
+     * @param ressource
      */
     public HttpResource(URL ressource) {
         super();
@@ -81,31 +86,29 @@ public class HttpResource implements Closeable {
 
     private void initialize(URL ressource) {
         this.ressource = ressource;
-        final String protocol = ressource.getProtocol().toLowerCase();
+        String protocol = ressource.getProtocol().toLowerCase();
         isHTTPS = protocol.equals("https");
         port = ressource.getPort();
-        if (port < 0) // no port specified - so get default!
-        {
+        if (port < 0) { // no port specified - so get default!
             if (isHTTPS)
                 port = 443;
             else
                 port = 80;
         }
         path = ressource.getPath();
-        if (path == null || path.length() == 0) path = "/";
+        if (path == null || path.isEmpty()) path = "/";
     }
 
     /**
      * Create the socket connection
      *
-     * @param ressource
      * @since 03.10.2016
      */
     private void open() {
         try {
             socket = new Socket(ressource.getHost(), port);
         } catch (IOException ex) {
-            Log.error("Connection to ressource " + ressource.toString() + " failed", ex);
+            logger.log(Level.ERROR, "Connection to ressource " + ressource.toString() + " failed", ex);
         }
     }
 
@@ -149,7 +152,7 @@ public class HttpResource implements Closeable {
     /**
      * @return the resourceHeaders
      */
-    public HashMap<String, String> getResourceHeaders() {
+    public Map<String, String> getResourceHeaders() {
         return resourceHeaders;
     }
 
@@ -197,28 +200,28 @@ public class HttpResource implements Closeable {
     /**
      * read all headers and set error code, content-type, ...
      *
-     * @param reader
+     * @param headers
      * @since 03.10.2016
      */
-    public void readHeadersFromMap(final Map<String, List<String>> headers) throws IOException {
-        resourceHeaders = new HashMap<String, String>();
+    public void readHeadersFromMap(Map<String, List<String>> headers) throws IOException {
+        resourceHeaders = new HashMap<>();
         for (String key : headers.keySet()) {
-            final List<String> values = headers.get(key);
+            List<String> values = headers.get(key);
             if (values == null) continue;
 
-            final String value = values.get(0);
+            String value = values.get(0);
 
             if (key == null) {
-                final StringTokenizer spaceTokenizer = new StringTokenizer(value, " ");
-                final String httpType = (spaceTokenizer.hasMoreTokens()) ? spaceTokenizer.nextToken() : null;
-                final String httpCodeString = (spaceTokenizer.hasMoreTokens()) ? spaceTokenizer.nextToken() : null;
-                final String httpStatusString = (spaceTokenizer.hasMoreTokens()) ? spaceTokenizer.nextToken() : null;
+                StringTokenizer spaceTokenizer = new StringTokenizer(value, " ");
+                String httpType = (spaceTokenizer.hasMoreTokens()) ? spaceTokenizer.nextToken() : null;
+                String httpCodeString = (spaceTokenizer.hasMoreTokens()) ? spaceTokenizer.nextToken() : null;
+                String httpStatusString = (spaceTokenizer.hasMoreTokens()) ? spaceTokenizer.nextToken() : null;
                 if (httpCodeString != null) {
                     httpCode = Integer.parseInt(httpCodeString);
                     resourceHeaders.put(httpType, httpCodeString + " " + httpStatusString);
                 }
             } else {
-                final String compare = key.toUpperCase();
+                String compare = key.toUpperCase();
 
                 if (compare.startsWith(HEADER_LOCATION)) {
                     newLocation = Helpers.createURLfromString(value);
@@ -238,22 +241,22 @@ public class HttpResource implements Closeable {
      * @param reader
      * @since 03.10.2016
      */
-    public void readHeaders(final BufferedReader reader) throws IOException {
-        Map<String, List<String>> headers = new HashMap<String, List<String>>();
+    public void readHeaders(BufferedReader reader) throws IOException {
+        Map<String, List<String>> headers = new HashMap<>();
 
         String line;
         while ((line = reader.readLine()) != null) {
-            if (line.length() == 0) break; // empty line: all headers read
+            if (line.isEmpty()) break; // empty line: all headers read
             int pos = line.indexOf(':');
             if (pos > 0) {
                 String keyWord = line.substring(0, pos);
                 String value = line.substring(pos + 1).trim();
                 if (value.toLowerCase().endsWith("<br>")) value = value.substring(0, value.length() - 4);
-                List<String> list = new ArrayList<String>();
+                List<String> list = new ArrayList<>();
                 list.add(value);
                 headers.put(keyWord, list);
             } else {
-                List<String> list = new ArrayList<String>();
+                List<String> list = new ArrayList<>();
                 list.add(line);
                 headers.put(null, list);
             }
@@ -264,13 +267,13 @@ public class HttpResource implements Closeable {
     /**
      * Read the resource - first read all headers and stay on the resource data itself
      *
-     * @param additionalHeaders
+     * @param additionalRequestHeaders
      * @param keep_alive
      * @return
      * @throws IOException
      * @since 03.10.2016
      */
-    public InputStream getResource(final HashMap<String, String> additionalRequestHeaders, final boolean keep_alive) throws IOException {
+    public InputStream getResource(Map<String, String> additionalRequestHeaders, boolean keep_alive) throws IOException {
         if (isHTTPS) {
             URLConnection con = ressource.openConnection();
             con.addRequestProperty("user-agent", user_agent);
@@ -291,7 +294,7 @@ public class HttpResource implements Closeable {
             } else
                 return result;
         } else {
-            final StringBuilder getString = new StringBuilder()
+            StringBuilder getString = new StringBuilder()
                     .append("GET ").append(path).append(" HTTP/1.1\r\nHost: ").append(ressource.getHost())
                     .append("\r\nuser-agent: ").append(user_agent).append("\r\nAccept: */*\r\nAccept-Charset: ").append(accept_charset)
                     .append("\r\n");
@@ -301,9 +304,9 @@ public class HttpResource implements Closeable {
             getString.append("Connection: ").append((keep_alive) ? "keep_alive" : "close").append("\r\n\r\n");
             // now send this "get" command and open the input Stream
             open();
-            final OutputStream os = socket.getOutputStream();
+            OutputStream os = socket.getOutputStream();
             os.write(getString.toString().getBytes());
-            final BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), Helpers.CODING_M3U));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), Helpers.CODING_M3U));
             readHeaders(reader);
             // if the resource moved, re-read at new location
             if (isMoved() && newLocation != null) {

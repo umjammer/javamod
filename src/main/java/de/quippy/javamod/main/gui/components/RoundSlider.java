@@ -29,6 +29,7 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.io.Serial;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -36,6 +37,7 @@ import javax.swing.event.ChangeListener;
 
 public class RoundSlider extends JComponent {
 
+    @Serial
     private static final long serialVersionUID = 7401158894851891182L;
 
     private static final RenderingHints AALIAS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -58,25 +60,31 @@ public class RoundSlider extends JComponent {
     private void initialize() {
         setValue(0);
 
-//		addComponentListener(new ComponentListener()
-//		{
-//			public void componentHidden(ComponentEvent e) {}
-//			public void componentMoved(ComponentEvent e) {}
-//			public void componentShown(ComponentEvent e) {}
-//			public void componentResized(ComponentEvent e) 
-//			{
-//				int width = getWidth();
-//				int height = getHeight();
-//				int size = Math.min(width, height);
-//			}
-//		});
+//        addComponentListener(new ComponentListener() {
+//            public void componentHidden(ComponentEvent e) {
+//            }
+//
+//            public void componentMoved(ComponentEvent e) {
+//            }
+//
+//            public void componentShown(ComponentEvent e) {
+//            }
+//
+//            public void componentResized(ComponentEvent e) {
+//                int width = getWidth();
+//                int height = getHeight();
+//                int size = Math.min(width, height);
+//            }
+//        });
 
         this.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent me) {
                 lastAngle = getAngle(me);
                 RoundSlider.this.requestFocusInWindow();
             }
 
+            @Override
             public void mouseClicked(MouseEvent me) {
                 double ang = getAngle(me);
                 RoundSlider.this.setValue((float) ((START_ANG - ang) / LENGTH_ANG));
@@ -88,14 +96,16 @@ public class RoundSlider extends JComponent {
              * @param me
              * @see java.awt.event.MouseMotionAdapter#mouseDragged(java.awt.event.MouseEvent)
              */
+            @Override
             public void mouseDragged(MouseEvent me) {
                 double ang = getAngle(me);
-                final double diff = ang - lastAngle;
+                double diff = ang - lastAngle;
                 lastAngle = ang;
                 float newValue = (float) (getValue() - (diff / LENGTH_ANG));
                 if (Math.abs(newValue - getValue()) < 0.5) setValue(newValue);
             }
 
+            @Override
             public void mouseMoved(MouseEvent me) {
             }
         });
@@ -137,24 +147,20 @@ public class RoundSlider extends JComponent {
     }
 
     private int getMaxSize() {
-        final int width = getWidth();
-        final int height = getHeight();
+        int width = getWidth();
+        int height = getHeight();
         return (width < height) ? width : height;
     }
 
     private double getAngle(MouseEvent me) {
-        final int middle = getMaxSize() >> 1;
-        final int xpos = me.getX() - middle;
-        final int ypos = me.getY() - middle;
+        int middle = getMaxSize() >> 1;
+        int xpos = me.getX() - middle;
+        int ypos = me.getY() - middle;
         double ang = Math.atan2(xpos, ypos);
         if (xpos < 0) ang += PI_2; // Values: y>0: 0.0° - 180° y<0: 0.0° -  -180°
         return ang;
     }
 
-    /**
-     * @param g
-     * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
-     */
     @Override
     public void paintComponent(Graphics g) {
         int size = getMaxSize();
@@ -168,7 +174,7 @@ public class RoundSlider extends JComponent {
             size -= 2;
             middle--;
             int startColor = 64;
-            final int colorStep = (255 - startColor) / size;
+            int colorStep = (255 - startColor) / size;
             for (int i = size; i >= 0; i--) {
                 gfx.setColor(new Color(startColor, startColor, startColor));
                 int x = 1 + middle - (i >> 1);
@@ -177,16 +183,16 @@ public class RoundSlider extends JComponent {
             }
 
             gfx.setColor(Color.RED);
-            final double sin = Math.sin(currentAngle);
-            final double cos = Math.cos(currentAngle);
-            final int x = middle + (int) (middle * sin);
-            final int y = middle + (int) (middle * cos);
+            double sin = Math.sin(currentAngle);
+            double cos = Math.cos(currentAngle);
+            int x = middle + (int) (middle * sin);
+            int y = middle + (int) (middle * cos);
             gfx.drawLine(middle, middle, x, y);
 
-            //		final int dx = (int) (2 * sin);
-            //		final int dy = (int) (2 * cos);
-            //		gfx.drawLine(middle + dx, middle + dy, x, y);
-            //		gfx.drawLine(middle - dx, middle - dy, x, y);
+//            int dx = (int) (2 * sin);
+//            int dy = (int) (2 * cos);
+//            gfx.drawLine(middle + dx, middle + dy, x, y);
+//            gfx.drawLine(middle - dx, middle - dy, x, y);
         } finally {
             gfx.dispose();
         }

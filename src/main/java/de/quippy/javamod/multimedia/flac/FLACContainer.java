@@ -44,10 +44,9 @@ import org.kc7bfi.jflac.metadata.VorbisComment;
  */
 public class FLACContainer extends MultimediaContainer {
 
-    private static final String[] FLACFILEEXTENSION = new String[]
-            {
-                    "flac"
-            };
+    private static final String[] FLACFILEEXTENSION = {
+            "flac"
+    };
     private FLACInfoPanel flacInfoPanel;
 
     private VorbisComment vorbisComment;
@@ -87,12 +86,12 @@ public class FLACContainer extends MultimediaContainer {
         InputStream inputStream = null;
         try {
             inputStream = new FileOrPackedInputStream(url);
-            final FLACDecoder decoder = new FLACDecoder(inputStream);
+            FLACDecoder decoder = new FLACDecoder(inputStream);
             decoder.readMetadata();
             vorbisComment = decoder.getVorbisComment();
-            final AudioFormat audioFormat = decoder.getStreamInfo().getAudioFormat();
-            final long sampleRate = (long) audioFormat.getSampleRate();
-            duration = (long) decoder.getStreamInfo().getTotalSamples() * 1000L / sampleRate;
+            AudioFormat audioFormat = decoder.getStreamInfo().getAudioFormat();
+            long sampleRate = (long) audioFormat.getSampleRate();
+            duration = decoder.getStreamInfo().getTotalSamples() * 1000L / sampleRate;
             if (!MultimediaContainerManager.isHeadlessMode())
                 ((FLACInfoPanel) getInfoPanel()).fillInfoPanelWith(audioFormat, duration, Helpers.getFileNameFromURL(url), getSongName(), decoder.getVorbisComment());
         } catch (Exception ex) {
@@ -100,38 +99,33 @@ public class FLACContainer extends MultimediaContainer {
         } finally {
             if (inputStream != null) try {
                 inputStream.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
         return result;
     }
 
-    private String getSongName(VorbisComment vorbisComment, URL forURL) {
+    private static String getSongName(VorbisComment vorbisComment, URL forURL) {
         if (vorbisComment != null) {
             try {
                 String artist = vorbisComment.getArtist();
                 String album = vorbisComment.getAlbum();
                 String title = vorbisComment.getTitle();
-                if (title == null || title.length() == 0) title = MultimediaContainerManager.getSongNameFromURL(forURL);
+                if (title == null || title.isEmpty()) title = MultimediaContainerManager.getSongNameFromURL(forURL);
 
                 StringBuilder str = new StringBuilder();
-                if (artist != null && artist.length() != 0) {
+                if (artist != null && !artist.isEmpty()) {
                     str.append(artist).append(" - ");
                 }
-                if (album != null && album.length() != 0) {
+                if (album != null && !album.isEmpty()) {
                     str.append(album).append(" - ");
                 }
                 return str.append(title).toString();
-            } catch (Throwable ex) // we can get the runtime exception "Unsupported Function"
-            {
+            } catch (Throwable ex) { // we can get the runtime exception "Unsupported Function"
             }
         }
         return MultimediaContainerManager.getSongNameFromURL(forURL);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongName()
-     */
     @Override
     public String getSongName() {
         if (vorbisComment != null)
@@ -140,24 +134,15 @@ public class FLACContainer extends MultimediaContainer {
             return super.getSongName();
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#createNewMixer()
-     */
     @Override
     public Mixer createNewMixer() {
         return new FLACMixer(getFileURL());
     }
 
-    /**
-     * @param url
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongInfosFor(java.net.URL)
-     */
     @Override
     public Object[] getSongInfosFor(URL url) {
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
-        Long duration = Long.valueOf(-1);
+        long duration = -1;
         InputStream inputStream = null;
         try {
             inputStream = new FileOrPackedInputStream(url);
@@ -167,47 +152,31 @@ public class FLACContainer extends MultimediaContainer {
             songName = getSongName(vorbisComment, url);
             AudioFormat audioFormat = decoder.getStreamInfo().getAudioFormat();
             long sampleRate = (long) audioFormat.getSampleRate();
-            duration = Long.valueOf((long) decoder.getStreamInfo().getTotalSamples() * 1000L / sampleRate);
+            duration = decoder.getStreamInfo().getTotalSamples() * 1000L / sampleRate;
         } catch (Throwable ex) {
         } finally {
             if (inputStream != null) try {
                 inputStream.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
         return new Object[] {songName, duration};
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getName()
-     */
     @Override
     public String getName() {
         return "FLAC-File";
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getFileExtensionList()
-     */
     @Override
     public String[] getFileExtensionList() {
         return FLACFILEEXTENSION;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getConfigPanel()
-     */
     @Override
     public JPanel getConfigPanel() {
         return null;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInfoPanel()
-     */
     @Override
     public JPanel getInfoPanel() {
         if (flacInfoPanel == null) {
@@ -217,25 +186,14 @@ public class FLACContainer extends MultimediaContainer {
         return flacInfoPanel;
     }
 
-    /**
-     * @param newProps
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationChanged(java.util.Properties)
-     */
     @Override
     public void configurationChanged(Properties newProps) {
     }
 
-    /**
-     * @param props
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationSave(java.util.Properties)
-     */
     @Override
     public void configurationSave(Properties props) {
     }
 
-    /**
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#cleanUp()
-     */
     @Override
     public void cleanUp() {
     }

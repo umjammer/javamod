@@ -67,7 +67,7 @@ public abstract class Mixer {
     /**
      * @param newAudioFormat the audioFormat to set
      */
-    protected void setAudioFormat(final AudioFormat newAudioFormat) {
+    protected void setAudioFormat(AudioFormat newAudioFormat) {
         audioFormat = newAudioFormat;
     }
 
@@ -81,7 +81,7 @@ public abstract class Mixer {
     /**
      * @param newAudioProcessor the audioProcessor to set
      */
-    public void setAudioProcessor(final AudioProcessor newAudioProcessor) {
+    public void setAudioProcessor(AudioProcessor newAudioProcessor) {
         audioProcessor = newAudioProcessor;
     }
 
@@ -93,7 +93,7 @@ public abstract class Mixer {
      * @param newVolume
      * @since 01.11.2008
      */
-    public void setVolume(final float newVolume) {
+    public void setVolume(float newVolume) {
         currentVolume = newVolume;
         if (outputStream != null) outputStream.setVolume(newVolume);
     }
@@ -103,10 +103,10 @@ public abstract class Mixer {
      * the Balance of the sound output, but never the wav writer
      * This will only succeed, if "openAudioDevice" was called once!
      *
-     * @param newVolume
+     * @param newBalance
      * @since 01.11.2008
      */
-    public void setBalance(final float newBalance) {
+    public void setBalance(float newBalance) {
         currentBalance = newBalance;
         if (outputStream != null) outputStream.setBalance(newBalance);
     }
@@ -114,38 +114,38 @@ public abstract class Mixer {
     /**
      * Delete external stream by setting it to null.
      *
-     * @param outputStream the outputStream to set
+     * @param newOutputStream the outputStream to set
      * @since 25.02.2011
      */
-    public void setSoundOutputStream(final SoundOutputStream newOutputStream) {
+    public void setSoundOutputStream(SoundOutputStream newOutputStream) {
         outputStream = newOutputStream;
     }
 
     /**
      * @param newExportFile the exportFile to set
      */
-    public void setExportFile(final File newExportFile) {
+    public void setExportFile(File newExportFile) {
         exportFile = newExportFile;
     }
 
     /**
-     * @param exportFile the exportFile to set
+     * @param exportFileName the exportFile to set
      */
-    public void setExportFile(final String exportFileName) {
+    public void setExportFile(String exportFileName) {
         if (exportFileName != null) exportFile = new File(exportFileName);
     }
 
     /**
      * @param newPlayDuringExport the playDuringExport to set
      */
-    public void setPlayDuringExport(final boolean newPlayDuringExport) {
+    public void setPlayDuringExport(boolean newPlayDuringExport) {
         playDuringExport = newPlayDuringExport;
     }
 
     /**
      * @param newKeepSilent the keepSilent to set
      */
-    public void setKeepSilent(final boolean newKeepSilent) {
+    public void setKeepSilent(boolean newKeepSilent) {
         keepSilent = newKeepSilent;
     }
 
@@ -153,7 +153,7 @@ public abstract class Mixer {
      * @param newSourceLineBufferSize
      * @since 01.02.2024
      */
-    public void setSourceLineBufferSize(final int newSourceLineBufferSize) {
+    public void setSourceLineBufferSize(int newSourceLineBufferSize) {
         sourceLineBufferSize = newSourceLineBufferSize;
         if (outputStream != null) outputStream.setSourceLineBufferSize(sourceLineBufferSize);
     }
@@ -211,11 +211,11 @@ public abstract class Mixer {
         }
     }
 
-    protected void stopLine(final boolean flushOrDrain) {
+    protected void stopLine(boolean flushOrDrain) {
         if (outputStream != null) outputStream.stopLine(flushOrDrain);
     }
 
-    protected void startLine(final boolean flushOrDrain) {
+    protected void startLine(boolean flushOrDrain) {
         if (outputStream != null) outputStream.startLine(flushOrDrain);
     }
 

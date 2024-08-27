@@ -23,13 +23,16 @@
 package de.quippy.javamod.multimedia.ape;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import javax.sound.sampled.AudioFormat;
 
 import davaguine.jmac.decoder.IAPEDecompress;
 import davaguine.jmac.tools.File;
 import de.quippy.javamod.mixer.BasicMixer;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -38,7 +41,9 @@ import de.quippy.javamod.system.Log;
  */
 public class APEMixer extends BasicMixer {
 
-    private URL apeFileURL;
+    private static final Logger logger = getLogger(APEMixer.class.getName());
+
+    private final URL apeFileURL;
     private File apeFile;
     private IAPEDecompress spAPEDecompress;
 
@@ -63,7 +68,7 @@ public class APEMixer extends BasicMixer {
     private void initialize() {
         try {
             apeFile = File.createFile(apeFileURL, "r");
-            spAPEDecompress = IAPEDecompress.CreateIAPEDecompress(apeFile);
+            spAPEDecompress = IAPEDecompress.createAPEDecompress(apeFile);
             channels = spAPEDecompress.getApeInfoChannels();
             bitsPerSample = spAPEDecompress.getApeInfoBitsPerSample();
             sampleSizeInBytes = bitsPerSample >> 3;
@@ -72,7 +77,7 @@ public class APEMixer extends BasicMixer {
             blocksPerDecode = 250 * sampleRate / 1000;
 
             // allocate space for decompression
-            final int bufferSize = blockAlign * blocksPerDecode;
+            int bufferSize = blockAlign * blocksPerDecode;
             output = new byte[bufferSize];
             setSourceLineBufferSize(bufferSize);
 
@@ -82,8 +87,8 @@ public class APEMixer extends BasicMixer {
             if (apeFile != null) try {
                 apeFile.close();
                 apeFile = null;
-            } catch (IOException e) { /* Log.error("IGNORED", e); */ }
-            Log.error("[APEMixer]", ex);
+            } catch (IOException e) { /* logger.log(Level.ERROR, "IGNORED", e); */ }
+            logger.log(Level.ERROR, "[APEMixer]", ex);
         }
     }
 
@@ -169,9 +174,9 @@ public class APEMixer extends BasicMixer {
     @Override
     protected void seek(long milliseconds) {
         try {
-            spAPEDecompress.Seek((int) (milliseconds * (long) sampleRate / 1000L));
+            spAPEDecompress.seek((int) (milliseconds * (long) sampleRate / 1000L));
         } catch (Exception ex) {
-            Log.error("[APEMixer]", ex);
+            logger.log(Level.ERROR, "[APEMixer]", ex);
         }
     }
 
@@ -183,7 +188,7 @@ public class APEMixer extends BasicMixer {
         if (apeFile != null) try {
             apeFile.close();
             apeFile = null;
-        } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+        } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
     }
 
     /**
@@ -203,8 +208,8 @@ public class APEMixer extends BasicMixer {
             int nBlocksDecoded = 0;
 
             do {
-                final long bytesToWrite = (hasStopPosition()) ? getSamplesToWriteLeft() * getChannelCount() * sampleSizeInBytes : -1;
-                nBlocksDecoded = spAPEDecompress.GetData(output, blocksPerDecode);
+                long bytesToWrite = (hasStopPosition()) ? getSamplesToWriteLeft() * getChannelCount() * sampleSizeInBytes : -1;
+                nBlocksDecoded = spAPEDecompress.getData(output, blocksPerDecode);
                 if (nBlocksDecoded > 0 && isInitialized()) {
                     int byteCount = nBlocksDecoded * blockAlign;
                     // find out, if all decoded samples are to write

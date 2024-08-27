@@ -52,9 +52,9 @@ public class JavaMod extends JavaModMainBase {
      */
     private static String getFileName(String[] args) {
         String fileName = null;
-        for (int i = 0; i < args.length; i++) {
-            if (!args[i].startsWith("-")) {
-                fileName = args[i];
+        for (String arg : args) {
+            if (!arg.startsWith("-")) {
+                fileName = arg;
                 break;
             }
         }
@@ -65,22 +65,20 @@ public class JavaMod extends JavaModMainBase {
      * @param args
      * @since 22.06.2006
      */
-    public static void main(final String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                MainForm mainForm = new MainForm();
-                Helpers.setCoding(true);
-                mainForm.setVisible(true);
-                if (args.length > 0) {
-                    String fileName = getFileName(args);
-                    if (fileName != null) {
-                        File f = new File(fileName);
-                        if (f.exists())
-                            mainForm.doOpenFile(new File[] {f});
-                        else
-                            mainForm.doOpenURL(fileName);
-                        mainForm.doStartPlaying();
-                    }
+    public static void main(String[] args) {
+        EventQueue.invokeLater(() -> {
+            MainForm mainForm = new MainForm();
+            Helpers.setCoding(true);
+            mainForm.setVisible(true);
+            if (args.length > 0) {
+                String fileName = getFileName(args);
+                if (fileName != null) {
+                    File f = new File(fileName);
+                    if (f.exists())
+                        mainForm.doOpenFile(new File[] {f});
+                    else
+                        mainForm.doOpenURL(fileName);
+                    mainForm.doStartPlaying();
                 }
             }
         });

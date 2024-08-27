@@ -28,9 +28,9 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.Rectangle;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.Serial;
 import java.util.Properties;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
@@ -41,8 +41,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JWindow;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import de.quippy.javamod.main.gui.components.XmasDecorationPanel;
 import de.quippy.javamod.system.Helpers;
@@ -54,6 +52,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class XmasScreenConfigPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = -8071971305563557958L;
 
     private static final String PROPERTY_XMAS_ENABLED = "javamod.xmas.enabled.";
@@ -71,15 +70,15 @@ public class XmasScreenConfigPanel extends JPanel {
     private JWindow transparentJFrame = null;
     private XmasDecorationPanel xmasDecorationPanel = null;
 
-    private int screenFPS;
-    private ImageIcon[] bulbs;
-    private GraphicsDevice screen;
-    private int defaultScreenHeight;
+    private final int screenFPS;
+    private final ImageIcon[] bulbs;
+    private final GraphicsDevice screen;
+    private final int defaultScreenHeight;
 
     /**
      * Constructor for XmasScreenConfigPanel
      */
-    public XmasScreenConfigPanel(final int myDesiredFPS, ImageIcon[] allBulbs, GraphicsDevice forScreen) {
+    public XmasScreenConfigPanel(int myDesiredFPS, ImageIcon[] allBulbs, GraphicsDevice forScreen) {
         super();
         screenFPS = myDesiredFPS;
         bulbs = allBulbs;
@@ -106,13 +105,11 @@ public class XmasScreenConfigPanel extends JPanel {
             xmasEnabledCheckBox.setText("Enable X-Mas decoration on this screen");
             xmasEnabledCheckBox.setFont(Helpers.getDialogFont());
             xmasEnabledCheckBox.setSelected(isXmasEnabled());
-            xmasEnabledCheckBox.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
-                        final boolean isEnabled = getXmasEnabledCheckBox().isSelected();
-                        getTransparentJWindow().setVisible(isEnabled);
-                        if (isEnabled) startThread(); // else: do not stop the thread - that cannot be undone
-                    }
+            xmasEnabledCheckBox.addItemListener(e -> {
+                if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
+                    boolean isEnabled = getXmasEnabledCheckBox().isSelected();
+                    getTransparentJWindow().setVisible(isEnabled);
+                    if (isEnabled) startThread(); // else: do not stop the thread - that cannot be undone
                 }
             });
         }
@@ -126,11 +123,9 @@ public class XmasScreenConfigPanel extends JPanel {
             withSpaceCheckBox.setText("with Space");
             withSpaceCheckBox.setFont(Helpers.getDialogFont());
             withSpaceCheckBox.setSelected(isWithSpaceEnabled());
-            withSpaceCheckBox.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
-                        getXmasDecorationPanel().setWithSpace(getWithSpaceCheckBox().isSelected());
-                    }
+            withSpaceCheckBox.addItemListener(e -> {
+                if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
+                    getXmasDecorationPanel().setWithSpace(getWithSpaceCheckBox().isSelected());
                 }
             });
         }
@@ -148,18 +143,16 @@ public class XmasScreenConfigPanel extends JPanel {
 
     private JComboBox<String> getFlickerTypeSelector() {
         if (flickerTypeSelector == null) {
-            flickerTypeSelector = new JComboBox<String>();
+            flickerTypeSelector = new JComboBox<>();
             flickerTypeSelector.setName("flickerTypeSelector");
 
-            DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<String>(XmasDecorationPanel.FLICKER_TYPES);
+            DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<>(XmasDecorationPanel.FLICKER_TYPES);
             flickerTypeSelector.setModel(theModel);
             flickerTypeSelector.setFont(Helpers.getDialogFont());
             flickerTypeSelector.setEnabled(true);
-            flickerTypeSelector.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    if (e.getStateChange() == ItemEvent.SELECTED) {
-                        getXmasDecorationPanel().setFlickerType(getFlickerType());
-                    }
+            flickerTypeSelector.addItemListener(e -> {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    getXmasDecorationPanel().setFlickerType(getFlickerType());
                 }
             });
         }
@@ -187,6 +180,7 @@ public class XmasScreenConfigPanel extends JPanel {
             updateFPSSelector.setPaintTrack(true);
             updateFPSSelector.setToolTipText(Integer.toString(updateFPSSelector.getValue()));
             updateFPSSelector.addMouseListener(new MouseAdapter() {
+                @Override
                 public void mouseClicked(MouseEvent e) {
                     if (e.getClickCount() > 1) {
                         ((JSlider) e.getSource()).setValue(2);
@@ -194,12 +188,9 @@ public class XmasScreenConfigPanel extends JPanel {
                     }
                 }
             });
-            updateFPSSelector.addChangeListener(new ChangeListener() {
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    getUpdateFPSSelector().setToolTipText(Integer.toString(getUpdateFPSSelector().getValue()));
-                    getXmasDecorationPanel().setUpdateFPS(getUpdateFPSSelector().getValue());
-                }
+            updateFPSSelector.addChangeListener(e -> {
+                getUpdateFPSSelector().setToolTipText(Integer.toString(getUpdateFPSSelector().getValue()));
+                getXmasDecorationPanel().setUpdateFPS(getUpdateFPSSelector().getValue());
             });
         }
         return updateFPSSelector;
@@ -215,8 +206,8 @@ public class XmasScreenConfigPanel extends JPanel {
             transparentJFrame = new JWindow();
             transparentJFrame.setAlwaysOnTop(true);
 
-            final GraphicsConfiguration gc = screen.getDefaultConfiguration();
-            final Rectangle bounds = gc.getBounds();
+            GraphicsConfiguration gc = screen.getDefaultConfiguration();
+            Rectangle bounds = gc.getBounds();
             bounds.height = defaultScreenHeight;
             transparentJFrame.setBounds(bounds);
 
@@ -234,7 +225,7 @@ public class XmasScreenConfigPanel extends JPanel {
             xmasDecorationPanel.setBorder(BorderFactory.createEmptyBorder());
             xmasDecorationPanel.setOpaque(false);
             xmasDecorationPanel.setBackground(new Color(0, true));
-            final Dimension d = getTransparentJWindow().getSize();
+            Dimension d = getTransparentJWindow().getSize();
             xmasDecorationPanel.setSize(d);
         }
         return xmasDecorationPanel;
@@ -244,7 +235,7 @@ public class XmasScreenConfigPanel extends JPanel {
         return getXmasEnabledCheckBox().isSelected();
     }
 
-    private void setXmasEnabled(final boolean xmasEnabled) {
+    private void setXmasEnabled(boolean xmasEnabled) {
         getXmasEnabledCheckBox().setSelected(xmasEnabled);
     }
 
@@ -252,11 +243,11 @@ public class XmasScreenConfigPanel extends JPanel {
         return getWithSpaceCheckBox().isSelected();
     }
 
-    private void setWithSpaceEnabled(final boolean spaceEnabled) {
+    private void setWithSpaceEnabled(boolean spaceEnabled) {
         getWithSpaceCheckBox().setSelected(spaceEnabled);
     }
 
-    private void setFlickerType(final int newFlickerType) {
+    private void setFlickerType(int newFlickerType) {
         if (newFlickerType >= 0 && newFlickerType < XmasDecorationPanel.FLICKER_TYPES.length)
             getFlickerTypeSelector().setSelectedIndex(newFlickerType);
     }
@@ -265,7 +256,7 @@ public class XmasScreenConfigPanel extends JPanel {
         return getFlickerTypeSelector().getSelectedIndex();
     }
 
-    private void setUpdateFPS(final int newUpdateFPS) {
+    private void setUpdateFPS(int newUpdateFPS) {
         if (newUpdateFPS >= getUpdateFPSSelector().getMinimum() && newUpdateFPS <= getUpdateFPSSelector().getMaximum())
             getUpdateFPSSelector().setValue(newUpdateFPS);
     }
@@ -276,16 +267,16 @@ public class XmasScreenConfigPanel extends JPanel {
 
 //---------------------- public interface --------------------------------------
 
-    public void readProperties(final Properties props, final int forScreen) {
-        final String index = Integer.toString(forScreen);
+    public void readProperties(Properties props, int forScreen) {
+        String index = Integer.toString(forScreen);
         setFlickerType(Integer.parseInt(props.getProperty(PROPERTY_XMAS_FLICKERTYPE + index, "4")));
         setUpdateFPS(Integer.parseInt(props.getProperty(PROPERTY_XMAS_UPDATEFPS + index, "2")));
         setWithSpaceEnabled(Boolean.parseBoolean(props.getProperty(PROPERTY_XMAS_WITHSPACE + index, "FALSE")));
         setXmasEnabled(Boolean.parseBoolean(props.getProperty(PROPERTY_XMAS_ENABLED + index, "FALSE")));
     }
 
-    public void writeProperties(final Properties props, final int forScreen) {
-        final String index = Integer.toString(forScreen);
+    public void writeProperties(Properties props, int forScreen) {
+        String index = Integer.toString(forScreen);
         props.setProperty(PROPERTY_XMAS_ENABLED + index, Boolean.toString(isXmasEnabled()));
         props.setProperty(PROPERTY_XMAS_WITHSPACE + index, Boolean.toString(isWithSpaceEnabled()));
         props.setProperty(PROPERTY_XMAS_FLICKERTYPE + index, Integer.toString(getFlickerType()));

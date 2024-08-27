@@ -27,7 +27,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.quippy.javamod.io.ModfileInputStream;
@@ -41,8 +42,8 @@ import de.quippy.javamod.io.ModfileInputStream;
  */
 public class ModuleFactory {
 
-    private static HashMap<String, Module> fileExtensionMap;
-    private static ArrayList<Module> modulesArray;
+    private static Map<String, Module> fileExtensionMap;
+    private static List<Module> modulesArray;
 
     /**
      * Constructor for ModuleFactory - This Class Is A Singleton
@@ -57,9 +58,9 @@ public class ModuleFactory {
      * @return
      * @since 04.01.2010
      */
-    private static HashMap<String, Module> getFileExtensionMap() {
+    private static Map<String, Module> getFileExtensionMap() {
         if (fileExtensionMap == null)
-            fileExtensionMap = new HashMap<String, Module>();
+            fileExtensionMap = new HashMap<>();
 
         return fileExtensionMap;
     }
@@ -70,24 +71,22 @@ public class ModuleFactory {
      * @return
      * @since 04.01.2010
      */
-    private static ArrayList<Module> getModulesArray() {
+    private static List<Module> getModulesArray() {
         if (modulesArray == null)
-            modulesArray = new ArrayList<Module>();
+            modulesArray = new ArrayList<>();
         return modulesArray;
     }
 
     public static void registerModule(Module mod) {
         getModulesArray().add(mod);
         String[] extensions = mod.getFileExtensionList();
-        for (int i = 0; i < extensions.length; i++)
-            getFileExtensionMap().put(extensions[i], mod);
+        for (String extension : extensions) getFileExtensionMap().put(extension, mod);
     }
 
     public static void deregisterModule(Module mod) {
         getModulesArray().remove(mod);
         String[] extensions = mod.getFileExtensionList();
-        for (int i = 0; i < extensions.length; i++)
-            getFileExtensionMap().remove(extensions[i]);
+        for (String extension : extensions) getFileExtensionMap().remove(extension);
     }
 
     public static String[] getSupportedFileExtensions() {
@@ -108,9 +107,7 @@ public class ModuleFactory {
      * @since 04.01.2010
      */
     private static Module getModuleFromStreamByID(ModfileInputStream input) {
-        Iterator<Module> iter = getModulesArray().iterator();
-        while (iter.hasNext()) {
-            Module mod = iter.next();
+        for (Module mod : getModulesArray()) {
             try {
                 if (mod.checkLoadingPossible(input)) return mod;
             } catch (IOException ex) {
@@ -128,9 +125,7 @@ public class ModuleFactory {
      * @since 13.06.2010
      */
     private static Module getModuleFromStream(ModfileInputStream input) {
-        Iterator<Module> iter = getModulesArray().iterator();
-        while (iter.hasNext()) {
-            Module mod = iter.next();
+        for (Module mod : getModulesArray()) {
             try {
                 Module result = mod.loadModFile(input);
                 input.seek(0);
@@ -189,7 +184,7 @@ public class ModuleFactory {
         } finally {
             if (inputStream != null) try {
                 inputStream.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
     }
 }

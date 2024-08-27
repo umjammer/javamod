@@ -80,7 +80,7 @@ public class FileChooserResult {
     }
 
     /**
-     * @param selectedFile the selectedFile to set
+     * @param selectedFiles the selectedFile to set
      */
     public void setSelectedFile(File[] selectedFiles) {
         this.selectedFiles = selectedFiles;

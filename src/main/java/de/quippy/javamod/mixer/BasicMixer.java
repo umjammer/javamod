@@ -22,7 +22,10 @@
 
 package de.quippy.javamod.mixer;
 
-import de.quippy.javamod.system.Log;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -30,6 +33,8 @@ import de.quippy.javamod.system.Log;
  * @since 30.12.2007
  */
 public abstract class BasicMixer extends Mixer {
+
+    private static final Logger logger = getLogger(BasicMixer.class.getName());
 
     private static final int ISNOTHING = 0;
     private static final int ISDOING = 1;
@@ -53,73 +58,41 @@ public abstract class BasicMixer extends Mixer {
         hasFinished = false;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#isPaused()
-     */
     @Override
     public boolean isPaused() {
         return paused == ISDONE;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#isPausing()
-     */
     @Override
     public boolean isPausing() {
         return paused == ISDOING;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#isStopped()
-     */
     @Override
     public boolean isStopped() {
         return stopped == ISDONE;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#isStopping()
-     */
     @Override
     public boolean isStopping() {
         return stopped == ISDOING;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#isNotPausingNorPaused()
-     */
     @Override
     public boolean isNotPausingNorPaused() {
         return paused == ISNOTHING;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#isNotStoppingNorStopped()
-     */
     @Override
     public boolean isNotStoppingNorStopped() {
         return stopped == ISNOTHING;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#isPlaying()
-     */
     @Override
     public boolean isPlaying() {
         return !isStopped();
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#isFinished()
-     */
     @Override
     public boolean hasFinished() {
         return hasFinished;
@@ -173,14 +146,17 @@ public abstract class BasicMixer extends Mixer {
         return seekPosition;
     }
 
+    @Override
     public boolean isNotSeeking() {
         return seeking == ISNOTHING;
     }
 
+    @Override
     public boolean isInSeeking() {
         return seeking != ISNOTHING;
     }
 
+    @Override
     public boolean isSeeking() {
         return seeking == ISDOING;
     }
@@ -209,7 +185,7 @@ public abstract class BasicMixer extends Mixer {
                 stopLine(true);
                 seek(milliseconds);
             } catch (Exception ex) {
-                Log.error("BasicMixer::setMillisecondPosition", ex);
+                logger.log(Level.ERROR, "BasicMixer::setMillisecondPosition", ex);
             } finally {
                 startLine(false);
                 seeking = ISNOTHING;

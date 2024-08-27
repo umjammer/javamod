@@ -24,6 +24,8 @@ package de.quippy.javamod.main.gui.tools;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import javax.swing.filechooser.FileFilter;
 
 import de.quippy.javamod.system.Helpers;
@@ -36,7 +38,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class FileChooserFilter extends FileFilter {
 
-    private ArrayList<String> extensions = new java.util.ArrayList<String>();
+    private final List<String> extensions = new java.util.ArrayList<>();
     private String description;
 
     /**
@@ -61,8 +63,7 @@ public class FileChooserFilter extends FileFilter {
     /**
      * FileChooserFilter - Konstruktorkommentar.
      *
-     * @param extension   java.lang.String
-     * @param description java.lang.String
+     * @param extension java.lang.String
      */
     public FileChooserFilter(String extension) {
         this(extension, null);
@@ -71,28 +72,24 @@ public class FileChooserFilter extends FileFilter {
     /**
      * FileChooserFilter - Konstruktorkommentar.
      *
-     * @param extension   java.lang.String
+     * @param extensions  java.lang.String[]
      * @param description java.lang.String
      */
     public FileChooserFilter(String[] extensions, String description) {
         this();
-        if (description != null)
-            this.description = description;
-        else
-            this.description = Helpers.EMPTY_STING;
+        this.description = Objects.requireNonNullElse(description, Helpers.EMPTY_STING);
 
-        for (int i = 0; i < extensions.length; i++) {
-            String suffix = extensions[i].toLowerCase();
+        for (String extension : extensions) {
+            String suffix = extension.toLowerCase();
             if (description == null) this.description += "*." + suffix + " ";
-            this.extensions.add(extensions[i].toLowerCase());
+            this.extensions.add(extension.toLowerCase());
         }
     }
 
     /**
      * FileChooserFilter
      *
-     * @param extension   java.lang.String
-     * @param description java.lang.String
+     * @param extensions java.lang.String[]
      */
     public FileChooserFilter(String[] extensions) {
         this(extensions, null);
@@ -105,12 +102,11 @@ public class FileChooserFilter extends FileFilter {
      * @return boolean
      */
     @Override
-    public boolean accept(final File f) {
+    public boolean accept(File f) {
         if (f.isDirectory()) return true;
         int len = extensions.size();
         if (len == 0) return true;
-        for (int i = 0; i < len; i++) {
-            String suffix = extensions.get(i);
+        for (String suffix : extensions) {
             if (suffix.equals("*")) return true;
             if (f.getName().toLowerCase().endsWith('.' + suffix)) return true;
             if (f.getName().toLowerCase().startsWith(suffix + '.'))

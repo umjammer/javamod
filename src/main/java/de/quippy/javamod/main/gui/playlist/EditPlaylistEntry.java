@@ -24,6 +24,7 @@ package de.quippy.javamod.main.gui.playlist;
 
 import java.awt.GridBagConstraints;
 import java.io.File;
+import java.io.Serial;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.filechooser.FileFilter;
@@ -39,6 +40,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class EditPlaylistEntry extends JDialog {
 
+    @Serial
     private static final long serialVersionUID = 6551932234216134125L;
 
     private javax.swing.JLabel jLabel1;
@@ -126,11 +128,7 @@ public class EditPlaylistEntry extends JDialog {
         searchButton.setText("...");
         searchButton.setToolTipText("Search");
         searchButton.setFont(Helpers.getDialogFont());
-        searchButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                doSearch();
-            }
-        });
+        searchButton.addActionListener(evt -> doSearch());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.anchor = GridBagConstraints.WEST;
         gridBagConstraints.gridx = 2;
@@ -146,11 +144,7 @@ public class EditPlaylistEntry extends JDialog {
         openButton.setText("OK");
         openButton.setFont(Helpers.getDialogFont());
         openButton.setToolTipText("OK");
-        openButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                doOpen();
-            }
-        });
+        openButton.addActionListener(evt -> doOpen());
         jPanel1.add(openButton);
 
         cancelButton = new javax.swing.JButton();
@@ -158,11 +152,7 @@ public class EditPlaylistEntry extends JDialog {
         cancelButton.setText("Cancel");
         cancelButton.setToolTipText("Cancel");
         cancelButton.setFont(Helpers.getDialogFont());
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                doCancel();
-            }
-        });
+        cancelButton.addActionListener(evt -> doCancel());
         jPanel1.add(cancelButton);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -200,11 +190,12 @@ public class EditPlaylistEntry extends JDialog {
         textField2.setText(value);
     }
 
-    /* EVENT METHODS -------------------------------------------------------- */
+    // EVENT METHODS
+
     public void doClose() {
         setVisible(false);
         dispose();
-        //if we are alone in the world, exit the vm
+        // if we are alone in the world, exit the vm
         if (getParent() == null) System.exit(0); // this should not be needed!
     }
 
@@ -224,15 +215,12 @@ public class EditPlaylistEntry extends JDialog {
         if (selectedFile != null) {
             File f = selectedFile.getSelectedFile();
             textField2.setText(f.getAbsolutePath());
-//			try
-//			{
-//				URL target = f.toURI().toURL();
-//				textField2.setText(target.toString());
-//			}
-//			catch (Exception ex)
-//			{
-//				//Log.error("IGNORED", ex);
-//			}
+//            try {
+//                URL target = f.toURI().toURL();
+//                textField2.setText(target.toString());
+//            } catch (Exception ex) {
+//                //logger.log(Level.ERROR, "IGNORED", ex);
+//            }
         }
     }
 }

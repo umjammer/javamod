@@ -34,7 +34,7 @@ import de.quippy.javamod.system.Helpers;
  * This class implements and id3v2 footer which is essentially the same as an id3v2
  * header but occurs at the end of the tag and is optional.
  *
- * @author: Jonathan Hilliker modified by Daniel Becker
+ * @author Jonathan Hilliker modified by Daniel Becker
  */
 public class ID3v2Footer {
 
@@ -60,7 +60,7 @@ public class ID3v2Footer {
      * be used when tags are appended.  An attempt will be made to read from
      * the file provided from the location provided.
      *
-     * @param mp3      the file to read from
+     * @param raf      the file to read from
      * @param location the location to find the footer
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
@@ -79,7 +79,7 @@ public class ID3v2Footer {
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
      */
-    private boolean checkFooter(RandomAccessInputStream raf, int location) throws IOException {
+    private static boolean checkFooter(RandomAccessInputStream raf, int location) throws IOException {
         raf.seek(location);
         byte[] buf = new byte[FOOT_SIZE];
 
@@ -88,7 +88,7 @@ public class ID3v2Footer {
         }
 
         String result = new String(buf, ENC_TYPE);
-        if (result.substring(0, TAG_START.length()).equals(TAG_START)) {
+        if (result.startsWith(TAG_START)) {
             if ((((int) buf[3] & 0xFF) != 0xff) && (((int) buf[4] & 0xFF) != 0xff)) {
                 if (((int) buf[6] & 0x80) == 0 && ((int) buf[7] & 0x80) == 0 && ((int) buf[8] & 0x80) == 0 && ((int) buf[9] & 0x80) == 0) {
                     return true;
@@ -114,10 +114,10 @@ public class ID3v2Footer {
             throw new IOException("Error encountered reading id3v2 footer");
         }
 
-        majorVersion = (int) foot[3];
+        majorVersion = foot[3];
 
         if (majorVersion <= NEW_MAJOR_VERSION) {
-            minorVersion = (int) foot[4];
+            minorVersion = foot[4];
             unsynchronisation = (foot[5] & 0x80) != 0;
             extended = (foot[5] & 0x40) != 0;
             experimental = (foot[5] & 0x20) != 0;

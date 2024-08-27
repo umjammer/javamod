@@ -26,9 +26,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
-
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiDevice.Info;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Sequence;
@@ -51,24 +52,25 @@ import de.quippy.javamod.system.Helpers;
  */
 public class MidiContainer extends MultimediaContainer {
 
-    private static final String[] MIDIFILEEXTENSION = new String[]
-            {
-                    "mid", "rmf", "rmi"
-            };
+    private static final String[] MIDIFILEEXTENSION = {
+            "mid", "rmf", "rmi"
+    };
     public static final String PROPERTY_MIDIPLAYER_OUTPUTDEVICE = "javamod.player.midi.outputdevice";
     public static final String PROPERTY_MIDIPLAYER_SOUNDBANK = "javamod.player.midi.soundbankurl";
     public static final String PROPERTY_MIDIPLAYER_CAPTURE = "javamod.player.midi.capture";
     public static final String PROPERTY_MIDIPLAYER_MIXERNAME = "javamod.player.midi.mixername";
     public static final String PROPERTY_MIDIPLAYER_PORTNAME = "javamod.player.midi.portname";
-    /* GUI Constants ---------------------------------------------------------*/
+
+    // GUI Constants
+
     public static final String DEFAULT_OUTPUTDEVICE = "Java Sound Synthesizer";
     public static final String DEFAULT_SOUNDBANKURL = Helpers.EMPTY_STING;
     public static final String DEFAULT_CAPUTRE = "0";
     public static final String DEFAULT_MIXERNAME = Helpers.EMPTY_STING;
     public static final String DEFAULT_PORTNAME = Helpers.EMPTY_STING;
 
-    public static MidiDevice.Info[] MIDIOUTDEVICEINFOS;
-    public static javax.sound.sampled.Mixer.Info[] MIXERDEVICEINFOS;
+    public static final MidiDevice.Info[] MIDIOUTDEVICEINFOS;
+    public static final javax.sound.sampled.Mixer.Info[] MIXERDEVICEINFOS;
 
     private Properties currentProps = null;
 
@@ -92,12 +94,12 @@ public class MidiContainer extends MultimediaContainer {
      * @since 24.10.2010
      */
     private static MidiDevice.Info[] getMidiOutDevices() {
-        ArrayList<MidiDevice.Info> midiOuts = new ArrayList<MidiDevice.Info>();
+        List<Info> midiOuts = new ArrayList<>();
         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-        for (int i = 0; i < infos.length; i++) {
+        for (MidiDevice.Info info : infos) {
             try {
-                MidiDevice device = MidiSystem.getMidiDevice(infos[i]);
-                if (device.getMaxReceivers() != 0) midiOuts.add(infos[i]);
+                MidiDevice device = MidiSystem.getMidiDevice(info);
+                if (device.getMaxReceivers() != 0) midiOuts.add(info);
             } catch (MidiUnavailableException e) {
             }
         }
@@ -124,16 +126,16 @@ public class MidiContainer extends MultimediaContainer {
      * @since 27.11.2010
      */
     private static javax.sound.sampled.Mixer.Info[] getInputMixerNames() {
-        ArrayList<javax.sound.sampled.Mixer.Info> mixers = new ArrayList<javax.sound.sampled.Mixer.Info>();
+        List<javax.sound.sampled.Mixer.Info> mixers = new ArrayList<>();
         javax.sound.sampled.Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
-        final Line.Info lineInfo = new Line.Info(TargetDataLine.class);
-        for (int i = 0; i < mixerInfos.length; i++) {
-            javax.sound.sampled.Mixer mixer = AudioSystem.getMixer(mixerInfos[i]);
+        Line.Info lineInfo = new Line.Info(TargetDataLine.class);
+        for (javax.sound.sampled.Mixer.Info mixerInfo : mixerInfos) {
+            javax.sound.sampled.Mixer mixer = AudioSystem.getMixer(mixerInfo);
             if (mixer.isLineSupported(lineInfo)) {
-                mixers.add(mixerInfos[i]);
+                mixers.add(mixerInfo);
             }
         }
-        return mixers.toArray(new javax.sound.sampled.Mixer.Info[mixers.size()]);
+        return mixers.toArray(javax.sound.sampled.Mixer.Info[]::new);
     }
 
     protected static javax.sound.sampled.Mixer.Info getInputMixerByName(String inputMixerDeviceName) {
@@ -151,11 +153,6 @@ public class MidiContainer extends MultimediaContainer {
         super();
     }
 
-    /**
-     * @param url
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInstance(java.net.URL)
-     */
     @Override
     public MultimediaContainer getInstance(URL midiFileUrl) {
         MultimediaContainer result = super.getInstance(midiFileUrl);
@@ -170,7 +167,7 @@ public class MidiContainer extends MultimediaContainer {
      * @return
      * @since 12.02.2011
      */
-    private Sequence getSequenceFromURL(URL midiFileUrl) {
+    private static Sequence getSequenceFromURL(URL midiFileUrl) {
         try {
             String fileName = midiFileUrl.getPath();
             String extension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
@@ -184,7 +181,7 @@ public class MidiContainer extends MultimediaContainer {
                 } finally {
                     if (input != null) try {
                         input.close();
-                    } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+                    } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
                 }
             }
         } catch (Throwable ex) {
@@ -193,12 +190,12 @@ public class MidiContainer extends MultimediaContainer {
     }
 
     private boolean getCapture() {
-        return Boolean.valueOf((currentProps != null) ? currentProps.getProperty(PROPERTY_MIDIPLAYER_CAPTURE, DEFAULT_CAPUTRE) : DEFAULT_CAPUTRE).booleanValue();
+        return Boolean.parseBoolean((currentProps != null) ? currentProps.getProperty(PROPERTY_MIDIPLAYER_CAPTURE, DEFAULT_CAPUTRE) : DEFAULT_CAPUTRE);
     }
 
     private File getSoundBankFile() {
-        final String soundBankFile = (currentProps != null) ? currentProps.getProperty(PROPERTY_MIDIPLAYER_SOUNDBANK, DEFAULT_SOUNDBANKURL) : DEFAULT_SOUNDBANKURL;
-        if (soundBankFile == null || soundBankFile.length() == 0) return null;
+        String soundBankFile = (currentProps != null) ? currentProps.getProperty(PROPERTY_MIDIPLAYER_SOUNDBANK, DEFAULT_SOUNDBANKURL) : DEFAULT_SOUNDBANKURL;
+        if (soundBankFile == null || soundBankFile.isEmpty()) return null;
         return new File(soundBankFile);
     }
 
@@ -218,10 +215,10 @@ public class MidiContainer extends MultimediaContainer {
     @Override
     public Object[] getSongInfosFor(URL url) {
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
-        Long duration = Long.valueOf(-1);
+        long duration = -1;
         try {
             Sequence sequence = getSequenceFromURL(url);
-            duration = Long.valueOf((sequence != null) ? (sequence.getMicrosecondLength() / 1000L) : 0);
+            duration = (sequence != null) ? (sequence.getMicrosecondLength() / 1000L) : 0;
         } catch (Throwable ex) {
         }
         return new Object[] {songName, duration};
@@ -297,9 +294,9 @@ public class MidiContainer extends MultimediaContainer {
     public Mixer createNewMixer() {
         configurationSave(currentProps);
 
-        final MidiDevice.Info info = getMidiInfo();
+        MidiDevice.Info info = getMidiInfo();
 
-        final javax.sound.sampled.Mixer.Info mixerInfo = getMixerInfo();
+        javax.sound.sampled.Mixer.Info mixerInfo = getMixerInfo();
         boolean capture = getCapture();
         if (capture && mixerInfo == null) capture = false;
 

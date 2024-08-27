@@ -36,31 +36,28 @@ import de.quippy.javamod.multimedia.mp3.id3.exceptions.ID3v2FormatException;
  * no mutators.  In other words, this class will only be used if an mp3
  * already has an extended header (at this point at least).
  *
- * @author: Jonathan Hilliker modified by Daniel Becker
+ * @author Jonathan Hilliker modified by Daniel Becker
  */
 public class ID3v2ExtendedHeader {
 
     private static final int EXT_HEAD_LOCATION = 10;
     private static final int MIN_SIZE = 6;
     private static final int CRC_SIZE = 5;
-    private static final int[] MAX_TAG_FRAMES_TABLE =
-            {
-                    128, 64, 32, 32
-            };
-    private static final int[] MAX_TAG_SIZE_TABLE =
-            {
-                    8000000, 1024000, 320000, 32000
-            };
-    private static final int[] MAX_TEXT_SIZE_TABLE =
-            {
-                    -1, 1024, 128, 30
-            };
+    private static final int[] MAX_TAG_FRAMES_TABLE = {
+            128, 64, 32, 32
+    };
+    private static final int[] MAX_TAG_SIZE_TABLE = {
+            8000000, 1024000, 320000, 32000
+    };
+    private static final int[] MAX_TEXT_SIZE_TABLE = {
+            -1, 1024, 128, 30
+    };
 
     private int size = 0;
     private int numFlagBytes = 0;
     private boolean update = false;
     private boolean crced = false;
-    private byte[] crc = new byte[CRC_SIZE];
+    private final byte[] crc = new byte[CRC_SIZE];
     //private int maxFrames = -1;
     private int maxTagSize = -1;
     private boolean textEncode = false;
@@ -72,7 +69,7 @@ public class ID3v2ExtendedHeader {
      * Create an extended header object from the file passed.  Information
      * in the file's extended header will be read and stored.
      *
-     * @param mp3 the file to read/write to
+     * @param raf the file to read/write to
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
      * @throws ID3v2FormatException  if an error occurs

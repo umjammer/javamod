@@ -40,8 +40,8 @@ public abstract class PatternElement {
     public static final int EFFECT_UNKNOWN = 5;
     public static final int EFFECT_NONE = 6;
 
-    protected Module parentMod;
-    protected PatternRow parentPatternRow;
+    protected final Module parentMod;
+    protected final PatternRow parentPatternRow;
 
     protected int patternIndex;
     protected int row;
@@ -57,7 +57,7 @@ public abstract class PatternElement {
     /**
      * Constructor for PatternElement
      */
-    public PatternElement(final Module parentMod, final PatternRow parentPatternRow, final int patternIndex, final int patternRow, final int channel) {
+    public PatternElement(Module parentMod, PatternRow parentPatternRow, int patternIndex, int patternRow, int channel) {
         super();
         this.patternIndex = patternIndex;
         this.row = patternRow;
@@ -109,13 +109,9 @@ public abstract class PatternElement {
      */
     public abstract int getVolEffectCategory();
 
-    /**
-     * @return
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         addToStringBuilder(sb);
         return sb.toString();
     }
@@ -124,10 +120,9 @@ public abstract class PatternElement {
      * Add patternElement string representation to a StringBuilder
      *
      * @param sb
-     * @param isIT
      * @since 22.12.2023
      */
-    public void addToStringBuilder(final StringBuilder sb) {
+    public void addToStringBuilder(StringBuilder sb) {
         sb.append(ModConstants.getNoteNameForIndex(noteIndex)).append(' ');
         if (instrument == 0)
             sb.append("..");
@@ -174,7 +169,7 @@ public abstract class PatternElement {
     /**
      * @param channel The channel to set.
      */
-    public void setChannel(final int channel) {
+    public void setChannel(int channel) {
         this.channel = channel;
     }
 
@@ -188,7 +183,7 @@ public abstract class PatternElement {
     /**
      * @param effekt The effekt to set.
      */
-    public void setEffekt(final int effekt) {
+    public void setEffekt(int effekt) {
         this.effekt = effekt;
     }
 
@@ -202,7 +197,7 @@ public abstract class PatternElement {
     /**
      * @param effektOp The effektOp to set.
      */
-    public void setEffektOp(final int effektOp) {
+    public void setEffektOp(int effektOp) {
         this.effektOp = effektOp;
     }
 
@@ -216,7 +211,7 @@ public abstract class PatternElement {
     /**
      * @param instrument The instrument to set.
      */
-    public void setInstrument(final int instrument) {
+    public void setInstrument(int instrument) {
         this.instrument = instrument;
     }
 
@@ -230,7 +225,7 @@ public abstract class PatternElement {
     /**
      * @param noteIndex The noteIndex to set.
      */
-    public void setNoteIndex(final int noteIndex) {
+    public void setNoteIndex(int noteIndex) {
         this.noteIndex = noteIndex;
     }
 
@@ -244,7 +239,7 @@ public abstract class PatternElement {
     /**
      * @param patternIndex The patternIndex to set.
      */
-    public void setPatternIndex(final int patternIndex) {
+    public void setPatternIndex(int patternIndex) {
         this.patternIndex = patternIndex;
     }
 
@@ -258,7 +253,7 @@ public abstract class PatternElement {
     /**
      * @param period The period to set.
      */
-    public void setPeriod(final int period) {
+    public void setPeriod(int period) {
         this.period = period;
     }
 
@@ -272,7 +267,7 @@ public abstract class PatternElement {
     /**
      * @param row The row to set.
      */
-    public void setRow(final int row) {
+    public void setRow(int row) {
         this.row = row;
     }
 
@@ -284,9 +279,9 @@ public abstract class PatternElement {
     }
 
     /**
-     * @param volume The volume to set.
+     * @param volumeEffekt The volume to set.
      */
-    public void setVolumeEffekt(final int volumeEffekt) {
+    public void setVolumeEffekt(int volumeEffekt) {
         this.volumeEffekt = volumeEffekt;
     }
 
@@ -298,9 +293,9 @@ public abstract class PatternElement {
     }
 
     /**
-     * @param assignedVolumeEffektOp The assignedVolumeEffektOp to set.
+     * @param volumeEffektOp The assignedVolumeEffektOp to set.
      */
-    public void setVolumeEffektOp(final int volumeEffektOp) {
+    public void setVolumeEffektOp(int volumeEffektOp) {
         this.volumeEffektOp = volumeEffektOp;
     }
 }

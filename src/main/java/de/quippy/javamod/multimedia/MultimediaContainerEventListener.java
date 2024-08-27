@@ -39,5 +39,5 @@ public interface MultimediaContainerEventListener extends EventListener {
      * @param event
      * @since 27.12.2008
      */
-    public void multimediaContainerEventOccured(MultimediaContainerEvent event);
+    void multimediaContainerEventOccurred(MultimediaContainerEvent event);
 }

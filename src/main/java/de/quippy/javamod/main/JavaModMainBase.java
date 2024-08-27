@@ -23,7 +23,6 @@
 package de.quippy.javamod.main;
 
 import de.quippy.javamod.system.Helpers;
-import de.quippy.javamod.system.Log;
 
 
 /**
@@ -36,7 +35,6 @@ public class JavaModMainBase {
         // Now load and initialize all classes, that should not be
         // initialized during play!
         Helpers.registerAllClasses();
-        Log.setLogLevel(Log.LOGLEVEL_ERROR | Log.LOGLEVEL_INFO);
     }
 
     /**

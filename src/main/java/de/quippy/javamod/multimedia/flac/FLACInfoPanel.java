@@ -23,7 +23,7 @@
 package de.quippy.javamod.multimedia.flac;
 
 import java.awt.LayoutManager;
-
+import java.io.Serial;
 import javax.sound.sampled.AudioFormat;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -43,6 +43,7 @@ import org.kc7bfi.jflac.metadata.VorbisComment;
  */
 public class FLACInfoPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = 8005898124149359343L;
 
     private JLabel flacFileNameLabel = null;
@@ -410,7 +411,7 @@ public class FLACInfoPanel extends JPanel {
 
     private javax.swing.JComboBox<String> getV1_Genre() {
         if (v1_Genre == null) {
-            v1_Genre = new javax.swing.JComboBox<String>(NullsoftID3GenreTable.getGenres());
+            v1_Genre = new javax.swing.JComboBox<>(NullsoftID3GenreTable.getGenres());
             v1_Genre.setName("v1_Genre");
             v1_Genre.setFont(Helpers.getDialogFont());
             v1_Genre.setEditable(true);
@@ -449,7 +450,7 @@ public class FLACInfoPanel extends JPanel {
         return v1_Comment;
     }
 
-    public void fillInfoPanelWith(final AudioFormat audioFormat, final long lengthInMilliseconds, final String fileName, final String songName, final VorbisComment vorbisComment) {
+    public void fillInfoPanelWith(AudioFormat audioFormat, long lengthInMilliseconds, String fileName, String songName, VorbisComment vorbisComment) {
         getFlacFileName().setText(fileName);
         getFlacShortDescription().setText(songName);
         getFlacFrequency().setText(Integer.toString((int) audioFormat.getSampleRate()));
@@ -462,13 +463,13 @@ public class FLACInfoPanel extends JPanel {
             // BAND, ALBUMARTIST, COMPOSER
             StringBuilder sb = new StringBuilder();
             String track = vorbisComment.getTrackNumber();
-            if (track.length() > 0) sb.append("Track ").append(track);
+            if (!track.isEmpty()) sb.append("Track ").append(track);
             String totalTracks = vorbisComment.getTotalTracks();
-            if (totalTracks.length() > 0) sb.append(" of ").append(totalTracks);
+            if (!totalTracks.isEmpty()) sb.append(" of ").append(totalTracks);
             String disc = vorbisComment.getDiscNumber();
-            if (disc.length() > 0) sb.append(" Disc ").append(disc);
+            if (!disc.isEmpty()) sb.append(" Disc ").append(disc);
             String totalDiscs = vorbisComment.getTotalDiscs();
-            if (totalDiscs.length() > 0) sb.append(" of ").append(totalDiscs);
+            if (!totalDiscs.isEmpty()) sb.append(" of ").append(totalDiscs);
             getV1_Track().setText(sb.toString());
 
             getV1_Title().setText(vorbisComment.getTitle());

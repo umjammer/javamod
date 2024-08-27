@@ -27,6 +27,7 @@ import java.awt.Cursor;
 import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.Serial;
 import java.util.Arrays;
 
 import de.quippy.javamod.mixer.dsp.FFT;
@@ -39,6 +40,7 @@ import de.quippy.javamod.system.FastMath;
  */
 public class SAMeterPanel extends MeterPanelBase {
 
+    @Serial
     private static final long serialVersionUID = 3032239961770238793L;
 
     private static final int FFT_SAMPLE_SIZE = 512;
@@ -50,20 +52,20 @@ public class SAMeterPanel extends MeterPanelBase {
     private static final Color WAVEMETER_LINE_COLOR = Color.darkGray;
     private static final Color WAVEMETER_WAVE_COLOR = Color.green;
 
-    private FFT fftCalc;
+    private final FFT fftCalc;
     private Color[] color;
     private Color[] SKcolor;
     private int SKMax;
-    private float[] fftLevels;
-    private float[] maxFFTLevels;
+    private final float[] fftLevels;
+    private final float[] maxFFTLevels;
 
     private float[] floatSamples;
     private int anzSamples;
 
-    private int bands;
-    private int multiplier;
+    private final int bands;
+    private final int multiplier;
     private float rampDownValue;
-    private float[] maxPeakLevelRampDownValue;
+    private final float[] maxPeakLevelRampDownValue;
     private float maxPeakLevelRampDownDelay;
 
     private int myBottom;
@@ -101,6 +103,7 @@ public class SAMeterPanel extends MeterPanelBase {
     private void prepareDisplayToggleListener() {
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseClicked(MouseEvent pEvent) {
                 if (pEvent.getButton() == MouseEvent.BUTTON1) {
                     drawWhat++;
@@ -122,11 +125,6 @@ public class SAMeterPanel extends MeterPanelBase {
         return drawWhat;
     }
 
-    /**
-     * Is called when the component is resized
-     *
-     * @see de.quippy.javamod.main.gui.components.MeterPanelBase#componentWasResized()
-     */
     @Override
     protected void componentWasResized(int newTop, int newLeft, int newWidth, int newHeight) {
         rampDownValue = 1.25f / (float) getDesiredFPS();
@@ -193,10 +191,6 @@ public class SAMeterPanel extends MeterPanelBase {
         }
     }
 
-    /**
-     * @param g
-     * @see de.quippy.javamod.main.gui.components.MeterPanelBase#drawMeter(java.awt.Graphics)
-     */
     @Override
     protected void drawMeter(Graphics2D g, int newTop, int newLeft, int newWidth, int newHeight) {
         drawMeter(g, newTop, newLeft, newWidth, newHeight, true);
@@ -294,8 +288,8 @@ public class SAMeterPanel extends MeterPanelBase {
             int barX1 = barX + barWidth - 2;
             int barHeight = (int) (((float) newHeight) * fftLevels[i]);
             int maxBarHeight = (int) (((float) newHeight) * maxFFTLevels[i]);
-//			if (barHeight >= color.length) barHeight = color.length-1;
-//			if (maxBarHeight >= color.length) maxBarHeight = color.length-1;
+//            if (barHeight >= color.length) barHeight = color.length - 1;
+//            if (maxBarHeight >= color.length) maxBarHeight = color.length - 1;
 
             int c = barHeight;
             for (int y = myBottom - barHeight; y < myBottom; y++) {

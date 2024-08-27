@@ -31,20 +31,19 @@ import java.io.IOException;
 public class XpkSqsh {
 
     private static final int HEADER_LENGTH = 36;
-    private static final byte[] OCTETS =
-            {
-                    2, 3, 4, 5, 6, 7, 8, 0,
-                    3, 2, 4, 5, 6, 7, 8, 0,
-                    4, 3, 5, 2, 6, 7, 8, 0,
-                    5, 4, 6, 2, 3, 7, 8, 0,
-                    6, 5, 7, 2, 3, 4, 8, 0,
-                    7, 6, 8, 2, 3, 4, 5, 0,
-                    8, 7, 6, 2, 3, 4, 5, 0,
-            };
+    private static final byte[] OCTETS = {
+            2, 3, 4, 5, 6, 7, 8, 0,
+            3, 2, 4, 5, 6, 7, 8, 0,
+            4, 3, 5, 2, 6, 7, 8, 0,
+            5, 4, 6, 2, 3, 7, 8, 0,
+            6, 5, 7, 2, 3, 4, 8, 0,
+            7, 6, 8, 2, 3, 4, 5, 0,
+            8, 7, 6, 2, 3, 4, 5, 0,
+    };
 
-    private byte[] buffer;
+    private final byte[] buffer;
 
-    private class BitData {
+    private static class BitData {
 
         private final byte[] p;
         private final int base;
@@ -112,30 +111,30 @@ public class XpkSqsh {
     }
 
     /*** Jelineks Coding *****/
-    private boolean testData(byte[] a) {
+    private static boolean testData(byte[] a) {
         if (a.length < 12) return false;
         if ('X' != a[0] || 'P' != a[1] || 'K' != a[2] || 'F' != a[3]) return false;
         if ('S' != a[8] || 'Q' != a[9] || 'S' != a[10] || 'H' != a[11]) return false;
         return true;
     }
 
-    private int getLength(byte[] a, int i) {
+    private static int getLength(byte[] a, int i) {
         return (a[i] & 0x7F) << 24 | (a[i + 1] & 0xFF) << 16 | (a[i + 2] & 0xFF) << 8 | a[i + 3] & 0xFF;
     }
 
     public byte[] unpackData(RandomAccessInputStream source) throws IOException {
         byte[] data = new byte[16];
         source.read(data, 0, 16);
-        final int orig_length = getLength(data, 4);
-        final int target_length = getLength(data, 12);
+        int orig_length = getLength(data, 4);
+        int target_length = getLength(data, 12);
         if (testData(data) && orig_length == source.getLength() - 8) {
-            final byte[] dst = new byte[target_length];
+            byte[] dst = new byte[target_length];
             if (unpack(source, dst, HEADER_LENGTH)) return dst;
         }
         return null;
     }
 
-    private boolean unpack(RandomAccessInputStream source, byte[] dst, final int srcPos) throws IOException {
+    private boolean unpack(RandomAccessInputStream source, byte[] dst, int srcPos) throws IOException {
         int dstPos = 0;
         source.seek(srcPos);
         while (dstPos < dst.length) {
@@ -152,7 +151,7 @@ public class XpkSqsh {
             packedLength = (packedLength + 3) & 0xFFFC;
             if (source.getFilePointer() + packedLength + 1 > source.getLength()) return false;
 
-            final byte[] src = new byte[packedLength];
+            byte[] src = new byte[packedLength];
             if (source.read(src, 0, packedLength) != packedLength) return false;
 
             for (int i = 0; i < packedLength; i += 2)
@@ -172,7 +171,7 @@ public class XpkSqsh {
         return true;
     }
 
-    private boolean unsqsh(byte[] src, int srcPos, byte[] dst, int dstPos, int dstEnd) {
+    private static boolean unsqsh(byte[] src, int srcPos, byte[] dst, int dstPos, int dstEnd) {
         if (dstEnd - dstPos != ((src[srcPos] & 255) << 8 | src[srcPos + 1] & 255)) return false;
         int expandCounter = 0, expandCount = 0, bitCount = 0;
         if (dstPos >= dst.length) return false;
@@ -204,7 +203,7 @@ public class XpkSqsh {
         return true;
     }
 
-    private int copyBlock(BitData data, byte[] dst, int dstPos, int count) {
+    private static int copyBlock(BitData data, byte[] dst, int dstPos, int count) {
         int bitCount = getCopyOffsetBitCount(data);
         int offsetBase = getCopyOffsetBase(bitCount);
         int winPos = dstPos - 1 - offsetBase - data.getBits(bitCount);
@@ -213,7 +212,7 @@ public class XpkSqsh {
         return Math.min(dst.length, dstPos + count);
     }
 
-    private int getCopyCount(BitData data) {
+    private static int getCopyCount(BitData data) {
         if (data.getBit() == 0) return 2 + data.getBit();
         if (data.getBit() == 0) return 4 + data.getBit();
         if (data.getBit() == 0) return 6 + data.getBit();
@@ -221,19 +220,19 @@ public class XpkSqsh {
         return 16 + data.getBits(5);
     }
 
-    private int getExpandBitCount(BitData data, int bitCount) {
+    private static int getExpandBitCount(BitData data, int bitCount) {
         if (data.getBit() == 0) return OCTETS[8 * bitCount - 15];
         if (data.getBit() == 0) return OCTETS[8 * bitCount - 14];
         return OCTETS[8 * bitCount + data.getBits(2) - 13];
     }
 
-    private int getCopyOffsetBitCount(BitData data) {
+    private static int getCopyOffsetBitCount(BitData data) {
         if (data.getBit() == 1) return 12;
         if (data.getBit() == 1) return 14;
         return 8;
     }
 
-    private int getCopyOffsetBase(int bitCount) {
+    private static int getCopyOffsetBase(int bitCount) {
         if (bitCount == 12) return 0x100;
         if (bitCount == 14) return 0x1100;
         return 0;

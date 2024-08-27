@@ -39,8 +39,8 @@ public class IIRFilter {
     private int jIndex;
     private int kIndex;
     private int sampleBufferSize;
-    private int filterLength;
-    private IIRFilterBase[] filters;
+    private final int filterLength;
+    private final IIRFilterBase[] filters;
     private float preAmp;
 
     /**
@@ -87,7 +87,7 @@ public class IIRFilter {
     }
 
     /**
-     * @param preAmp the preAmp to set
+     * @param newPreAmpDB the preAmp to set
      */
     public void setPreAmp(float newPreAmpDB) {
         preAmp = (float) Helpers.getDecimalValueFrom(newPreAmpDB);
@@ -105,23 +105,23 @@ public class IIRFilter {
      * This will perform the filter on the samples
      *
      * @param ringBuffer
-     * @param preAmpedResultBuffer
+     * @param useBands
      * @param start
      * @param length
      * @since 12.01.2012
      */
-    public int doFilter(final float[] ringBuffer, final int start, final int length, final int useBands) {
-        final float internalPreAmp = 1f / useBands;
-        final float rest = 1.0f - internalPreAmp;
-        final int end = start + length;
+    public int doFilter(float[] ringBuffer, int start, int length, int useBands) {
+        float internalPreAmp = 1f / useBands;
+        float rest = 1.0f - internalPreAmp;
+        int end = start + length;
         int index = start;
         while (index < end) {
             for (int c = 0; c < channels; c++) {
-                final int sampleIndex = (index++) % sampleBufferSize;
+                int sampleIndex = (index++) % sampleBufferSize;
 
                 float sample = 0;
                 // Run the difference equation
-                final float preAmpedSample = ringBuffer[sampleIndex] * preAmp * internalPreAmp;
+                float preAmpedSample = ringBuffer[sampleIndex] * preAmp * internalPreAmp;
                 for (int f = 0; f < useBands; f++) {
                     IIRFilterBase filter = filters[f];
                     sample += filter.performFilterCalculation(preAmpedSample, c, iIndex, jIndex, kIndex) * filter.amplitudeAdj;

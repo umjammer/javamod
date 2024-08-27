@@ -43,14 +43,16 @@
 
 package de.quippy.opl3;
 
+
 /**
  * @author Daniel Becker
  * @since 11.08.2020
  */
 public class FMOPL_072 {
-//	private static final int BUILD_YM3812 = 1;
-//	private static final int BUILD_YM3526 = 1;
-//	private static final int BUILD_Y8950  = 0;
+
+//    private static final int BUILD_YM3812 = 1;
+//    private static final int BUILD_YM3526 = 1;
+//    private static final int BUILD_Y8950 = 0;
 
     interface OPL_IRQHANDLER {
 
@@ -66,38 +68,44 @@ public class FMOPL_072 {
 
         void invoke(int min_interval_us);
     }
+
 //#if BUILD_Y8950
-//	interface STATUS_CHANGE_HANDLER
-//	{
-//		public void STATUS_SET(final int status_bits);
-//		public void STATUS_RESET(final int status_bits);
-//	}
-//	interface OPL_PORTHANDLER_R
-//	{
-//		public byte invoke();
-//	}
-//	interface OPL_PORTHANDLER_W
-//	{
-//		public void invoke(int data);
-//	}
+//
+//    interface STATUS_CHANGE_HANDLER {
+//
+//        public void STATUS_SET(final int status_bits);
+//
+//        public void STATUS_RESET(final int status_bits);
+//    }
+//
+//    interface OPL_PORTHANDLER_R {
+//
+//        public byte invoke();
+//    }
+//
+//    interface OPL_PORTHANDLER_W {
+//
+//        public void invoke(int data);
+//    }
 //#endif
 
-    /* output final shift */
+    // output final shift
+
     private static final int FINAL_SH = 0;
-    private static final int MAXOUT = 0x00007FFF;
-    private static final int MINOUT = 0xFFFF8000;
+    private static final int MAXOUT = 0x0000_7FFF;
+    private static final int MINOUT = 0xFFFF_8000;
 
     private static final int FREQ_SH = 16; // 16.16 fixed point (frequency calculations)
     private static final int EG_SH = 16; // 16.16 fixed point (EG timing)
     private static final int LFO_SH = 24; //  8.24 fixed point (LFO calculations)
-    //private static final int TIMER_SH		= 16; // 16.16 fixed point (timers calculations)
+//    private static final int TIMER_SH = 16; // 16.16 fixed point (timers calculations)
 
     private static final int FREQ_MASK = ((1 << FREQ_SH) - 1);
     private static final int ENV_BITS = 10;
     private static final int ENV_LEN = (1 << ENV_BITS);
     private static final double ENV_STEP = (128.0 / ENV_LEN);
 
-    private static final int MAX_ATT_INDEX = ((1 << (ENV_BITS - 1)) - 1); /*511*/
+    private static final int MAX_ATT_INDEX = ((1 << (ENV_BITS - 1)) - 1); // 511
     private static final int MIN_ATT_INDEX = 0;
 
     private static final int SIN_BITS = 10;
@@ -106,35 +114,40 @@ public class FMOPL_072 {
 
     private static final int TL_RES_LEN = 256; // 8 bits addressing (real chip)
 
-    /* register number to channel number, slot offset */
+    // register number to channel number, slot offset
     private static final int SLOT1 = 0;
     private static final int SLOT2 = 1;
 
-    /* Envelope Generator phases */
+    // Envelope Generator phases
     private static final int EG_ATT = 4;
     private static final int EG_DEC = 3;
     private static final int EG_SUS = 2;
     private static final int EG_REL = 1;
     private static final int EG_OFF = 0;
 
-    private static final int OPL_TYPE_WAVESEL = 0x01; // waveform select
-    private static final int OPL_TYPE_ADPCM = 0x02; // DELTA-T ADPCM unit
-    private static final int OPL_TYPE_KEYBOARD = 0x04; // keyboard interface
-    private static final int OPL_TYPE_IO = 0x08; // I/O port
+    /** waveform select */
+    private static final int OPL_TYPE_WAVESEL = 0x01;
+    /** DELTA-T ADPCM unit */
+    private static final int OPL_TYPE_ADPCM = 0x02;
+    /** keyboard interface */
+    private static final int OPL_TYPE_KEYBOARD = 0x04;
+    /** I/O port */
+    private static final int OPL_TYPE_IO = 0x08;
 
-    /* ---------- Generic interface section ---------- */
+    // Generic interface section
+
     public static final int OPL_TYPE_YM3526 = 0;
     public static final int OPL_TYPE_YM3812 = (OPL_TYPE_WAVESEL);
     public static final int OPL_TYPE_Y8950 = (OPL_TYPE_ADPCM | OPL_TYPE_KEYBOARD | OPL_TYPE_IO);
 
     private static final int RATE_STEPS = 8;
 
-    //private static final int ML = 2;
-    //private static final int MAX_OPL_CHIPS = 2;
+//    private static final int ML = 2;
+//    private static final int MAX_OPL_CHIPS = 2;
 
-    /*rate  0,    1,    2,    3,   4,   5,   6,  7,  8,  9,  10, 11, 12, 13, 14, 15 */
-    /*shift 12,   11,   10,   9,   8,   7,   6,  5,  4,  3,  2,  1,  0,  0,  0,  0  */
-    /*mask  4095, 2047, 1023, 511, 255, 127, 63, 31, 15, 7,  3,  1,  0,  0,  0,  0  */
+    /* rate  0,    1,    2,    3,   4,   5,   6,  7,  8,  9,  10, 11, 12, 13, 14, 15 */
+    /* shift 12,   11,   10,   9,   8,   7,   6,  5,  4,  3,  2,  1,  0,  0,  0,  0  */
+    /* mask  4095, 2047, 1023, 511, 255, 127, 63, 31, 15, 7,  3,  1,  0,  0,  0,  0  */
     private static final int[] eg_rate_select = {   /* Envelope Generator rates (16 + 64 rates + 16 RKS) */
             /* 16 infinite time rates */
             (14 * RATE_STEPS), (14 * RATE_STEPS), (14 * RATE_STEPS), (14 * RATE_STEPS), (14 * RATE_STEPS), (14 * RATE_STEPS), (14 * RATE_STEPS), (14 * RATE_STEPS),
@@ -202,9 +215,8 @@ public class FMOPL_072 {
             0, 0, 0, 0, 0, 0, 0, 0
     };
 
-    //#if BUILD_Y8950
-//	private static class YM_DELTAT
-//	{ // AT: rearranged and tightened structure
+//#if BUILD_Y8950
+//	private static class YM_DELTAT { // AT: rearranged and tightened structure
 //		private static final int YM_DELTAT_SHIFT    = 16;
 //
 //		private static final int YM_DELTAT_DELTA_MAX = 24576;
@@ -286,17 +298,14 @@ public class FMOPL_072 {
 //
 //		// ROM Emulation
 //		private final byte[] ROM = new byte[memory_size];
-//		private int read_byte(final int offset)
-//		{
+//		private int read_byte(final int offset) {
 //			return ((int)ROM[offset])&0xFF;
 //		}
-//		private void write_byte(final int offset, final int value)
-//		{
+//		private void write_byte(final int offset, final int value) {
 //			ROM[offset] = (byte)(value&0xFF);
 //		}
 //
-//		private int ADPCM_Read()
-//		{
+//		private int ADPCM_Read() {
 //			int v = 0;
 //
 //			/* external memory read */
@@ -337,13 +346,11 @@ public class FMOPL_072 {
 //
 //			return v;
 //		}
-//		private void ADPCM_Write(int r, int v)
-//		{
+//		private void ADPCM_Write(int r, int v) {
 //			if (r >= 0x10) return;
 //			reg[r] = v; /* stock data */
 //
-//			switch (r)
-//			{
+//			switch (r) {
 //			case 0x00:
 //		/*
 //		START:
@@ -402,18 +409,15 @@ public class FMOPL_072 {
 //
 //				}
 //
-//				if ((portstate & 0x20)!=0) /* do we access external memory? */
-//				{
+//				if ((portstate & 0x20)!=0) /* do we access external memory? */ {
 //					now_addr = start << 1;
 //					memread = 2;    /* two dummy reads needed before accesing external memory via register $08*/
 //				}
-//				else    /* we access CPU memory (ADPCM data register $08) so we only reset now_addr here */
-//				{
+//				else    /* we access CPU memory (ADPCM data register $08) so we only reset now_addr here */ {
 //					now_addr = 0;
 //				}
 //
-//				if ((portstate & 0x01)!=0)
-//				{
+//				if ((portstate & 0x01)!=0) {
 //					portstate = 0x00;
 //
 //					/* clear PCM BUSY bit (in status register) */
@@ -427,17 +431,14 @@ public class FMOPL_072 {
 //
 //			case 0x01:  /* L,R,-,-,SAMPLE,DA/AD,RAMTYPE,ROM */
 //				/* handle emulation mode */
-//				if (emulation_mode == EMULATION_MODE_YM2610)
-//				{
+//				if (emulation_mode == EMULATION_MODE_YM2610) {
 //					v |= 0x01;      /*  YM2610 always uses ROM as an external memory and doesn't have ROM/RAM memory flag bit. */
 //				}
 //
 //				output_pointer_pan = (v >> 6) & 0x03;
-//				if ((control2 & 3) != (v & 3))
-//				{
+//				if ((control2 & 3) != (v & 3)) {
 //					/*0-DRAM x1, 1-ROM, 2-DRAM x8, 3-ROM (3 is bad setting - not allowed by the manual) */
-//					if (DRAMportshift != dram_rightshift[v & 3])
-//					{
+//					if (DRAMportshift != dram_rightshift[v & 3]) {
 //						DRAMportshift = dram_rightshift[v & 3];
 //
 //						/* final shift value depends on chip type and memory type selected:
@@ -487,16 +488,13 @@ public class FMOPL_072 {
 //		*/
 //
 //				/* external memory write */
-//				if ((portstate & 0xe0) == 0x60)
-//				{
-//					if (memread!=0)
-//					{
+//				if ((portstate & 0xe0) == 0x60) {
+//					if (memread!=0) {
 //						now_addr = start << 1;
 //						memread = 0;
 //					}
 //
-//					if (now_addr != (end << 1))
-//					{
+//					if (now_addr != (end << 1)) {
 //						write_byte(now_addr >> 1, v);
 //						now_addr += 2; /* two nibbles at a time */
 //
@@ -512,9 +510,7 @@ public class FMOPL_072 {
 //						if (status_change_handler!=null && status_change_BRDY_bit!=0)
 //							(status_change_handler).STATUS_SET(status_change_BRDY_bit);
 //
-//					}
-//					else
-//					{
+//					} else {
 //						/* set EOS bit in status register */
 //						if (status_change_handler!=null && status_change_EOS_bit!=0)
 //							(status_change_handler).STATUS_SET(status_change_EOS_bit);
@@ -524,8 +520,7 @@ public class FMOPL_072 {
 //				}
 //
 //				/* ADPCM synthesis from CPU */
-//				if ((portstate & 0xe0) == 0x80)
-//				{
+//				if ((portstate & 0xe0) == 0x80) {
 //					CPU_data = v;
 //
 //					/* Reset BRDY bit in status register, which means we are full of data */
@@ -789,7 +784,7 @@ public class FMOPL_072 {
         private int Incr;                    // frequency counter step
         private int FB;                        // feedback shift value
         private int[] connect1;                // slot1 output pointer
-        private int[] op1_out = new int[2];    // slot1 output for feedback
+        private final int[] op1_out = new int[2];    // slot1 output for feedback
         private int CON;                    // connection (algorithm) type
 
         /* Envelope Generator */
@@ -839,7 +834,7 @@ public class FMOPL_072 {
 
     private static class OPL_CH {
 
-        private OPL_SLOT[] SLOT = new OPL_SLOT[2];
+        private final OPL_SLOT[] SLOT = new OPL_SLOT[2];
         /* phase generator state */
         private int block_fnum; /* block+fnum                   */
         private int fc;         /* Freq. Increment base         */
@@ -851,7 +846,7 @@ public class FMOPL_072 {
         private void CALC_FCSLOT(OPL_SLOT SLOT) {
             /* (frequency) phase increment counter */
             SLOT.Incr = fc * SLOT.mul;
-            final int ksr = kcode >>> SLOT.KSR;
+            int ksr = kcode >>> SLOT.KSR;
 
             if (SLOT.ksr != ksr) {
                 SLOT.ksr = ksr;
@@ -892,219 +887,216 @@ public class FMOPL_072 {
         /* key scale level */
         /* table is 3dB/octave , DV converts this into 6dB/octave */
         /* 0.1875 is bit 0 weight of the envelope counter (volume) expressed in the 'decibel' scale */
-        private static double DV = 0.1875d / 2.0d;
-        private static final double[] ksl_tab =
-                {
-                        /* OCT 0 */
-                        0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
-                        0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
-                        0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
-                        0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
-                        /* OCT 1 */
-                        0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
-                        0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
-                        0.000 / DV, 0.750 / DV, 1.125 / DV, 1.500 / DV,
-                        1.875 / DV, 2.250 / DV, 2.625 / DV, 3.000 / DV,
-                        /* OCT 2 */
-                        0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
-                        0.000 / DV, 1.125 / DV, 1.875 / DV, 2.625 / DV,
-                        3.000 / DV, 3.750 / DV, 4.125 / DV, 4.500 / DV,
-                        4.875 / DV, 5.250 / DV, 5.625 / DV, 6.000 / DV,
-                        /* OCT 3 */
-                        0.000 / DV, 0.000 / DV, 0.000 / DV, 1.875 / DV,
-                        3.000 / DV, 4.125 / DV, 4.875 / DV, 5.625 / DV,
-                        6.000 / DV, 6.750 / DV, 7.125 / DV, 7.500 / DV,
-                        7.875 / DV, 8.250 / DV, 8.625 / DV, 9.000 / DV,
-                        /* OCT 4 */
-                        0.000 / DV, 0.000 / DV, 3.000 / DV, 4.875 / DV,
-                        6.000 / DV, 7.125 / DV, 7.875 / DV, 8.625 / DV,
-                        9.000 / DV, 9.750 / DV, 10.125 / DV, 10.500 / DV,
-                        10.875 / DV, 11.250 / DV, 11.625 / DV, 12.000 / DV,
-                        /* OCT 5 */
-                        0.000 / DV, 3.000 / DV, 6.000 / DV, 7.875 / DV,
-                        9.000 / DV, 10.125 / DV, 10.875 / DV, 11.625 / DV,
-                        12.000 / DV, 12.750 / DV, 13.125 / DV, 13.500 / DV,
-                        13.875 / DV, 14.250 / DV, 14.625 / DV, 15.000 / DV,
-                        /* OCT 6 */
-                        0.000 / DV, 6.000 / DV, 9.000 / DV, 10.875 / DV,
-                        12.000 / DV, 13.125 / DV, 13.875 / DV, 14.625 / DV,
-                        15.000 / DV, 15.750 / DV, 16.125 / DV, 16.500 / DV,
-                        16.875 / DV, 17.250 / DV, 17.625 / DV, 18.000 / DV,
-                        /* OCT 7 */
-                        0.000 / DV, 9.000 / DV, 12.000 / DV, 13.875 / DV,
-                        15.000 / DV, 16.125 / DV, 16.875 / DV, 17.625 / DV,
-                        18.000 / DV, 18.750 / DV, 19.125 / DV, 19.500 / DV,
-                        19.875 / DV, 20.250 / DV, 20.625 / DV, 21.000 / DV
-                };
+        private static final double DV = 0.1875d / 2.0d;
+        private static final double[] ksl_tab = {
+                /* OCT 0 */
+                0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
+                0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
+                0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
+                0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
+                /* OCT 1 */
+                0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
+                0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
+                0.000 / DV, 0.750 / DV, 1.125 / DV, 1.500 / DV,
+                1.875 / DV, 2.250 / DV, 2.625 / DV, 3.000 / DV,
+                /* OCT 2 */
+                0.000 / DV, 0.000 / DV, 0.000 / DV, 0.000 / DV,
+                0.000 / DV, 1.125 / DV, 1.875 / DV, 2.625 / DV,
+                3.000 / DV, 3.750 / DV, 4.125 / DV, 4.500 / DV,
+                4.875 / DV, 5.250 / DV, 5.625 / DV, 6.000 / DV,
+                /* OCT 3 */
+                0.000 / DV, 0.000 / DV, 0.000 / DV, 1.875 / DV,
+                3.000 / DV, 4.125 / DV, 4.875 / DV, 5.625 / DV,
+                6.000 / DV, 6.750 / DV, 7.125 / DV, 7.500 / DV,
+                7.875 / DV, 8.250 / DV, 8.625 / DV, 9.000 / DV,
+                /* OCT 4 */
+                0.000 / DV, 0.000 / DV, 3.000 / DV, 4.875 / DV,
+                6.000 / DV, 7.125 / DV, 7.875 / DV, 8.625 / DV,
+                9.000 / DV, 9.750 / DV, 10.125 / DV, 10.500 / DV,
+                10.875 / DV, 11.250 / DV, 11.625 / DV, 12.000 / DV,
+                /* OCT 5 */
+                0.000 / DV, 3.000 / DV, 6.000 / DV, 7.875 / DV,
+                9.000 / DV, 10.125 / DV, 10.875 / DV, 11.625 / DV,
+                12.000 / DV, 12.750 / DV, 13.125 / DV, 13.500 / DV,
+                13.875 / DV, 14.250 / DV, 14.625 / DV, 15.000 / DV,
+                /* OCT 6 */
+                0.000 / DV, 6.000 / DV, 9.000 / DV, 10.875 / DV,
+                12.000 / DV, 13.125 / DV, 13.875 / DV, 14.625 / DV,
+                15.000 / DV, 15.750 / DV, 16.125 / DV, 16.500 / DV,
+                16.875 / DV, 17.250 / DV, 17.625 / DV, 18.000 / DV,
+                /* OCT 7 */
+                0.000 / DV, 9.000 / DV, 12.000 / DV, 13.875 / DV,
+                15.000 / DV, 16.125 / DV, 16.875 / DV, 17.625 / DV,
+                18.000 / DV, 18.750 / DV, 19.125 / DV, 19.500 / DV,
+                19.875 / DV, 20.250 / DV, 20.625 / DV, 21.000 / DV
+        };
         /* 0 / 3.0 / 1.5 / 6.0 dB/OCT */
-        private static int[] ksl_shift = {31, 1, 2, 0};
+        private static final int[] ksl_shift = {31, 1, 2, 0};
 
         /* sustain level table (3dB per step) */
         /* 0 - 15: 0, 3, 6, 9,12,15,18,21,24,27,30,33,36,39,42,93 (dB)*/
         private static final double SC = (2.0 / ENV_STEP);
-        private static final int[] sl_tab =
-                {
-                        (int) (0 * SC), (int) (1 * SC), (int) (2 * SC), (int) (3 * SC), (int) (4 * SC), (int) (5 * SC), (int) (6 * SC), (int) (7 * SC),
-                        (int) (8 * SC), (int) (9 * SC), (int) (10 * SC), (int) (11 * SC), (int) (12 * SC), (int) (13 * SC), (int) (14 * SC), (int) (31 * SC)
-                };
+        private static final int[] sl_tab = {
+                (int) (0 * SC), (int) (1 * SC), (int) (2 * SC), (int) (3 * SC), (int) (4 * SC), (int) (5 * SC), (int) (6 * SC), (int) (7 * SC),
+                (int) (8 * SC), (int) (9 * SC), (int) (10 * SC), (int) (11 * SC), (int) (12 * SC), (int) (13 * SC), (int) (14 * SC), (int) (31 * SC)
+        };
 
-        private static final int[] eg_inc =
-                {
-                        /*cycle:0 1  2 3  4 5  6 7*/
+        private static final int[] eg_inc = {
+                /*cycle:0 1  2 3  4 5  6 7*/
 
-                        /* 0 */ 0, 1, 0, 1, 0, 1, 0, 1, /* rates 00..12 0 (increment by 0 or 1) */
-                        /* 1 */ 0, 1, 0, 1, 1, 1, 0, 1, /* rates 00..12 1 */
-                        /* 2 */ 0, 1, 1, 1, 0, 1, 1, 1, /* rates 00..12 2 */
-                        /* 3 */ 0, 1, 1, 1, 1, 1, 1, 1, /* rates 00..12 3 */
+                /* 0 */ 0, 1, 0, 1, 0, 1, 0, 1, /* rates 00..12 0 (increment by 0 or 1) */
+                /* 1 */ 0, 1, 0, 1, 1, 1, 0, 1, /* rates 00..12 1 */
+                /* 2 */ 0, 1, 1, 1, 0, 1, 1, 1, /* rates 00..12 2 */
+                /* 3 */ 0, 1, 1, 1, 1, 1, 1, 1, /* rates 00..12 3 */
 
-                        /* 4 */ 1, 1, 1, 1, 1, 1, 1, 1, /* rate 13 0 (increment by 1) */
-                        /* 5 */ 1, 1, 1, 2, 1, 1, 1, 2, /* rate 13 1 */
-                        /* 6 */ 1, 2, 1, 2, 1, 2, 1, 2, /* rate 13 2 */
-                        /* 7 */ 1, 2, 2, 2, 1, 2, 2, 2, /* rate 13 3 */
+                /* 4 */ 1, 1, 1, 1, 1, 1, 1, 1, /* rate 13 0 (increment by 1) */
+                /* 5 */ 1, 1, 1, 2, 1, 1, 1, 2, /* rate 13 1 */
+                /* 6 */ 1, 2, 1, 2, 1, 2, 1, 2, /* rate 13 2 */
+                /* 7 */ 1, 2, 2, 2, 1, 2, 2, 2, /* rate 13 3 */
 
-                        /* 8 */ 2, 2, 2, 2, 2, 2, 2, 2, /* rate 14 0 (increment by 2) */
-                        /* 9 */ 2, 2, 2, 4, 2, 2, 2, 4, /* rate 14 1 */
-                        /*10 */ 2, 4, 2, 4, 2, 4, 2, 4, /* rate 14 2 */
-                        /*11 */ 2, 4, 4, 4, 2, 4, 4, 4, /* rate 14 3 */
+                /* 8 */ 2, 2, 2, 2, 2, 2, 2, 2, /* rate 14 0 (increment by 2) */
+                /* 9 */ 2, 2, 2, 4, 2, 2, 2, 4, /* rate 14 1 */
+                /*10 */ 2, 4, 2, 4, 2, 4, 2, 4, /* rate 14 2 */
+                /*11 */ 2, 4, 4, 4, 2, 4, 4, 4, /* rate 14 3 */
 
-                        /*12 */ 4, 4, 4, 4, 4, 4, 4, 4, /* rates 15 0, 15 1, 15 2, 15 3 (increment by 4) */
-                        /*13 */ 8, 8, 8, 8, 8, 8, 8, 8, /* rates 15 2, 15 3 for attack */
-                        /*14 */ 0, 0, 0, 0, 0, 0, 0, 0, /* infinity rates for attack and decay(s) */
-                };
+                /*12 */ 4, 4, 4, 4, 4, 4, 4, 4, /* rates 15 0, 15 1, 15 2, 15 3 (increment by 4) */
+                /*13 */ 8, 8, 8, 8, 8, 8, 8, 8, /* rates 15 2, 15 3 for attack */
+                /*14 */ 0, 0, 0, 0, 0, 0, 0, 0, /* infinity rates for attack and decay(s) */
+        };
         /* multiple table */
         private static final int ML = 2;
-        private static final int[] mul_tab =
-                {
-                        ML / 2, 1 * ML, 2 * ML, 3 * ML, 4 * ML, 5 * ML, 6 * ML, 7 * ML,
-                        8 * ML, 9 * ML, 10 * ML, 10 * ML, 12 * ML, 12 * ML, 15 * ML, 15 * ML
-                };
+        private static final int[] mul_tab = {
+                ML / 2, 1 * ML, 2 * ML, 3 * ML, 4 * ML, 5 * ML, 6 * ML, 7 * ML,
+                8 * ML, 9 * ML, 10 * ML, 10 * ML, 12 * ML, 12 * ML, 15 * ML, 15 * ML
+        };
         /* mapping of register number (offset) to slot number used by the emulator */
-        private static final int[] slot_array =
-                {
-                        0, 2, 4, 1, 3, 5, -1, -1,
-                        6, 8, 10, 7, 9, 11, -1, -1,
-                        12, 14, 16, 13, 15, 17, -1, -1,
-                        -1, -1, -1, -1, -1, -1, -1, -1
-                };
+        private static final int[] slot_array = {
+                0, 2, 4, 1, 3, 5, -1, -1,
+                6, 8, 10, 7, 9, 11, -1, -1,
+                12, 14, 16, 13, 15, 17, -1, -1,
+                -1, -1, -1, -1, -1, -1, -1, -1
+        };
 
-
-        /*  TL_TAB_LEN is calculated as:
+        /**
+         * TL_TAB_LEN is calculated as:
+         * <pre>
          *   12 - sinus amplitude bits     (Y axis)
          *   2  - sinus sign bit           (Y axis)
          *   TL_RES_LEN - sinus resolution (X axis)
+         * </pre>
          */
-        private static int TL_TAB_LEN = 12 * 2 * TL_RES_LEN;
-        private static int ENV_QUIET = TL_TAB_LEN >> 4;
+        private static final int TL_TAB_LEN = 12 * 2 * TL_RES_LEN;
+        private static final int ENV_QUIET = TL_TAB_LEN >> 4;
 
-        private static int LFO_AM_TAB_ELEMENTS = 210;
+        private static final int LFO_AM_TAB_ELEMENTS = 210;
 
-        private static int[] tl_tab = new int[TL_TAB_LEN];
+        private static final int[] tl_tab = new int[TL_TAB_LEN];
         /* sin waveform table in 'decibel' scale */
         /* four waveforms on OPL2 type chips */
-        private static int[] sin_tab = new int[SIN_LEN * 4];
+        private static final int[] sin_tab = new int[SIN_LEN * 4];
 
-        /* LFO Amplitude Modulation table (verified on real YM3812)
-		   27 output levels (triangle waveform); 1 level takes one of: 192, 256 or 448 samples
-
-		   Length: 210 elements.
-
-		    Each of the elements has to be repeated
-		    exactly 64 times (on 64 consecutive samples).
-		    The whole table takes: 64 * 210 = 13440 samples.
-
-		    When AM = 1 data is used directly
-		    When AM = 0 data is divided by 4 before being used (losing precision is important)
-		*/
-        private static int[] lfo_am_table =
-                {
-                        0, 0, 0, 0, 0, 0, 0,
-                        1, 1, 1, 1,
-                        2, 2, 2, 2,
-                        3, 3, 3, 3,
-                        4, 4, 4, 4,
-                        5, 5, 5, 5,
-                        6, 6, 6, 6,
-                        7, 7, 7, 7,
-                        8, 8, 8, 8,
-                        9, 9, 9, 9,
-                        10, 10, 10, 10,
-                        11, 11, 11, 11,
-                        12, 12, 12, 12,
-                        13, 13, 13, 13,
-                        14, 14, 14, 14,
-                        15, 15, 15, 15,
-                        16, 16, 16, 16,
-                        17, 17, 17, 17,
-                        18, 18, 18, 18,
-                        19, 19, 19, 19,
-                        20, 20, 20, 20,
-                        21, 21, 21, 21,
-                        22, 22, 22, 22,
-                        23, 23, 23, 23,
-                        24, 24, 24, 24,
-                        25, 25, 25, 25,
-                        26, 26, 26,
-                        25, 25, 25, 25,
-                        24, 24, 24, 24,
-                        23, 23, 23, 23,
-                        22, 22, 22, 22,
-                        21, 21, 21, 21,
-                        20, 20, 20, 20,
-                        19, 19, 19, 19,
-                        18, 18, 18, 18,
-                        17, 17, 17, 17,
-                        16, 16, 16, 16,
-                        15, 15, 15, 15,
-                        14, 14, 14, 14,
-                        13, 13, 13, 13,
-                        12, 12, 12, 12,
-                        11, 11, 11, 11,
-                        10, 10, 10, 10,
-                        9, 9, 9, 9,
-                        8, 8, 8, 8,
-                        7, 7, 7, 7,
-                        6, 6, 6, 6,
-                        5, 5, 5, 5,
-                        4, 4, 4, 4,
-                        3, 3, 3, 3,
-                        2, 2, 2, 2,
-                        1, 1, 1, 1
-                };
+        /**
+         * LFO Amplitude Modulation table (verified on real YM3812)
+         * 27 output levels (triangle waveform); 1 level takes one of: 192, 256 or 448 samples
+         * <pre>
+         * Length: 210 elements.
+         *
+         * Each of the elements has to be repeated
+         * exactly 64 times (on 64 consecutive samples).
+         * The whole table takes: 64 * 210 = 13440 samples.
+         *
+         * When AM = 1 data is used directly
+         * When AM = 0 data is divided by 4 before being used (losing precision is important)
+         * </pre>
+         */
+        private static final int[] lfo_am_table = {
+                0, 0, 0, 0, 0, 0, 0,
+                1, 1, 1, 1,
+                2, 2, 2, 2,
+                3, 3, 3, 3,
+                4, 4, 4, 4,
+                5, 5, 5, 5,
+                6, 6, 6, 6,
+                7, 7, 7, 7,
+                8, 8, 8, 8,
+                9, 9, 9, 9,
+                10, 10, 10, 10,
+                11, 11, 11, 11,
+                12, 12, 12, 12,
+                13, 13, 13, 13,
+                14, 14, 14, 14,
+                15, 15, 15, 15,
+                16, 16, 16, 16,
+                17, 17, 17, 17,
+                18, 18, 18, 18,
+                19, 19, 19, 19,
+                20, 20, 20, 20,
+                21, 21, 21, 21,
+                22, 22, 22, 22,
+                23, 23, 23, 23,
+                24, 24, 24, 24,
+                25, 25, 25, 25,
+                26, 26, 26,
+                25, 25, 25, 25,
+                24, 24, 24, 24,
+                23, 23, 23, 23,
+                22, 22, 22, 22,
+                21, 21, 21, 21,
+                20, 20, 20, 20,
+                19, 19, 19, 19,
+                18, 18, 18, 18,
+                17, 17, 17, 17,
+                16, 16, 16, 16,
+                15, 15, 15, 15,
+                14, 14, 14, 14,
+                13, 13, 13, 13,
+                12, 12, 12, 12,
+                11, 11, 11, 11,
+                10, 10, 10, 10,
+                9, 9, 9, 9,
+                8, 8, 8, 8,
+                7, 7, 7, 7,
+                6, 6, 6, 6,
+                5, 5, 5, 5,
+                4, 4, 4, 4,
+                3, 3, 3, 3,
+                2, 2, 2, 2,
+                1, 1, 1, 1
+        };
         /* LFO Phase Modulation table (verified on real YM3812) */
-        private static int[] lfo_pm_table =
-                {
-                        /* FNUM2/FNUM = 00 0xxxxxxx (0x0000) */
-                        0, 0, 0, 0, 0, 0, 0, 0, /*LFO PM depth = 0*/
-                        0, 0, 0, 0, 0, 0, 0, 0, /*LFO PM depth = 1*/
+        private static final int[] lfo_pm_table = {
+                /* FNUM2/FNUM = 00 0xxxxxxx (0x0000) */
+                0, 0, 0, 0, 0, 0, 0, 0, /*LFO PM depth = 0*/
+                0, 0, 0, 0, 0, 0, 0, 0, /*LFO PM depth = 1*/
 
-                        /* FNUM2/FNUM = 00 1xxxxxxx (0x0080) */
-                        0, 0, 0, 0, 0, 0, 0, 0, /*LFO PM depth = 0*/
-                        1, 0, 0, 0, -1, 0, 0, 0, /*LFO PM depth = 1*/
+                /* FNUM2/FNUM = 00 1xxxxxxx (0x0080) */
+                0, 0, 0, 0, 0, 0, 0, 0, /*LFO PM depth = 0*/
+                1, 0, 0, 0, -1, 0, 0, 0, /*LFO PM depth = 1*/
 
-                        /* FNUM2/FNUM = 01 0xxxxxxx (0x0100) */
-                        1, 0, 0, 0, -1, 0, 0, 0, /*LFO PM depth = 0*/
-                        2, 1, 0, -1, -2, -1, 0, 1, /*LFO PM depth = 1*/
+                /* FNUM2/FNUM = 01 0xxxxxxx (0x0100) */
+                1, 0, 0, 0, -1, 0, 0, 0, /*LFO PM depth = 0*/
+                2, 1, 0, -1, -2, -1, 0, 1, /*LFO PM depth = 1*/
 
-                        /* FNUM2/FNUM = 01 1xxxxxxx (0x0180) */
-                        1, 0, 0, 0, -1, 0, 0, 0, /*LFO PM depth = 0*/
-                        3, 1, 0, -1, -3, -1, 0, 1, /*LFO PM depth = 1*/
+                /* FNUM2/FNUM = 01 1xxxxxxx (0x0180) */
+                1, 0, 0, 0, -1, 0, 0, 0, /*LFO PM depth = 0*/
+                3, 1, 0, -1, -3, -1, 0, 1, /*LFO PM depth = 1*/
 
-                        /* FNUM2/FNUM = 10 0xxxxxxx (0x0200) */
-                        2, 1, 0, -1, -2, -1, 0, 1, /*LFO PM depth = 0*/
-                        4, 2, 0, -2, -4, -2, 0, 2, /*LFO PM depth = 1*/
+                /* FNUM2/FNUM = 10 0xxxxxxx (0x0200) */
+                2, 1, 0, -1, -2, -1, 0, 1, /*LFO PM depth = 0*/
+                4, 2, 0, -2, -4, -2, 0, 2, /*LFO PM depth = 1*/
 
-                        /* FNUM2/FNUM = 10 1xxxxxxx (0x0280) */
-                        2, 1, 0, -1, -2, -1, 0, 1, /*LFO PM depth = 0*/
-                        5, 2, 0, -2, -5, -2, 0, 2, /*LFO PM depth = 1*/
+                /* FNUM2/FNUM = 10 1xxxxxxx (0x0280) */
+                2, 1, 0, -1, -2, -1, 0, 1, /*LFO PM depth = 0*/
+                5, 2, 0, -2, -5, -2, 0, 2, /*LFO PM depth = 1*/
 
-                        /* FNUM2/FNUM = 11 0xxxxxxx (0x0300) */
-                        3, 1, 0, -1, -3, -1, 0, 1, /*LFO PM depth = 0*/
-                        6, 3, 0, -3, -6, -3, 0, 3, /*LFO PM depth = 1*/
+                /* FNUM2/FNUM = 11 0xxxxxxx (0x0300) */
+                3, 1, 0, -1, -3, -1, 0, 1, /*LFO PM depth = 0*/
+                6, 3, 0, -3, -6, -3, 0, 3, /*LFO PM depth = 1*/
 
-                        /* FNUM2/FNUM = 11 1xxxxxxx (0x0380) */
-                        3, 1, 0, -1, -3, -1, 0, 1, /*LFO PM depth = 0*/
-                        7, 3, 0, -3, -7, -3, 0, 3  /*LFO PM depth = 1*/
-                };
+                /* FNUM2/FNUM = 11 1xxxxxxx (0x0380) */
+                3, 1, 0, -1, -3, -1, 0, 1, /*LFO PM depth = 0*/
+                7, 3, 0, -3, -7, -3, 0, 3  /*LFO PM depth = 1*/
+        };
 
         private static int num_lock = 0;
 
@@ -1112,19 +1104,27 @@ public class FMOPL_072 {
             super();
         }
 
-        /* FM channel slots */
-        private OPL_CH[] P_CH = new OPL_CH[9];    /* OPL/OPL2 chips have 9 channels*/
+        // FM channel slots
 
-        private int eg_cnt;                        /* global envelope generator counter    */
-        private int eg_timer;                    /* global envelope generator counter works at frequency = chipclock/72 */
-        private int eg_timer_add;                /* step of eg_timer                     */
-        private int eg_timer_overflow;            /* envelope generator timer overflows every 1 sample (on real chip) */
+        /** OPL/OPL2 chips have 9 channels */
+        private final OPL_CH[] P_CH = new OPL_CH[9];
 
-        private int rhythm;                        /* Rhythm mode                  */
+        /** global envelope generator counter */
+        private int eg_cnt;
+        /** global envelope generator counter works at frequency = chipclock/72 */
+        private int eg_timer;
+        /** step of eg_timer */
+        private int eg_timer_add;
+        /** envelope generator timer overflows every 1 sample (on real chip) */
+        private int eg_timer_overflow;
 
-        private int[] fn_tab = new int[1024];    /* fnumber->increment counter   */
+        /** Rhythm mode */
+        private int rhythm;
 
-        /* LFO */
+        /** fnumber->increment counter */
+        private final int[] fn_tab = new int[1024];
+
+        // LFO
         private int LFO_AM;
         private int LFO_PM;
 
@@ -1141,10 +1141,10 @@ public class FMOPL_072 {
 
         private int wavesel;                    /* waveform select enable flag  */
 
-        private int[] T = new int[2];            /* timer counters               */
-        private int[] st = new int[2];            /* timer enable                 */
+        private final int[] T = new int[2];            /* timer counters               */
+        private final int[] st = new int[2];            /* timer enable                 */
 
-//	#if BUILD_Y8950
+//#if BUILD_Y8950
 //		/* Delta-T ADPCM unit (Y8950) */
 //		private YM_DELTAT deltat;
 //
@@ -1155,7 +1155,7 @@ public class FMOPL_072 {
 //		OPL_PORTHANDLER_W porthandler_w;
 //		OPL_PORTHANDLER_R keyboardhandler_r;
 //		OPL_PORTHANDLER_W keyboardhandler_w;
-//	#endif
+//#endif
 
         /* external event callback handlers */
         OPL_TIMERHANDLER timer_handler;    /* TIMER handler                */
@@ -1173,13 +1173,13 @@ public class FMOPL_072 {
         private double freqbase;             /* frequency base               */
         private double TimerBase;            /* Timer base time (==sampling time)*/
 
-        private int[] phase_modulation = new int[1]; /* phase modulation input (SLOT 2) */
-        private int[] output = new int[1];
-//	#if BUILD_Y8950
+        private final int[] phase_modulation = new int[1]; /* phase modulation input (SLOT 2) */
+        private final int[] output = new int[1];
+//#if BUILD_Y8950
 //	    private int[] output_deltat = new int[4];    /* for Y8950 DELTA-T, chip is mono, that 4 here is just for safety */
-// #endif
+//#endif
 
-        /* status set and IRQ handling */
+        /** status set and IRQ handling */
         public void STATUS_SET(int flag) {
             /* set status flag */
             status |= flag;
@@ -1192,20 +1192,20 @@ public class FMOPL_072 {
             }
         }
 
-        /* status reset and IRQ handling */
+        /** status reset and IRQ handling */
         public void STATUS_RESET(int flag) {
-            /* reset status flag */
+            // reset status flag
             status &= ~flag;
             if ((status & 0x80) != 0) {
                 if ((status & statusmask) == 0) {
                     status &= 0x7f;
-                    /* callback user interrupt handler (IRQ is ON to OFF) */
+                    // callback user interrupt handler (IRQ is ON to OFF)
                     if (IRQHandler != null) (IRQHandler).invoke(0);
                 }
             }
         }
 
-        /* IRQ mask set */
+        /** IRQ mask set */
         void STATUSMASK_SET(int flag) {
             statusmask = flag;
             /* IRQ handling check */
@@ -1213,14 +1213,14 @@ public class FMOPL_072 {
             STATUS_RESET(0);
         }
 
-        /* advance LFO to next sample */
+        /** advance LFO to next sample */
         void advance_lfo() {
-            /* LFO */
+            // LFO
             lfo_am_cnt += lfo_am_inc;
             if (lfo_am_cnt >= (LFO_AM_TAB_ELEMENTS << LFO_SH))  /* lfo_am_table is 210 elements long */
                 lfo_am_cnt -= (LFO_AM_TAB_ELEMENTS << LFO_SH);
 
-            final int tmp = lfo_am_table[lfo_am_cnt >>> LFO_SH];
+            int tmp = lfo_am_table[lfo_am_cnt >>> LFO_SH];
 
             LFO_AM = lfo_am_depth != 0 ? tmp : tmp >> 2;
 
@@ -1228,7 +1228,7 @@ public class FMOPL_072 {
             LFO_PM = (lfo_pm_cnt >>> LFO_SH & 7) | lfo_pm_depth_range;
         }
 
-        /* advance to next sample */
+        /** advance to next sample */
         void advance() {
             eg_timer += eg_timer_add;
 
@@ -1241,9 +1241,9 @@ public class FMOPL_072 {
                     OPL_CH CH = P_CH[i / 2];
                     OPL_SLOT op = CH.SLOT[i & 1];
 
-                    /* Envelope Generator */
+                    // Envelope Generator
                     switch (op.state) {
-                        case EG_ATT:        /* attack phase */
+                        case EG_ATT: // attack phase
                             if ((eg_cnt & ((1 << op.eg_sh_ar) - 1)) == 0) {
                                 op.volume += (~op.volume *
                                         (eg_inc[op.eg_sel_ar + ((eg_cnt >> op.eg_sh_ar) & 7)])
@@ -1257,7 +1257,7 @@ public class FMOPL_072 {
                             }
                             break;
 
-                        case EG_DEC:    /* decay phase */
+                        case EG_DEC: // decay phase
                             if ((eg_cnt & ((1 << op.eg_sh_dr) - 1)) == 0) {
                                 op.volume += eg_inc[op.eg_sel_dr + ((eg_cnt >> op.eg_sh_dr) & 7)];
 
@@ -1267,27 +1267,27 @@ public class FMOPL_072 {
                             }
                             break;
 
-                        case EG_SUS:    /* sustain phase */
+                        case EG_SUS: // sustain phase
 
-						/* this is important behaviour:
-						one can change percusive/non-percussive modes on the fly and
-						the chip will remain in sustain phase - verified on real YM3812 */
+                            // this is important behaviour:
+                            // one can change percussive/non-percussive modes on the fly and
+                            // the chip will remain in sustain phase - verified on real YM3812
 
-                            if (op.eg_type != 0)    /* non-percussive mode */ {
-                                /* do nothing */
-                            } else                /* percussive mode */ {
-                                /* during sustain phase chip adds Release Rate (in percussive mode) */
+                            if (op.eg_type != 0) { // non-percussive mode
+                                // do nothing
+                            } else { // percussive mode
+                                // during sustain phase chip adds Release Rate (in percussive mode)
                                 if ((eg_cnt & ((1 << op.eg_sh_rr) - 1)) == 0) {
                                     op.volume += eg_inc[op.eg_sel_rr + ((eg_cnt >> op.eg_sh_rr) & 7)];
 
                                     if (op.volume >= MAX_ATT_INDEX)
                                         op.volume = MAX_ATT_INDEX;
                                 }
-                                /* else do nothing in sustain phase */
+                                // else do nothing in sustain phase
                             }
                             break;
 
-                        case EG_REL:    /* release phase */
+                        case EG_REL: // release phase
                             if ((eg_cnt & ((1 << op.eg_sh_rr) - 1)) == 0) {
                                 op.volume += eg_inc[op.eg_sel_rr + ((eg_cnt >> op.eg_sh_rr) & 7)];
 
@@ -1309,53 +1309,48 @@ public class FMOPL_072 {
                 OPL_CH CH = P_CH[i / 2];
                 OPL_SLOT op = CH.SLOT[i & 1];
 
-                /* Phase Generator */
+                // Phase Generator
                 if (op.vib != 0) {
                     int block_fnum = CH.block_fnum;
-                    final int fnum_lfo = (block_fnum & 0x0380) >> 7;
+                    int fnum_lfo = (block_fnum & 0x0380) >> 7;
 
-                    final int lfo_fn_table_index_offset = lfo_pm_table[LFO_PM + 16 * fnum_lfo];
+                    int lfo_fn_table_index_offset = lfo_pm_table[LFO_PM + 16 * fnum_lfo];
 
-                    if (lfo_fn_table_index_offset != 0)  /* LFO phase modulation active */ {
+                    if (lfo_fn_table_index_offset != 0) { // LFO phase modulation active
                         block_fnum += lfo_fn_table_index_offset;
-                        final int block = (block_fnum & 0x1c00) >> 10;
+                        int block = (block_fnum & 0x1c00) >> 10;
                         op.Cnt += (fn_tab[block_fnum & 0x03ff] >> (7 - block)) * op.mul;
-                    } else    /* LFO phase modulation  = zero */ {
+                    } else { // LFO phase modulation  = zero
                         op.Cnt += op.Incr;
                     }
-                } else    /* LFO phase modulation disabled for this operator */ {
+                } else { // LFO phase modulation disabled for this operator
                     op.Cnt += op.Incr;
                 }
             }
 
-            /*  The Noise Generator of the YM3812 is 23-bit shift register.
-             *   Period is equal to 2^23-2 samples.
-             *   Register works at sampling frequency of the chip, so output
-             *   can change on every sample.
-             *
-             *   Output of the register and input to the bit 22 is:
-             *   bit0 XOR bit14 XOR bit15 XOR bit22
-             *
-             *   Simply use bit 22 as the noise output.
-             */
+            // The Noise Generator of the YM3812 is 23-bit shift register.
+            // Period is equal to 2^23-2 samples.
+            // Register works at sampling frequency of the chip, so output
+            // can change on every sample.
+            //
+            // Output of the register and input to the bit 22 is:
+            // bit0 XOR bit14 XOR bit15 XOR bit22
+            //
+            // Simply use bit 22 as the noise output.
 
             noise_p += noise_f;
-            int i = noise_p >> FREQ_SH;        /* number of events (shifts of the shift register) */
+            int i = noise_p >> FREQ_SH; // number of events (shifts of the shift register)
             noise_p &= FREQ_MASK;
             while (i > 0) {
-				/*
-				int j;
-				j = ( (noise_rng) ^ (noise_rng>>14) ^ (noise_rng>>15) ^ (noise_rng>>22) ) & 1;
-				noise_rng = (j<<22) | (noise_rng>>1);
-				*/
+//                int j;
+//                j = ((noise_rng) ^ (noise_rng >> 14) ^ (noise_rng >> 15) ^ (noise_rng >> 22)) & 1;
+//                noise_rng = (j << 22) | (noise_rng >> 1);
 
-				/*
-				    Instead of doing all the logic operations above, we
-				    use a trick here (and use bit 0 as the noise output).
-				    The difference is only that the noise bit changes one
-				    step ahead. This doesn't matter since we don't know
-				    what is real state of the noise_rng after the reset.
-				*/
+                // Instead of doing all the logic operations above, we
+                // use a trick here (and use bit 0 as the noise output).
+                // The difference is only that the noise bit changes one
+                // step ahead. This doesn't matter since we don't know
+                // what is real state of the noise_rng after the reset.
 
                 if ((noise_rng & 1) != 0) noise_rng ^= 0x800302;
                 noise_rng >>= 1;
@@ -1364,7 +1359,7 @@ public class FMOPL_072 {
             }
         }
 
-        /* calculate output */
+        /** calculate output */
         void CALC_CH(OPL_CH CH) {
             OPL_SLOT SLOT;
             int env;
@@ -1372,7 +1367,7 @@ public class FMOPL_072 {
 
             phase_modulation[0] = 0;
 
-            /* SLOT 1 */
+            // SLOT 1
             SLOT = CH.SLOT[SLOT1];
             env = volume_calc(SLOT);
             out = SLOT.op1_out[0] + SLOT.op1_out[1];
@@ -1385,7 +1380,7 @@ public class FMOPL_072 {
                 SLOT.op1_out[1] = op_calc1(SLOT.Cnt, env, (out << SLOT.FB), SLOT.wavetable);
             }
 
-            /* SLOT 2 */
+            // SLOT 2
             SLOT = CH.SLOT[SLOT2];
             env = volume_calc(SLOT);
             if (env < ENV_QUIET)
@@ -1427,20 +1422,19 @@ public class FMOPL_072 {
 
 		*/
 
-        /* calculate rhythm */
+        /** calculate rhythm */
         void CALC_RH() {
-            final int noise = noise_rng & 1;
+            int noise = noise_rng & 1;
 
             OPL_SLOT SLOT;
             int out;
             int env;
 
-			/* Bass Drum (verified on real YM3812):
-			  - depends on the channel 6 'connect' register:
-			      when connect = 0 it works the same as in normal (non-rhythm) mode (op1->op2->out)
-			      when connect = 1 _only_ operator 2 is present on output (op2->out), operator 1 is ignored
-			  - output sample always is multiplied by 2
-			*/
+            // Bass Drum (verified on real YM3812):
+            // - depends on the channel 6 'connect' register:
+            //     when connect = 0 it works the same as in normal (non-rhythm) mode (op1->op2->out)
+            //     when connect = 1 _only_ operator 2 is present on output (op2->out), operator 1 is ignored
+            // - output sample always is multiplied by 2
 
             phase_modulation[0] = 0;
             /* SLOT 1 */
@@ -1461,7 +1455,7 @@ public class FMOPL_072 {
                 SLOT.op1_out[1] = op_calc1(SLOT.Cnt, env, (out << SLOT.FB), SLOT.wavetable);
             }
 
-            /* SLOT 2 */
+            // SLOT 2
             SLOT = P_CH[6].SLOT[SLOT2];
             env = volume_calc(SLOT);
             if (env < ENV_QUIET)
@@ -1479,36 +1473,34 @@ public class FMOPL_072 {
             /* TOM channel 8->slot1 */
             /* TOP channel 8->slot2 */
 
-			/* The following formulas can be well optimized.
-			   I leave them in direct form for now (in case I've missed something).
-			*/
+            // The following formulas can be well optimized.
+            // I leave them in direct form for now (in case I've missed something).
 
             /* High Hat (verified on real YM3812) */
-            final OPL_SLOT SLOT7_1 = P_CH[7].SLOT[SLOT1];
-            final OPL_SLOT SLOT8_2 = P_CH[8].SLOT[SLOT2];
+            OPL_SLOT SLOT7_1 = P_CH[7].SLOT[SLOT1];
+            OPL_SLOT SLOT8_2 = P_CH[8].SLOT[SLOT2];
             env = volume_calc(SLOT7_1);
             if (env < ENV_QUIET) {
-				/* high hat phase generation:
-				    phase = d0 or 234 (based on frequency only)
-				    phase = 34 or 2d0 (based on noise)
-				*/
+                // high hat phase generation:
+                //  phase = d0 or 234 (based on frequency only)
+                //  phase = 34 or 2d0 (based on noise)
 
-                /* base frequency derived from operator 1 in channel 7 */
-                final int bit7 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 7;
-                final int bit3 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 3;
-                final int bit2 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 2;
+                // base frequency derived from operator 1 in channel 7
+                int bit7 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 7;
+                int bit3 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 3;
+                int bit2 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 2;
 
-                final int res1 = (bit2 ^ bit7) | bit3;
+                int res1 = (bit2 ^ bit7) | bit3;
 
                 /* when res1 = 0 phase = 0x000 | 0xd0; */
                 /* when res1 = 1 phase = 0x200 | (0xd0>>2); */
                 int phase = res1 != 0 ? (0x200 | (0xd0 >> 2)) : 0xd0;
 
                 /* enable gate based on frequency of operator 2 in channel 8 */
-                final int bit5e = SLOT8_2.Cnt >>> FREQ_SH & 1 << 5;
-                final int bit3e = SLOT8_2.Cnt >>> FREQ_SH & 1 << 3;
+                int bit5e = SLOT8_2.Cnt >>> FREQ_SH & 1 << 5;
+                int bit3e = SLOT8_2.Cnt >>> FREQ_SH & 1 << 3;
 
-                final int res2 = bit3e ^ bit5e;
+                int res2 = bit3e ^ bit5e;
 
                 /* when res2 = 0 pass the phase from calculation above (res1); */
                 /* when res2 = 1 phase = 0x200 | (0xd0>>2); */
@@ -1531,11 +1523,11 @@ public class FMOPL_072 {
             }
 
             /* Snare Drum (verified on real YM3812) */
-            final OPL_SLOT SLOT7_2 = P_CH[7].SLOT[SLOT2];
+            OPL_SLOT SLOT7_2 = P_CH[7].SLOT[SLOT2];
             env = volume_calc(SLOT7_2);
             if (env < ENV_QUIET) {
                 /* base frequency derived from operator 1 in channel 7 */
-                final int bit8 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 8;
+                int bit8 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 8;
 
                 /* when bit8 = 0 phase = 0x100; */
                 /* when bit8 = 1 phase = 0x200; */
@@ -1552,7 +1544,7 @@ public class FMOPL_072 {
             }
 
             /* Tom Tom (verified on real YM3812) */
-            final OPL_SLOT SLOT8_1 = P_CH[8].SLOT[SLOT1];
+            OPL_SLOT SLOT8_1 = P_CH[8].SLOT[SLOT1];
             env = volume_calc(SLOT8_1);
             if (env < ENV_QUIET)
                 output[0] += op_calc(SLOT8_1.Cnt, env, 0, SLOT8_1.wavetable) << 1; //* 2;
@@ -1561,21 +1553,21 @@ public class FMOPL_072 {
             env = volume_calc(SLOT8_2);
             if (env < ENV_QUIET) {
                 /* base frequency derived from operator 1 in channel 7 */
-                final int bit7 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 7;
-                final int bit3 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 3;
-                final int bit2 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 2;
+                int bit7 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 7;
+                int bit3 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 3;
+                int bit2 = SLOT7_1.Cnt >>> FREQ_SH & 1 << 2;
 
-                final int res1 = (bit2 ^ bit7) | bit3;
+                int res1 = (bit2 ^ bit7) | bit3;
 
                 /* when res1 = 0 phase = 0x000 | 0x100; */
                 /* when res1 = 1 phase = 0x200 | 0x100; */
                 int phase = res1 != 0 ? 0x300 : 0x100;
 
                 /* enable gate based on frequency of operator 2 in channel 8 */
-                final int bit5e = SLOT8_2.Cnt >>> FREQ_SH & 1 << 5;
-                final int bit3e = SLOT8_2.Cnt >>> FREQ_SH & 1 << 3;
+                int bit5e = SLOT8_2.Cnt >>> FREQ_SH & 1 << 5;
+                int bit3e = SLOT8_2.Cnt >>> FREQ_SH & 1 << 3;
 
-                final int res2 = bit3e ^ bit5e;
+                int res2 = bit3e ^ bit5e;
                 /* when res2 = 0 pass the phase from calculation above (res1); */
                 /* when res2 = 1 phase = 0x200 | 0x100; */
                 if (res2 != 0)
@@ -1738,10 +1730,9 @@ public class FMOPL_072 {
                                 }
                             }
                             break;
-//			#if BUILD_Y8950
+//#if BUILD_Y8950
 //				case 0x06:      /* Key Board OUT */
-//					if((type&OPL_TYPE_KEYBOARD)!=0)
-//					{
+//					if((type&OPL_TYPE_KEYBOARD)!=0) {
 //						if(keyboardhandler_w!=null)
 //							keyboardhandler_w.invoke(v);
 //					}
@@ -1750,16 +1741,16 @@ public class FMOPL_072 {
 //					if((type&OPL_TYPE_ADPCM)!=0)
 //						deltat.ADPCM_Write(r-0x07,v);
 //					break;
-//			#endif
+//#endif
                         case 0x08:  /* MODE,DELTA-T control 2 : CSM,NOTESEL,x,x,smpl,da/ad,64k,rom */
                             mode = v;
-//			#if BUILD_Y8950
+//#if BUILD_Y8950
 //					if((type&OPL_TYPE_ADPCM)!=0)
 //						deltat.ADPCM_Write(r-0x07,v&0x0f); /* mask 4 LSBs in register 08 for DELTA-T unit */
-//			#endif
+//#endif
                             break;
 
-//			#if BUILD_Y8950
+//#if BUILD_Y8950
 //				case 0x09:      /* START ADD */
 //				case 0x0a:
 //				case 0x0b:      /* STOP ADD  */
@@ -1791,7 +1782,7 @@ public class FMOPL_072 {
 //							porthandler_w.invoke(v&portDirection);
 //					}
 //					break;
-//			#endif
+//#endif
                         default:
                             break;
                     }
@@ -1949,22 +1940,21 @@ public class FMOPL_072 {
                     SLOT.volume = MAX_ATT_INDEX;
                 }
             }
-//		#if BUILD_Y8950
-//			if((type&OPL_TYPE_ADPCM)!=0)
-//			{
+//#if BUILD_Y8950
+//			if((type&OPL_TYPE_ADPCM)!=0) {
 //				deltat.freqbase = freqbase;
 //				deltat.output_pointer = output_deltat;
 //				deltat.portshift = 5;
 //				deltat.output_range = 1<<23;
 //				deltat.ADPCM_Reset(0,YM_DELTAT.EMULATION_MODE_NORMAL);
 //			}
-//		#endif
+//#endif
         }
 
         private void postload() {
             for (OPL_CH CH : P_CH) {
                 /* Look up key scale level */
-                final int block_fnum = CH.block_fnum;
+                int block_fnum = CH.block_fnum;
                 CH.ksl_base = (int) (ksl_tab[block_fnum >> 6]);
                 CH.fc = fn_tab[block_fnum & 0x03ff] >> (7 - (block_fnum >> 10));
 
@@ -1995,14 +1985,13 @@ public class FMOPL_072 {
                     SLOT.connect1 = SLOT.CON != 0 ? output : phase_modulation;
                 }
             }
-//		#if BUILD_Y8950
-//			if ( (type & OPL_TYPE_ADPCM)!=0 && (deltat!=null) )
-//			{
+//#if BUILD_Y8950
+//			if ( (type & OPL_TYPE_ADPCM)!=0 && (deltat!=null) ) {
 //				// We really should call the postload function for the YM_DELTAT, but it's hard without registers
 //				// (see the way the YM2610 does it)
 //				//deltat.postload(REGS);
 //			}
-//		#endif
+//#endif
         }
 
         /* set multi,am,vib,EG-TYP,KSR,mul */
@@ -2061,7 +2050,7 @@ public class FMOPL_072 {
             SLOT.eg_sel_rr = eg_rate_select[SLOT.rr + SLOT.ksr];
         }
 
-        void clock_changed(int c, int r) {
+        void clockChanged(int c, int r) {
             clock = c;
             rate = r;
 
@@ -2069,7 +2058,7 @@ public class FMOPL_072 {
             initialize();
         }
 
-        int Write(int a, int v) {
+        int write(int a, int v) {
             if ((a & 1) == 0) {   /* address port */
                 address = v & 0xff;
             } else {   /* data port */
@@ -2079,35 +2068,31 @@ public class FMOPL_072 {
             return status >> 7;
         }
 
-        int Read(int a) {
+        int read(int a) {
             if ((a & 1) == 0) {
                 /* status port */
 
-//			#if BUILD_Y8950
-//				if((type&OPL_TYPE_ADPCM)!=0)    /* Y8950 */
-//				{
+//#if BUILD_Y8950
+//				if ((type&OPL_TYPE_ADPCM)!=0) /* Y8950 */ {
 //					return (status & (statusmask|0x80)) | (deltat.PCM_BSY&1);
 //				}
-//			#endif
+//#endif
 
                 /* OPL and OPL2 */
                 return status & (statusmask | 0x80);
             }
 
-//		#if BUILD_Y8950
+//#if BUILD_Y8950
 //			/* data port */
-//			switch (address)
-//			{
+//			switch (address) {
 //				case 0x05: /* KeyBoard IN */
-//					if ((type & OPL_TYPE_KEYBOARD) != 0)
-//					{
+//					if ((type & OPL_TYPE_KEYBOARD) != 0) {
 //						if (keyboardhandler_r != null) return keyboardhandler_r.invoke();
 //					}
 //					return 0;
 //
 //				case 0x0f: /* ADPCM-DATA */
-//					if ((type & OPL_TYPE_ADPCM) != 0)
-//					{
+//					if ((type & OPL_TYPE_ADPCM) != 0) {
 //						int val;
 //
 //						val = deltat.ADPCM_Read();
@@ -2116,24 +2101,22 @@ public class FMOPL_072 {
 //					return 0;
 //
 //				case 0x19: /* I/O DATA */
-//					if ((type & OPL_TYPE_IO) != 0)
-//					{
+//					if ((type & OPL_TYPE_IO) != 0) {
 //						if (porthandler_r != null) return porthandler_r.invoke();
 //					}
 //					return 0;
 //				case 0x1a: /* PCM-DATA */
-//					if ((type & OPL_TYPE_ADPCM) != 0)
-//					{
+//					if ((type & OPL_TYPE_ADPCM) != 0) {
 //						return 0x80; /* 2's complement PCM data - result from A/D conversion */
 //					}
 //					return 0;
 //			}
-//		#endif
+//#endif
 
             return 0xff;
         }
 
-        private int TimerOver(int c) {
+        private int timerOver(int c) {
             if (c != 0) {   /* Timer B */
                 STATUS_SET(0x20);
             } else {   /* Timer A */
@@ -2158,7 +2141,7 @@ public class FMOPL_072 {
                 return null;
 
             /* allocate memory block */
-            final FM_OPL OPL = new FM_OPL();
+            FM_OPL OPL = new FM_OPL();
             for (int i = 0; i < OPL.P_CH.length; i++) {
                 OPL.P_CH[i] = new OPL_CH();
                 for (int j = 0; j < OPL.P_CH[i].SLOT.length; j++)
@@ -2169,23 +2152,23 @@ public class FMOPL_072 {
 //		#endif
 
             OPL.type = type;
-            OPL.clock_changed(clock, rate);
+            OPL.clockChanged(clock, rate);
 
             return OPL;
         }
 
-        private final int volume_calc(final OPL_SLOT OP) {
-            return OP.TLL + (int) (OP.volume) + (LFO_AM & OP.AMmask);
+        private int volume_calc(OPL_SLOT OP) {
+            return OP.TLL + OP.volume + (LFO_AM & OP.AMmask);
         }
 
-        private int op_calc(long phase, int env, int pm, int wave_tab) {
-            final int p = (env << 4) + sin_tab[wave_tab + ((((int) ((phase & ~FREQ_MASK) + (pm << 16))) >> FREQ_SH) & SIN_MASK)];
+        private static int op_calc(long phase, int env, int pm, int wave_tab) {
+            int p = (env << 4) + sin_tab[wave_tab + ((((int) ((phase & ~FREQ_MASK) + (pm << 16))) >> FREQ_SH) & SIN_MASK)];
 
             return (p >= TL_TAB_LEN) ? 0 : tl_tab[p];
         }
 
-        private int op_calc1(long phase, int env, int pm, int wave_tab) {
-            final int p = (env << 4) + sin_tab[wave_tab + ((((int) ((phase & ~FREQ_MASK) + pm)) >> FREQ_SH) & SIN_MASK)];
+        private static int op_calc1(long phase, int env, int pm, int wave_tab) {
+            int p = (env << 4) + sin_tab[wave_tab + ((((int) ((phase & ~FREQ_MASK) + pm)) >> FREQ_SH) & SIN_MASK)];
 
             return (p >= TL_TAB_LEN) ? 0 : tl_tab[p];
         }
@@ -2207,15 +2190,15 @@ public class FMOPL_072 {
         }
 
         /* Optional handlers */
-        void SetTimerHandler(OPL_TIMERHANDLER handler) {
+        void setTimerHandler(OPL_TIMERHANDLER handler) {
             timer_handler = handler;
         }
 
-        void SetIRQHandler(OPL_IRQHANDLER handler) {
+        void setIRQHandler(OPL_IRQHANDLER handler) {
             IRQHandler = handler;
         }
 
-        void SetUpdateHandler(OPL_UPDATEHANDLER handler) {
+        void setUpdateHandler(OPL_UPDATEHANDLER handler) {
             UpdateHandler = handler;
         }
     }
@@ -2227,59 +2210,60 @@ public class FMOPL_072 {
         super();
     }
 
-    private static int limit(final int val, final int max, final int min) {
+    private static int limit(int val, int max, int min) {
         if (val > max) return max;
         else if (val < min) return min;
 
         return val;
     }
-    /*******************************************************************************/
-    /*		YM3812 local section                                                   */
 
-    /*******************************************************************************/
+    //
+    // YM3812 local section
+    //
+
+    /** creates emulator */
     public static FM_OPL init(int type, int clock, int rate) {
-        /* emulator create */
         FM_OPL chip = FM_OPL.Create(clock, rate, type);
         if (chip != null) {
             chip.postload();
-            reset_chip(chip);
+            resetChip(chip);
         }
         return chip;
     }
 
     public static void shutdown(FM_OPL chip) {
-        /* Nothing to do in java */
+        // Nothing to do in java
     }
 
-    public static void reset_chip(FM_OPL chip) {
+    public static void resetChip(FM_OPL chip) {
         chip.ResetChip();
     }
 
     public static int write(FM_OPL chip, int a, int v) {
-        return chip.Write(a, v);
+        return chip.write(a, v);
     }
 
+    /** YM3812 always returns bit2 and bit1 in HIGH state */
     public static int read(FM_OPL chip, int a) {
-        /* YM3812 always returns bit2 and bit1 in HIGH state */
-        return chip.Read(a) | 0x06;
+        return chip.read(a) | 0x06;
     }
 
-    /*
-     ** Generate samples for one of the YM3812's
-     **
-     ** 'which' is the virtual YM3812 number
-     ** '*buffer' is the output buffer pointer
-     ** 'length' is the number of samples that should be generated
+    /**
+     * Generate samples for one of the YM3812's
+     *
+     * @param chip is the virtual YM3812 number
+     * @param buffer is the output buffer pointer
+     * @param length is the number of samples that should be generated
      */
-    public static void update_one(FM_OPL chip, int[] buffer, int length) {
-        final boolean rhythm = (chip.rhythm & 0x20) != 0;
+    public static void updateOne(FM_OPL chip, int[] buffer, int length) {
+        boolean rhythm = (chip.rhythm & 0x20) != 0;
 
         for (int i = 0; i < length; i++) {
             chip.output[0] = 0;
 
             chip.advance_lfo();
 
-            /* FM part */
+            // FM part
             chip.CALC_CH(chip.P_CH[0]);
             chip.CALC_CH(chip.P_CH[1]);
             chip.CALC_CH(chip.P_CH[2]);
@@ -2291,47 +2275,47 @@ public class FMOPL_072 {
                 chip.CALC_CH(chip.P_CH[6]);
                 chip.CALC_CH(chip.P_CH[7]);
                 chip.CALC_CH(chip.P_CH[8]);
-            } else        /* Rhythm part */ {
+            } else { // Rhythm part
                 chip.CALC_RH();
             }
 
-            /* limit check */
-            /* store to sound buffer */
+            // limit check
+            // store to sound buffer
             buffer[i] = limit(chip.output[0] >> FINAL_SH, MAXOUT, MINOUT);
 
             chip.advance();
         }
     }
 
-    public static int timer_over(FM_OPL chip, int c) {
-        return chip.TimerOver(c);
+    public static int timerOver(FM_OPL chip, int c) {
+        return chip.timerOver(c);
     }
 
-    public static void clock_changed(FM_OPL chip, int clock, int rate) {
-        chip.clock_changed(clock, rate);
+    public static void clockChanged(FM_OPL chip, int clock, int rate) {
+        chip.clockChanged(clock, rate);
     }
 
-    public static void set_timer_handler(FM_OPL chip, OPL_TIMERHANDLER timer_handler) {
-        chip.SetTimerHandler(timer_handler);
+    public static void setTimerHandler(FM_OPL chip, OPL_TIMERHANDLER timer_handler) {
+        chip.setTimerHandler(timer_handler);
     }
 
-    public static void set_irq_handler(FM_OPL chip, OPL_IRQHANDLER IRQHandler) {
-        chip.SetIRQHandler(IRQHandler);
+    public static void setIrqHandler(FM_OPL chip, OPL_IRQHANDLER IRQHandler) {
+        chip.setIRQHandler(IRQHandler);
     }
 
     public static void set_update_handler(FM_OPL chip, OPL_UPDATEHANDLER UpdateHandler) {
-        chip.SetUpdateHandler(UpdateHandler);
+        chip.setUpdateHandler(UpdateHandler);
     }
+
 //#if BUILD_Y8950
-//	/*******************************************************************************/
-//	/*		YM8950 local section                                                   */
-//	/*******************************************************************************/
-//	public static FM_OPL y8950_init(int clock, int rate)
-//	{
+//	//
+//	// YM8950 local section
+//	//
+//
+//	public static FM_OPL y8950_init(int clock, int rate) {
 //		/* emulator create */
 //		FM_OPL chip = FM_OPL.Create(clock, rate, OPL_TYPE_Y8950);
-//		if (chip!=null)
-//		{
+//		if (chip!=null) {
 //			chip.deltat.status_change_handler = chip;
 //			chip.deltat.status_change_EOS_bit = 0x10;      /* status flag: set bit4 on End Of Sample */
 //			chip.deltat.status_change_BRDY_bit = 0x08;     /* status flag: set bit3 on BRDY (End Of: ADPCM analysis/synthesis, memory reading/writing) */
@@ -2345,20 +2329,20 @@ public class FMOPL_072 {
 //
 //		return chip;
 //	}
-//	/*
-//	** Generate samples for one of the Y8950's
-//	**
-//	** 'which' is the virtual Y8950 number
-//	** '*buffer' is the output buffer pointer
-//	** 'length' is the number of samples that should be generated
-//	*/
+//
+//	/**
+//	 * Generate samples for one of the Y8950's
+//	 *
+//	 * 'which' is the virtual Y8950 number
+//	 * '*buffer' is the output buffer pointer
+//	 * 'length' is the number of samples that should be generated
+//	 */
 //	public static void y8950_update_one(FM_OPL chip, int[] buffer, int length)
 //	{
 //		final YM_DELTAT DELTAT = chip.deltat;
 //		final boolean rhythm  = (chip.rhythm&0x20)!=0;
 //
-//		for(int i=0; i < length ; i++ )
-//		{
+//		for(int i=0; i < length ; i++ ) {
 //			chip.output[0] = 0;
 //			chip.output_deltat[0] = 0;
 //
@@ -2376,14 +2360,11 @@ public class FMOPL_072 {
 //			chip.CALC_CH(chip.P_CH[4]);
 //			chip.CALC_CH(chip.P_CH[5]);
 //
-//			if(!rhythm)
-//			{
+//			if(!rhythm) {
 //				chip.CALC_CH(chip.P_CH[6]);
 //				chip.CALC_CH(chip.P_CH[7]);
 //				chip.CALC_CH(chip.P_CH[8]);
-//			}
-//			else        /* Rhythm part */
-//			{
+//			} else /* Rhythm part */ {
 //				chip.CALC_RH();
 //			}
 //
@@ -2394,15 +2375,15 @@ public class FMOPL_072 {
 //			chip.advance();
 //		}
 //	}
-//	public void y8950_set_port_handler(FM_OPL chip, OPL_PORTHANDLER_W PortHandler_w, OPL_PORTHANDLER_R PortHandler_r)
-//	{
+//
+//	public void y8950_set_port_handler(FM_OPL chip, OPL_PORTHANDLER_W PortHandler_w, OPL_PORTHANDLER_R PortHandler_r) {
 //		chip.porthandler_w = PortHandler_w;
 //		chip.porthandler_r = PortHandler_r;
 //	}
-//	public void y8950_set_keyboard_handler(FM_OPL chip, OPL_PORTHANDLER_W KeyboardHandler_w, OPL_PORTHANDLER_R KeyboardHandler_r)
-//	{
+//
+//	public void y8950_set_keyboard_handler(FM_OPL chip, OPL_PORTHANDLER_W KeyboardHandler_w, OPL_PORTHANDLER_R KeyboardHandler_r) {
 //		chip.keyboardhandler_w = KeyboardHandler_w;
 //		chip.keyboardhandler_r = KeyboardHandler_r;
 //	}
-//	#endif
+//#endif
 }

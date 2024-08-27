@@ -25,6 +25,7 @@ package de.quippy.javamod.main.gui.components;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.Window;
+import java.io.Serial;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -39,6 +40,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class DoubleProgressDialog extends JDialog implements ProgressDialog {
 
+    @Serial
     private static final long serialVersionUID = 6413406398889206437L;
 
     protected JPanel downloadPane = null;
@@ -132,15 +134,15 @@ public class DoubleProgressDialog extends JDialog implements ProgressDialog {
         return downloadProgressBar;
     }
 
-    public void setGeneralMinimum(final int minValue) {
+    public void setGeneralMinimum(int minValue) {
         getDownloadProgressBar().setMinimum(minValue);
     }
 
-    public void setGeneralMaximum(final int maxValue) {
+    public void setGeneralMaximum(int maxValue) {
         getDownloadProgressBar().setMaximum(maxValue);
     }
 
-    public void setGeneralValue(final int value) {
+    public void setGeneralValue(int value) {
         getDownloadProgressBar().setValue(value);
     }
 
@@ -154,15 +156,18 @@ public class DoubleProgressDialog extends JDialog implements ProgressDialog {
         return downloadDetailProgressBar;
     }
 
-    public void setDetailMinimum(final int minValue) {
+    @Override
+    public void setDetailMinimum(int minValue) {
         getDownloadDetailProgressBar().setMinimum(minValue);
     }
 
-    public void setDetailMaximum(final int maxValue) {
+    @Override
+    public void setDetailMaximum(int maxValue) {
         getDownloadDetailProgressBar().setMaximum(maxValue);
     }
 
-    public void setDetailValue(final int value) {
+    @Override
+    public void setDetailValue(int value) {
         getDownloadDetailProgressBar().setValue(value);
     }
 }

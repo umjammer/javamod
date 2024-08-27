@@ -33,17 +33,16 @@ import de.quippy.javamod.system.Helpers;
  * set in the constructor.  This is for simplicity's sake.  This object
  * doesn't automatically unsynchronise, encrypt, or compress the data.
  *
- * @author: Jonathan Hilliker modified by Daniel Becker
+ * @author Jonathan Hilliker modified by Daniel Becker
  */
 public class ID3v2Frame {
 
     private static final int FRAME_HEAD_SIZE = 10;
     private static final int FRAME_FLAGS_SIZE = 2;
     private static final int MAX_EXTRA_DATA = 5;
-    private static final String[] ENC_TYPES =
-            {
-                    "ISO-8859-1", "UTF16", "UTF-16BE", "UTF-8"
-            };
+    private static final String[] ENC_TYPES = {
+            "ISO-8859-1", "UTF16", "UTF-16BE", "UTF-8"
+    };
 
     private String id = null;
     private boolean tagAlterDiscard = false;
@@ -178,7 +177,7 @@ public class ID3v2Frame {
      * @return a value of type 'byte[]'
      */
     private byte[] getFlagBytes() {
-        byte flags[] = new byte[2];
+        byte[] flags = new byte[2];
 
         if (tagAlterDiscard) flags[0] |= 0x40;
         if (fileAlterDiscard) flags[0] |= 0x20;
@@ -439,7 +438,7 @@ public class ID3v2Frame {
         String str = null;
 
         if (frameData.length > 1) {
-            final String enc_type = (frameData[0] < ENC_TYPES.length) ? ENC_TYPES[frameData[0]] : ENC_TYPES[0];
+            String enc_type = (frameData[0] < ENC_TYPES.length) ? ENC_TYPES[frameData[0]] : ENC_TYPES[0];
             try {
                 if ((id.charAt(0) == 'T') || id.equals(ID3v2Frames.OWNERSHIP_FRAME)) {
                     str = Helpers.retrieveAsString(frameData, 1, frameData.length - 1, enc_type);
@@ -471,7 +470,7 @@ public class ID3v2Frame {
     public String toString() {
         try {
             return id + "\nTagAlterDiscard:\t\t" + tagAlterDiscard + "\nFileAlterDiscard:\t\t" + fileAlterDiscard + "\nReadOnly:\t\t\t" + readOnly + "\nGrouped:\t\t\t" + grouped + "\nCompressed:\t\t\t" + compressed + "\nEncrypted:\t\t\t" + encrypted
-                    + "\nUnsynchronised:\t\t\t" + unsynchronised + "\nLengthIndicator:\t\t" + lengthIndicator + "\nData:\t\t\t\t" + getDataString().toString();
+                    + "\nUnsynchronised:\t\t\t" + unsynchronised + "\nLengthIndicator:\t\t" + lengthIndicator + "\nData:\t\t\t\t" + getDataString();
         } catch (Exception e) {
             return e.getMessage();
         }

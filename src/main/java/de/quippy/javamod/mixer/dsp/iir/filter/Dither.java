@@ -24,54 +24,49 @@ package de.quippy.javamod.mixer.dsp.iir.filter;
  */
 public class Dither {
 
-    private double firstOrder[] =
-            {
-                    0.0D, 1.0D
-            };
-    private double secondOrder[] =
-            {
-                    0.0D, 2D, -1D
-            };
-    private double psychAccoust3[] =
-            {
-                    0.0D, 1.623D, -0.98199999999999998D, 0.109D
-            };
-    private double psychAccoust5[] =
-            {
-                    0.0D, 2.0329999999999999D, -2.165D, 1.9590000000000001D, -1.5900000000000001D, 0.6149D
-            };
-    private double psychAccoust9[] =
-            {
-                    0.0D, 2.4119999999999999D, -3.3700000000000001D, 3.9369999999999998D, -4.1740000000000004D, 3.3530000000000002D, -2.2050000000000001D, 1.2809999999999999D, -0.56899999999999995D, 0.084699999999999998D
-            };
+    private final double[] firstOrder = {
+            0.0D, 1.0D
+    };
+    private final double[] secondOrder = {
+            0.0D, 2D, -1D
+    };
+    private final double[] psychAccoust3 = {
+            0.0D, 1.623D, -0.98199999999999998D, 0.109D
+    };
+    private final double[] psychAccoust5 = {
+            0.0D, 2.0329999999999999D, -2.165D, 1.9590000000000001D, -1.5900000000000001D, 0.6149D
+    };
+    private final double[] psychAccoust9 = {
+            0.0D, 2.4119999999999999D, -3.3700000000000001D, 3.9369999999999998D, -4.1740000000000004D, 3.3530000000000002D, -2.2050000000000001D, 1.2809999999999999D, -0.56899999999999995D, 0.084699999999999998D
+    };
 
-    public static enum FilterType {
+    public enum FilterType {
         FirstOrder, SecondOrder, Psychoacoustic3, Psychoacoustic5, Psychoacoustic9
     }
 
-    public static String[] FilterTypeNames = {
+    public static final String[] FilterTypeNames = {
             "First Oder", "Second Order", "Psychoacoustic 3", "Psychoacoustic 5", "Psychoacoustic 9",
     };
 
-    public static enum DitherType {
+    public enum DitherType {
         Rectangular, Triangular, HighPass
     }
 
-    public static String[] DitherTypeNames = {
+    public static final String[] DitherTypeNames = {
             "Rectangular", "Triangular", "High-Pass"
     };
 
     private int mChannels = 0;
-    private double noiseShapeFilter[] = null;
-    private double scalarProduct[] = null;
-    private double oldSamples[][] = null;
+    private double[] noiseShapeFilter = null;
+    private double[] scalarProduct = null;
+    private double[][] oldSamples = null;
     private double qt = 0;
     private boolean mByPass = false;
     private int toNumberBits = 0;
     private int mDitherType = 0;
     private boolean mWithNoiseShaping = true;
     private boolean mWithDither = true;
-    private double randValue[] = null;
+    private double[] randValue = null;
 
     /**
      * Constructor for Dither
@@ -152,7 +147,7 @@ public class Dither {
     public void cleanStateCoefficients() {
         randValue = new double[mChannels];
         scalarProduct = new double[mChannels];
-        final int filterLength = noiseShapeFilter.length;
+        int filterLength = noiseShapeFilter.length;
         oldSamples = new double[mChannels][filterLength];
 
         for (int i = 0; i < mChannels; i++) {
@@ -185,7 +180,7 @@ public class Dither {
         mChannels = i;
     }
 
-    final double scalarProduct(double ad[], double ad1[]) {
+    static double scalarProduct(double[] ad, double[] ad1) {
         double d = 0.0D;
         int i = ad.length;
         int j = ad1.length;
@@ -204,7 +199,7 @@ public class Dither {
      * @param newValue
      * @since 30.05.2020
      */
-    final void shiftAndSet(double ad[], double newValue) {
+    static void shiftAndSet(double[] ad, double newValue) {
         int lastIndex = ad.length - 1;
         for (int k = lastIndex; k > 0; k--) ad[k] = ad[k - 1];
         ad[0] = newValue;
@@ -221,25 +216,19 @@ public class Dither {
     public final double process(double sample, int forChannel) {
         scalarProduct[forChannel] = scalarProduct(noiseShapeFilter, oldSamples[forChannel]);
 
-        final double sampleNoiseShaped = (mWithNoiseShaping) ? sample - scalarProduct[forChannel] : sample;
+        double sampleNoiseShaped = (mWithNoiseShaping) ? sample - scalarProduct[forChannel] : sample;
 
-        final double sampleDitherd;
+        double sampleDitherd;
         if (mWithDither) {
-            final double rndOne = randValue[forChannel] = 2D * Math.random() - 1.0D;
-            final double ditheredSample;
-            switch (mDitherType) {
-                case 0:
-                    ditheredSample = (rndOne * qt) / 2D;
-                    break;
-                case 1:
-                    final double rndTwo = 2D * Math.random() - 1.0D;
-                    ditheredSample = ((rndOne + rndTwo) * qt) / 2D;
-                    break;
-                case 2:
-                default:
-                    ditheredSample = ((rndOne - randValue[forChannel]) * qt) / 2D;
-                    break;
-            }
+            double rndOne = randValue[forChannel] = 2D * Math.random() - 1.0D;
+            double ditheredSample = switch (mDitherType) {
+                case 0 -> (rndOne * qt) / 2D;
+                case 1 -> {
+                    double rndTwo = 2D * Math.random() - 1.0D;
+                    yield ((rndOne + rndTwo) * qt) / 2D;
+                }
+                default -> ((rndOne - randValue[forChannel]) * qt) / 2D;
+            };
             sampleDitherd = Math.floor(((sampleNoiseShaped + ditheredSample) / qt) + 0.5D) * qt;
         } else
             sampleDitherd = Math.floor((sampleNoiseShaped / qt) + 0.5D) * qt;

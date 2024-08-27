@@ -24,8 +24,8 @@ package de.quippy.javamod.multimedia.midi;
 
 import java.awt.LayoutManager;
 import java.io.File;
+import java.io.Serial;
 import java.util.Properties;
-
 import javax.sound.midi.MidiDevice;
 import javax.sound.sampled.AudioSystem;
 import javax.swing.JButton;
@@ -47,6 +47,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class MidiConfigPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = -3555440476406286002L;
 
     private JLabel midiOutputDeviceLabel = null;
@@ -120,8 +121,8 @@ public class MidiConfigPanel extends JPanel {
      */
     private static javax.sound.sampled.Mixer.Info getMixerInfo(String fromName) {
         javax.sound.sampled.Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
-        for (int i = 0; i < mixerInfos.length; i++) {
-            if (mixerInfos[i].getName().equalsIgnoreCase(fromName)) return mixerInfos[i];
+        for (javax.sound.sampled.Mixer.Info mixerInfo : mixerInfos) {
+            if (mixerInfo.getName().equalsIgnoreCase(fromName)) return mixerInfo;
         }
         return null;
     }
@@ -173,35 +174,30 @@ public class MidiConfigPanel extends JPanel {
 
     private JComboBox<MidiDevice.Info> getMidiOutputDevice() {
         if (midiOutputDevice == null) {
-            midiOutputDevice = new JComboBox<MidiDevice.Info>();
+            midiOutputDevice = new JComboBox<>();
             midiOutputDevice.setName("midiOutputDevice");
 
             if (MidiContainer.MIDIOUTDEVICEINFOS != null) {
-                javax.swing.DefaultComboBoxModel<MidiDevice.Info> theModel = new javax.swing.DefaultComboBoxModel<MidiDevice.Info>(MidiContainer.MIDIOUTDEVICEINFOS);
+                javax.swing.DefaultComboBoxModel<MidiDevice.Info> theModel = new javax.swing.DefaultComboBoxModel<>(MidiContainer.MIDIOUTDEVICEINFOS);
                 midiOutputDevice.setModel(theModel);
             }
             midiOutputDevice.setFont(Helpers.getDialogFont());
             midiOutputDevice.setEnabled(true);
             // Changing on the fly does not seem to work!!!
-//			midiOutputDevice.addItemListener(new ItemListener()
-//			{
-//				public void itemStateChanged(ItemEvent e)
-//				{
-//					if (e.getStateChange()==ItemEvent.SELECTED)
-//					{
-//						MidiContainer parent = getParentContainer();
-//						if (parent!=null)
-//						{
-//							MidiMixer midiMixer = parent.getCurrentMixer();
-//							if (midiMixer!=null)
-//							{
-//								MidiDevice.Info info = (MidiDevice.Info)midiOutputDevice.getSelectedItem();
-//								midiMixer.setNewOutputDevice(info);
-//							}
-//						}
-//					}
-//				}
-//			});
+//            midiOutputDevice.addItemListener(new ItemListener() {
+//                public void itemStateChanged(ItemEvent e) {
+//                    if (e.getStateChange() == ItemEvent.SELECTED) {
+//                        MidiContainer parent = getParentContainer();
+//                        if (parent != null) {
+//                            MidiMixer midiMixer = parent.getCurrentMixer();
+//                            if (midiMixer != null) {
+//                                MidiDevice.Info info = (MidiDevice.Info) midiOutputDevice.getSelectedItem();
+//                                midiMixer.setNewOutputDevice(info);
+//                            }
+//                        }
+//                    }
+//                }
+//            });
         }
         return midiOutputDevice;
     }
@@ -231,22 +227,18 @@ public class MidiConfigPanel extends JPanel {
             searchButton.setText("Search");
             searchButton.setFont(Helpers.getDialogFont());
             searchButton.setToolTipText("Search a soundbank file for the default synthesizer");
-            searchButton.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    doSelectSoundbankFile();
-                }
-            });
+            searchButton.addActionListener(evt -> doSelectSoundbankFile());
         }
         return searchButton;
     }
 
     private JComboBox<javax.sound.sampled.Mixer.Info> getMixerInputDevice() {
         if (mixerInputDevice == null) {
-            mixerInputDevice = new JComboBox<javax.sound.sampled.Mixer.Info>();
+            mixerInputDevice = new JComboBox<>();
             mixerInputDevice.setName("mixerInputDevice");
 
             if (MidiContainer.MIXERDEVICEINFOS != null) {
-                javax.swing.DefaultComboBoxModel<javax.sound.sampled.Mixer.Info> theModel = new javax.swing.DefaultComboBoxModel<javax.sound.sampled.Mixer.Info>(MidiContainer.MIXERDEVICEINFOS);
+                javax.swing.DefaultComboBoxModel<javax.sound.sampled.Mixer.Info> theModel = new javax.swing.DefaultComboBoxModel<>(MidiContainer.MIXERDEVICEINFOS);
                 mixerInputDevice.setModel(theModel);
             }
             mixerInputDevice.setFont(Helpers.getDialogFont());
@@ -258,7 +250,7 @@ public class MidiConfigPanel extends JPanel {
     public void configurationChanged(Properties newProps) {
         getMidiOutputDevice().setSelectedItem(MidiContainer.getMidiOutDeviceByName(newProps.getProperty(MidiContainer.PROPERTY_MIDIPLAYER_OUTPUTDEVICE, MidiContainer.DEFAULT_OUTPUTDEVICE)));
         getMidiSoundBankURL().setText(newProps.getProperty(MidiContainer.PROPERTY_MIDIPLAYER_SOUNDBANK, MidiContainer.DEFAULT_SOUNDBANKURL));
-        getCapture().setSelected((Boolean.valueOf(newProps.getProperty(MidiContainer.PROPERTY_MIDIPLAYER_CAPTURE, MidiContainer.DEFAULT_CAPUTRE)).booleanValue()));
+        getCapture().setSelected((Boolean.parseBoolean(newProps.getProperty(MidiContainer.PROPERTY_MIDIPLAYER_CAPTURE, MidiContainer.DEFAULT_CAPUTRE))));
         javax.sound.sampled.Mixer.Info mixerInfo = getMixerInfo(newProps.getProperty(MidiContainer.PROPERTY_MIDIPLAYER_MIXERNAME, MidiContainer.DEFAULT_MIXERNAME));
         if (mixerInfo != null) {
             for (int i = 0; i < MidiContainer.MIXERDEVICEINFOS.length; i++) {
@@ -269,7 +261,7 @@ public class MidiConfigPanel extends JPanel {
         }
     }
 
-    public void configurationSave(final Properties props) {
+    public void configurationSave(Properties props) {
         MidiDevice.Info outputDevice = (MidiDevice.Info) getMidiOutputDevice().getSelectedItem();
         if (outputDevice != null)
             props.setProperty(MidiContainer.PROPERTY_MIDIPLAYER_OUTPUTDEVICE, outputDevice.getName());

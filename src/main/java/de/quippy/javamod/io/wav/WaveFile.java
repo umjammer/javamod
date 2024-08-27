@@ -39,7 +39,7 @@ public class WaveFile extends RiffFile {
 
     private static class WaveFormat_ChunkData {
 
-        public short wFormatTag; // Format category (PCM=1)
+        public final short wFormatTag; // Format category (PCM=1)
         public short nChannels; // Number of channels (mono=1, stereo=2)
         public int nSamplesPerSec; // Sampling rate [Hz]
         public int nAvgBytesPerSec;
@@ -62,8 +62,8 @@ public class WaveFile extends RiffFile {
 
     private static class WaveFormat_Chunk {
 
-        public RiffChunkHeader header;
-        public WaveFormat_ChunkData data;
+        public final RiffChunkHeader header;
+        public final WaveFormat_ChunkData data;
 
         public WaveFormat_Chunk() {
             header = new RiffChunkHeader();
@@ -73,8 +73,8 @@ public class WaveFile extends RiffFile {
         }
     }
 
-    private WaveFormat_Chunk wave_format;
-    private RiffChunkHeader pcm_data;
+    private final WaveFormat_Chunk wave_format;
+    private final RiffChunkHeader pcm_data;
     private long pcm_data_offset;
 
     /**
@@ -113,10 +113,9 @@ public class WaveFile extends RiffFile {
         int retcode = open(Filename, RFM_WRITE);
 
         if (retcode == DDC_SUCCESS) {
-            byte[] theWave =
-                    {
-                            (byte) 'W', (byte) 'A', (byte) 'V', (byte) 'E'
-                    };
+            byte[] theWave = {
+                    (byte) 'W', (byte) 'A', (byte) 'V', (byte) 'E'
+            };
             retcode = write(theWave, 4);
 
             if (retcode == DDC_SUCCESS) {
@@ -143,7 +142,7 @@ public class WaveFile extends RiffFile {
      * @param start
      * @param numBytes
      * @return
-     * @see javazoom.jl.converter.RiffFile#write(byte[], int, int)
+     * @see #write(byte[], int, int)
      */
     public int writeSamples(byte[] data, int start, int numBytes) {
         pcm_data.ckSize += numBytes;
@@ -154,7 +153,7 @@ public class WaveFile extends RiffFile {
      * @param data
      * @param numBytes
      * @return
-     * @see javazoom.jl.converter.RiffFile#write(byte[], int)
+     * @see #write(byte[], int)
      */
     public int writeSamples(byte[] data, int numBytes) {
         pcm_data.ckSize += numBytes;
@@ -177,6 +176,7 @@ public class WaveFile extends RiffFile {
     /**
      *
      */
+    @Override
     public int close() {
         int rc = DDC_SUCCESS;
 

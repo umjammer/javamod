@@ -22,11 +22,14 @@
 
 package de.quippy.javamod.multimedia.mp3.id3.exceptions;
 
+import java.io.Serial;
+
+
 /**
  * Description:
  * An exception to be thrown if the parser is unable to find an mpeg header.
  *
- * @author: Jonathan Hilliker
+ * @author Jonathan Hilliker
  * @version: $Id: NoMPEGFramesException.java,v 1.3 2013-03-24 13:29:01 quippy Exp $
  * Revsisions:
  * $Log: not supported by cvs2svn $
@@ -41,6 +44,7 @@ package de.quippy.javamod.multimedia.mp3.id3.exceptions;
  */
 public class NoMPEGFramesException extends Exception {
 
+    @Serial
     private static final long serialVersionUID = -8189457738550297675L;
 
     /**

@@ -31,5 +31,5 @@ import java.util.EventListener;
  */
 public interface PlayThreadEventListener extends EventListener {
 
-    public void playThreadEventOccured(PlayThread thread);
+    void playThreadEventOccured(PlayThread thread);
 }

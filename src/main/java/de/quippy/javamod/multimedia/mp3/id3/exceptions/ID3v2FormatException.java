@@ -22,15 +22,19 @@
 
 package de.quippy.javamod.multimedia.mp3.id3.exceptions;
 
+import java.io.Serial;
+
+
 /**
  * Description:
  * This exception is thrown when an data in an id3v2 tag violates the
  * id3v2 standards.
  *
- * @author: Jonathan Hilliker modified by Daniel Becker
+ * @author Jonathan Hilliker modified by Daniel Becker
  */
 public class ID3v2FormatException extends Exception {
 
+    @Serial
     private static final long serialVersionUID = 1668617234586193326L;
 
     /**
@@ -53,8 +57,8 @@ public class ID3v2FormatException extends Exception {
      * Create an ID3v2FormatException with a specified message
      * and original exception
      *
-     * @param msg   the message for this exception
-     * @param cause the cause that wraps this exception
+     * @param message the message for this exception
+     * @param cause   the cause that wraps this exception
      */
     public ID3v2FormatException(String message, Throwable cause) {
         super(message, cause);

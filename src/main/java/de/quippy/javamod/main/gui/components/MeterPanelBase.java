@@ -30,9 +30,12 @@ import java.awt.Transparency;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.image.BufferedImage;
+import java.io.Serial;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import javax.swing.border.Border;
 
-import de.quippy.javamod.system.Log;
+import static java.lang.System.getLogger;
 
 
 /**
@@ -41,6 +44,9 @@ import de.quippy.javamod.system.Log;
  */
 public abstract class MeterPanelBase extends ThreadUpdatePanel {
 
+    private static final Logger logger = getLogger(MeterPanelBase.class.getName());
+
+    @Serial
     private static final long serialVersionUID = -7284099301353768209L;
 
     protected volatile int myTop;
@@ -98,9 +104,9 @@ public abstract class MeterPanelBase extends ThreadUpdatePanel {
         if (myWidth > 0 && myHeight > 0) componentWasResized(0, 0, myWidth, myHeight);
     }
 
-    protected synchronized BufferedImage getDoubleBuffer(final int myWidth, final int myHeight) {
+    protected synchronized BufferedImage getDoubleBuffer(int myWidth, int myHeight) {
         if (imageBuffer == null && myWidth > 0 && myHeight > 0) {
-            final GraphicsConfiguration graConf = getGraphicsConfiguration();
+            GraphicsConfiguration graConf = getGraphicsConfiguration();
             if (graConf != null) imageBuffer = graConf.createCompatibleImage(myWidth, myHeight, Transparency.OPAQUE);
         }
         return imageBuffer;
@@ -109,15 +115,16 @@ public abstract class MeterPanelBase extends ThreadUpdatePanel {
     /**
      * @since 06.10.2007
      */
+    @Override
     protected synchronized void doThreadUpdate() {
-        final BufferedImage buffer = getDoubleBuffer(myWidth, myHeight);
+        BufferedImage buffer = getDoubleBuffer(myWidth, myHeight);
         if (buffer != null) {
-            final Graphics2D gfx = (Graphics2D) buffer.getGraphics();
+            Graphics2D gfx = (Graphics2D) buffer.getGraphics();
             try {
                 drawMeter(gfx, 0, 0, myWidth, myHeight);
                 repaint(myTop, myLeft, myWidth, myHeight);
             } catch (Exception ex) {
-                Log.error("[MeterPanelBase]:", ex);
+                logger.log(Level.ERROR, "[MeterPanelBase]:", ex);
             } finally {
                 gfx.dispose();
             }
@@ -131,9 +138,9 @@ public abstract class MeterPanelBase extends ThreadUpdatePanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        final BufferedImage buffer = getDoubleBuffer(myWidth, myHeight);
+        BufferedImage buffer = getDoubleBuffer(myWidth, myHeight);
         if (buffer != null && g != null) {
-            final Graphics2D gfx = (Graphics2D) g.create();
+            Graphics2D gfx = (Graphics2D) g.create();
             try {
                 gfx.drawImage(buffer, myLeft, myTop, null);
             } finally {

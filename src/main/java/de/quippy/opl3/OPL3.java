@@ -56,12 +56,12 @@ package de.quippy.opl3;
 
 public final class OPL3 {
 
-    int registers[] = new int[0x200];
+    final int[] registers = new int[0x200];
 
     Operator[][] operators;
     Channel2op[][] channels2op;
     Channel4op[][] channels4op;
-    Channel[][] channels;
+    final Channel[][] channels;
     DisabledChannel disabledChannel;
 
     BassDrumChannel bassDrumChannel;
@@ -79,8 +79,8 @@ public final class OPL3 {
     int nts, dam, dvb, ryt, bd, sd, tom, tc, hh, _new, connectionsel;
     int vibratoIndex, tremoloIndex;
 
-    private double[] outputBuffer;
-    private double[] channelOutput;
+    private final double[] outputBuffer;
+    private final double[] channelOutput;
 
     public OPL3() {
         nts = dam = dvb = ryt = bd = sd = tom = tc = hh = _new = connectionsel = 0;
@@ -101,8 +101,8 @@ public final class OPL3 {
     // read() returns "#frames" frames at a time, to be played at 49716 Hz,
     // with each frame being four 16-bit samples,
     // corresponding to the OPL3 four output channels CHA...CHD.
-    public void read(final int[] output, final int frames) {
-        final int anzSamples = frames << 2;
+    public void read(int[] output, int frames) {
+        int anzSamples = frames << 2;
         for (int i = 0; i < anzSamples; i += 4) {
             for (int outputChannelNumber = 0; outputChannelNumber < 4; outputChannelNumber++)
                 outputBuffer[outputChannelNumber] = 0;
@@ -424,10 +424,10 @@ public final class OPL3 {
 
 abstract class Channel {
 
-    protected OPL3 opl3;
-    int channelBaseAddress;
+    protected final OPL3 opl3;
+    final int channelBaseAddress;
 
-    double[] feedback;
+    final double[] feedback;
 
     int fnuml, fnumh, kon, block, cha, chb, chc, chd, fb, cnt;
 
@@ -509,7 +509,8 @@ abstract class Channel {
 
 class Channel2op extends Channel {
 
-    Operator op1, op2;
+    final Operator op1;
+    final Operator op2;
 
     Channel2op(OPL3 opl3, int baseAddress, Operator o1, Operator o2) {
         super(opl3, baseAddress);
@@ -574,23 +575,25 @@ class Channel2op extends Channel {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder();
 
         int f_number = (fnumh << 8) + fnuml;
 
-        str.append(String.format("channelBaseAddress: %d\n", Integer.valueOf(channelBaseAddress)));
-        str.append(String.format("f_number: %d, block: %d\n", Integer.valueOf(f_number), Integer.valueOf(block)));
-        str.append(String.format("cnt: %d, feedback: %d\n", Integer.valueOf(cnt), Integer.valueOf(fb)));
-        str.append(String.format("op1:\n%s", op1.toString()));
-        str.append(String.format("op2:\n%s", op2.toString()));
+        String str = String.format("channelBaseAddress: %d\n", channelBaseAddress) +
+                String.format("f_number: %d, block: %d\n", f_number, block) +
+                String.format("cnt: %d, feedback: %d\n", cnt, fb) +
+                String.format("op1:\n%s", op1.toString()) +
+                String.format("op2:\n%s", op2.toString());
 
-        return str.toString();
+        return str;
     }
 }
 
 class Channel4op extends Channel {
 
-    Operator op1, op2, op3, op4;
+    final Operator op1;
+    final Operator op2;
+    final Operator op3;
+    final Operator op4;
 
     Channel4op(OPL3 opl3, int baseAddress, Operator o1, Operator o2, Operator o3, Operator o4) {
         super(opl3, baseAddress);
@@ -696,19 +699,18 @@ class Channel4op extends Channel {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder();
 
         int f_number = (fnumh << 8) + fnuml;
 
-        str.append(String.format("channelBaseAddress: %d\n", Integer.valueOf(channelBaseAddress)));
-        str.append(String.format("f_number: %d, block: %d\n", Integer.valueOf(f_number), Integer.valueOf(block)));
-        str.append(String.format("cnt: %d, feedback: %d\n", Integer.valueOf(cnt), Integer.valueOf(fb)));
-        str.append(String.format("op1:\n%s", op1.toString()));
-        str.append(String.format("op2:\n%s", op2.toString()));
-        str.append(String.format("op3:\n%s", op3.toString()));
-        str.append(String.format("op4:\n%s", op4.toString()));
+        String str = String.format("channelBaseAddress: %d\n", channelBaseAddress) +
+                String.format("f_number: %d, block: %d\n", f_number, block) +
+                String.format("cnt: %d, feedback: %d\n", cnt, fb) +
+                String.format("op1:\n%s", op1.toString()) +
+                String.format("op2:\n%s", op2.toString()) +
+                String.format("op3:\n%s", op3.toString()) +
+                String.format("op4:\n%s", op4.toString());
 
-        return str.toString();
+        return str;
     }
 }
 
@@ -743,13 +745,13 @@ class DisabledChannel extends Channel {
 
 class Operator {
 
-    protected OPL3 opl3;
-    PhaseGenerator phaseGenerator;
-    EnvelopeGenerator envelopeGenerator;
+    protected final OPL3 opl3;
+    final PhaseGenerator phaseGenerator;
+    final EnvelopeGenerator envelopeGenerator;
 
     double envelope, phase;
 
-    int operatorBaseAddress;
+    final int operatorBaseAddress;
     int am, vib, ksr, egt, mult, ksl, tl, ar, dr, sl, rr, ws;
     int keyScaleNumber, f_number, block;
 
@@ -885,10 +887,10 @@ class Operator {
 
         double operatorFrequency = f_number * Math.pow(2, block - 1) * OPL3Data.sampleRate / Math.pow(2, 19) * OperatorData.multTable[mult];
 
-        str.append(String.format("operatorBaseAddress: %d\n", Integer.valueOf(operatorBaseAddress)));
-        str.append(String.format("operatorFrequency: %f\n", Double.valueOf(operatorFrequency)));
-        str.append(String.format("mult: %d, ar: %d, dr: %d, sl: %d, rr: %d, ws: %d\n", Integer.valueOf(mult), Integer.valueOf(ar), Integer.valueOf(dr), Integer.valueOf(sl), Integer.valueOf(rr), Integer.valueOf(ws)));
-        str.append(String.format("am: %d, vib: %d, ksr: %d, egt: %d, ksl: %d, tl: %d\n", Integer.valueOf(am), Integer.valueOf(vib), Integer.valueOf(ksr), Integer.valueOf(egt), Integer.valueOf(ksl), Integer.valueOf(tl)));
+        str.append(String.format("operatorBaseAddress: %d\n", operatorBaseAddress));
+        str.append(String.format("operatorFrequency: %f\n", operatorFrequency));
+        str.append(String.format("mult: %d, ar: %d, dr: %d, sl: %d, rr: %d, ws: %d\n", mult, ar, dr, sl, rr, ws));
+        str.append(String.format("am: %d, vib: %d, ksr: %d, egt: %d, ksl: %d, tl: %d\n", am, vib, ksr, egt, ksl, tl));
 
         return str.toString();
     }
@@ -900,7 +902,7 @@ class Operator {
 
 class EnvelopeGenerator {
 
-    protected OPL3 opl3;
+    protected final OPL3 opl3;
 
     final static double[] INFINITY = null;
 
@@ -1010,7 +1012,7 @@ class EnvelopeGenerator {
         dBreleaseIncrement = OPL3Data.calculateIncrement(percentageToDB(0.1), percentageToDB(0.9), period10to90inSeconds);
     }
 
-    private int calculateActualRate(int rate, int ksr, int keyScaleNumber) {
+    private static int calculateActualRate(int rate, int ksr, int keyScaleNumber) {
         int rof = EnvelopeGeneratorData.rateOffset[ksr][keyScaleNumber];
         int actualRate = rate * 4 + rof;
         // If, as an example at the maximum, rate is 15 and the rate offset is 15,
@@ -1132,18 +1134,17 @@ class EnvelopeGenerator {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder();
-        str.append("Envelope Generator: \n");
         double attackPeriodInSeconds = EnvelopeGeneratorData.attackTimeValuesTable[actualAttackRate][0] / 1000d;
-        str.append(String.format("\tATTACK  %f s, rate %d. \n", Double.valueOf(attackPeriodInSeconds), Integer.valueOf(actualAttackRate)));
         double decayPeriodInSeconds = EnvelopeGeneratorData.decayAndReleaseTimeValuesTable[actualDecayRate][0] / 1000d;
-        str.append(String.format("\tDECAY   %f s, rate %d. \n", Double.valueOf(decayPeriodInSeconds), Integer.valueOf(actualDecayRate)));
-        str.append(String.format("\tSL      %f dB. \n", Double.valueOf(sustainLevel)));
         double releasePeriodInSeconds = EnvelopeGeneratorData.decayAndReleaseTimeValuesTable[actualReleaseRate][0] / 1000d;
-        str.append(String.format("\tRELEASE %f s, rate %d. \n", Double.valueOf(releasePeriodInSeconds), Integer.valueOf(actualReleaseRate)));
-        str.append("\n");
+        String str = "Envelope Generator: \n" +
+                String.format("\tATTACK  %f s, rate %d. \n", attackPeriodInSeconds, actualAttackRate) +
+                String.format("\tDECAY   %f s, rate %d. \n", decayPeriodInSeconds, actualDecayRate) +
+                String.format("\tSL      %f dB. \n", sustainLevel) +
+                String.format("\tRELEASE %f s, rate %d. \n", releasePeriodInSeconds, actualReleaseRate) +
+                "\n";
 
-        return str.toString();
+        return str;
     }
 }
 
@@ -1153,7 +1154,7 @@ class EnvelopeGenerator {
 
 class PhaseGenerator {
 
-    protected OPL3 opl3;
+    protected final OPL3 opl3;
     double phase, phaseIncrement;
 
     PhaseGenerator(OPL3 opl3) {
@@ -1194,7 +1195,7 @@ class PhaseGenerator {
 
     @Override
     public String toString() {
-        return String.format("Operator frequency: %f Hz.\n", Double.valueOf(OPL3Data.sampleRate * phaseIncrement));
+        return String.format("Operator frequency: %f Hz.\n", OPL3Data.sampleRate * phaseIncrement);
     }
 }
 
@@ -1438,13 +1439,13 @@ class OPL3Data {
         // The first array is used when DVB=0 and the second array is used when DVB=1.
         vibratoTable = new double[2][8192];
 
-        final double semitone = Math.pow(2, 1 / 12d);
+        double semitone = Math.pow(2, 1 / 12d);
         // A cent is 1/100 of a semitone:
-        final double cent = Math.pow(semitone, 1 / 100d);
+        double cent = Math.pow(semitone, 1 / 100d);
 
         // When dvb=0, the depth is 7 cents, when it is 1, the depth is 14 cents.
-        final double DVB0 = Math.pow(cent, 7);
-        final double DVB1 = Math.pow(cent, 14);
+        double DVB0 = Math.pow(cent, 7);
+        double DVB1 = Math.pow(cent, 14);
         int i;
         for (i = 0; i < 1024; i++)
             vibratoTable[0][i] =
@@ -1485,10 +1486,7 @@ class OPL3Data {
         final double tremoloFrequency = 3.7;
 
         // The tremolo depth is -1 dB when DAM = 0, and -4.8 dB when DAM = 1.
-        final double tremoloDepth[] =
-                {
-                        -1, -4.8
-                };
+        double[] tremoloDepth = {-1, -4.8};
 
         //  According to the YMF278B manual's OPL3 section graph, 
         //              the tremolo waveform is not 
@@ -1496,10 +1494,10 @@ class OPL3Data {
         //    \    /    Thus, the period to achieve the tremolo depth is T/2, and      
         //     \  /     the increment in each T/2 section uses a frequency of 2*f.
         //      \/      Tremolo varies from 0 dB to depth, to 0 dB again, at frequency*2:
-        final double tremoloIncrement[] =
-                {
-                        calculateIncrement(tremoloDepth[0], 0, 1 / (2 * tremoloFrequency)), calculateIncrement(tremoloDepth[1], 0, 1 / (2 * tremoloFrequency))
-                };
+        double[] tremoloIncrement = {
+                calculateIncrement(tremoloDepth[0], 0, 1 / (2 * tremoloFrequency)),
+                calculateIncrement(tremoloDepth[1], 0, 1 / (2 * tremoloFrequency))
+        };
 
         int tremoloTableLength = (int) (sampleRate / tremoloFrequency);
 
@@ -1541,10 +1539,9 @@ class ChannelData {
 
     // Feedback rate in fractions of 2*Pi, normalized to (0,1):
     // 0, Pi/16, Pi/8, Pi/4, Pi/2, Pi, 2*Pi, 4*Pi turns to be:
-    final static double[] feedback =
-            {
-                    0, 1 / 32d, 1 / 16d, 1 / 8d, 1 / 4d, 1 / 2d, 1, 2
-            };
+    final static double[] feedback = {
+            0, 1 / 32d, 1 / 16d, 1 / 8d, 1 / 4d, 1 / 2d, 1, 2
+    };
 }
 
 //
@@ -1566,33 +1563,31 @@ class OperatorData {
 
     final static int waveLength = 1024;
 
-    final static double[] multTable =
-            {
-                    0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 12, 12, 15, 15
-            };
+    final static double[] multTable = {
+            0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 12, 12, 15, 15
+    };
 
-    final static double[][] ksl3dBtable =
-            {
-                    {0, 0, 0, 0, 0, 0, 0, 0},
-                    {0, 0, 0, 0, 0, -3, -6, -9},
-                    {0, 0, 0, 0, -3, -6, -9, -12},
-                    {0, 0, 0, -1.875, -4.875, -7.875, -10.875, -13.875},
+    final static double[][] ksl3dBtable = {
+            {0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, -3, -6, -9},
+            {0, 0, 0, 0, -3, -6, -9, -12},
+            {0, 0, 0, -1.875, -4.875, -7.875, -10.875, -13.875},
 
-                    {0, 0, 0, -3, -6, -9, -12, -15},
-                    {0, 0, -1.125, -4.125, -7.125, -10.125, -13.125, -16.125},
-                    {0, 0, -1.875, -4.875, -7.875, -10.875, -13.875, -16.875},
-                    {0, 0, -2.625, -5.625, -8.625, -11.625, -14.625, -17.625},
+            {0, 0, 0, -3, -6, -9, -12, -15},
+            {0, 0, -1.125, -4.125, -7.125, -10.125, -13.125, -16.125},
+            {0, 0, -1.875, -4.875, -7.875, -10.875, -13.875, -16.875},
+            {0, 0, -2.625, -5.625, -8.625, -11.625, -14.625, -17.625},
 
-                    {0, 0, -3, -6, -9, -12, -15, -18},
-                    {0, -0.750, -3.750, -6.750, -9.750, -12.750, -15.750, -18.750},
-                    {0, -1.125, -4.125, -7.125, -10.125, -13.125, -16.125, -19.125},
-                    {0, -1.500, -4.500, -7.500, -10.500, -13.500, -16.500, -19.500},
+            {0, 0, -3, -6, -9, -12, -15, -18},
+            {0, -0.750, -3.750, -6.750, -9.750, -12.750, -15.750, -18.750},
+            {0, -1.125, -4.125, -7.125, -10.125, -13.125, -16.125, -19.125},
+            {0, -1.500, -4.500, -7.500, -10.500, -13.500, -16.500, -19.500},
 
-                    {0, -1.875, -4.875, -7.875, -10.875, -13.875, -16.875, -19.875},
-                    {0, -2.250, -5.250, -8.250, -11.250, -14.250, -17.250, -20.250},
-                    {0, -2.625, -5.625, -8.625, -11.625, -14.625, -17.625, -20.625},
-                    {0, -3, -6, -9, -12, -15, -18, -21}
-            };
+            {0, -1.875, -4.875, -7.875, -10.875, -13.875, -16.875, -19.875},
+            {0, -2.250, -5.250, -8.250, -11.250, -14.250, -17.250, -20.250},
+            {0, -2.625, -5.625, -8.625, -11.625, -14.625, -17.625, -20.625},
+            {0, -3, -6, -9, -12, -15, -18, -21}
+    };
 
     static double[][] waveforms;
 
@@ -1663,11 +1658,10 @@ class EnvelopeGeneratorData {
     final static double INFINITY = 1f / 0f;
     // This table is indexed by the value of Operator.ksr
     // and the value of ChannelRegister.keyScaleNumber.
-    final static int[][] rateOffset =
-            {
-                    {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3},
-                    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
-            };
+    final static int[][] rateOffset = {
+            {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3},
+            {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+    };
     // These attack periods in miliseconds were taken from the YMF278B manual. 
     // The attack actual rates range from 0 to 63, with different data for 
     // 0%-100% and for 10%-90%: 

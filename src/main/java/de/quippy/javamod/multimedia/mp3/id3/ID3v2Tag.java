@@ -26,25 +26,29 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 
 import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mp3.id3.exceptions.ID3v2FormatException;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
- * Description:
  * This class reads and writes id3v2 tags from a file.
  *
- * @author: Jonathan Hilliker modified by Daniel Becker
+ * @author Jonathan Hilliker modified by Daniel Becker
  */
 public class ID3v2Tag {
 
+    private static final Logger logger = getLogger(ID3v2Tag.class.getName());
+
     private static final String ENC_TYPE = "ISO-8859-1";
 
-    private ID3v2Header head = null;
+    private final ID3v2Header head;
     private ID3v2ExtendedHeader ext_head = null;
-    private ID3v2Frames<String, ID3v2Frame> frames = null;
+    private final ID3v2Frames<String, ID3v2Frame> frames;
     private ID3v2Footer foot = null;
     private int padding;
     private int origSize;
@@ -57,13 +61,13 @@ public class ID3v2Tag {
      * will be extracted.  If a tag doesn't exist, then this is the file that
      * will be written to when the writeTag method is called.
      *
-     * @param mp3 the file to write/read the the tag information to/from
+     * @param raf the file to write/read the tag information to/from
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
      * @throws ID3v2FormatException  if an exisiting id3v2 tag isn't correct
      */
-    public ID3v2Tag(RandomAccessInputStream raf) throws FileNotFoundException, IOException, ID3v2FormatException {
-        frames = new ID3v2Frames<String, ID3v2Frame>();
+    public ID3v2Tag(RandomAccessInputStream raf) throws IOException, ID3v2FormatException {
+        frames = new ID3v2Frames<>();
         head = new ID3v2Header(raf);
         padding = 0;
         exists = head.headerExists();
@@ -90,11 +94,10 @@ public class ID3v2Tag {
      * Converts an integer to an Motorola 86000er dword byte array
      *
      * @param value
-     * @param offset
      * @return
      * @since 23.12.2008
      */
-    public static byte[] convertIntToDWord(final int value) {
+    public static byte[] convertIntToDWord(int value) {
         byte[] buf = new byte[4];
         buf[0] = (byte) ((value >> 24) & 0xFF);
         buf[1] = (byte) ((value >> 16) & 0xFF);
@@ -104,13 +107,13 @@ public class ID3v2Tag {
     }
 
     /**
-     * Converts an Motorola 86000er dword to an integer (most significant byte first)
+     * Converts a Motorola 86000er dword to an integer (most significant byte first)
      *
      * @param buf
      * @param offset
      * @return
      */
-    public static int convertDWordToInt(final byte[] buf, final int offset) {
+    public static int convertDWordToInt(byte[] buf, int offset) {
         return ((buf[offset] & 0xFF) << 24) | ((buf[offset + 1] & 0xFF) << 16) | ((buf[offset + 2] & 0xFF) << 8) | (buf[offset + 3] & 0xFF);
     }
 
@@ -165,11 +168,10 @@ public class ID3v2Tag {
      * the previous tag and part of the previous padding will be overwritten.
      * Otherwise, a new tag will be prepended to the file.
      *
-     * @return true if the tag was successfully written
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
      */
-    public void writeTag(RandomAccessFile raf) throws FileNotFoundException, IOException {
+    public void writeTag(RandomAccessFile raf) throws IOException {
         int curSize = getSize();
         origPadding = padding;
         padding = getUpdatedPadding();
@@ -181,7 +183,7 @@ public class ID3v2Tag {
             raf.seek(0);
             raf.write(out);
         } else {
-            //TODO: This needs copying without full loading
+            // TODO This needs copying without full loading
             int bufSize = (int) (raf.length() + curSize);
             byte[] out = new byte[bufSize];
             System.arraycopy(getBytes(), 0, out, 0, curSize);
@@ -208,11 +210,10 @@ public class ID3v2Tag {
     /**
      * Remove an existing id3v2 tag from the file passed to the constructor.
      *
-     * @return true if the removal was a success
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
      */
-    public void removeTag(RandomAccessFile raf) throws FileNotFoundException, IOException {
+    public void removeTag(RandomAccessFile raf) throws IOException {
         if (exists) {
             int bufSize = (int) (raf.length() - origSize);
             byte[] buf = new byte[bufSize];
@@ -308,7 +309,7 @@ public class ID3v2Tag {
 
                 updateFrameData(id, b);
             } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+                logger.log(Level.DEBUG, e.toString());
             }
         }
     }
@@ -346,7 +347,7 @@ public class ID3v2Tag {
 
             updateFrameData(ID3v2Frames.USER_DEFINED_TEXT_INFO, b);
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            logger.log(Level.DEBUG, e.toString());
         }
     }
 
@@ -369,7 +370,7 @@ public class ID3v2Tag {
 
             updateFrameData(ID3v2Frames.USER_DEFINED_URL, b);
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            logger.log(Level.DEBUG, e.toString());
         }
     }
 
@@ -395,7 +396,7 @@ public class ID3v2Tag {
 
             updateFrameData(ID3v2Frames.COMMENTS, b);
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            logger.log(Level.DEBUG, e.toString());
         }
     }
 
@@ -419,7 +420,7 @@ public class ID3v2Tag {
      */
     public void updateFrameData(String id, byte[] data) {
         if (frames.containsKey(id)) {
-            ((ID3v2Frame) frames.get(id)).setFrameData(data);
+            frames.get(id).setFrameData(data);
         } else {
             ID3v2Frame frame = new ID3v2Frame(id, data);
             frames.put(id, frame);
@@ -440,10 +441,10 @@ public class ID3v2Tag {
     public String getFrameDataString(String id) {
         try {
             if (frames.containsKey(id)) {
-                return ((ID3v2Frame) frames.get(id)).getDataString();
+                return frames.get(id).getDataString();
             }
         } catch (ID3v2FormatException ex) {
-            Log.error("ID3v2Tag:", ex);
+            logger.log(Level.ERROR, "ID3v2Tag:", ex);
         }
         return null;
     }
@@ -457,7 +458,7 @@ public class ID3v2Tag {
      */
     public byte[] getFrameData(String id) {
         if (frames.containsKey(id)) {
-            return ((ID3v2Frame) frames.get(id)).getFrameData();
+            return frames.get(id).getFrameData();
         }
 
         return null;

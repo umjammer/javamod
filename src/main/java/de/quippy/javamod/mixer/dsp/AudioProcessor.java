@@ -33,6 +33,7 @@
 package de.quippy.javamod.mixer.dsp;
 
 import java.util.ArrayList;
+import java.util.List;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioFormat.Encoding;
 import javax.sound.sampled.SourceDataLine;
@@ -48,8 +49,8 @@ public class AudioProcessor {
 
     private final int desiredBufferSize;
     private final long waitForNanos;
-    private final ArrayList<DspProcessorCallBack> callBacks;
-    private final ArrayList<DSPEffekt> effectCallBacks;
+    private final List<DspProcessorCallBack> callBacks;
+    private final List<DSPEffekt> effectCallBacks;
 
     private static final int SAMPLEBUFFERSIZE = 96000;
     private SourceDataLine sourceDataLine;
@@ -99,8 +100,7 @@ public class AudioProcessor {
          */
         public void stopProcessorTask() {
             process = false; // Signal endless loop to stop
-            while (process_alive) // wait till that happened
-            {
+            while (process_alive) { // wait till that happened
                 try {
                     Thread.sleep(10L);
                 } catch (InterruptedException ex) { /*NOOP*/ }
@@ -112,10 +112,11 @@ public class AudioProcessor {
         /**
          * @see java.lang.Runnable#run()
          */
+        @Override
         public void run() {
             process_alive = true;
             while (process) {
-                final long now = System.nanoTime();
+                long now = System.nanoTime();
 
                 synchronized (lock) {
                     int channels = me.audioFormat.getChannels();
@@ -133,7 +134,7 @@ public class AudioProcessor {
 
                 me.fireCurrentSampleChanged(leftBuffer, rightBuffer);
 
-                final long stillToWait = nanoWait - (System.nanoTime() - now);
+                long stillToWait = nanoWait - (System.nanoTime() - now);
                 if (stillToWait > 0) {
                     try {
                         Thread.sleep(stillToWait / 1000000L);
@@ -158,8 +159,8 @@ public class AudioProcessor {
         super();
         this.desiredBufferSize = desiredBufferSize;
         this.waitForNanos = 1000000000L / (long) desiredFPS;
-        this.callBacks = new ArrayList<DspProcessorCallBack>();
-        this.effectCallBacks = new ArrayList<DSPEffekt>();
+        this.callBacks = new ArrayList<>();
+        this.effectCallBacks = new ArrayList<>();
         dspEnabled = true;
     }
 
@@ -192,9 +193,9 @@ public class AudioProcessor {
      * @since 06.01.2012
      */
     private synchronized void fireCurrentSampleChanged(float[] leftBuffer, float[] rightBuffer) {
-        final int size = callBacks.size();
-        for (int i = 0; i < size; i++) {
-            callBacks.get(i).currentSampleChanged(leftBuffer, rightBuffer);
+        int size = callBacks.size();
+        for (DspProcessorCallBack callBack : callBacks) {
+            callBack.currentSampleChanged(leftBuffer, rightBuffer);
         }
     }
 
@@ -214,18 +215,18 @@ public class AudioProcessor {
         effectCallBacks.remove(effectCallBack);
     }
 
-    private synchronized void initializeEffects(final AudioFormat audioFormat, final int sampleBufferLength) {
-        final int size = effectCallBacks.size();
-        for (int i = 0; i < size; i++) {
-            effectCallBacks.get(i).initialize(audioFormat, sampleBufferLength);
+    private synchronized void initializeEffects(AudioFormat audioFormat, int sampleBufferLength) {
+        int size = effectCallBacks.size();
+        for (DSPEffekt effectCallBack : effectCallBacks) {
+            effectCallBack.initialize(audioFormat, sampleBufferLength);
         }
     }
 
-    private synchronized int callEffects(final float[] buffer, final int start, final int length) {
-        final int size = effectCallBacks.size();
+    private synchronized int callEffects(float[] buffer, int start, int length) {
+        int size = effectCallBacks.size();
         int anzSamples = length;
-        for (int i = 0; i < size; i++) {
-            anzSamples = effectCallBacks.get(i).doEffekt(buffer, start, anzSamples);
+        for (DSPEffekt effectCallBack : effectCallBacks) {
+            anzSamples = effectCallBack.doEffekt(buffer, start, anzSamples);
         }
         return anzSamples;
     }
@@ -274,8 +275,8 @@ public class AudioProcessor {
         isSigned = audioFormat.getEncoding().equals(Encoding.PCM_SIGNED);
         sampleSizeInBits = audioFormat.getSampleSizeInBits();
         bytesPerChannel = sampleSizeInBits >> 3;
-        mask = (long) (1L << sampleSizeInBits) - 1;
-        neg_Bit = (long) (1L << (sampleSizeInBits - 1));
+        mask = (1L << sampleSizeInBits) - 1;
+        neg_Bit = 1L << (sampleSizeInBits - 1);
         maxSample = neg_Bit - 1;
         minSample = -neg_Bit;
         neg_mask = 0xFFFFFFFF ^ mask;
@@ -326,13 +327,11 @@ public class AudioProcessor {
     }
 
     /**
-     * @param newSampleData
-     * @param offset
-     * @param length
+     * @param anzSamples
      * @return
      * @since 27.12.2011
      */
-    private int writeIntoFloatArrayBuffer(final int anzSamples) {
+    private int writeIntoFloatArrayBuffer(int anzSamples) {
         int ox = 0;
         int wx = currentWritePosition;
         while (ox < anzSamples) {
@@ -356,12 +355,11 @@ public class AudioProcessor {
     }
 
     /**
-     * @param currentReadPosition
      * @param anzSamples
      * @return
      * @since 27.12.2011
      */
-    private int readFromFloatArrayBuffer(final int anzSamples) {
+    private int readFromFloatArrayBuffer(int anzSamples) {
         int rx = currentWritePosition;
         int ox = 0;
         for (int i = 0; i < anzSamples; i++, ox += bytesPerChannel) {
@@ -391,9 +389,9 @@ public class AudioProcessor {
      * @param length
      * @since 23.12.2011
      */
-    public int writeSampleData(final byte[] newSampleData, final int offset, int length) {
+    public int writeSampleData(byte[] newSampleData, int offset, int length) {
         synchronized (lock) {
-            final int chunkSize = (length > resultSampleBuffer.length) ? resultSampleBuffer.length : length;
+            int chunkSize = (length > resultSampleBuffer.length) ? resultSampleBuffer.length : length;
             System.arraycopy(newSampleData, offset, resultSampleBuffer, 0, chunkSize);
             int anzSamples = writeIntoFloatArrayBuffer(chunkSize);
             if (dspEnabled) {
@@ -413,7 +411,7 @@ public class AudioProcessor {
      * @param newSampleData
      * @since 23.12.2011
      */
-    public int writeSampleData(final byte[] newSampleData) {
+    public int writeSampleData(byte[] newSampleData) {
         return writeSampleData(newSampleData, 0, newSampleData.length);
     }
 }

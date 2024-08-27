@@ -23,10 +23,13 @@
 package de.quippy.javamod.io;
 
 import java.io.File;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import javax.sound.sampled.AudioFormat;
 
 import de.quippy.javamod.mixer.dsp.AudioProcessor;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -34,6 +37,8 @@ import de.quippy.javamod.system.Log;
  * @since 25.02.2011
  */
 public class GaplessSoundOutputStreamImpl extends SoundOutputStreamImpl {
+
+    private static final Logger logger = getLogger(GaplessSoundOutputStreamImpl.class.getName());
 
     public GaplessSoundOutputStreamImpl() {
         super();
@@ -47,7 +52,7 @@ public class GaplessSoundOutputStreamImpl extends SoundOutputStreamImpl {
      * @param keepSilent
      * @since 25.02.2011
      */
-    public GaplessSoundOutputStreamImpl(final AudioFormat audioFormat, final AudioProcessor audioProcessor, final File exportFile, final boolean playDuringExport, final boolean keepSilent) {
+    public GaplessSoundOutputStreamImpl(AudioFormat audioFormat, AudioProcessor audioProcessor, File exportFile, boolean playDuringExport, boolean keepSilent) {
         super(audioFormat, audioProcessor, exportFile, playDuringExport, keepSilent);
     }
 
@@ -73,7 +78,7 @@ public class GaplessSoundOutputStreamImpl extends SoundOutputStreamImpl {
             }
         } catch (Exception ex) {
             sourceLine = null;
-            Log.error("Error occured when opening audio device", ex);
+            logger.log(Level.ERROR, "Error occured when opening audio device", ex);
         }
     }
 
@@ -108,6 +113,7 @@ public class GaplessSoundOutputStreamImpl extends SoundOutputStreamImpl {
      *
      * @since 27.02.2011
      */
+    @Override
     public synchronized void closeAllDevices() {
         super.close();
     }
@@ -118,7 +124,7 @@ public class GaplessSoundOutputStreamImpl extends SoundOutputStreamImpl {
      * @since 25.02.2011
      */
     @Override
-    public synchronized void changeAudioFormatTo(final AudioFormat newAudioFormat) {
+    public synchronized void changeAudioFormatTo(AudioFormat newAudioFormat) {
         if (audioFormat == null || !audioFormat.matches(newAudioFormat)) {
             super.changeAudioFormatTo(newAudioFormat);
         }

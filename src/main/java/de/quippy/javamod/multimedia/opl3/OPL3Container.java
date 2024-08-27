@@ -23,18 +23,20 @@
 package de.quippy.javamod.multimedia.opl3;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.Properties;
-
 import javax.swing.JPanel;
 
 import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
+import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.Version;
 import de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence;
 import de.quippy.javamod.system.Helpers;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -43,10 +45,11 @@ import de.quippy.javamod.system.Log;
  */
 public class OPL3Container extends MultimediaContainer {
 
-    private static final String[] OPL3FILEEXTENSION = new String[]
-            {
-                    "rol", "laa", "cmf", "dro", "sci"
-            };
+    private static final Logger logger = getLogger(OPL3Container.class.getName());
+
+    private static final String[] OPL3FILEEXTENSION = {
+            "rol", "laa", "cmf", "dro", "sci"
+    };
     public static final String PROPERTY_OPL3PLAYER_SOUNDBANK = "javamod.player.opl3.soundbankurl";
     public static final String PROPERTY_OPL3PLAYER_OPLVERSION = "javamod.player.opl3.oplversion";
     public static final String PROPERTY_OPL3PLAYER_VIRTUAL_STEREO = "javamod.player.opl3.virtualStereo";
@@ -55,7 +58,6 @@ public class OPL3Container extends MultimediaContainer {
     public static final String DEFAULT_VIRTUAL_STEREO = "false";
     public static final String DEFAULT_OPLVERSION = "FMOPL_072_YM3812";
 
-
     private Properties currentProps = null;
 
     private OPL3Sequence opl3Sequence;
@@ -63,7 +65,7 @@ public class OPL3Container extends MultimediaContainer {
     private OPL3ConfigPanel OPL3ConfigPanel;
     private OPL3InfoPanel OPL3InfoPanel;
 
-    /**
+    /*
      * Will be executed during class load
      */
     static {
@@ -81,8 +83,8 @@ public class OPL3Container extends MultimediaContainer {
         return 49716;
     }
 
-    private EmuOPL.version getOPLVersion() {
-        return Enum.valueOf(EmuOPL.version.class, (currentProps != null) ? currentProps.getProperty(PROPERTY_OPL3PLAYER_OPLVERSION, DEFAULT_OPLVERSION) : DEFAULT_OPLVERSION);
+    private Version getOPLVersion() {
+        return Enum.valueOf(Version.class, (currentProps != null) ? currentProps.getProperty(PROPERTY_OPL3PLAYER_OPLVERSION, DEFAULT_OPLVERSION) : DEFAULT_OPLVERSION);
     }
 
     public OPL3Mixer getCurrentMixer() {
@@ -90,52 +92,38 @@ public class OPL3Container extends MultimediaContainer {
     }
 
     private URL getSoundBankURL() {
-        final String soundBankURL = (currentProps != null) ? currentProps.getProperty(PROPERTY_OPL3PLAYER_SOUNDBANK, DEFAULT_SOUNDBANKURL) : DEFAULT_SOUNDBANKURL;
-        if (soundBankURL == null || soundBankURL.length() == 0) return null;
+        String soundBankURL = (currentProps != null) ? currentProps.getProperty(PROPERTY_OPL3PLAYER_SOUNDBANK, DEFAULT_SOUNDBANKURL) : DEFAULT_SOUNDBANKURL;
+        if (soundBankURL == null || soundBankURL.isEmpty()) return null;
         return Helpers.createURLfromString(soundBankURL);
     }
 
-    /**
-     * @param url
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInstance(java.net.URL)
-     */
     @Override
-    public MultimediaContainer getInstance(final URL url) {
+    public MultimediaContainer getInstance(URL url) {
         MultimediaContainer result = super.getInstance(url);
         try {
             opl3Sequence = OPL3Sequence.createOPL3Sequence(url, getSoundBankURL());
             if (!MultimediaContainerManager.isHeadlessMode())
                 ((OPL3InfoPanel) getInfoPanel()).fillInfoPanelWith(opl3Sequence);
         } catch (IOException ex) {
-            Log.error("Loading of sequence failed", ex);
+            logger.log(Level.ERROR, "Loading of sequence failed", ex);
         }
         return result;
     }
 
-    /**
-     * @param url
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongInfosFor(java.net.URL)
-     */
     @Override
-    public Object[] getSongInfosFor(final URL url) {
+    public Object[] getSongInfosFor(URL url) {
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
-        Long duration = Long.valueOf(-1);
+        long duration = -1;
         try {
-            final OPL3Sequence opl3Sequence = OPL3Sequence.createOPL3Sequence(url, getSoundBankURL());
+            OPL3Sequence opl3Sequence = OPL3Sequence.createOPL3Sequence(url, getSoundBankURL());
             songName = opl3Sequence.getSongName();
-            duration = Long.valueOf(opl3Sequence.getLengthInMilliseconds());
+            duration = opl3Sequence.getLengthInMilliseconds();
         } catch (Throwable ex) {
             /* NOOP */
         }
         return new Object[] {songName, duration};
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongName()
-     */
     @Override
     public String getSongName() {
         if (opl3Sequence != null)
@@ -144,19 +132,11 @@ public class OPL3Container extends MultimediaContainer {
             return super.getSongName();
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#canExport()
-     */
     @Override
     public boolean canExport() {
         return true;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInfoPanel()
-     */
     @Override
     public JPanel getInfoPanel() {
         if (OPL3InfoPanel == null) {
@@ -166,10 +146,6 @@ public class OPL3Container extends MultimediaContainer {
         return OPL3InfoPanel;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getConfigPanel()
-     */
     @Override
     public JPanel getConfigPanel() {
         if (OPL3ConfigPanel == null) {
@@ -179,50 +155,34 @@ public class OPL3Container extends MultimediaContainer {
         return OPL3ConfigPanel;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getFileExtensionList()
-     */
     @Override
     public String[] getFileExtensionList() {
         return OPL3FILEEXTENSION;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getName()
-     */
     @Override
     public String getName() {
         return "OPL3-File";
     }
 
-    /**
-     * @param newProps
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationChanged(java.util.Properties)
-     */
     @Override
-    public void configurationChanged(final Properties newProps) {
+    public void configurationChanged(Properties newProps) {
         if (currentProps == null) currentProps = new Properties();
         currentProps.setProperty(PROPERTY_OPL3PLAYER_SOUNDBANK, newProps.getProperty(PROPERTY_OPL3PLAYER_SOUNDBANK, DEFAULT_SOUNDBANKURL));
         currentProps.setProperty(PROPERTY_OPL3PLAYER_VIRTUAL_STEREO, newProps.getProperty(PROPERTY_OPL3PLAYER_VIRTUAL_STEREO, DEFAULT_VIRTUAL_STEREO));
         currentProps.setProperty(PROPERTY_OPL3PLAYER_OPLVERSION, newProps.getProperty(PROPERTY_OPL3PLAYER_OPLVERSION, DEFAULT_OPLVERSION));
 
         if (!MultimediaContainerManager.isHeadlessMode()) {
-            final OPL3ConfigPanel configPanel = (OPL3ConfigPanel) getConfigPanel();
+            OPL3ConfigPanel configPanel = (OPL3ConfigPanel) getConfigPanel();
             configPanel.configurationChanged(newProps);
         }
     }
 
-    /**
-     * @param props
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationSave(java.util.Properties)
-     */
     @Override
-    public void configurationSave(final Properties props) {
+    public void configurationSave(Properties props) {
         if (currentProps == null) currentProps = new Properties();
         if (!MultimediaContainerManager.isHeadlessMode()) {
-            final OPL3ConfigPanel configPanel = (OPL3ConfigPanel) getConfigPanel();
+            OPL3ConfigPanel configPanel = (OPL3ConfigPanel) getConfigPanel();
             configPanel.configurationSave(currentProps);
         }
 
@@ -233,25 +193,18 @@ public class OPL3Container extends MultimediaContainer {
         }
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#createNewMixer()
-     */
     @Override
     public Mixer createNewMixer() {
         if (opl3Sequence == null) return null;
 
         configurationSave(currentProps);
 
-        final boolean doVirtualStereoMix = Boolean.parseBoolean(currentProps.getProperty(PROPERTY_OPL3PLAYER_VIRTUAL_STEREO, DEFAULT_VIRTUAL_STEREO));
+        boolean doVirtualStereoMix = Boolean.parseBoolean(currentProps.getProperty(PROPERTY_OPL3PLAYER_VIRTUAL_STEREO, DEFAULT_VIRTUAL_STEREO));
 
         currentMixer = new OPL3Mixer(getOPLVersion(), getSampleRate(), opl3Sequence, doVirtualStereoMix);
         return currentMixer;
     }
 
-    /**
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#cleanUp()
-     */
     @Override
     public void cleanUp() {
     }

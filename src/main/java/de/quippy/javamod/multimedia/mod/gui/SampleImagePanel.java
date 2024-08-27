@@ -24,6 +24,7 @@ package de.quippy.javamod.multimedia.mod.gui;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.io.Serial;
 import javax.swing.JComponent;
 
 import de.quippy.javamod.multimedia.mod.ModConstants;
@@ -36,6 +37,7 @@ import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
  */
 public class SampleImagePanel extends JComponent {
 
+    @Serial
     private static final long serialVersionUID = 1757748155250484172L;
     private static final Color LOOP_COLOR = Color.yellow;
     private static final Color SUSTAINLOOP_COLOR = Color.green;
@@ -53,13 +55,13 @@ public class SampleImagePanel extends JComponent {
         setDoubleBuffered(true);
     }
 
-    private void drawSample(final Graphics g, final int top, final int left, final int width, final int height, final int loopStart, final int loopEnd, final int sustainStart, final int sustainEnd, final long[] buffer) {
-        final int halfHeight = height >> 1;
+    private void drawSample(Graphics g, int top, int left, int width, int height, int loopStart, int loopEnd, int sustainStart, int sustainEnd, long[] buffer) {
+        int halfHeight = height >> 1;
         g.setColor(LINE_COLOR);
         g.drawLine(left, top + halfHeight, left + width, top + halfHeight);
 
         if (buffer != null) {
-            final int anzSamples = sample.length; //-1; // with this we show the first sample for interpolation as well - but is needed for loopEnd display
+            int anzSamples = sample.length; //-1; // with this we show the first sample for interpolation as well - but is needed for loopEnd display
 
             int xpOld = 0;
             int ypOld = 0;
@@ -106,7 +108,7 @@ public class SampleImagePanel extends JComponent {
     }
 
     /**
-     * @param gfx
+     * @param g
      * @since 07.01.2024
      */
     private void drawSample(Graphics g) {
@@ -115,7 +117,7 @@ public class SampleImagePanel extends JComponent {
         int width = getWidth();
         int height = getHeight();
 
-        final int halfHeight = height >> 1;
+        int halfHeight = height >> 1;
 
         g.setColor(BACKGROUND_COLOR);
         g.fillRect(left, top, width, height);

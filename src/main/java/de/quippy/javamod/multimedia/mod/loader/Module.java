@@ -26,6 +26,7 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 
 import de.quippy.javamod.io.ModfileInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
@@ -206,21 +207,21 @@ public abstract class Module {
     private static class ITDeCompressor {
 
         // StreamData
-        private ModfileInputStream input;
+        private final ModfileInputStream input;
         // Block of Data
         private byte[] sourceBuffer;
         private int sourceIndex;
         // Destination (24Bit signed mono!)
-        private long[] destBuffer;
+        private final long[] destBuffer;
         private int destIndex;
         // Samples to fill
         private int anzSamples;
         // Bits remaining
         private int bitsRemain;
         // true, if we have IT Version >2.15 packed Data
-        private boolean isIT215;
+        private final boolean isIT215;
 
-        public ITDeCompressor(final long[] buffer, final int length, boolean isIT215, ModfileInputStream inputStream) {
+        public ITDeCompressor(long[] buffer, int length, boolean isIT215, ModfileInputStream inputStream) {
             this.input = inputStream;
             this.sourceBuffer = null;
             this.sourceIndex = 0;
@@ -324,16 +325,14 @@ public abstract class Module {
                 while (blkpos < blklen) {
                     value = readbits(width); // read bits
 
-                    if (width < 7) // method 1 (1-6 bits)
-                    {
+                    if (width < 7) { // method 1 (1-6 bits)
                         if (value == (1 << (width - 1))) // check for "100..."
                         {
                             value = readbits(3) + 1; // yes -> read new width;
                             width = (value < width) ? value : value + 1; // and expand it
                             continue; // ... next value
                         }
-                    } else if (width < 9) // method 2 (7-8 bits)
-                    {
+                    } else if (width < 9) { // method 2 (7-8 bits)
                         int border = (0xFF >> (9 - width)) - 4; // lower border for width chg
 
                         if (value > border && value <= (border + 8)) {
@@ -341,15 +340,12 @@ public abstract class Module {
                             width = (value < width) ? value : value + 1; // and expand it
                             continue; // ... next value
                         }
-                    } else if (width == 9) // method 3 (9 bits)
-                    {
-                        if ((value & 0x100) != 0) // bit 8 set?
-                        {
+                    } else if (width == 9) { // method 3 (9 bits)
+                        if ((value & 0x100) != 0) { // bit 8 set?
                             width = (value + 1) & 0xFF; // new width...
                             continue; // ... and next value
                         }
-                    } else // illegal width, abort
-                    {
+                    } else { // illegal width, abort
                         return false;
                     }
 
@@ -405,16 +401,13 @@ public abstract class Module {
                 while (blkpos < blklen) {
                     value = readbits(width); // read bits
 
-                    if (width < 7) // method 1 (1-6 bits)
-                    {
-                        if (value == (1 << (width - 1))) // check for "100..."
-                        {
+                    if (width < 7) { // method 1 (1-6 bits)
+                        if (value == (1 << (width - 1))) { // check for "100..."
                             value = readbits(4) + 1; // yes -> read new width;
                             width = (value < width) ? value : value + 1; // and expand it
                             continue; // ... next value
                         }
-                    } else if (width < 17) // method 2 (7-16 bits)
-                    {
+                    } else if (width < 17) { // method 2 (7-16 bits)
                         int border = (0xFFFF >> (17 - width)) - 8; // lower border for width chg
 
                         if (value > border && value <= (border + 16)) {
@@ -422,15 +415,12 @@ public abstract class Module {
                             width = (value < width) ? value : value + 1; // and expand it
                             continue; // ... next value
                         }
-                    } else if (width == 17) // method 3 (17 bits)
-                    {
-                        if ((value & 0x10000) != 0) // bit 16 set?
-                        {
+                    } else if (width == 17) { // method 3 (17 bits)
+                        if ((value & 0x10000) != 0) { // bit 16 set?
                             width = (value + 1) & 0xFF; // new width...
                             continue; // ... and next value
                         }
-                    } else // illegal width, abort
-                    {
+                    } else { // illegal width, abort
                         return false;
                     }
 
@@ -478,7 +468,7 @@ public abstract class Module {
     /**
      * Constructor for Module
      */
-    protected Module(final String fileName) {
+    protected Module(String fileName) {
         this();
         this.fileName = fileName;
     }
@@ -489,7 +479,7 @@ public abstract class Module {
      * @param fileName
      * @return
      */
-    public Module loadModFile(final String fileName) throws IOException {
+    public Module loadModFile(String fileName) throws IOException {
         return loadModFile(new File(fileName));
     }
 
@@ -500,7 +490,7 @@ public abstract class Module {
      * @param file
      * @return
      */
-    public Module loadModFile(final File file) throws IOException {
+    public Module loadModFile(File file) throws IOException {
         return loadModFile(file.toURI().toURL());
     }
 
@@ -509,7 +499,7 @@ public abstract class Module {
      * @return
      * @since 12.10.2007
      */
-    public Module loadModFile(final URL url) throws IOException {
+    public Module loadModFile(URL url) throws IOException {
         ModfileInputStream inputStream = null;
         try {
             inputStream = new ModfileInputStream(url);
@@ -517,7 +507,7 @@ public abstract class Module {
         } finally {
             if (inputStream != null) try {
                 inputStream.close();
-            } catch (Exception ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (Exception ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
     }
 
@@ -527,7 +517,7 @@ public abstract class Module {
      * @throws IOException
      * @since 31.12.2007
      */
-    public Module loadModFile(final ModfileInputStream inputStream) throws IOException {
+    public Module loadModFile(ModfileInputStream inputStream) throws IOException {
         Module mod = this.getNewInstance(inputStream.getFileName());
         mod.loadModFileInternal(inputStream);
         return mod;
@@ -537,31 +527,29 @@ public abstract class Module {
      * Loads samples
      *
      * @param current
-     * @param flags
-     * @param input
-     * @param offset
+     * @param inputStream
      * @return the new offset after loading
      * @since 03.11.2007
      */
-    protected void readSampleData(final Sample current, final ModfileInputStream inputStream) throws IOException {
-        final int flags = current.sampleType;
-        final boolean isStereo = (flags & ModConstants.SM_STEREO) != 0;
-        final boolean isUnsigned = (flags & ModConstants.SM_PCMU) != 0;
-        final boolean is16Bit = (flags & ModConstants.SM_16BIT) != 0;
-        final boolean isBigEndian = (flags & ModConstants.SM_BigEndian) != 0;
+    protected void readSampleData(Sample current, ModfileInputStream inputStream) throws IOException {
+        int flags = current.sampleType;
+        boolean isStereo = (flags & ModConstants.SM_STEREO) != 0;
+        boolean isUnsigned = (flags & ModConstants.SM_PCMU) != 0;
+        boolean is16Bit = (flags & ModConstants.SM_16BIT) != 0;
+        boolean isBigEndian = (flags & ModConstants.SM_BigEndian) != 0;
         //current.setStereo(isStereo); // just to be sure...
 
         if (current.length > 0) {
             current.allocSampleData();
             if ((flags & ModConstants.SM_IT214) != 0 || (flags & ModConstants.SM_IT215) != 0) {
-                final boolean isIT215 = (flags & ModConstants.SM_IT215) != 0;
-                final ITDeCompressor reader = new ITDeCompressor(current.sampleL, current.length, isIT215, inputStream);
+                boolean isIT215 = (flags & ModConstants.SM_IT215) != 0;
+                ITDeCompressor reader = new ITDeCompressor(current.sampleL, current.length, isIT215, inputStream);
                 if (is16Bit)
                     reader.decompress16();
                 else
                     reader.decompress8();
                 if (isStereo) {
-                    final ITDeCompressor reader2 = new ITDeCompressor(current.sampleR, current.length, isIT215, inputStream);
+                    ITDeCompressor reader2 = new ITDeCompressor(current.sampleR, current.length, isIT215, inputStream);
                     if (is16Bit)
                         reader2.decompress16();
                     else
@@ -571,75 +559,73 @@ public abstract class Module {
                 byte[] deltaLUT = new byte[16];
                 inputStream.read(deltaLUT);
 
-                final int length = (current.length + 1) >> 1;
+                int length = (current.length + 1) >> 1;
                 byte currentSample = 0;
                 for (int i = 0, s = 0; i < length; i++) {
-                    final int nibble = inputStream.read();
+                    int nibble = inputStream.read();
 
                     currentSample += deltaLUT[nibble & 0x0F];
-                    current.sampleL[s++] = ModConstants.promoteSigned8BitToSigned32Bit((long) currentSample);
+                    current.sampleL[s++] = ModConstants.promoteSigned8BitToSigned32Bit(currentSample);
 
                     currentSample += deltaLUT[nibble >> 4];
-                    current.sampleL[s++] = ModConstants.promoteSigned8BitToSigned32Bit((long) currentSample);
+                    current.sampleL[s++] = ModConstants.promoteSigned8BitToSigned32Bit(currentSample);
                 }
             } else if ((flags & ModConstants.SM_PCMD) != 0 || (flags & ModConstants.SM_PTM8Dto16) != 0) {
                 if (is16Bit && (flags & ModConstants.SM_PTM8Dto16) == 0) {
                     short delta = 0;
                     for (int s = 0; s < current.length; s++) {
-                        final int sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
-                        current.sampleL[s] = ModConstants.promoteSigned16BitToSigned32Bit((long) (delta += sample));
+                        int sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
+                        current.sampleL[s] = ModConstants.promoteSigned16BitToSigned32Bit(delta += sample);
                     }
                     if (isStereo) {
                         delta = 0;
                         for (int s = 0; s < current.length; s++) {
-                            final int sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
-                            current.sampleR[s] = ModConstants.promoteSigned16BitToSigned32Bit((long) (delta += sample));
+                            int sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
+                            current.sampleR[s] = ModConstants.promoteSigned16BitToSigned32Bit(delta += sample);
                         }
                     }
                 } else {
                     byte delta = 0;
                     for (int s = 0; s < current.length; s++)
-                        current.sampleL[s] = ModConstants.promoteSigned8BitToSigned32Bit((long) (delta += inputStream.readByte()));
+                        current.sampleL[s] = ModConstants.promoteSigned8BitToSigned32Bit(delta += inputStream.readByte());
                     if (isStereo) {
                         delta = 0;
                         for (int s = 0; s < current.length; s++)
-                            current.sampleR[s] = ModConstants.promoteSigned8BitToSigned32Bit((long) (delta += inputStream.readByte()));
+                            current.sampleR[s] = ModConstants.promoteSigned8BitToSigned32Bit(delta += inputStream.readByte());
                     }
                 }
-            } else if ((flags & ModConstants.SM_16BIT) != 0) // 16 Bit PCM Samples
-            {
+            } else if ((flags & ModConstants.SM_16BIT) != 0) { // 16 Bit PCM Samples
                 for (int s = 0; s < current.length; s++) {
-                    final short sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
+                    short sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
                     if (isUnsigned) // unsigned
-                        current.sampleL[s] = ModConstants.promoteUnsigned16BitToSigned32Bit((long) sample);
+                        current.sampleL[s] = ModConstants.promoteUnsigned16BitToSigned32Bit(sample);
                     else
-                        current.sampleL[s] = ModConstants.promoteSigned16BitToSigned32Bit((long) sample);
+                        current.sampleL[s] = ModConstants.promoteSigned16BitToSigned32Bit(sample);
                 }
                 if (isStereo) {
                     for (int s = 0; s < current.length; s++) {
-                        final short sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
+                        short sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
                         if (isUnsigned) // unsigned
-                            current.sampleR[s] = ModConstants.promoteUnsigned16BitToSigned32Bit((long) sample);
+                            current.sampleR[s] = ModConstants.promoteUnsigned16BitToSigned32Bit(sample);
                         else
-                            current.sampleR[s] = ModConstants.promoteSigned16BitToSigned32Bit((long) sample);
+                            current.sampleR[s] = ModConstants.promoteSigned16BitToSigned32Bit(sample);
                     }
                 }
-            } else // 8 Bit Samples, singed or unsigned
-            {
+            } else { // 8 Bit Samples, singed or unsigned
                 for (int s = 0; s < current.length; s++) {
-                    final byte sample = inputStream.readByte();
+                    byte sample = inputStream.readByte();
                     if (isUnsigned) // unsigned
-                        current.sampleL[s] = ModConstants.promoteUnsigned8BitToSigned32Bit((long) sample);
+                        current.sampleL[s] = ModConstants.promoteUnsigned8BitToSigned32Bit(sample);
                     else
-                        current.sampleL[s] = ModConstants.promoteSigned8BitToSigned32Bit((long) sample);
+                        current.sampleL[s] = ModConstants.promoteSigned8BitToSigned32Bit(sample);
                 }
                 if (isStereo) {
                     for (int s = 0; s < current.length; s++) {
-                        final byte sample = inputStream.readByte();
+                        byte sample = inputStream.readByte();
                         if (isUnsigned) // unsigned
-                            current.sampleR[s] = ModConstants.promoteUnsigned8BitToSigned32Bit((long) sample);
+                            current.sampleR[s] = ModConstants.promoteUnsigned8BitToSigned32Bit(sample);
                         else
-                            current.sampleR[s] = ModConstants.promoteSigned8BitToSigned32Bit((long) sample);
+                            current.sampleR[s] = ModConstants.promoteSigned8BitToSigned32Bit(sample);
                     }
                 }
 
@@ -656,7 +642,7 @@ public abstract class Module {
      * @throws IOException
      * @since 10.01.2010
      */
-    public abstract boolean checkLoadingPossible(final ModfileInputStream inputStream) throws IOException;
+    public abstract boolean checkLoadingPossible(ModfileInputStream inputStream) throws IOException;
 
     /**
      * Create an Instance of your own - is used by loadModFile before loadModFileInternal is called
@@ -664,7 +650,7 @@ public abstract class Module {
      * @return
      * @since 10.01.2010
      */
-    protected abstract Module getNewInstance(final String fileName);
+    protected abstract Module getNewInstance(String fileName);
 
     /**
      * @param inputStream
@@ -672,12 +658,12 @@ public abstract class Module {
      * @throws IOException
      * @since 31.12.2007
      */
-    protected abstract void loadModFileInternal(final ModfileInputStream inputStream) throws IOException;
+    protected abstract void loadModFileInternal(ModfileInputStream inputStream) throws IOException;
 
     /**
      * @return Returns the mixer.
      */
-    public abstract BasicModMixer getModMixer(final int sampleRate, final int doISP, final int doNoLoops, final int maxNNAChannels);
+    public abstract BasicModMixer getModMixer(int sampleRate, int doISP, int doNoLoops, int maxNNAChannels);
 
     /**
      * Retrieve the file extension list this loader/player is used for
@@ -696,7 +682,7 @@ public abstract class Module {
      * @param channel
      * @return
      */
-    public abstract int getPanningValue(final int channel);
+    public abstract int getPanningValue(int channel);
 
     /**
      * Give the channel volume for this channel. 0->64
@@ -705,7 +691,7 @@ public abstract class Module {
      * @return
      * @since 25.06.2006
      */
-    public abstract int getChannelVolume(final int channel);
+    public abstract int getChannelVolume(int channel);
 
     /**
      * Return value from Helpers, section "The frequency tables supported"
@@ -747,7 +733,7 @@ public abstract class Module {
      * @param length
      * @since 25.06.2006
      */
-    protected void allocArrangement(final int length) {
+    protected void allocArrangement(int length) {
         arrangement = new int[length];
         msTimeIndex = new long[length];
         arrangementPositionPlayed = new boolean[length];
@@ -788,20 +774,20 @@ public abstract class Module {
     /**
      * @param arrangement The arrangement to set.
      */
-    public void setArrangement(final int[] arrangement) {
+    public void setArrangement(int[] arrangement) {
         this.arrangement = arrangement;
     }
 
     public void resetLoopRecognition() {
-        for (int i = 0; i < arrangementPositionPlayed.length; i++) arrangementPositionPlayed[i] = false;
+        Arrays.fill(arrangementPositionPlayed, false);
         getPatternContainer().resetRowsPlayed();
     }
 
-    public boolean isArrangementPositionPlayed(final int position) {
+    public boolean isArrangementPositionPlayed(int position) {
         return arrangementPositionPlayed[position];
     }
 
-    public void setArrangementPositionPlayed(final int position) {
+    public void setArrangementPositionPlayed(int position) {
         arrangementPositionPlayed[position] = true;
     }
 
@@ -815,7 +801,7 @@ public abstract class Module {
     /**
      * @param speed The bPMSpeed to set.
      */
-    protected void setBPMSpeed(final int speed) {
+    protected void setBPMSpeed(int speed) {
         BPMSpeed = speed;
     }
 
@@ -827,9 +813,9 @@ public abstract class Module {
     }
 
     /**
-     * @param instruments The instruments to set.
+     * @param instrumentContainer The instruments to set.
      */
-    protected void setInstrumentContainer(final InstrumentsContainer instrumentContainer) {
+    protected void setInstrumentContainer(InstrumentsContainer instrumentContainer) {
         this.instrumentContainer = instrumentContainer;
     }
 
@@ -843,7 +829,7 @@ public abstract class Module {
     /**
      * @param channels The nChannels to set.
      */
-    protected void setNChannels(final int channels) {
+    protected void setNChannels(int channels) {
         nChannels = channels;
     }
 
@@ -857,7 +843,7 @@ public abstract class Module {
     /**
      * @param pattern The nPattern to set.
      */
-    protected void setNPattern(final int pattern) {
+    protected void setNPattern(int pattern) {
         nPattern = pattern;
     }
 
@@ -869,9 +855,9 @@ public abstract class Module {
     }
 
     /**
-     * @param samples The nInstruments to set.
+     * @param instruments The nInstruments to set.
      */
-    protected void setNInstruments(final int instruments) {
+    protected void setNInstruments(int instruments) {
         nInstruments = instruments;
     }
 
@@ -885,7 +871,7 @@ public abstract class Module {
     /**
      * @param samples The nSamples to set.
      */
-    protected void setNSamples(final int samples) {
+    protected void setNSamples(int samples) {
         nSamples = samples;
     }
 
@@ -897,9 +883,9 @@ public abstract class Module {
     }
 
     /**
-     * @param songLength The songLength to set.
+     * @param newSongLength The songLength to set.
      */
-    protected void setSongLength(final int newSongLength) {
+    protected void setSongLength(int newSongLength) {
         songLength = newSongLength;
     }
 
@@ -911,9 +897,9 @@ public abstract class Module {
     }
 
     /**
-     * @param songRestart the songRestart to set
+     * @param newSongRestart the songRestart to set
      */
-    protected void setSongRestart(final int newSongRestart) {
+    protected void setSongRestart(int newSongRestart) {
         songRestart = newSongRestart;
     }
 
@@ -925,9 +911,9 @@ public abstract class Module {
     }
 
     /**
-     * @param songName The songName to set.
+     * @param newSongName The songName to set.
      */
-    protected void setSongName(final String newSongName) {
+    protected void setSongName(String newSongName) {
         songName = newSongName;
     }
 
@@ -939,9 +925,9 @@ public abstract class Module {
     }
 
     /**
-     * @param tempo The tempo to set.
+     * @param newTempo The tempo to set.
      */
-    protected void setTempo(final int newTempo) {
+    protected void setTempo(int newTempo) {
         tempo = newTempo;
     }
 
@@ -964,9 +950,9 @@ public abstract class Module {
     }
 
     /**
-     * @param trackerName The trackerName to set.
+     * @param newTrackerName The trackerName to set.
      */
-    protected void setTrackerName(final String newTrackerName) {
+    protected void setTrackerName(String newTrackerName) {
         trackerName = newTrackerName;
     }
 
@@ -978,9 +964,9 @@ public abstract class Module {
     }
 
     /**
-     * @param patternContainer The patternContainer to set.
+     * @param newPatternContainer The patternContainer to set.
      */
-    protected void setPatternContainer(final PatternContainer newPatternContainer) {
+    protected void setPatternContainer(PatternContainer newPatternContainer) {
         patternContainer = newPatternContainer;
     }
 
@@ -999,9 +985,9 @@ public abstract class Module {
     }
 
     /**
-     * @param modID The modID to set.
+     * @param newModID The modID to set.
      */
-    protected void setModID(final String newModID) {
+    protected void setModID(String newModID) {
         modID = newModID;
     }
 
@@ -1013,9 +999,9 @@ public abstract class Module {
     }
 
     /**
-     * @param baseVolume The baseVolume to set.
+     * @param newBaseVolume The baseVolume to set.
      */
-    protected void setBaseVolume(final int newBaseVolume) {
+    protected void setBaseVolume(int newBaseVolume) {
         baseVolume = newBaseVolume;
     }
 
@@ -1027,9 +1013,9 @@ public abstract class Module {
     }
 
     /**
-     * @param mixingPreAmp The mixing Pre-Amp to set
+     * @param newMixingPreAmp The mixing Pre-Amp to set
      */
-    protected void setMixingPreAmp(final int newMixingPreAmp) {
+    protected void setMixingPreAmp(int newMixingPreAmp) {
         mixingPreAmp = newMixingPreAmp;
     }
 
@@ -1041,9 +1027,9 @@ public abstract class Module {
     }
 
     /**
-     * @param synthMixingPreAmp The synth mixing Pre-Amp to set
+     * @param newSynthMixingPreAmp The synth mixing Pre-Amp to set
      */
-    protected void setSynthMixingPreAmp(final int newSynthMixingPreAmp) {
+    protected void setSynthMixingPreAmp(int newSynthMixingPreAmp) {
         synthMixingPreAmp = newSynthMixingPreAmp;
     }
 
@@ -1055,9 +1041,9 @@ public abstract class Module {
     }
 
     /**
-     * @param songFlags the songFlags to set
+     * @param newSongFlags the songFlags to set
      */
-    protected void setSongFlags(final int newSongFlags) {
+    protected void setSongFlags(int newSongFlags) {
         songFlags = newSongFlags;
     }
 
@@ -1069,9 +1055,9 @@ public abstract class Module {
     }
 
     /**
-     * @param modType The modType to set.
+     * @param newModType The modType to set.
      */
-    protected void setModType(final int newModType) {
+    protected void setModType(int newModType) {
         modType = newModType;
     }
 
@@ -1083,23 +1069,23 @@ public abstract class Module {
     }
 
     /**
-     * @param version the version to set
+     * @param newVersion the version to set
      */
-    public void setVersion(final int newVersion) {
+    public void setVersion(int newVersion) {
         version = newVersion;
     }
 
     /**
-     * @return the lenthInMilliseconds
+     * @return the lengthInMilliseconds
      */
     public long getLengthInMilliseconds() {
         return lengthInMilliseconds;
     }
 
     /**
-     * @param lenthInMilliseconds the lenthInMilliseconds to set
+     * @param newLengthInMilliseconds the lenthInMilliseconds to set
      */
-    public void setLengthInMilliseconds(final long newLengthInMilliseconds) {
+    public void setLengthInMilliseconds(long newLengthInMilliseconds) {
         lengthInMilliseconds = newLengthInMilliseconds;
     }
 
@@ -1130,21 +1116,15 @@ public abstract class Module {
      * @since 18.12.2023
      */
     public String getFrequencyTableString() {
-        switch (getFrequencyTable()) {
-            case ModConstants.STM_S3M_TABLE:
-                return "Scream Tracker";
-            case ModConstants.IT_AMIGA_TABLE:
-                return "Impulse Tracker log";
-            case ModConstants.IT_LINEAR_TABLE:
-                return "Impulse Tracker linear";
-            case ModConstants.AMIGA_TABLE:
-                return "Protracker log";
-            case ModConstants.XM_AMIGA_TABLE:
-                return "Fast Tracker log";
-            case ModConstants.XM_LINEAR_TABLE:
-                return "Fast Tracker linear";
-        }
-        return "Unknown";
+        return switch (getFrequencyTable()) {
+            case ModConstants.STM_S3M_TABLE -> "Scream Tracker";
+            case ModConstants.IT_AMIGA_TABLE -> "Impulse Tracker log";
+            case ModConstants.IT_LINEAR_TABLE -> "Impulse Tracker linear";
+            case ModConstants.AMIGA_TABLE -> "Protracker log";
+            case ModConstants.XM_AMIGA_TABLE -> "Fast Tracker log";
+            case ModConstants.XM_LINEAR_TABLE -> "Fast Tracker linear";
+            default -> "Unknown";
+        };
     }
 
     public boolean isStereo() {
@@ -1166,18 +1146,15 @@ public abstract class Module {
     }
 
     /**
-     * @return
-     * @see java.lang.Object#toString()
      * @since 29.03.2010
      */
     @Override
     public String toString() {
-        StringBuilder modInfo = new StringBuilder(toShortInfoString());
-        modInfo.append("\n\nSong named: ")
-                .append(getSongName()).append('\n')
-                .append(getSongMessage()).append('\n')
-                .append(getInstrumentContainer().toString());
-        return modInfo.toString();
+        String modInfo = toShortInfoString() + "\n\nSong named: " +
+                getSongName() + '\n' +
+                getSongMessage() + '\n' +
+                getInstrumentContainer().toString();
+        return modInfo;
     }
 
     // Flags for readExtendedFlags
@@ -1208,8 +1185,8 @@ public abstract class Module {
      * @throws IOException
      * @since 13.02.2024
      */
-    protected void readExtendedFlags(final ModfileInputStream inputStream, final Instrument ins, final int size) throws IOException {
-        final int flag = (int) inputStream.readIntelBytes(size); // OMPT reads only 8 bits, but flags indicate 16 bit! We rely on "size"
+    protected static void readExtendedFlags(ModfileInputStream inputStream, Instrument ins, int size) throws IOException {
+        int flag = (int) inputStream.readIntelBytes(size); // OMPT reads only 8 bits, but flags indicate 16 bit! We rely on "size"
         if ((flag & dFdd_VOLUME) != 0) ins.volumeEnvelope.on = true;
         if ((flag & dFdd_VOLSUSTAIN) != 0) ins.volumeEnvelope.sustain = true;
         if ((flag & dFdd_VOLLOOP) != 0) ins.volumeEnvelope.loop = true;
@@ -1238,7 +1215,7 @@ public abstract class Module {
      * @throws IOException
      * @since 03.02.2024
      */
-    protected void readInstrumentExtensionField(final ModfileInputStream inputStream, final Instrument ins, final int code, final int size) throws IOException {
+    protected static void readInstrumentExtensionField(ModfileInputStream inputStream, Instrument ins, int code, int size) throws IOException {
         if (size > inputStream.length() || ins == null) return;
         switch (code) {
             case 0x56522E2E: //"VR.." VOLRampUp
@@ -1356,16 +1333,15 @@ public abstract class Module {
      * @throws IOException
      * @since 19.01.2024
      */
-    protected boolean loadExtendedInstrumentProperties(final ModfileInputStream inputStream) throws IOException {
-        final int marker = inputStream.readIntelDWord();
-        if (marker != 0x4D505458) // MPTX - ModPlugExtraInstrumentInfo
-        {
+    protected boolean loadExtendedInstrumentProperties(ModfileInputStream inputStream) throws IOException {
+        int marker = inputStream.readIntelDWord();
+        if (marker != 0x4D505458) { // MPTX - ModPlugExtraInstrumentInfo
             inputStream.skipBack(4);
             return false;
         }
 //		System.out.println("\nExtendedInstrumentProperties");
         while (inputStream.length() >= 6) {
-            final int code = inputStream.readIntelDWord();
+            int code = inputStream.readIntelDWord();
             if (code == 0x4D505453 || // Start of MPTM extensions, non-ASCII ID or truncated field
                     (code & 0x80808080) != 0 || (code & 0x60606060) == 0) {
                 inputStream.skipBack(4);
@@ -1373,7 +1349,7 @@ public abstract class Module {
             }
 //			System.out.println("case 0x"+ModConstants.getAsHex(code, 8) + ": //\"" + Helpers.retrieveAsString(new byte[] {(byte)((code>>24)&0xFF), (byte)((code>>16)&0xFF), (byte)((code>>8)&0xFF), (byte)(code&0xFF)}, 0, 4)+"\"");
             // size of this property for ONE instrument
-            final int size = inputStream.readIntelWord();
+            int size = inputStream.readIntelWord();
             for (int i = 0; i < getNInstruments(); i++) {
                 readInstrumentExtensionField(inputStream, getInstrumentContainer().getInstrument(i), code, size);
             }
@@ -1388,30 +1364,28 @@ public abstract class Module {
      * @throws IOException
      * @since 03.02.2024
      */
-    protected boolean loadExtendedSongProperties(final ModfileInputStream inputStream, final boolean ignoreChannelCount) throws IOException {
-        final int marker = inputStream.readIntelDWord();
-        if (marker != 0x4D505453) // MPTS - ModPlugExtraSongInfo
-        {
+    protected boolean loadExtendedSongProperties(ModfileInputStream inputStream, boolean ignoreChannelCount) throws IOException {
+        int marker = inputStream.readIntelDWord();
+        if (marker != 0x4D50_5453) { // MPTS - ModPlugExtraSongInfo
             inputStream.skipBack(4);
             return false;
         }
 //		System.out.println("\nExtendedSongProperties");
         while (inputStream.length() >= 6) {
-            final int code = inputStream.readIntelDWord();
+            int code = inputStream.readIntelDWord();
 //			System.out.println("case 0x"+ModConstants.getAsHex(code, 8) + ": //\"" + Helpers.retrieveAsString(new byte[] {(byte)((code>>24)&0xFF), (byte)((code>>16)&0xFF), (byte)((code>>8)&0xFF), (byte)(code&0xFF)}, 0, 4)+"\"");
-            final int size = inputStream.readIntelWord();
+            int size = inputStream.readIntelWord();
 
-            if (code == 0x04383232) // Start of MPTM extensions, non-ASCII ID or truncated field
-            {
+            if (code == 0x0438_3232) { // Start of MPTM extensions, non-ASCII ID or truncated field
                 inputStream.skipBack(6);
                 break;
-            } else if ((code & 0x80808080) != 0 || (code & 0x60606060) == 0 || inputStream.length() < size) {
+            } else if ((code & 0x8080_8080) != 0 || (code & 0x6060_6060) == 0 || inputStream.length() < size) {
                 break;
             }
 
             switch (code) {
                 case 0x44542E2E: //"DT.." - default BPM
-                    final int bpm = (int) inputStream.readIntelBytes(size);
+                    int bpm = (int) inputStream.readIntelBytes(size);
                     setBPMSpeed(bpm);
                     break;
                 case 0x52464544: //"DTFR" - default BPM - fraction - is written as MagicLE
@@ -1425,7 +1399,7 @@ public abstract class Module {
                     rowsPerMeasure = (int) inputStream.readIntelBytes(size);
                     break;
                 case 0x432E2E2E: //"C..." - # channels
-                    final int channels = (int) inputStream.readIntelBytes(size);
+                    int channels = (int) inputStream.readIntelBytes(size);
                     if (!ignoreChannelCount) setNChannels(channels);
                     break;
                 case 0x544D2E2E: //"TM.." - Tempo mode
@@ -1449,7 +1423,7 @@ public abstract class Module {
                     baseVolume = (int) inputStream.readIntelBytes(size);
                     break;
                 case 0x52502E2E: //"RP.." - Song Restart
-                    final int restartPosition = (int) inputStream.readIntelBytes(size);
+                    int restartPosition = (int) inputStream.readIntelBytes(size);
                     if ((getModType() & ModConstants.MODTYPE_XM) == 0) setSongRestart(restartPosition); // Skip for XMs!
                     break;
                 case 0x504D5352: //"RSMP" - Resampling Method - written as MagicLE
@@ -1460,16 +1434,16 @@ public abstract class Module {
                     break;
                 case 0x4C4F4343: //"CCOL" - Channel Colors - written as MagicLE
                     if ((size % 4) == 0) {
-                        final int numChannels = size >> 2;
-                        final Color[] chnColors = new Color[numChannels];
+                        int numChannels = size >> 2;
+                        Color[] chnColors = new Color[numChannels];
 
-                        final byte[] rgb = new byte[4];
+                        byte[] rgb = new byte[4];
                         for (int c = 0; c < numChannels; c++) {
                             inputStream.read(rgb, 0, 4);
                             if (rgb[3] != 0)
                                 chnColors[c] = null;
                             else
-                                chnColors[c] = new Color((int) (rgb[0] & 0xFF) | ((int) (rgb[1] & 0xFF) << 8) | ((int) (rgb[2] & 0xFF) << 16));
+                                chnColors[c] = new Color((rgb[0] & 0xFF) | ((rgb[1] & 0xFF) << 8) | ((rgb[2] & 0xFF) << 16));
                         }
                     } else
                         inputStream.skip(size);
@@ -1478,17 +1452,16 @@ public abstract class Module {
                     author = inputStream.readString(size);
                     break;
                 case 0x43686E53: //"ChnS" - channel settings for channels 65-127
-                    if ((getModType() & ModConstants.MODTYPE_XM) == 0 && size <= 64 * 2 && size % 2 == 0) // Skip for XMs!
-                    {
-                        final int loopLimit = 64 + size >> 1;
-                        final int[] newPanningValues = new int[loopLimit];
-                        final int[] newChannelVolume = new int[loopLimit];
+                    if ((getModType() & ModConstants.MODTYPE_XM) == 0 && size <= 64 * 2 && size % 2 == 0) { // Skip for XMs!
+                        int loopLimit = 64 + size >> 1;
+                        int[] newPanningValues = new int[loopLimit];
+                        int[] newChannelVolume = new int[loopLimit];
                         System.arraycopy(panningValue, 0, newPanningValues, 0, 64);
                         System.arraycopy(channelVolume, 0, newChannelVolume, 0, 64);
 
                         for (int c = 64; c < loopLimit; c++) {
                             int pan = inputStream.read();
-                            final int vol = inputStream.read();
+                            int vol = inputStream.read();
                             if (pan != 0xFF) {
                                 newChannelVolume[c] = vol;
                                 if (pan == 100 || (pan & 0x80) != 0) {
@@ -1510,11 +1483,11 @@ public abstract class Module {
                 case 0x53455543: //"CUES" - Sample Cues - written as MagicLE
                     if (size > 2) {
                         int cues = (size - 2) >> 2; // should be MAX_CUES (or less)
-                        final int sampleIndex = inputStream.readIntelWord();
+                        int sampleIndex = inputStream.readIntelWord();
                         if (sampleIndex > 0 && sampleIndex <= getNSamples()) {
-                            final Sample sample = getInstrumentContainer().getSample(sampleIndex);
+                            Sample sample = getInstrumentContainer().getSample(sampleIndex);
                             // future versions of OMPT might have more than 9 cues...
-                            final int[] theCues = new int[cues < Sample.MAX_CUES ? Sample.MAX_CUES : cues];
+                            int[] theCues = new int[cues < Sample.MAX_CUES ? Sample.MAX_CUES : cues];
                             int cue = 0;
                             for (; cue < cues; cue++) theCues[cue] = inputStream.readIntelDWord();
                             // if we had less than max_cues, fill up with default
@@ -1527,9 +1500,9 @@ public abstract class Module {
                     break;
                 case 0x474E5753: //"SWNG" - Tempo Swing factors - written as MagicLE
                     if (size > 2) {
-                        final int anzNums = inputStream.readIntelWord();
+                        int anzNums = inputStream.readIntelWord();
                         tempoSwing = new double[anzNums];
-                        for (int i = 0; i < anzNums; i++) tempoSwing[i] = (double) inputStream.readIntelDWord();
+                        for (int i = 0; i < anzNums; i++) tempoSwing[i] = inputStream.readIntelDWord();
                     } else
                         inputStream.skip(size);
                     break;

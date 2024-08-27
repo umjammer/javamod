@@ -29,10 +29,8 @@ import java.awt.GridBagLayout;
 import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
-
+import java.io.Serial;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -57,6 +55,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class ModInfoPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = 6435757622273854276L;
 
     private static final int SAMPLE_INDEX = 0;
@@ -171,7 +170,7 @@ public class ModInfoPanel extends JPanel {
     }
 
     /**
-     * @param parentInfoDialog the parentInfoDialog to set
+     * @param parent the parentInfoDialog to set
      */
     public void setParentContainer(ModContainer parent) {
         parentContainer = parent;
@@ -278,66 +277,66 @@ public class ModInfoPanel extends JPanel {
     }
 
     /**
-     * @param patternDialogLocation the patternDialogLocation to set
+     * @param newPatternDialogLocation the patternDialogLocation to set
      */
-    protected void setPatternDialogLocation(final Point newPatternDialogLocation) {
+    protected void setPatternDialogLocation(Point newPatternDialogLocation) {
         patternDialogLocation = newPatternDialogLocation;
     }
 
     /**
-     * @param patternDialogSize the patternDialogSize to set
+     * @param newPatternDialogSize the patternDialogSize to set
      */
-    protected void setPatternDialogSize(final Dimension newPatternDialogSize) {
+    protected void setPatternDialogSize(Dimension newPatternDialogSize) {
         patternDialogSize = newPatternDialogSize;
     }
 
     /**
-     * @param patternDialogVisable the patternDialogVisable to set
+     * @param newPatternDialogVisable the patternDialogVisable to set
      */
-    protected void setPatternDialogVisable(final boolean newPatternDialogVisable) {
+    protected void setPatternDialogVisable(boolean newPatternDialogVisable) {
         oldModPatternDialogVisibility = (newPatternDialogVisable) ? 1 : 0;
     }
 
     /**
-     * @param sampleDialogLocation the sampleDialogLocation to set
+     * @param newSampleDialogLocation the sampleDialogLocation to set
      */
-    protected void setSampleDialogLocation(final Point newSampleDialogLocation) {
+    protected void setSampleDialogLocation(Point newSampleDialogLocation) {
         sampleDialogLocation = newSampleDialogLocation;
     }
 
     /**
-     * @param sampleDialogSize the sampleDialogSize to set
+     * @param newSampleDialogSize the sampleDialogSize to set
      */
-    protected void setSampleDialogSize(final Dimension newSampleDialogSize) {
+    protected void setSampleDialogSize(Dimension newSampleDialogSize) {
         sampleDialogSize = newSampleDialogSize;
     }
 
     /**
-     * @param sampleDialogVisable the sampleDialogVisable to set
+     * @param newSampleDialogVisable the sampleDialogVisable to set
      */
-    protected void setSampleDialogVisable(final boolean newSampleDialogVisable) {
+    protected void setSampleDialogVisable(boolean newSampleDialogVisable) {
         oldModSampleDialogVisibility = (newSampleDialogVisable) ? 1 : 0;
     }
 
     /**
-     * @param instrumentDialogLocation the instrumentDialogLocation to set
+     * @param newInstrumentDialogLocation the instrumentDialogLocation to set
      */
-    protected void setInstrumentDialogLocation(final Point newInstrumentDialogLocation) {
+    protected void setInstrumentDialogLocation(Point newInstrumentDialogLocation) {
         instrumentDialogLocation = newInstrumentDialogLocation;
     }
 
     /**
-     * @param instrumentDialogSize the instrumentDialogSize to set
+     * @param newInstrumentDialogSize the instrumentDialogSize to set
      */
-    protected void setInstrumentDialogSize(final Dimension newInstrumentDialogSize) {
+    protected void setInstrumentDialogSize(Dimension newInstrumentDialogSize) {
         instrumentDialogSize = newInstrumentDialogSize;
     }
 
     /**
-     * @param instrumentDialogVisable the instrumentDialogVisable to set
+     * @param newInstrumentDialogVisible the instrumentDialogVisible to set
      */
-    protected void setInstrumentDialogVisable(final boolean newInstrumentDialogVisable) {
-        oldModInstrumentDialogVisibility = (newInstrumentDialogVisable) ? 1 : 0;
+    protected void setInstrumentDialogVisible(boolean newInstrumentDialogVisible) {
+        oldModInstrumentDialogVisibility = (newInstrumentDialogVisible) ? 1 : 0;
     }
 
     /**
@@ -661,11 +660,7 @@ public class ModInfoPanel extends JPanel {
             modInfo_openPatternDialog.setMnemonic('P');
             modInfo_openPatternDialog.setFont(Helpers.getDialogFont());
             modInfo_openPatternDialog.setToolTipText("Show the pattern data of this mod");
-            modInfo_openPatternDialog.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent evt) {
-                    getModPatternDialog().setVisible(!getModPatternDialog().isVisible());
-                }
-            });
+            modInfo_openPatternDialog.addActionListener(evt -> getModPatternDialog().setVisible(!getModPatternDialog().isVisible()));
         }
         return modInfo_openPatternDialog;
     }
@@ -678,11 +673,7 @@ public class ModInfoPanel extends JPanel {
             modInfo_openSampleDialog.setMnemonic('S');
             modInfo_openSampleDialog.setFont(Helpers.getDialogFont());
             modInfo_openSampleDialog.setToolTipText("Show the sample data of this mod");
-            modInfo_openSampleDialog.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent evt) {
-                    getModSampleDialog().setVisible(!getModSampleDialog().isVisible());
-                }
-            });
+            modInfo_openSampleDialog.addActionListener(evt -> getModSampleDialog().setVisible(!getModSampleDialog().isVisible()));
         }
         return modInfo_openSampleDialog;
     }
@@ -695,11 +686,7 @@ public class ModInfoPanel extends JPanel {
             modInfo_openInstrumentDialog.setMnemonic('I');
             modInfo_openInstrumentDialog.setFont(Helpers.getDialogFont());
             modInfo_openInstrumentDialog.setToolTipText("Show the instrument data of this mod");
-            modInfo_openInstrumentDialog.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent evt) {
-                    getModInstrumentDialog().setVisible(!getModInstrumentDialog().isVisible());
-                }
-            });
+            modInfo_openInstrumentDialog.addActionListener(evt -> getModInstrumentDialog().setVisible(!getModInstrumentDialog().isVisible()));
 
         }
         return modInfo_openInstrumentDialog;
@@ -822,7 +809,7 @@ public class ModInfoPanel extends JPanel {
      * @param instrumentIndex
      * @since 22.01.2024
      */
-    public void showInstrument(final int instrumentIndex) {
+    public void showInstrument(int instrumentIndex) {
         if (!mod.getInstrumentContainer().hasInstruments())
             showSample(instrumentIndex);
         else {
@@ -838,12 +825,12 @@ public class ModInfoPanel extends JPanel {
      * @param sampleIndex
      * @since 20.12.2023
      */
-    public void showSample(final int sampleIndex) {
+    public void showSample(int sampleIndex) {
         getModSampleDialog().showSample(sampleIndex);
         getModSampleDialog().setVisible(true);
     }
 
-    public void fillInfoPanelWith(final Module currentMod) {
+    public void fillInfoPanelWith(Module currentMod) {
         mod = currentMod;
         getModInfo_InsSamTabbedPane().setSelectedIndex(SAMPLE_INDEX);
         if (currentMod == null) {
@@ -901,7 +888,7 @@ public class ModInfoPanel extends JPanel {
             getModInfo_AnzPattern().setCaretPosition(0);
             getModInfo_AnzPattern().moveCaretPosition(0);
 
-            final InstrumentsContainer instrumentContainer = currentMod.getInstrumentContainer();
+            InstrumentsContainer instrumentContainer = currentMod.getInstrumentContainer();
             if (instrumentContainer != null) {
                 getModInfo_AnzSamples().setText(Integer.toString(currentMod.getNSamples()));
                 getModInfo_AnzSamples().setCaretPosition(0);
@@ -927,8 +914,8 @@ public class ModInfoPanel extends JPanel {
                 }
             }
 
-            final String songMessage = currentMod.getSongMessage();
-            if (songMessage != null && songMessage.length() > 0) {
+            String songMessage = currentMod.getSongMessage();
+            if (songMessage != null && !songMessage.isEmpty()) {
                 getModInfo_SongMessage().setText(songMessage);
                 getModInfo_SongMessage().setCaretPosition(0);
                 getModInfo_SongMessage().moveCaretPosition(0);

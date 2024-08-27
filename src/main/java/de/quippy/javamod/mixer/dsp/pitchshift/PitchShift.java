@@ -54,21 +54,21 @@ public class PitchShift implements DSPEffekt {
 
     private static final int MAXFIFO = 2;
 
-    private float gInFIFO[][] = null;
-    private float gOutFIFO[][] = null;
-    private float stretchFIFO[][] = null;
-    private float gFFTworksp[] = null;
-    private float gLastPhase[][] = null;
-    private float gSumPhase[][] = null;
-    private float gOutputAccum[][] = null;
-    private float gAnaFreq[] = null;
-    private float gAnaMagn[] = null;
-    private float gSynFreq[] = null;
-    private float gSynMagn[] = null;
-    private float gWindow[] = null;
-    private float gWindow2[] = null;
-    private float gWindow3[] = null;
-    private float outBuffer[] = null;
+    private float[][] gInFIFO = null;
+    private float[][] gOutFIFO = null;
+    private float[][] stretchFIFO = null;
+    private float[] gFFTworksp = null;
+    private float[][] gLastPhase = null;
+    private float[][] gSumPhase = null;
+    private float[][] gOutputAccum = null;
+    private float[] gAnaFreq = null;
+    private float[] gAnaMagn = null;
+    private float[] gSynFreq = null;
+    private float[] gSynMagn = null;
+    private float[] gWindow = null;
+    private float[] gWindow2 = null;
+    private float[] gWindow3 = null;
+    private float[] outBuffer = null;
     private FFT2 fft = null;
     private int gRover;
     private float pitchScale;
@@ -107,6 +107,7 @@ public class PitchShift implements DSPEffekt {
      * @param sampleBufferLength
      * @see de.quippy.javamod.mixer.dsp.DSPEffekt#initialize(javax.sound.sampled.AudioFormat, int)
      */
+    @Override
     public void initialize(AudioFormat audioFormat, int sampleBufferLength) {
         sampleBufferSize = sampleBufferLength;
         sampleRate = audioFormat.getSampleRate();
@@ -119,6 +120,7 @@ public class PitchShift implements DSPEffekt {
      * @param active
      * @see de.quippy.javamod.mixer.dsp.DSPEffekt#setIsActive(boolean)
      */
+    @Override
     public void setIsActive(boolean active) {
         isActive = active;
     }
@@ -127,6 +129,7 @@ public class PitchShift implements DSPEffekt {
      * @return
      * @see de.quippy.javamod.mixer.dsp.DSPEffekt#isActive()
      */
+    @Override
     public boolean isActive() {
         return isActive;
     }
@@ -264,10 +267,10 @@ public class PitchShift implements DSPEffekt {
     private void analyze(int c) {
         fft.smsFft(gFFTworksp, FFT2.FORWARD);
         for (int k = 0; k < fftFrameSize2; k++) {
-            final float real = gFFTworksp[k << 1];
-            final float imag = gFFTworksp[(k << 1) + 1];
-            final float magn = 2f * (float) FastMath.sqrt(real * real + imag * imag);
-            final float phase = (float) FastMath.atan2(imag, real);
+            float real = gFFTworksp[k << 1];
+            float imag = gFFTworksp[(k << 1) + 1];
+            float magn = 2f * (float) FastMath.sqrt(real * real + imag * imag);
+            float phase = (float) FastMath.atan2(imag, real);
             float tmp = phase - gLastPhase[c][k];
             gLastPhase[c][k] = phase;
             tmp -= k * expct;
@@ -288,7 +291,7 @@ public class PitchShift implements DSPEffekt {
         Arrays.fill(gSynMagn, 0, fftFrameSize, 0.0f);
         //Arrays.fill(gSynFreq[c], 0, fftFrameSize, 0.0f);
         for (int k = 0; k <= fftFrameSize2; k++) {
-            final int index = (int) ((float) k / pitchScale);
+            int index = (int) ((float) k / pitchScale);
             if (index > fftFrameSize2) continue;
             if (gAnaMagn[index] > gSynMagn[k]) {
                 gSynMagn[k] = gAnaMagn[index];
@@ -303,10 +306,10 @@ public class PitchShift implements DSPEffekt {
 
     private void synthesize(int c) {
         for (int k = 0; k < fftFrameSize2; k++) {
-            final float magn = gSynMagn[k];
+            float magn = gSynMagn[k];
             float tmp = gSynFreq[k];
             tmp = (tmp - (float) k * freqPerBin) / freqPerBin * expct2 + gWindow3[k];
-            final float phase = (gSumPhase[c][k] += tmp);
+            float phase = (gSumPhase[c][k] += tmp);
             gFFTworksp[k << 1] = magn * (float) FastMath.fastCos(phase);
             gFFTworksp[(k << 1) + 1] = magn * (float) FastMath.fastSin(phase);
         }
@@ -320,13 +323,13 @@ public class PitchShift implements DSPEffekt {
             gOutputAccum[c][k] += gWindow2[k] * gFFTworksp[k << 1];
     }
 
-    private float getSampleFrom(int channel, final float[] buffer, float index, float scale) {
-        final float b[] = stretchFIFO[channel];
-        final float s1 = b[0];
-        final float s2 = b[1];
-        final float sIndex = index + scale;
-        final float steigung = sIndex - FastMath.floor(index);
-        final int skipSamples = (int) sIndex - (int) (index);
+    private float getSampleFrom(int channel, float[] buffer, float index, float scale) {
+        float[] b = stretchFIFO[channel];
+        float s1 = b[0];
+        float s2 = b[1];
+        float sIndex = index + scale;
+        float steigung = sIndex - FastMath.floor(index);
+        int skipSamples = (int) sIndex - (int) (index);
         if (skipSamples > 0) {
             b[0] = b[1];
             //System.arraycopy(b, 1, b, 0, MAXFIFO - 1);
@@ -335,17 +338,12 @@ public class PitchShift implements DSPEffekt {
         return s1 + ((s2 - s1) * steigung);
     }
 
-    /**
-     * @param buffer
-     * @param start
-     * @param length
-     * @see de.quippy.javamod.mixer.dsp.DSPEffekt#doEffekt(float[], int, int)
-     */
-    public synchronized int doEffekt(final float[] ringBuffer, final int start, final int length) {
+    @Override
+    public synchronized int doEffekt(float[] ringBuffer, int start, int length) {
         if (!isActive) return length;
 
         if (gRover == 0) gRover = (int) inFifoLatency;
-        final float end = (float) (start + length) / (float) channels;
+        float end = (float) (start + length) / (float) channels;
         float index = (float) start / (float) channels;
         int sampleIndex = 0;
         while (index < end) {

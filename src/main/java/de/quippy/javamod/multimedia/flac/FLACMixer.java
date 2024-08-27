@@ -25,17 +25,20 @@ package de.quippy.javamod.multimedia.flac;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import javax.sound.sampled.AudioFormat;
 
 import de.quippy.javamod.io.FileOrPackedInputStream;
 import de.quippy.javamod.mixer.BasicMixer;
-import de.quippy.javamod.system.Log;
 import org.kc7bfi.jflac.FLACDecoder;
 import org.kc7bfi.jflac.FrameDecodeException;
 import org.kc7bfi.jflac.frame.Frame;
 import org.kc7bfi.jflac.frame.Header;
 import org.kc7bfi.jflac.util.ByteData;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -44,10 +47,12 @@ import org.kc7bfi.jflac.util.ByteData;
  */
 public class FLACMixer extends BasicMixer {
 
+    private static final Logger logger = getLogger(FLACMixer.class.getName());
+
     private InputStream inputStream;
     private FLACDecoder decoder;
 
-    private URL flacFileUrl;
+    private final URL flacFileUrl;
 
     private int channels;
     private int sampleRate;
@@ -68,7 +73,7 @@ public class FLACMixer extends BasicMixer {
         try {
             if (inputStream != null) try {
                 inputStream.close();
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
             inputStream = new FileOrPackedInputStream(flacFileUrl);
             decoder = new FLACDecoder(inputStream);
             decoder.readMetadata();
@@ -78,13 +83,13 @@ public class FLACMixer extends BasicMixer {
             sampleRate = (int) audioFormat.getSampleRate();
             sampleSizeInBits = audioFormat.getSampleSizeInBits();
             sampleSizeInBytes = sampleSizeInBits >> 3;
-            lengthInMilliseconds = (int) ((long) decoder.getStreamInfo().getTotalSamples() * 1000L / (long) sampleRate);
+            lengthInMilliseconds = (int) (decoder.getStreamInfo().getTotalSamples() * 1000L / (long) sampleRate);
         } catch (Exception ex) {
             if (inputStream != null) try {
                 inputStream.close();
                 inputStream = null;
-            } catch (IOException e) { /* Log.error("IGNORED", e); */ }
-            Log.error("[FLACMixer]", ex);
+            } catch (IOException e) { /* logger.log(Level.ERROR, "IGNORED", e); */ }
+            logger.log(Level.ERROR, "[FLACMixer]", ex);
         }
     }
 
@@ -165,19 +170,19 @@ public class FLACMixer extends BasicMixer {
     @Override
     protected void seek(long milliseconds) {
         try {
-            final long seekToSamples = milliseconds * (long) sampleRate / 1000L;
-            final long currentSamples = getMillisecondPosition() * (long) sampleRate / 1000L;
+            long seekToSamples = milliseconds * (long) sampleRate / 1000L;
+            long currentSamples = getMillisecondPosition() * (long) sampleRate / 1000L;
             if (currentSamples > seekToSamples || decoder.getSeekTable() != null) {
                 if (inputStream != null) try {
                     inputStream.close();
-                } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+                } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
                 inputStream = flacFileUrl.openStream();
                 decoder = new FLACDecoder(inputStream);
                 decoder.readMetadata();
             }
             decoder.seekTo(seekToSamples);
         } catch (Throwable ex) {
-            Log.error("[FLACMixer::seek]", ex);
+            logger.log(Level.ERROR, "[FLACMixer::seek]", ex);
         }
     }
 
@@ -209,7 +214,7 @@ public class FLACMixer extends BasicMixer {
 
             do {
                 try {
-                    final long bytesToWrite = (hasStopPosition()) ? getSamplesToWriteLeft() * getChannelCount() * sampleSizeInBytes : -1;
+                    long bytesToWrite = (hasStopPosition()) ? getSamplesToWriteLeft() * getChannelCount() * sampleSizeInBytes : -1;
                     ByteData bd = decode();
                     if (bd != null) {
                         byte[] b = bd.getData();
@@ -256,7 +261,7 @@ public class FLACMixer extends BasicMixer {
             if (inputStream != null) try {
                 inputStream.close();
                 inputStream = null;
-            } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
     }
 }

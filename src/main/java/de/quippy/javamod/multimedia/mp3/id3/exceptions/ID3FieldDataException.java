@@ -22,8 +22,12 @@
 
 package de.quippy.javamod.multimedia.mp3.id3.exceptions;
 
+import java.io.Serial;
+
+
 public class ID3FieldDataException extends Exception {
 
+    @Serial
     private static final long serialVersionUID = -2358436509702583539L;
 
     /**

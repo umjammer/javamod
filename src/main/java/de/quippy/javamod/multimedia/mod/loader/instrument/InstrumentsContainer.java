@@ -31,8 +31,8 @@ import de.quippy.javamod.multimedia.mod.loader.Module;
  */
 public class InstrumentsContainer {
 
-    private Module parent;
-    private Instrument[] instruments;
+    private final Module parent;
+    private final Instrument[] instruments;
     private Sample[] samples;
 
     /**
@@ -54,7 +54,7 @@ public class InstrumentsContainer {
     }
 
     /**
-     * With XM-Mods we do not know the real ammount
+     * With XM-Mods we do not know the real amount
      * of samples at startup
      *
      * @param newAmount
@@ -108,15 +108,14 @@ public class InstrumentsContainer {
      */
     public int getFullSampleLength() {
         int fullSampleLength = 0;
-        for (int i = 0; i < samples.length; i++)
-            fullSampleLength += samples[i].length;
+        for (Sample sample : samples) fullSampleLength += sample.length;
         return fullSampleLength;
     }
 
     /**
      * returns the instrument with the index
      *
-     * @param sampleIndex
+     * @param index
      * @return
      * @since 19.06.2006
      */
@@ -157,8 +156,8 @@ public class InstrumentsContainer {
     public String getInstrumentNames() {
         StringBuilder bf = new StringBuilder();
         if (instruments != null && instruments.length > 0) {
-            for (int i = 0; i < instruments.length; i++) {
-                if (instruments[i] != null) bf.append(instruments[i].toString());
+            for (Instrument instrument : instruments) {
+                if (instrument != null) bf.append(instrument);
                 bf.append('\n');
             }
         }
@@ -168,8 +167,8 @@ public class InstrumentsContainer {
     public String getSampleNames() {
         StringBuilder bf = new StringBuilder();
         if (samples != null && samples.length > 0) {
-            for (int i = 0; i < samples.length; i++) {
-                if (samples[i] != null) bf.append(samples[i].toShortString());
+            for (Sample sample : samples) {
+                if (sample != null) bf.append(sample.toShortString());
                 bf.append('\n');
             }
         }
@@ -183,7 +182,7 @@ public class InstrumentsContainer {
     @Override
     public String toString() {
         StringBuilder bf = new StringBuilder();
-        final boolean hasInstruments = hasInstruments();
+        boolean hasInstruments = hasInstruments();
         if (hasInstruments) {
             bf.append("Instruments:\n");
             bf.append(getInstrumentNames());

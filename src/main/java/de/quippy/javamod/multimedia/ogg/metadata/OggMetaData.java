@@ -26,8 +26,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import de.quippy.javamod.io.FileOrPackedInputStream;
@@ -37,14 +38,14 @@ import de.quippy.javamod.multimedia.MultimediaContainerManager;
 public class OggMetaData {
 
     private URL urlName = null;
-    private HashMap<String, String> oggInfo = null;
+    private Map<String, String> oggInfo = null;
     private int lengthInMilliseconds;
 
     /**
      * Create an id3v1tag from the file specified.  If the file contains a
      * tag, the information is automatically extracted.
      *
-     * @param mp3 the file to read/write the tag to
+     * @param oggFileURL the file to read/write the tag to
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
      */
@@ -65,14 +66,14 @@ public class OggMetaData {
             in.close();
 
             lengthInMilliseconds = jorbiscomment.getLengthInMilliseconds();
-            oggInfo = new HashMap<String, String>();
+            oggInfo = new HashMap<>();
             // get data from vorbis comment
             for (int i = 99; i >= 0; --i) {
-                final String comment = jorbiscomment.getComment().getComment(i);
-                if (comment != null && comment.length() > 0) {
+                String comment = jorbiscomment.getComment().getComment(i);
+                if (comment != null && !comment.isEmpty()) {
                     int equalIndex = comment.indexOf('=');
                     String key = comment.substring(0, equalIndex);
-                    String value = new String(comment.substring(equalIndex + 1).getBytes(), "UTF-8");
+                    String value = new String(comment.substring(equalIndex + 1).getBytes(), StandardCharsets.UTF_8);
                     if (equalIndex != -1 && key != null) oggInfo.put(key.toUpperCase(), value);
                 }
             }
@@ -94,7 +95,7 @@ public class OggMetaData {
             if (in != null) {
                 try {
                     in.close();
-                } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+                } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
                 in = null;
             }
         }
@@ -167,13 +168,13 @@ public class OggMetaData {
         String title = getTitle();
 
         StringBuilder str = new StringBuilder();
-        if (artist != null && artist.length() != 0) {
+        if (artist != null && !artist.isEmpty()) {
             str.append(artist).append(" - ");
         }
-        if (album != null && album.length() != 0) {
+        if (album != null && !album.isEmpty()) {
             str.append(album).append(" - ");
         }
-        if (title == null || title.length() == 0) title = MultimediaContainerManager.getSongNameFromURL(urlName);
+        if (title == null || title.isEmpty()) title = MultimediaContainerManager.getSongNameFromURL(urlName);
         return str.append(title).toString();
     }
 
@@ -181,9 +182,7 @@ public class OggMetaData {
         StringBuilder builder = new StringBuilder("OggMetaData\nURL\t\t");
         builder.append(urlName);
         Set<String> keys = oggInfo.keySet();
-        Iterator<String> keyIter = keys.iterator();
-        while (keyIter.hasNext()) {
-            String key = keyIter.next();
+        for (String key : keys) {
             String value = oggInfo.get(key);
             builder.append('\n').append(key).append("\t\t").append(value);
         }

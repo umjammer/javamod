@@ -77,18 +77,18 @@ public class FileOrPackedInputStream extends InputStream {
         try {
             stream = fromUrl.openStream();
         } catch (Exception ex) {
-            //Log.error("[FileOrPackedInputStream] Checking if "+fromUrl.toString()+" is a zipped file location", ex);
+            //logger.log(Level.ERROR, "[FileOrPackedInputStream] Checking if "+fromUrl.toString()+" is a zipped file location", ex);
             stream = tryForZippedFile(fromUrl);
         }
     }
 
     private InputStream tryForZippedFile(URL fromUrl) throws IOException {
         String path = fromUrl.toString();
-        String fileNamePortion = Helpers.EMPTY_STING;
-        while (path != null && path.length() != 0) {
+        StringBuilder fileNamePortion = new StringBuilder(Helpers.EMPTY_STING);
+        while (path != null && !path.isEmpty()) {
             int slashIndex = path.lastIndexOf('/');
             if (slashIndex < 0) break;
-            fileNamePortion = Helpers.createStringFromURLString(path.substring(slashIndex)) + fileNamePortion;
+            fileNamePortion.insert(0, Helpers.createStringFromURLString(path.substring(slashIndex)));
             path = path.substring(0, slashIndex);
             URL newUrl = Helpers.createURLfromString(path);
             if (newUrl == null) continue;
@@ -195,7 +195,7 @@ public class FileOrPackedInputStream extends InputStream {
     @Override
     public int read(byte[] b) throws IOException {
         return stream.read(b);
-//		return read(b, 0, b.length);
+//        return read(b, 0, b.length);
     }
 
     /**
@@ -209,19 +209,17 @@ public class FileOrPackedInputStream extends InputStream {
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
         return stream.read(b, off, len);
-//		int fullSize = 0;
-//		while (fullSize < len)
-//		{
-//			int readLength = stream.read(b, off + fullSize, len - fullSize);
-//			if (readLength==-1)
-//			{
-//				if (fullSize>0)
-//					return fullSize;
-//				else
-//					return -1;
-//			}
-//			fullSize += readLength;
-//		}
-//		return fullSize;
+//        int fullSize = 0;
+//        while (fullSize < len) {
+//            int readLength = stream.read(b, off + fullSize, len - fullSize);
+//            if (readLength == -1) {
+//                if (fullSize > 0)
+//                    return fullSize;
+//                else
+//                    return -1;
+//            }
+//            fullSize += readLength;
+//        }
+//        return fullSize;
     }
 }

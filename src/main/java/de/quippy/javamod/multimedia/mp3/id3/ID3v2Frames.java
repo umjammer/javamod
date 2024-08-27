@@ -22,18 +22,19 @@
 
 package de.quippy.javamod.multimedia.mp3.id3;
 
+import java.io.Serial;
 import java.util.HashMap;
-import java.util.Iterator;
 
 
 /**
  * Description:
  * This class is a collection that is used to hold the ID3v2Frames.
  *
- * @author: Jonathan Hilliker modified by Daniel Becker
+ * @author Jonathan Hilliker modified by Daniel Becker
  */
 public class ID3v2Frames<K, V> extends HashMap<K, V> {
 
+    @Serial
     private static final long serialVersionUID = -1434484594524119778L;
 
     // Want to know what these fields store?  Go to www.id3.org
@@ -131,9 +132,8 @@ public class ID3v2Frames<K, V> extends HashMap<K, V> {
     public String toString() {
         StringBuilder str = new StringBuilder();
 
-        Iterator<V> it = this.values().iterator();
-        while (it.hasNext()) {
-            str.append(it.next().toString()).append('\n');
+        for (V v : this.values()) {
+            str.append(v.toString()).append('\n');
         }
 
         return str.toString();
@@ -147,9 +147,8 @@ public class ID3v2Frames<K, V> extends HashMap<K, V> {
     public int getLength() {
         int length = 0;
 
-        Iterator<V> it = this.values().iterator();
-        while (it.hasNext()) {
-            length += ((ID3v2Frame) it.next()).getFrameLength();
+        for (V v : this.values()) {
+            length += ((ID3v2Frame) v).getFrameLength();
         }
 
         return length;
@@ -162,12 +161,11 @@ public class ID3v2Frames<K, V> extends HashMap<K, V> {
      * @return an array of bytes contain all frames contained in this object
      */
     public byte[] getBytes() {
-        byte b[] = new byte[getLength()];
+        byte[] b = new byte[getLength()];
         int bytesCopied = 0;
 
-        Iterator<V> it = this.values().iterator();
-        while (it.hasNext()) {
-            ID3v2Frame frame = (ID3v2Frame) it.next();
+        for (V v : this.values()) {
+            ID3v2Frame frame = (ID3v2Frame) v;
             System.arraycopy(frame.getFrameBytes(), 0, b, bytesCopied, frame.getFrameLength());
             bytesCopied += frame.getFrameLength();
         }

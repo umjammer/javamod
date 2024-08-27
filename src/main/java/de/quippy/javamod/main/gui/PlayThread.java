@@ -22,10 +22,14 @@
 
 package de.quippy.javamod.main.gui;
 
+import java.io.Serial;
 import java.io.Serializable;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 
 import de.quippy.javamod.mixer.Mixer;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -34,6 +38,9 @@ import de.quippy.javamod.system.Log;
  */
 public final class PlayThread extends Thread implements Serializable {
 
+    private static final Logger logger = getLogger(PlayThread.class.getName());
+
+    @Serial
     private static final long serialVersionUID = 3546401588411431506L;
 
     private transient final Mixer currentMixer;
@@ -94,7 +101,7 @@ public final class PlayThread extends Thread implements Serializable {
         try {
             getCurrentMixer().startPlayback();
         } catch (Throwable ex) {
-            Log.error("[PlayThread::run]", ex);
+            logger.log(Level.ERROR, "[PlayThread::run]", ex);
         }
         this.isRunning = false;
         this.finishedNormaly = getCurrentMixer().hasFinished();

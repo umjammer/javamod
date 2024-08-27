@@ -80,7 +80,7 @@ public class IIRBandpassFilter extends IIRFilterBase {
      * @since 09.01.2012
      */
     @Override
-    public void initialize(final int sampleRate, final int channels, final int frequency, final float parameter) {
+    public void initialize(int sampleRate, int channels, int frequency, float parameter) {
         super.initialize(sampleRate, channels, frequency, parameter);
         // thetaZero = 2 * Pi * Freq * T or (2 * Pi * Freq) / sampleRate
         // where Freq is center frequency of bandpass filter
@@ -110,9 +110,9 @@ public class IIRBandpassFilter extends IIRFilterBase {
      * @since 12.01.2012
      */
     @Override
-    protected float performFilterCalculation(final float sample, final int channel, final int iIndex, final int jIndex, final int kIndex) {
-        final float[] x = inArray[channel];
-        final float[] y = outArray[channel];
+    protected float performFilterCalculation(float sample, int channel, int iIndex, int jIndex, int kIndex) {
+        float[] x = inArray[channel];
+        float[] y = outArray[channel];
 
         y[iIndex] = (alpha * ((x[iIndex] = sample) - x[jIndex])) +
                 (gamma * y[kIndex]) -

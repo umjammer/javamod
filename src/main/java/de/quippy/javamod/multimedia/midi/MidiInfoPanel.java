@@ -23,7 +23,7 @@
 package de.quippy.javamod.multimedia.midi;
 
 import java.awt.LayoutManager;
-
+import java.io.Serial;
 import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiMessage;
@@ -42,6 +42,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class MidiInfoPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = -2853660365143541701L;
 
     private JLabel midiNameLabel = null;
@@ -183,19 +184,20 @@ public class MidiInfoPanel extends JPanel {
         return midiInfo;
     }
 
-    //	private static final int TEXT = 0x01;
-//	private static final int COPYRIGHT_EVENT = 0x02;
-//	private static final int TRACKNAME = 0x03;
-//	private static final int INSTRUMENTNAME = 0x04; 
+//    private static final int TEXT = 0x01;
+//    private static final int COPYRIGHT_EVENT = 0x02;
+//    private static final int TRACKNAME = 0x03;
+//    private static final int INSTRUMENTNAME = 0x04;
+
     public void fillInfoPanelWith(Sequence currentSequence, String songName) {
         getMidiDuration().setText(Helpers.getTimeStringFromMilliseconds(currentSequence.getMicrosecondLength() / 1000L));
         getMidiName().setText(songName);
         Track[] tracks = currentSequence.getTracks();
         StringBuilder fullText = new StringBuilder();
-        for (int t = 0; t < tracks.length; t++) {
-            int size = tracks[t].size();
+        for (Track track : tracks) {
+            int size = track.size();
             for (int ticks = 0; ticks < size; ticks++) {
-                MidiEvent event = tracks[t].get(ticks);
+                MidiEvent event = track.get(ticks);
                 MidiMessage message = event.getMessage();
                 if (message instanceof MetaMessage) {
                     int type = ((MetaMessage) message).getType();

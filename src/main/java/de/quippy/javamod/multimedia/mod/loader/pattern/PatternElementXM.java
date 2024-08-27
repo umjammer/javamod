@@ -41,7 +41,7 @@ public class PatternElementXM extends PatternElement {
      * @param patternRow
      * @param channel
      */
-    public PatternElementXM(final Module parentMod, final PatternRow parentPatternRow, final int patternIndex, final int patternRow, int channel) {
+    public PatternElementXM(Module parentMod, PatternRow parentPatternRow, int patternIndex, int patternRow, int channel) {
         super(parentMod, parentPatternRow, patternIndex, patternRow, channel);
     }
 
@@ -97,7 +97,7 @@ public class PatternElementXM extends PatternElement {
             case 0x0D:
                 return "Pattern break";
             case 0x0E:
-                final int effektOpEx = effektOp & 0x0F;
+                int effektOpEx = effektOp & 0x0F;
                 switch (effektOp >> 4) {
                     case 0x0:
                         return "Set filter";
@@ -201,7 +201,7 @@ public class PatternElementXM extends PatternElement {
             case 0x26:
                 return "Parameter Extension";
         }
-        //Log.error("Unknown: " + ModConstants.getAsHex(effekt, 2) + "/" + ModConstants.getAsHex(effektOp, 2));
+        //logger.log(Level.ERROR, "Unknown: " + ModConstants.getAsHex(effekt, 2) + "/" + ModConstants.getAsHex(effektOp, 2));
         return Helpers.EMPTY_STING;
     }
 
@@ -350,33 +350,25 @@ public class PatternElementXM extends PatternElement {
      */
     @Override
     public char getVolumeColumEffektChar() {
-        switch (volumeEffekt) {
-            case 0x01:
-                return 'v';
-            case 0x02:
-                return 'd';
-            case 0x03:
-                return 'c';
-            case 0x04:
-                return 'b';
-            case 0x05:
-                return 'a';
-            case 0x06:
-                return 'u';
-            case 0x07:
-                return 'h';
-            case 0x08:
-                return 'p';
-            case 0x09:
-                return 'l';
-            case 0x0A:
-                return 'r';
-            case 0x0B:
-                return 'g';
-//			case 0x0C: return 'e';
-//			case 0x0D: return 'f';
-        }
-        return '?';
+        return switch (volumeEffekt) {
+            case 0x01 -> 'v';
+            case 0x02 -> 'd';
+            case 0x03 -> 'c';
+            case 0x04 -> 'b';
+            case 0x05 -> 'a';
+            case 0x06 -> 'u';
+            case 0x07 -> 'h';
+            case 0x08 -> 'p';
+            case 0x09 -> 'l';
+            case 0x0A -> 'r';
+            case 0x0B -> 'g';
+            default ->
+//            case 0x0C:
+//                return 'e';
+//            case 0x0D:
+//                return 'f';
+                    '?';
+        };
     }
 
     /**
@@ -411,10 +403,12 @@ public class PatternElementXM extends PatternElement {
                 return "Panning Slide Right";
             case 0x0B:
                 return "Porta To Note";
-//			case 0x0C: return "Porta Down";
-//			case 0x0D: return "Porta Up";
+//            case 0x0C:
+//                return "Porta Down";
+//            case 0x0D:
+//                return "Porta Up";
         }
-        //Log.error("Unknown: " + ModConstants.getAsHex(assignedVolumeEffekt, 2) + "/" + ModConstants.getAsHex(assignedVolumeEffektOp, 2));
+        //logger.log(Level.ERROR, "Unknown: " + ModConstants.getAsHex(assignedVolumeEffekt, 2) + "/" + ModConstants.getAsHex(assignedVolumeEffektOp, 2));
         return Helpers.EMPTY_STING;
     }
 
@@ -424,34 +418,25 @@ public class PatternElementXM extends PatternElement {
      */
     @Override
     public int getVolEffectCategory() {
-        switch (volumeEffekt) {
-            case 0x00:
-                return EFFECT_NORMAL;
-            case 0x01:
-                return EFFECT_VOLUME;
-            case 0x02:
-                return EFFECT_VOLUME;
-            case 0x03:
-                return EFFECT_VOLUME;
-            case 0x04:
-                return EFFECT_VOLUME;
-            case 0x05:
-                return EFFECT_VOLUME;
-            case 0x06:
-                return EFFECT_PITCH;
-            case 0x07:
-                return EFFECT_PITCH;
-            case 0x08:
-                return EFFECT_PANNING;
-            case 0x09:
-                return EFFECT_PANNING;
-            case 0x0A:
-                return EFFECT_PANNING;
-            case 0x0B:
-                return EFFECT_PITCH;
-//			case 0x0C: return EFFECT_UNKNOWN;
-//			case 0x0D: return EFFECT_UNKNOWN;
-        }
-        return EFFECT_UNKNOWN;
+        return switch (volumeEffekt) {
+            case 0x00 -> EFFECT_NORMAL;
+            case 0x01 -> EFFECT_VOLUME;
+            case 0x02 -> EFFECT_VOLUME;
+            case 0x03 -> EFFECT_VOLUME;
+            case 0x04 -> EFFECT_VOLUME;
+            case 0x05 -> EFFECT_VOLUME;
+            case 0x06 -> EFFECT_PITCH;
+            case 0x07 -> EFFECT_PITCH;
+            case 0x08 -> EFFECT_PANNING;
+            case 0x09 -> EFFECT_PANNING;
+            case 0x0A -> EFFECT_PANNING;
+            case 0x0B -> EFFECT_PITCH;
+            default ->
+//            case 0x0C:
+//                return EFFECT_UNKNOWN;
+//            case 0x0D:
+//                return EFFECT_UNKNOWN;
+                    EFFECT_UNKNOWN;
+        };
     }
 }

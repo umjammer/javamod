@@ -23,7 +23,7 @@
 package de.quippy.javamod.multimedia.mp3;
 
 import java.awt.LayoutManager;
-
+import java.io.Serial;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -44,6 +44,7 @@ import javazoom.jl.decoder.Header;
  */
 public class MP3InfoPanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = -7222399300330777886L;
 
     private JLabel mp3Info_L_Filename = null;
@@ -460,7 +461,7 @@ public class MP3InfoPanel extends JPanel {
 
     private javax.swing.JComboBox<String> getV1_Genre() {
         if (v1_Genre == null) {
-            v1_Genre = new javax.swing.JComboBox<String>(NullsoftID3GenreTable.getGenres());
+            v1_Genre = new javax.swing.JComboBox<>(NullsoftID3GenreTable.getGenres());
             v1_Genre.setName("v1_Genre");
             v1_Genre.setFont(Helpers.getDialogFont());
             v1_Genre.setEditable(true);
@@ -672,7 +673,7 @@ public class MP3InfoPanel extends JPanel {
 
     private javax.swing.JComboBox<String> getV2_Genre() {
         if (v2_Genre == null) {
-            v2_Genre = new javax.swing.JComboBox<String>(NullsoftID3GenreTable.getGenres());
+            v2_Genre = new javax.swing.JComboBox<>(NullsoftID3GenreTable.getGenres());
             v2_Genre.setName("v2_Genre");
             v2_Genre.setFont(Helpers.getDialogFont());
             v2_Genre.setEditable(true);

@@ -33,7 +33,7 @@ import de.quippy.javamod.system.Helpers;
  * Description:
  * This class reads all the information in the header of an id3v2 tag.
  *
- * @author: Jonathan Hilliker modified by Daniel Becker
+ * @author Jonathan Hilliker modified by Daniel Becker
  */
 public class ID3v2Header {
 
@@ -60,7 +60,7 @@ public class ID3v2Header {
      * exists, then information in the header will be extracted.  If a header
      * doesn't exist, default data will be used.
      *
-     * @param mp3 the file to attempt to read data from
+     * @param raf the file to attempt to read data from
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
      */
@@ -77,7 +77,7 @@ public class ID3v2Header {
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
      */
-    private boolean checkHeader(RandomAccessInputStream raf) throws IOException {
+    private static boolean checkHeader(RandomAccessInputStream raf) throws IOException {
         raf.seek(HEAD_LOCATION);
 
         byte[] buf = new byte[HEAD_SIZE];
@@ -86,7 +86,7 @@ public class ID3v2Header {
         }
 
         String result = new String(buf, ENC_TYPE);
-        if (result.substring(0, TAG_START.length()).equals(TAG_START)) {
+        if (result.startsWith(TAG_START)) {
             if ((((int) buf[3] & 0xFF) < 0xff) && (((int) buf[4] & 0xFF) < 0xff)) {
                 if ((((int) buf[6] & 0xFF) < 0x80) && (((int) buf[7] & 0xFF) < 0x80) && (((int) buf[8] & 0xFF) < 0x80) && (((int) buf[9] & 0xFF) < 0x80)) {
                     return true;
@@ -111,10 +111,10 @@ public class ID3v2Header {
             throw new IOException("Error encountered reading id3v2 header");
         }
 
-        majorVersion = (int) head[3];
+        majorVersion = head[3];
 
         if (majorVersion <= NEW_MAJOR_VERSION) {
-            minorVersion = (int) head[4];
+            minorVersion = head[4];
             unsynchronisation = (head[5] & 0x80) != 0;
             extended = (head[5] & 0x40) != 0;
             experimental = (head[5] & 0x20) != 0;

@@ -28,12 +28,16 @@ import java.awt.HeadlessException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serial;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 
 import de.quippy.javamod.system.Helpers;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -42,6 +46,9 @@ import de.quippy.javamod.system.Log;
  */
 public class SimpleTextViewerDialog extends JDialog {
 
+    private static final Logger logger = getLogger(SimpleTextViewerDialog.class.getName());
+
+    @Serial
     private static final long serialVersionUID = -5666092255473846658L;
 
     private static final String DEFAULT_CODING = "ISO-8859-1";
@@ -134,11 +141,7 @@ public class SimpleTextViewerDialog extends JDialog {
             closeButton.setText("Close");
             closeButton.setToolTipText("Close");
             closeButton.setFont(Helpers.getDialogFont());
-            closeButton.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    doClose();
-                }
-            });
+            closeButton.addActionListener(evt -> doClose());
         }
         return closeButton;
     }
@@ -150,7 +153,7 @@ public class SimpleTextViewerDialog extends JDialog {
         if (getParent() == null) System.exit(0); // this should not be needed!
     }
 
-    private void fillTextArea(final String text) {
+    private void fillTextArea(String text) {
         getTextArea().setText(text);
         getTextArea().select(0, 0);
     }
@@ -167,25 +170,25 @@ public class SimpleTextViewerDialog extends JDialog {
                 }
                 fillTextArea(fullText.toString());
             } catch (Throwable ex) {
-                Log.error("reading text failed", ex);
+                logger.log(Level.ERROR, "reading text failed", ex);
             } finally {
                 if (reader != null) try {
                     reader.close();
-                } catch (IOException ex) { /* Log.error("IGNORED", ex); */ }
+                } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
             }
         }
     }
 
-    public void setDisplayTextFromURL(final URL url) {
+    public void setDisplayTextFromURL(URL url) {
         this.url = url;
         fillTextArea();
     }
 
-    public void setDisplayTextFromURL(final String url) {
+    public void setDisplayTextFromURL(String url) {
         setDisplayTextFromURL(Helpers.createURLfromString(url));
     }
 
-    public void setDisplayText(final String text) {
+    public void setDisplayText(String text) {
         fillTextArea(text);
     }
 }

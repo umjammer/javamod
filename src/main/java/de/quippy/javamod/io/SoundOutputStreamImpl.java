@@ -23,6 +23,8 @@
 package de.quippy.javamod.io;
 
 import java.io.File;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
@@ -32,7 +34,8 @@ import javax.sound.sampled.SourceDataLine;
 import de.quippy.javamod.io.wav.WaveFile;
 import de.quippy.javamod.mixer.dsp.AudioProcessor;
 import de.quippy.javamod.system.Helpers;
-import de.quippy.javamod.system.Log;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -43,6 +46,8 @@ import de.quippy.javamod.system.Log;
  * @since 30.12.2007
  */
 public class SoundOutputStreamImpl implements SoundOutputStream {
+
+    private static final Logger logger = getLogger(SoundOutputStreamImpl.class.getName());
 
     protected AudioProcessor audioProcessor;
     protected AudioFormat audioFormat;
@@ -70,7 +75,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @param playDuringExport if true, data will be send to line and file
      * @param keepSilent       if true, 0 bytes will be send to the line
      */
-    public SoundOutputStreamImpl(final AudioFormat audioFormat, final AudioProcessor audioProcessor, final File exportFile, final boolean playDuringExport, final boolean keepSilent) {
+    public SoundOutputStreamImpl(AudioFormat audioFormat, AudioProcessor audioProcessor, File exportFile, boolean playDuringExport, boolean keepSilent) {
         this();
         this.audioFormat = audioFormat;
         this.audioProcessor = audioProcessor;
@@ -82,7 +87,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
         this.currentBalance = 0.0f;
     }
 
-    public SoundOutputStreamImpl(final AudioFormat audioFormat, final AudioProcessor audioProcessor, final File exportFile, final boolean playDuringExport, final boolean keepSilent, final int sourceLineBufferSize) {
+    public SoundOutputStreamImpl(AudioFormat audioFormat, AudioProcessor audioProcessor, File exportFile, boolean playDuringExport, boolean keepSilent, int sourceLineBufferSize) {
         this(audioFormat, audioProcessor, exportFile, playDuringExport, keepSilent);
         this.sourceLineBufferSize = sourceLineBufferSize;
     }
@@ -109,10 +114,10 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
                     setBalance(currentBalance);
                     openAudioProcessor();
                 } else
-                    Log.info("Audioformat is not supported");
+                    logger.log(Level.INFO, "Audioformat is not supported");
             } catch (Exception ex) {
                 sourceLine = null;
-                Log.error("Error occured when opening audio device", ex);
+                logger.log(Level.ERROR, "Error occured when opening audio device", ex);
             }
         }
     }
@@ -138,10 +143,10 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
     protected synchronized void openExportFile() {
         if (exportFile != null) {
             waveExportFile = new WaveFile();
-            final int result = waveExportFile.openForWrite(exportFile, audioFormat);
+            int result = waveExportFile.openForWrite(exportFile, audioFormat);
             if (result != WaveFile.DDC_SUCCESS) {
                 waveExportFile = null;
-                Log.error("Creation of exportfile was NOT successfull! " + exportFile.getAbsolutePath());
+                logger.log(Level.ERROR, "Creation of exportfile was NOT successfull! " + exportFile.getAbsolutePath());
             }
         }
     }
@@ -175,7 +180,6 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
     }
 
     /**
-     * @see de.quippy.javamod.io.SoundOutputStream#open()
      * @since 30.12.2007
      */
     @Override
@@ -183,11 +187,10 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
         close();
         if (playDuringExport || exportFile == null) openSourceLine();
         openExportFile();
-        //flushLine(); // might avoid "clutter" with PulseAudio, but did not do the trick!
+//        flushLine(); // might avoid "clutter" with PulseAudio, but did not do the trick!
     }
 
     /**
-     * @see de.quippy.javamod.io.SoundOutputStream#close()
      * @since 30.12.2007
      */
     @Override
@@ -198,7 +201,6 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
     }
 
     /**
-     * @see de.quippy.javamod.io.SoundOutputStream#closeAllDevices()
      * @since 30.12.2007
      */
     @Override
@@ -207,8 +209,6 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
     }
 
     /**
-     * @return
-     * @see de.quippy.javamod.io.SoundOutputStream#isInitialized()
      * @since 30.12.2007
      */
     @Override
@@ -217,12 +217,10 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
     }
 
     /**
-     * @param flushOrDrain
-     * @see de.quippy.javamod.io.SoundOutputStream#startLine(boolean)
      * @since 30.12.2007
      */
     @Override
-    public synchronized void startLine(final boolean flushOrDrain) {
+    public synchronized void startLine(boolean flushOrDrain) {
         // if there is a line, flush or drain it
         if (sourceLine != null && flushOrDrain) {
             stopLine(flushOrDrain); // if running, drain or flush and close the line
@@ -236,12 +234,10 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
     }
 
     /**
-     * @param flushOrDrain
-     * @see de.quippy.javamod.io.SoundOutputStream#stopLine(boolean)
      * @since 30.12.2007
      */
     @Override
-    public synchronized void stopLine(final boolean flushOrDrain) {
+    public synchronized void stopLine(boolean flushOrDrain) {
         if (sourceLine != null) {
             // play, whatever is left in the buffers. Caution! Will block, until everything is played
             if (flushOrDrain) {
@@ -260,8 +256,6 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
 
     /**
      * Manually flush the line
-     *
-     * @see de.quippy.javamod.io.SoundOutputStream#flushLine()
      */
     @Override
     public void flushLine() {
@@ -274,18 +268,12 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * If a thread is still pumping data in or if the line is closed
      * draining will run forever - at least very long
      * No Check, if line is stopped, is done here!
-     *
-     * @see de.quippy.javamod.io.SoundOutputStream#drainLine()
      */
     @Override
     public void drainLine() {
         if (sourceLine != null) sourceLine.drain();
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.io.SoundOutputStream#getLineBufferSize()
-     */
     @Override
     public int getLineBufferSize() {
         if (sourceLine != null)
@@ -300,19 +288,13 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @param length
      * @since 27.12.2011
      */
-    protected synchronized void writeSampleDataInternally(final byte[] samples, final int start, final int length) {
+    protected synchronized void writeSampleDataInternally(byte[] samples, int start, int length) {
         if (sourceLine != null && !keepSilent) sourceLine.write(samples, start, length);
         if (waveExportFile != null) waveExportFile.writeSamples(samples, start, length);
     }
 
-    /**
-     * @param samples
-     * @param start
-     * @param length
-     * @see de.quippy.javamod.io.SoundOutputStream#writeSampleData(byte[], int, int)
-     */
     @Override
-    public synchronized void writeSampleData(final byte[] samples, final int start, final int length) {
+    public synchronized void writeSampleData(byte[] samples, int start, int length) {
         if (audioProcessor != null) {
             int bytesToWrite = length;
             int startFrom = start;
@@ -326,19 +308,11 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
             writeSampleDataInternally(samples, start, length);
     }
 
-    /**
-     * @param newFramePosition
-     * @see de.quippy.javamod.io.SoundOutputStream#setInternalFramePosition(long)
-     */
     @Override
-    public synchronized void setInternalFramePosition(final long newFramePosition) {
+    public synchronized void setInternalFramePosition(long newFramePosition) {
         if (audioProcessor != null) audioProcessor.setInternalFramePosition(newFramePosition);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.io.SoundOutputStream#getFramePosition()
-     */
     @Override
     public synchronized long getFramePosition() {
         if (audioProcessor != null) return audioProcessor.getFramePosition();
@@ -347,12 +321,8 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
             return -1;
     }
 
-    /**
-     * @param gain
-     * @see de.quippy.javamod.io.SoundOutputStream#setVolume(float)
-     */
     @Override
-    public synchronized void setVolume(final float gain) {
+    public synchronized void setVolume(float gain) {
         currentVolume = gain;
         if (sourceLine != null && sourceLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
             FloatControl gainControl = (FloatControl) sourceLine.getControl(FloatControl.Type.MASTER_GAIN);
@@ -368,7 +338,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @see de.quippy.javamod.io.SoundOutputStream#setBalance(float)
      */
     @Override
-    public synchronized void setBalance(final float balance) {
+    public synchronized void setBalance(float balance) {
         currentBalance = balance;
         if (sourceLine != null && sourceLine.isControlSupported(FloatControl.Type.BALANCE)) {
             FloatControl balanceControl = (FloatControl) sourceLine.getControl(FloatControl.Type.BALANCE);
@@ -382,7 +352,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @see de.quippy.javamod.io.SoundOutputStream#setAudioProcessor(de.quippy.javamod.mixer.dsp.AudioProcessor)
      */
     @Override
-    public synchronized void setAudioProcessor(final AudioProcessor audioProcessor) {
+    public synchronized void setAudioProcessor(AudioProcessor audioProcessor) {
         this.audioProcessor = audioProcessor;
     }
 
@@ -391,7 +361,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @see de.quippy.javamod.io.SoundOutputStream#setExportFile(java.io.File)
      */
     @Override
-    public synchronized void setExportFile(final File exportFile) {
+    public synchronized void setExportFile(File exportFile) {
         this.exportFile = exportFile;
     }
 
@@ -400,7 +370,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @see de.quippy.javamod.io.SoundOutputStream#setWaveExportFile(de.quippy.javamod.io.wav.WaveFile)
      */
     @Override
-    public synchronized void setWaveExportFile(final WaveFile waveExportFile) {
+    public synchronized void setWaveExportFile(WaveFile waveExportFile) {
         this.waveExportFile = waveExportFile;
     }
 
@@ -409,7 +379,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @see de.quippy.javamod.io.SoundOutputStream#setPlayDuringExport(boolean)
      */
     @Override
-    public synchronized void setPlayDuringExport(final boolean playDuringExport) {
+    public synchronized void setPlayDuringExport(boolean playDuringExport) {
         this.playDuringExport = playDuringExport;
     }
 
@@ -418,7 +388,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @see de.quippy.javamod.io.SoundOutputStream#setKeepSilent(boolean)
      */
     @Override
-    public synchronized void setKeepSilent(final boolean keepSilent) {
+    public synchronized void setKeepSilent(boolean keepSilent) {
         this.keepSilent = keepSilent;
     }
 
@@ -428,7 +398,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @see de.quippy.javamod.io.SoundOutputStream#matches(de.quippy.javamod.io.SoundOutputStream)
      */
     @Override
-    public boolean matches(final SoundOutputStream otherStream) {
+    public boolean matches(SoundOutputStream otherStream) {
         return getAudioFormat().matches(otherStream.getAudioFormat());
     }
 
@@ -446,7 +416,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @see de.quippy.javamod.io.SoundOutputStream#changeAudioFormatTo(javax.sound.sampled.AudioFormat)
      */
     @Override
-    public synchronized void changeAudioFormatTo(final AudioFormat newAudioFormat) {
+    public synchronized void changeAudioFormatTo(AudioFormat newAudioFormat) {
         boolean reOpen = sourceLine != null && sourceLine.isOpen();
         close();
         audioFormat = newAudioFormat;
@@ -459,7 +429,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @see de.quippy.javamod.io.SoundOutputStream#changeAudioFormatTo(javax.sound.sampled.AudioFormat, int)
      */
     @Override
-    public synchronized void changeAudioFormatTo(final AudioFormat newAudioFormat, final int newSourceLineBufferSize) {
+    public synchronized void changeAudioFormatTo(AudioFormat newAudioFormat, int newSourceLineBufferSize) {
         sourceLineBufferSize = newSourceLineBufferSize;
         changeAudioFormatTo(newAudioFormat);
     }
@@ -469,7 +439,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @see de.quippy.javamod.io.SoundOutputStream#setSourceLineBufferSize(int)
      */
     @Override
-    public synchronized void setSourceLineBufferSize(final int newSourceLineBufferSize) {
+    public synchronized void setSourceLineBufferSize(int newSourceLineBufferSize) {
         sourceLineBufferSize = newSourceLineBufferSize;
         if (audioFormat != null) changeAudioFormatTo(audioFormat);
     }

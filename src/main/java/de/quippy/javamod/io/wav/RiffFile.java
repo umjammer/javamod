@@ -60,7 +60,7 @@ public class RiffFile {
     public static final int RFM_WRITE = 1; // open for write
     public static final int RFM_READ = 2; // open for read
 
-    private RiffChunkHeader riff_header; // header for whole file
+    private final RiffChunkHeader riff_header; // header for whole file
     protected int fmode; // current file I/O mode
     protected RandomAccessFile file; // I/O stream to use
 
@@ -350,34 +350,38 @@ public class RiffFile {
         return rc;
     }
 
-    /**
-     * Error Messages.
-     */
-    //   private String DDCRET_String(int retcode)
-    //   {
-    //   	 switch ( retcode )
-    //   	 {
-    //	  case DDC_SUCCESS:          return "DDC_SUCCESS";
-    //	  case DDC_FAILURE:          return "DDC_FAILURE";
-    //	  case DDC_OUT_OF_MEMORY:    return "DDC_OUT_OF_MEMORY";
-    //	  case DDC_FILE_ERROR:       return "DDC_FILE_ERROR";
-    //	  case DDC_INVALID_CALL:     return "DDC_INVALID_CALL";
-    //	  case DDC_USER_ABORT:       return "DDC_USER_ABORT";
-    //	  case DDC_INVALID_FILE:     return "DDC_INVALID_FILE";
-    //     }
-    //     return "Unknown Error";
-    //   }
+//    /**
+//     * Error Messages.
+//     */
+//    private String DDCRET_String(int retcode) {
+//        switch (retcode) {
+//            case DDC_SUCCESS:
+//                return "DDC_SUCCESS";
+//            case DDC_FAILURE:
+//                return "DDC_FAILURE";
+//            case DDC_OUT_OF_MEMORY:
+//                return "DDC_OUT_OF_MEMORY";
+//            case DDC_FILE_ERROR:
+//                return "DDC_FILE_ERROR";
+//            case DDC_INVALID_CALL:
+//                return "DDC_INVALID_CALL";
+//            case DDC_USER_ABORT:
+//                return "DDC_USER_ABORT";
+//            case DDC_INVALID_FILE:
+//                return "DDC_INVALID_FILE";
+//        }
+//        return "Unknown Error";
+//    }
 
     /**
      * Fill the header.
      */
     public static int fourCC(String ChunkName) {
-        byte[] p =
-                {
-                        0x20, 0x20, 0x20, 0x20
-                };
+        byte[] p = {
+                0x20, 0x20, 0x20, 0x20
+        };
         System.arraycopy(ChunkName.getBytes(), 0, p, 0, 4);
-        int ret = (((p[0] << 24) & 0xFF000000) | ((p[1] << 16) & 0x00FF0000) | ((p[2] << 8) & 0x0000FF00) | (p[3] & 0x000000FF));
+        int ret = (((p[0] << 24) & 0xFF00_0000) | ((p[1] << 16) & 0x00FF_0000) | ((p[2] << 8) & 0x0000_FF00) | (p[3] & 0x0000_00FF));
         return ret;
     }
 

@@ -33,12 +33,12 @@ public class FFT {
     private static final int FRAC_BITS = 16;
     public static final int FRAC_FAC = 1 << FRAC_BITS;
 
-    private final long xre[];
-    private final long xim[];
-    private final float mag[];
-    private final long fftSin[];
-    private final long fftCos[];
-    private final int fftBr[];
+    private final long[] xre;
+    private final long[] xim;
+    private final float[] mag;
+    private final long[] fftSin;
+    private final long[] fftCos;
+    private final int[] fftBr;
     private final int ss;
     private final int ss2;
     private final int nu;
@@ -78,7 +78,7 @@ public class FFT {
         for (int l = 1; l <= nu; l++) {
             while (k < ss) {
                 for (int i = 1; i <= n2; i++) {
-                    double p = (double) bitrev(k >> nu1, nu);
+                    double p = bitrev(k >> nu1, nu);
                     double arg = (Math.PI * p * 2.0D) / (double) ss;
                     fftSin[x] = (long) (Math.sin(arg) * FRAC_FAC);
                     fftCos[x] = (long) (Math.cos(arg) * FRAC_FAC);
@@ -149,8 +149,8 @@ public class FFT {
      * @return
      * @since 03.10.2007
      */
-    public float[] calculate(float pSample[]) {
-        final int wAps = pSample.length / ss;
+    public float[] calculate(float[] pSample) {
+        int wAps = pSample.length / ss;
         int n2 = ss2;
 //		int nu1 = nu - 1;
         int a = 0;
@@ -165,11 +165,11 @@ public class FFT {
         for (int l = 1; l <= nu; l++) {
             for (int k = 0; k < ss; k += n2) {
                 for (int i = 1; i <= n2; i++) {
-                    final long c = fftCos[x];
-                    final long s = fftSin[x];
-                    final int kn2 = k + n2;
-                    final long tr = (xre[kn2] * c + xim[kn2] * s) >> FRAC_BITS;
-                    final long ti = (xim[kn2] * c - xre[kn2] * s) >> FRAC_BITS;
+                    long c = fftCos[x];
+                    long s = fftSin[x];
+                    int kn2 = k + n2;
+                    long tr = (xre[kn2] * c + xim[kn2] * s) >> FRAC_BITS;
+                    long ti = (xim[kn2] * c - xre[kn2] * s) >> FRAC_BITS;
                     xre[kn2] = xre[k] - tr;
                     xim[kn2] = xim[k] - ti;
                     xre[k] += tr;
@@ -185,10 +185,10 @@ public class FFT {
         }
 
         for (int k = 0; k < ss; k++) {
-            final int r = fftBr[k];
+            int r = fftBr[k];
             if (r > k) {
-                final long tr = xre[k];
-                final long ti = xim[k];
+                long tr = xre[k];
+                long ti = xim[k];
                 xre[k] = xre[r];
                 xim[k] = xim[r];
                 xre[r] = tr;

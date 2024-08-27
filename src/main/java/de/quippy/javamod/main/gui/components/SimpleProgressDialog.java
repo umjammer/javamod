@@ -25,6 +25,7 @@ package de.quippy.javamod.main.gui.components;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.Window;
+import java.io.Serial;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -39,6 +40,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class SimpleProgressDialog extends JDialog implements ProgressDialog {
 
+    @Serial
     private static final long serialVersionUID = 8117746938625469328L;
 
     private JPanel downloadPane = null;
@@ -129,14 +131,17 @@ public class SimpleProgressDialog extends JDialog implements ProgressDialog {
         return downloadProgressBar;
     }
 
+    @Override
     public void setDetailMinimum(int minValue) {
         getDownloadProgressBar().setMinimum(minValue);
     }
 
+    @Override
     public void setDetailMaximum(int maxValue) {
         getDownloadProgressBar().setMaximum(maxValue);
     }
 
+    @Override
     public void setDetailValue(int value) {
         getDownloadProgressBar().setValue(value);
     }

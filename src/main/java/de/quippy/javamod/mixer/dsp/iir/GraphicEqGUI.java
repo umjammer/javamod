@@ -24,9 +24,9 @@ package de.quippy.javamod.mixer.dsp.iir;
 
 import java.awt.GridBagLayout;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.Serial;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -34,8 +34,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import de.quippy.javamod.system.Helpers;
 
@@ -46,6 +44,7 @@ import de.quippy.javamod.system.Helpers;
  */
 public class GraphicEqGUI extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = 8091057988399658762L;
 
     private static final int SHIFT_DB = 100;
@@ -53,7 +52,7 @@ public class GraphicEqGUI extends JPanel {
     private static final int SLIDER_MIN = -20 * SHIFT_DB;
     private static final String DEZIBEL = "db";
 
-    private GraphicEQ eq;
+    private final GraphicEQ eq;
 
     private JPanel selectionPanel = null;
     private JPanel bandsPanel = null;
@@ -69,47 +68,45 @@ public class GraphicEqGUI extends JPanel {
     private JLabel presetSelectionLabel = null;
     private JComboBox<String> presetSelection = null;
 
-    private boolean presetsActive;
+    private final boolean presetsActive;
 
-    private static final String PRESET_NAMES[] =
-            {
-                    "Select a preset...",
-                    "Flat",
-                    "Classical",
-                    "Club",
-                    "Cristal",
-                    "Dance",
-                    "Full bass",
-                    "Full bass & treble",
-                    "Full treble",
-                    "Laptop",
-                    "Live",
-                    "Party",
-                    "Pop",
-                    "Reggae",
-                    "Rock",
-                    "Techno",
-            };
+    private static final String[] PRESET_NAMES = {
+            "Select a preset...",
+            "Flat",
+            "Classical",
+            "Club",
+            "Cristal",
+            "Dance",
+            "Full bass",
+            "Full bass & treble",
+            "Full treble",
+            "Laptop",
+            "Live",
+            "Party",
+            "Pop",
+            "Reggae",
+            "Rock",
+            "Techno",
+    };
 
-    private static final int PRESET_DB[][] =
-            {
-                    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                    {0, 0, 0, 0, 0, 0, -8, -8, -8, -10},
-                    {0, 0, 4, 7, 7, 7, 4, 0, 0, 0},
-                    {20, 15, 10, 5, 0, 0, 5, 10, 15, 20},
-                    {10, 7, 2, 0, 0, -6, -8, -8, 0, 0},
-                    {10, 10, 10, 6, 2, -4, -10, -11, -11, -11},
-                    {7, 7, 0, -7, -4, 2, 9, 12, 13, 13},
-                    {-11, -11, -11, -4, 4, 11, 17, 17, 17, 17},
-                    {5, 12, 6, -4, -3, 2, 5, 11, 14, 15},
-                    {-6, 0, 4, 6, 7, 7, 4, 4, 4, 4},
-                    {8, 8, 0, 0, 0, 0, 0, 0, 8, 8},
-                    {-2, 5, 8, 8, 5, -1, -2, -2, -1, -1},
-                    {1, 1, 0, -6, 1, 7, 7, 1, 1, 1},
-                    {8, 5, -5, -8, -2, 4, 9, 11, 11, 11},
-                    {8, 7, 1, -6, -5, 1, 8, 11, 11, 9}
-            };
+    private static final int[][] PRESET_DB = {
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, -8, -8, -8, -10},
+            {0, 0, 4, 7, 7, 7, 4, 0, 0, 0},
+            {20, 15, 10, 5, 0, 0, 5, 10, 15, 20},
+            {10, 7, 2, 0, 0, -6, -8, -8, 0, 0},
+            {10, 10, 10, 6, 2, -4, -10, -11, -11, -11},
+            {7, 7, 0, -7, -4, 2, 9, 12, 13, 13},
+            {-11, -11, -11, -4, 4, 11, 17, 17, 17, 17},
+            {5, 12, 6, -4, -3, 2, 5, 11, 14, 15},
+            {-6, 0, 4, 6, 7, 7, 4, 4, 4, 4},
+            {8, 8, 0, 0, 0, 0, 0, 0, 8, 8},
+            {-2, 5, 8, 8, 5, -1, -2, -2, -1, -1},
+            {1, 1, 0, -6, 1, 7, 7, 1, 1, 1},
+            {8, 5, -5, -8, -2, 4, 9, 11, 11, 11},
+            {8, 7, 1, -6, -5, 1, 8, 11, 11, 9}
+    };
 
     /**
      * Constructor for GraphicEqGUI
@@ -150,11 +147,9 @@ public class GraphicEqGUI extends JPanel {
             equalizerActive.setText("activate equalizer");
             equalizerActive.setFont(Helpers.getDialogFont());
             if (eq != null) equalizerActive.setSelected(eq.isActive());
-            equalizerActive.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
-                        if (eq != null) eq.setIsActive(getEqualizerActive().isSelected());
-                    }
+            equalizerActive.addItemListener(e -> {
+                if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
+                    if (eq != null) eq.setIsActive(getEqualizerActive().isSelected());
                 }
             });
         }
@@ -172,25 +167,23 @@ public class GraphicEqGUI extends JPanel {
 
     private JComboBox<String> getPresetSelection() {
         if (presetSelection == null) {
-            presetSelection = new JComboBox<String>();
+            presetSelection = new JComboBox<>();
             presetSelection.setName("presetSelection");
 
-            DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<String>(PRESET_NAMES);
+            DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<>(PRESET_NAMES);
             presetSelection.setModel(theModel);
             presetSelection.setFont(Helpers.getDialogFont());
             presetSelection.setEnabled(presetsActive);
-            presetSelection.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    if (e.getStateChange() == ItemEvent.SELECTED) {
-                        setPreset(getPresetSelection().getSelectedIndex());
-                    }
+            presetSelection.addItemListener(e -> {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    setPreset(getPresetSelection().getSelectedIndex());
                 }
             });
         }
         return presetSelection;
     }
 
-    private JSlider createDefaultSlider(float value) {
+    private static JSlider createDefaultSlider(float value) {
         if (value > (SLIDER_MAX / SHIFT_DB)) value = SLIDER_MAX / SHIFT_DB;
         else if (value < (SLIDER_MIN / SHIFT_DB)) value = SLIDER_MIN / SHIFT_DB;
         JSlider slider = new JSlider(JSlider.VERTICAL, SLIDER_MIN, SLIDER_MAX, (int) (value * SHIFT_DB));
@@ -201,8 +194,9 @@ public class GraphicEqGUI extends JPanel {
         slider.setSnapToTicks(false);
         slider.setPaintLabels(false);
         slider.setPaintTrack(true);
-        slider.setToolTipText(Float.toString(Math.round(value * 10f) / 10f) + DEZIBEL);
+        slider.setToolTipText(Math.round(value * 10f) / 10f + DEZIBEL);
         slider.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() > 1) {
                     ((JSlider) e.getSource()).setValue(0);
@@ -220,7 +214,7 @@ public class GraphicEqGUI extends JPanel {
             bandsPanel.setLayout(new GridBagLayout());
             bandsPanel.setBorder(new TitledBorder(null, "Bands", TitledBorder.LEADING, TitledBorder.DEFAULT_POSITION, Helpers.getDialogFont(), null));
 
-            maxLabel = new JLabel("+" + Integer.toString(SLIDER_MAX / SHIFT_DB));
+            maxLabel = new JLabel("+" + SLIDER_MAX / SHIFT_DB);
             maxLabel.setFont(Helpers.getDialogFont());
             bandsPanel.add(maxLabel, Helpers.getGridBagConstraint(0, 0, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.NORTH, 0.0, 1.0));
             centerLabel = new JLabel("0" + DEZIBEL);
@@ -236,18 +230,16 @@ public class GraphicEqGUI extends JPanel {
             for (int i = 0; i < bandCount; i++) {
                 sliders[i] = createDefaultSlider(eq.getBand(i));
                 sliders[i].setName(Integer.toString(i));
-                sliders[i].addChangeListener(new ChangeListener() {
-                    public void stateChanged(ChangeEvent e) {
-                        final JSlider slider = ((JSlider) e.getSource());
-                        final String sliderName = slider.getName();
-                        final int bandIndex = Integer.parseInt(sliderName);
-                        final int value = slider.getValue();
-                        eq.setBand(bandIndex, (float) value / (float) SHIFT_DB);
-                        slider.setToolTipText(Float.toString(Math.round(eq.getBand(bandIndex) * 10f) / 10f) + DEZIBEL);
-                    }
+                sliders[i].addChangeListener(e -> {
+                    JSlider slider = ((JSlider) e.getSource());
+                    String sliderName = slider.getName();
+                    int bandIndex = Integer.parseInt(sliderName);
+                    int value = slider.getValue();
+                    eq.setBand(bandIndex, (float) value / (float) SHIFT_DB);
+                    slider.setToolTipText(Math.round(eq.getBand(bandIndex) * 10f) / 10f + DEZIBEL);
                 });
                 int centerFreq = eq.getCenterFreq(i);
-                String lableString = (centerFreq >= 1000) ? Integer.toString(centerFreq / 1000) + "k" : Integer.toString(centerFreq);
+                String lableString = (centerFreq >= 1000) ? centerFreq / 1000 + "k" : Integer.toString(centerFreq);
                 slidersLable[i] = new JLabel(lableString);
                 slidersLable[i].setFont(Helpers.getDialogFont());
                 bandsPanel.add(sliders[i], Helpers.getGridBagConstraint(i + 1, 0, 3, 1, java.awt.GridBagConstraints.VERTICAL, java.awt.GridBagConstraints.CENTER, 0.0, 1.0));
@@ -265,13 +257,11 @@ public class GraphicEqGUI extends JPanel {
             preAmpPanel.setBorder(new TitledBorder(null, "Pre Amp", TitledBorder.LEADING, TitledBorder.DEFAULT_POSITION, Helpers.getDialogFont(), null));
             preAmpSlider = createDefaultSlider(eq.getPreAmpDB());
             preAmpSlider.setName("PreAmp");
-            preAmpSlider.addChangeListener(new ChangeListener() {
-                public void stateChanged(ChangeEvent e) {
-                    JSlider slider = ((JSlider) e.getSource());
-                    int value = slider.getValue();
-                    eq.setPreAmp((float) value / (float) SHIFT_DB);
-                    slider.setToolTipText(Float.toString(Math.round(eq.getPreAmpDB() * 10f) / 10f) + DEZIBEL);
-                }
+            preAmpSlider.addChangeListener(e -> {
+                JSlider slider = ((JSlider) e.getSource());
+                int value = slider.getValue();
+                eq.setPreAmp((float) value / (float) SHIFT_DB);
+                slider.setToolTipText(Math.round(eq.getPreAmpDB() * 10f) / 10f + DEZIBEL);
             });
             preAmpSliderLable = new JLabel("PreAmp");
             preAmpSliderLable.setFont(Helpers.getDialogFont());

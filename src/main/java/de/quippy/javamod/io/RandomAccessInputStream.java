@@ -34,62 +34,62 @@ import java.io.IOException;
  */
 public interface RandomAccessInputStream {
 
-    public File getFile();
+    File getFile();
 
     // InputStream functions - normally implemented due to extending from InputStream
-    public int available() throws IOException;
+    int available() throws IOException;
 
-    public void close() throws IOException;
+    void close() throws IOException;
 
-    public void mark(int readlimit);
+    void mark(int readlimit);
 
-    public boolean markSupported();
+    boolean markSupported();
 
-    public int read() throws IOException;
+    int read() throws IOException;
 
-    public int read(byte[] b, int off, int len) throws IOException;
+    int read(byte[] b, int off, int len) throws IOException;
 
-    public int read(byte[] b) throws IOException;
+    int read(byte[] b) throws IOException;
 
-    public void reset() throws IOException;
+    void reset() throws IOException;
 
-    public long skip(long n) throws IOException;
+    long skip(long n) throws IOException;
 
     // New functions
-    public long getFilePointer() throws IOException;
+    long getFilePointer() throws IOException;
 
-    public void seek(long pos) throws IOException;
+    void seek(long pos) throws IOException;
 
-    public byte readByte() throws IOException;
+    byte readByte() throws IOException;
 
-    public long getLength() throws IOException;
+    long getLength() throws IOException;
 
-    public int skipBack(int n) throws IOException;
+    int skipBack(int n) throws IOException;
 
     // RandomAccessFile functions
-    public int skipBytes(int n) throws IOException;
+    int skipBytes(int n) throws IOException;
 
-    public long length() throws IOException;
+    long length() throws IOException;
 
-    public boolean readBoolean() throws IOException;
+    boolean readBoolean() throws IOException;
 
-    public char readChar() throws IOException;
+    char readChar() throws IOException;
 
-    public short readShort() throws IOException;
+    short readShort() throws IOException;
 
-    public double readDouble() throws IOException;
+    double readDouble() throws IOException;
 
-    public float readFloat() throws IOException;
+    float readFloat() throws IOException;
 
-    public int readInt() throws IOException;
+    int readInt() throws IOException;
 
-    public String readLine() throws IOException;
+    String readLine() throws IOException;
 
-    public long readLong() throws IOException;
+    long readLong() throws IOException;
 
-    public int readUnsignedByte() throws IOException;
+    int readUnsignedByte() throws IOException;
 
-    public int readUnsignedShort() throws IOException;
+    int readUnsignedShort() throws IOException;
 
-    public String readUTF() throws IOException;
+    String readUTF() throws IOException;
 }
