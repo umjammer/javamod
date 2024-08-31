@@ -12,7 +12,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.11.0</version>
+        <version>3.12.1</version>
         <configuration>
           <release>17</release>
         </configuration>
@@ -20,7 +20,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.2.2</version>
+        <version>3.2.5</version>
         <configuration>
           <argLine>
             -Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties
@@ -37,7 +37,7 @@
       <url>https://jitpack.io</url>
     </repository>
     <repository>
-      <id>beatunes</id>
+      <id>beatunes</id> <!-- for jogg -->
       <url>https://www.beatunes.com/repo/maven2/</url>
     </repository>
   </repositories>
@@ -47,7 +47,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.10.2</version>
+        <version>5.10.3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -61,9 +61,9 @@
       <version>1.0.3</version>
     </dependency>
     <dependency>
-      <groupId>vavi</groupId> <!-- com.github.umjammer / vavi -->
+      <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / vavi -->
       <artifactId>vavi-sound-flac</artifactId>
-      <version>0.0.7-SNAPSHOT</version>
+      <version>0.0.7</version>
     </dependency>
     <dependency>
       <groupId>org.jcraft</groupId>
@@ -76,18 +76,18 @@
       <version>0.0.7</version>
     </dependency>
     <dependency>
-      <groupId>net.sourceforge.jmac</groupId>
+      <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / net.sourceforge.jmac -->
       <artifactId>jmac</artifactId>
-      <version>1.7.5v-SNAPSHOT</version>
+      <version>1.7.5v</version>
     </dependency>
     <dependency>
-      <groupId>jsidplay2</groupId>
+      <groupId>com.github.umjammer.JSIDPlay2</groupId> <!-- com.github.umjammer.JSIDPlay2 / jsidplay2 -->
       <artifactId>jsidplay2</artifactId>
-      <version>4.10.0v-SNAPSHOT</version>
+      <version>4.10.0v</version>
       <exclusions>
         <exclusion>
           <groupId>org.openjfx</groupId>
-          <artifactId>javafx-*</artifactId>
+          <artifactId>*</artifactId>
         </exclusion>
         <exclusion>
           <groupId>net.java.truevfs</groupId>
@@ -113,6 +113,22 @@
           <groupId>net.sf.sevenzipjbinding</groupId>
           <artifactId>sevenzipjbinding*</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>xuggle</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>sidblaster</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>kickassembler</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>exsid</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
@@ -134,8 +150,8 @@
 
     <dependency>
       <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-sound</artifactId>
-      <version>1.0.19</version>
+      <artifactId>vavi-commons</artifactId>
+      <version>1.1.13</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

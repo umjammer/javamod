@@ -1,10 +1,26 @@
+[![Release](https://jitpack.io/v/umjammer/javamod.svg)](https://jitpack.io/#umjammer/javamod)
+[![Java CI](https://github.com/umjammer/javamod/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/javamod/actions/workflows/maven.yml)
+[![CodeQL](https://github.com/umjammer/javamod/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/umjammer/javamod/actions/workflows/codeql-analysis.yml)
+![Java](https://img.shields.io/badge/Java-17-b07219)
+
 # JavaMod
+
+Java MOD Player
+
+- mavenized
+- made libraries outsourced libraries as much as possible  
 
 ## References
 
 * https://github.com/quippy-git/javamod
 * https://github.com/PotcFdk/JSIDPlay2
 * https://modarchive.org/
+
+## TODO
+
+* extract graphic equalizer ui
+* extract led scroll ui
+* java sound spi
 
 ---
 
