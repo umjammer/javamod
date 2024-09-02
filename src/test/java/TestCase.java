@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -48,6 +49,7 @@ class TestCase {
         if (localPropertiesExists()) {
             PropsEntity.Util.bind(this);
         }
+Debug.println("volume: " + volume);
     }
 
     @Test
@@ -68,10 +70,14 @@ class TestCase {
         Mixer mixer = container.createNewMixer();
         mixer.setSoundOutputStream(new SoundOutputStreamImpl());
         mixer.setVolume(volume);
-        PlayThread playerThread = new PlayThread(mixer, thread -> {}); // TODO extract player from thread
-        playerThread.start();
 
         CountDownLatch cdl = new CountDownLatch(1);
+
+        PlayThread playerThread = new PlayThread(mixer, thread -> {
+            if (!thread.isRunning()) cdl.countDown();
+        }); // TODO extract player from thread
+        playerThread.start();
+
         cdl.await();
     }
 }
