@@ -45,20 +45,6 @@ public class OGGContainer extends MultimediaContainer {
     private OggMetaData oggMetaData = null;
 
     /**
-     * Will be executed during class load
-     */
-    static {
-        MultimediaContainerManager.registerContainer(new OGGContainer());
-    }
-
-    /**
-     * Constructor for OGGContainer
-     */
-    public OGGContainer() {
-        super();
-    }
-
-    /**
      * @param url
      * @return
      * @see de.quippy.javamod.multimedia.MultimediaContainer#getInstance(java.net.URL)

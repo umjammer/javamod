@@ -79,14 +79,13 @@ public class MidiContainer extends MultimediaContainer {
     private MidiConfigPanel midiConfigPanel;
     private MidiInfoPanel midiInfoPanel;
 
-    /**
+    /*
      * Will be executed during class load
      */
     static {
         // This can sometimes take a while
         MIDIOUTDEVICEINFOS = getMidiOutDevices();
         MIXERDEVICEINFOS = getInputMixerNames();
-        MultimediaContainerManager.registerContainer(new MidiContainer());
     }
 
     /**
@@ -144,13 +143,6 @@ public class MidiContainer extends MultimediaContainer {
                 return MidiContainer.MIXERDEVICEINFOS[i];
         }
         return null;
-    }
-
-    /**
-     * Constructor for MidiContainer
-     */
-    public MidiContainer() {
-        super();
     }
 
     @Override

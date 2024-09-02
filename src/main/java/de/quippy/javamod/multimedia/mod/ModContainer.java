@@ -119,20 +119,6 @@ public class ModContainer extends MultimediaContainer {
     private ModConfigPanel modConfigPanel;
     private SongUpdater songUpdater;
 
-    /*
-     * Will be executed during class load
-     */
-    static {
-        MultimediaContainerManager.registerContainer(new ModContainer());
-    }
-
-    /**
-     * @since 12.10.2007
-     */
-    public ModContainer() {
-        super();
-    }
-
     @Override
     public MultimediaContainer getInstance(URL url) {
         MultimediaContainer result = super.getInstance(url);

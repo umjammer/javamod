@@ -1,0 +1,9 @@
+de.quippy.javamod.multimedia.mod.ModContainer
+de.quippy.javamod.multimedia.wav.WavContainer
+de.quippy.javamod.multimedia.mp3.MP3Container
+de.quippy.javamod.multimedia.ogg.OGGContainer
+de.quippy.javamod.multimedia.ape.APEContainer
+de.quippy.javamod.multimedia.flac.FLACContainer
+de.quippy.javamod.multimedia.midi.MidiContainer
+de.quippy.javamod.multimedia.opl3.OPL3Container
+de.quippy.javamod.multimedia.sid.SIDContainer

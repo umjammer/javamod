@@ -84,20 +84,6 @@ public class SIDContainer extends MultimediaContainer {
     private SIDConfigPanel sidConfigPanel;
     private SIDInfoPanel sidInfoPanel;
 
-    /*
-     * Will be executed during class load
-     */
-    static {
-        MultimediaContainerManager.registerContainer(new SIDContainer());
-    }
-
-    /**
-     * Constructor for SIDContainer
-     */
-    public SIDContainer() {
-        super();
-    }
-
     @Override
     public MultimediaContainer getInstance(URL sidFileUrl) {
         MultimediaContainer result = super.getInstance(sidFileUrl);

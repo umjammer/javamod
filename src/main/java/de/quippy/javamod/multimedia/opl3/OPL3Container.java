@@ -65,20 +65,6 @@ public class OPL3Container extends MultimediaContainer {
     private OPL3ConfigPanel OPL3ConfigPanel;
     private OPL3InfoPanel OPL3InfoPanel;
 
-    /*
-     * Will be executed during class load
-     */
-    static {
-        MultimediaContainerManager.registerContainer(new OPL3Container());
-    }
-
-    /**
-     * Constructor for OPL3Container
-     */
-    public OPL3Container() {
-        super();
-    }
-
     private float getSampleRate() {
         return 49716;
     }

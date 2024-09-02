@@ -48,20 +48,6 @@ public class APEContainer extends MultimediaContainer {
 
     private APETag idTag;
 
-    /*
-     * Will be executed during class load
-     */
-    static {
-        MultimediaContainerManager.registerContainer(new APEContainer());
-    }
-
-    /**
-     * Constructor for APEContainer
-     */
-    public APEContainer() {
-        super();
-    }
-
     @Override
     public boolean canExport() {
         return true;

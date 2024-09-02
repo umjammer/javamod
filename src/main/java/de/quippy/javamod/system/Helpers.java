@@ -1132,55 +1132,8 @@ public class Helpers {
             logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
 
-        // The following are essential for registration at the MultimediaContainerManager
-        // ModContainer uses the ModFactory!!
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mod.ModContainer");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.INFO, "No MOD file support!");
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.wav.WavContainer");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.INFO, "No WAV file support!");
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mp3.MP3Container");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.INFO, "No MP3 file support!");
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.ogg.OGGContainer");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.INFO, "No OGG file support!");
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.ape.APEContainer");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.INFO, "No APE file support!");
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.flac.FLACContainer");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.INFO, "No FLAC file support!");
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.midi.MidiContainer");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.INFO, "No MIDI file support!");
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.opl3.OPL3Container");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.INFO, "No OPL file support!");
-        }
+        // SID WAVE Loading
 
-        // SID and SID WAVE Loading
-        try {
-            Class.forName("de.quippy.javamod.multimedia.sid.SIDContainer");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.INFO, "No SID file support!");
-        }
         try {
             Class.forName("de.quippy.sidplay.resid_builder.resid.Wave");
         } catch (ClassNotFoundException ex) {

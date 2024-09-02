@@ -48,7 +48,7 @@ public class WavContainer extends MultimediaContainer {
     private WavInfoPanel wavInfoPanel;
     private WavMixer currentMixer;
 
-    /**
+    /*
      * Will be executed during class load
      */
     static {
@@ -56,14 +56,6 @@ public class WavContainer extends MultimediaContainer {
         wavefile_Extensions = new String[types.length];
         for (int i = 0; i < types.length; i++)
             wavefile_Extensions[i] = types[i].getExtension();
-        MultimediaContainerManager.registerContainer(new WavContainer());
-    }
-
-    /**
-     * Constructor for WavContainer
-     */
-    public WavContainer() {
-        super();
     }
 
     @Override

@@ -28,11 +28,10 @@ import java.lang.System.Logger.Level;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.Set;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -50,8 +49,15 @@ public class MultimediaContainerManager {
     private static final Logger logger = getLogger(MultimediaContainerManager.class.getName());
 
     private static Map<String, MultimediaContainer> fileExtensionMap;
-    private static List<MultimediaContainer> containerArray;
+    private static Iterable<MultimediaContainer> containers;
     private static boolean headlessMode = true;
+
+    static {
+        for (MultimediaContainer container : getContainers()) {
+            String[] extensions = container.getFileExtensionList();
+            for (String extension : extensions) getFileExtensionMap().put(extension, container);
+        }
+    }
 
     /**
      * @since 12.10.2007
@@ -81,50 +87,32 @@ public class MultimediaContainerManager {
         return fileExtensionMap;
     }
 
-    public static List<MultimediaContainer> getContainerArray() {
-        if (containerArray == null)
-            containerArray = new ArrayList<>();
-        return containerArray;
+    public static Iterable<MultimediaContainer> getContainers() {
+        if (containers == null)
+            containers = ServiceLoader.load(MultimediaContainer.class);
+        return containers;
     }
 
     public static void getContainerConfigs(Properties intoProps) {
-        List<MultimediaContainer> listeners = getContainerArray();
+        Iterable<MultimediaContainer> listeners = getContainers();
         for (MultimediaContainer listener : listeners) listener.configurationSave(intoProps);
     }
 
     public static void configureContainer(Properties fromProps) {
-        List<MultimediaContainer> listeners = getContainerArray();
+        Iterable<MultimediaContainer> listeners = getContainers();
         for (MultimediaContainer listener : listeners) listener.configurationChanged(fromProps);
     }
 
-    public static void registerContainer(MultimediaContainer container) {
-        if (container != null) {
-            getContainerArray().add(container);
-            String[] extensions = container.getFileExtensionList();
-            for (String extension : extensions) getFileExtensionMap().put(extension, container);
-        }
-    }
-
-    public static void deregisterContainer(MultimediaContainer container) {
-        if (container != null) {
-            getContainerArray().remove(container);
-            String[] extensions = container.getFileExtensionList();
-            for (String extension : extensions) getFileExtensionMap().remove(extension);
-        }
-    }
-
-    @SuppressWarnings("ForLoopReplaceableByForEach")
     public static void cleanUpAllContainers() {
-        List<MultimediaContainer> containers = getContainerArray();
-        for (int i = 0; i < containers.size(); i++) {
-            MultimediaContainer container = containers.get(i);
-            deregisterContainer(container);
+        Iterable<MultimediaContainer> containers = getContainers();
+        for (MultimediaContainer container : containers) {
             container.cleanUp();
         }
+        getFileExtensionMap().clear();
     }
 
     public static void updateLookAndFeel() {
-        List<MultimediaContainer> listeners = getContainerArray();
+        Iterable<MultimediaContainer> listeners = getContainers();
         for (MultimediaContainer listener : listeners) listener.updateLookAndFeel();
     }
 
@@ -135,8 +123,8 @@ public class MultimediaContainerManager {
     }
 
     public static Map<String, String[]> getSupportedFileExtensionsPerContainer() {
-        List<MultimediaContainer> listeners = getContainerArray();
-        Map<String, String[]> result = new HashMap<>(listeners.size());
+        Iterable<MultimediaContainer> listeners = getContainers();
+        Map<String, String[]> result = new HashMap<>();
         for (MultimediaContainer listener : listeners) result.put(listener.getName(), listener.getFileExtensionList());
         return result;
     }
@@ -199,12 +187,12 @@ logger.log(Level.DEBUG, getFileExtensionMap());
     }
 
     public static void addMultimediaContainerEventListener(MultimediaContainerEventListener listener) {
-        List<MultimediaContainer> containers = getContainerArray();
+        Iterable<MultimediaContainer> containers = getContainers();
         for (MultimediaContainer container : containers) container.addListener(listener);
     }
 
     public static void removeMultimediaContainerEventListener(MultimediaContainerEventListener listener) {
-        List<MultimediaContainer> containers = getContainerArray();
+        Iterable<MultimediaContainer> containers = getContainers();
         for (MultimediaContainer container : containers) container.removeListener(listener);
     }
 

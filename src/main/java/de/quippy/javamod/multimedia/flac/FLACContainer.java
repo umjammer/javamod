@@ -53,20 +53,6 @@ public class FLACContainer extends MultimediaContainer {
     private long duration;
 
     /**
-     * Will be executed during class load
-     */
-    static {
-        MultimediaContainerManager.registerContainer(new FLACContainer());
-    }
-
-    /**
-     * Constructor for FLACContainer
-     */
-    public FLACContainer() {
-        super();
-    }
-
-    /**
      * @return
      * @see de.quippy.javamod.multimedia.MultimediaContainer#canExport()
      */
