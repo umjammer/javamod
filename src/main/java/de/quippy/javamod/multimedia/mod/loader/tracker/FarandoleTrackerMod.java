@@ -47,33 +47,10 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
             "far"
     };
 
-    /**
-     * Will be executed during class load
-     */
-    static {
-        ModuleFactory.registerModule(new FarandoleTrackerMod());
-    }
-
     private static final int FARFILEMAGIC = 0xFE524146;
     private static final int BREAK_ROW_INVALID = -1;
 
     private String songMessage;
-
-    /**
-     * Constructor for FarandoleTrackerMod
-     */
-    public FarandoleTrackerMod() {
-        super();
-    }
-
-    /**
-     * Constructor for FarandoleTrackerMod
-     *
-     * @param fileName
-     */
-    public FarandoleTrackerMod(String fileName) {
-        super(fileName);
-    }
 
     /**
      * @return
@@ -166,16 +143,6 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
         int id = inputStream.readIntelDWord();
         inputStream.seek(0);
         return id == FARFILEMAGIC;
-    }
-
-    /**
-     * @param fileName
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getNewInstance(java.lang.String)
-     */
-    @Override
-    protected Module getNewInstance(String fileName) {
-        return new FarandoleTrackerMod(fileName);
     }
 
     /**

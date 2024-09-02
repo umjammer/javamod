@@ -466,21 +466,13 @@ public abstract class Module {
     }
 
     /**
-     * Constructor for Module
-     */
-    protected Module(String fileName) {
-        this();
-        this.fileName = fileName;
-    }
-
-    /**
      * Loads a Module. This Method will delegate the task to loadModFile(InputStream)
      *
      * @param fileName
      * @return
      */
-    public Module loadModFile(String fileName) throws IOException {
-        return loadModFile(new File(fileName));
+    public void loadModFile(String fileName) throws IOException {
+        loadModFile(new File(fileName));
     }
 
     /**
@@ -490,8 +482,8 @@ public abstract class Module {
      * @param file
      * @return
      */
-    public Module loadModFile(File file) throws IOException {
-        return loadModFile(file.toURI().toURL());
+    public void loadModFile(File file) throws IOException {
+        loadModFile(file.toURI().toURL());
     }
 
     /**
@@ -499,11 +491,11 @@ public abstract class Module {
      * @return
      * @since 12.10.2007
      */
-    public Module loadModFile(URL url) throws IOException {
+    public void loadModFile(URL url) throws IOException {
         ModfileInputStream inputStream = null;
         try {
             inputStream = new ModfileInputStream(url);
-            return loadModFile(inputStream);
+            loadModFile(inputStream);
         } finally {
             if (inputStream != null) try {
                 inputStream.close();
@@ -517,10 +509,9 @@ public abstract class Module {
      * @throws IOException
      * @since 31.12.2007
      */
-    public Module loadModFile(ModfileInputStream inputStream) throws IOException {
-        Module mod = this.getNewInstance(inputStream.getFileName());
-        mod.loadModFileInternal(inputStream);
-        return mod;
+    public void loadModFile(ModfileInputStream inputStream) throws IOException {
+        this.fileName = inputStream.getFileName();
+        loadModFileInternal(inputStream);
     }
 
     /**
@@ -643,14 +634,6 @@ public abstract class Module {
      * @since 10.01.2010
      */
     public abstract boolean checkLoadingPossible(ModfileInputStream inputStream) throws IOException;
-
-    /**
-     * Create an Instance of your own - is used by loadModFile before loadModFileInternal is called
-     *
-     * @return
-     * @since 10.01.2010
-     */
-    protected abstract Module getNewInstance(String fileName);
 
     /**
      * @param inputStream

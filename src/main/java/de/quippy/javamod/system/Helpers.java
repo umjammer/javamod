@@ -1132,48 +1132,6 @@ public class Helpers {
             logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
         }
 
-        // The following are essential for registration at the ModuleFactory
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.ProTrackerMod");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.XMMod");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.ScreamTrackerOldMod");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.ScreamTrackerSTXMod");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.ScreamTrackerMod");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.ImpulseTrackerMod");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.FarandoleTrackerMod");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mod.loader.tracker.MultiTrackerMod");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
-        }
-
         // The following are essential for registration at the MultimediaContainerManager
         // ModContainer uses the ModFactory!!
         try {

@@ -94,13 +94,6 @@ public class ScreamTrackerMod extends Module {
     private static final int songFastVolSlide = 0x40;
 //	private static final int songCustomData		 = 0x80;
 
-    /*
-     * Will be executed during class load
-     */
-    static {
-        ModuleFactory.registerModule(new ScreamTrackerMod());
-    }
-
     protected int flags;
     protected int samplesType;
     protected boolean usePanningValues;
@@ -108,22 +101,6 @@ public class ScreamTrackerMod extends Module {
     // Due to deactivated Channels, we need to remap:
     private int[] channelMap;
     private byte[] channelStatus;
-
-    /**
-     * Constructor for ScreamTrackerMod
-     */
-    public ScreamTrackerMod() {
-        super();
-    }
-
-    /**
-     * Constructor for ScreamTrackerMod
-     *
-     * @param fileName
-     */
-    protected ScreamTrackerMod(String fileName) {
-        super(fileName);
-    }
 
     @Override
     public String[] getFileExtensionList() {
@@ -184,11 +161,6 @@ public class ScreamTrackerMod extends Module {
         String s3mID = inputStream.readString(4);
         inputStream.seek(0);
         return s3mID.equals(S3M_ID);
-    }
-
-    @Override
-    protected Module getNewInstance(String fileName) {
-        return new ScreamTrackerMod(fileName);
     }
 
     /**

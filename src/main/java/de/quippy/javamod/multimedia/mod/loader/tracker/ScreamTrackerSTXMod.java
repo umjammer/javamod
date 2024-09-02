@@ -49,29 +49,6 @@ public class ScreamTrackerSTXMod extends ScreamTrackerOldMod {
     };
 
     /**
-     * Will be executed during class load
-     */
-    static {
-        ModuleFactory.registerModule(new ScreamTrackerSTXMod());
-    }
-
-    /**
-     * Constructor for ScreamTrackerSTXMod
-     */
-    public ScreamTrackerSTXMod() {
-        super();
-    }
-
-    /**
-     * Constructor for ScreamTrackerSTXMod
-     *
-     * @param fileName
-     */
-    public ScreamTrackerSTXMod(String fileName) {
-        super(fileName);
-    }
-
-    /**
      * @return the file extensions this loader is suitable for
      */
     @Override
@@ -150,11 +127,6 @@ public class ScreamTrackerSTXMod extends ScreamTrackerOldMod {
         String s3mID = inputStream.readString(4);
         inputStream.seek(0);
         return s3mID.equals(S3M_ID);
-    }
-
-    @Override
-    protected Module getNewInstance(String fileName) {
-        return new ScreamTrackerSTXMod(fileName);
     }
 
     /**

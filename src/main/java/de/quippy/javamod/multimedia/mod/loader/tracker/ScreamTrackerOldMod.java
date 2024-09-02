@@ -50,27 +50,6 @@ public class ScreamTrackerOldMod extends Module {
     protected static final String S3M_ID = "SCRM";
 
     /**
-     * Will be executed during class load
-     */
-    static {
-        ModuleFactory.registerModule(new ScreamTrackerOldMod());
-    }
-
-    /**
-     * Constructor for ScreamTrackerOldMod
-     */
-    public ScreamTrackerOldMod() {
-        super();
-    }
-
-    /**
-     * Constructor for ScreamTrackerOldMod
-     */
-    protected ScreamTrackerOldMod(String fileName) {
-        super(fileName);
-    }
-
-    /**
      * @return the file extensions this loader is suitable for
      */
     @Override
@@ -156,16 +135,6 @@ public class ScreamTrackerOldMod extends Module {
         String s3mID = inputStream.readString(4);
         inputStream.seek(0);
         return !s3mID.equals(S3M_ID);
-    }
-
-    /**
-     * @param fileName
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getNewInstance(java.lang.String)
-     */
-    @Override
-    protected Module getNewInstance(String fileName) {
-        return new ScreamTrackerOldMod(fileName);
     }
 
     /**

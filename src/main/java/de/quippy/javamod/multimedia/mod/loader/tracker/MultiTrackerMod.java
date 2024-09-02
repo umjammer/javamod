@@ -47,32 +47,8 @@ public class MultiTrackerMod extends ProTrackerMod {
             "mtm"
     };
 
-    /**
-     * Will be executed during class load
-     */
-    static {
-        ModuleFactory.registerModule(new MultiTrackerMod());
-    }
-
     protected int[] panningValue;
     private String songMessage;
-
-    /**
-     * Constructor for MultiTrackerMod
-     */
-    public MultiTrackerMod() {
-        super();
-    }
-
-    /**
-     * Constructor for MultiTrackerMod
-     *
-     * @param fileName
-     */
-    public MultiTrackerMod(String fileName) {
-        super(fileName);
-
-    }
 
     @Override
     public String[] getFileExtensionList() {
@@ -122,11 +98,6 @@ public class MultiTrackerMod extends ProTrackerMod {
         String id = inputStream.readString(3);
         inputStream.seek(0);
         return id.equals("MTM");
-    }
-
-    @Override
-    protected Module getNewInstance(String fileName) {
-        return new MultiTrackerMod(fileName);
     }
 
     @Override

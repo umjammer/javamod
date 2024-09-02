@@ -43,7 +43,14 @@ import de.quippy.javamod.io.ModfileInputStream;
 public class ModuleFactory {
 
     private static Map<String, Module> fileExtensionMap;
-    private static List<Module> modulesArray;
+    private static ServiceLoader<Module> modules;
+
+    static {
+        for (Module mod : getModules()) {
+            String[] extensions = mod.getFileExtensionList();
+            for (String extension : extensions) getFileExtensionMap().put(extension, mod);
+        }
+    }
 
     /**
      * Constructor for ModuleFactory - This Class Is A Singleton
@@ -71,22 +78,11 @@ public class ModuleFactory {
      * @return
      * @since 04.01.2010
      */
-    private static List<Module> getModulesArray() {
-        if (modulesArray == null)
-            modulesArray = new ArrayList<>();
-        return modulesArray;
+    private static ServiceLoader<Module> getModules() {
+        if (modules == null) {
+            modules = ServiceLoader.load(Module.class);
     }
-
-    public static void registerModule(Module mod) {
-        getModulesArray().add(mod);
-        String[] extensions = mod.getFileExtensionList();
-        for (String extension : extensions) getFileExtensionMap().put(extension, mod);
-    }
-
-    public static void deregisterModule(Module mod) {
-        getModulesArray().remove(mod);
-        String[] extensions = mod.getFileExtensionList();
-        for (String extension : extensions) getFileExtensionMap().remove(extension);
+        return modules;
     }
 
     public static String[] getSupportedFileExtensions() {
@@ -107,7 +103,7 @@ public class ModuleFactory {
      * @since 04.01.2010
      */
     private static Module getModuleFromStreamByID(ModfileInputStream input) {
-        for (Module mod : getModulesArray()) {
+        for (Module mod : getModules()) {
             try {
                 if (mod.checkLoadingPossible(input)) return mod;
             } catch (IOException ex) {
@@ -125,13 +121,12 @@ public class ModuleFactory {
      * @since 13.06.2010
      */
     private static Module getModuleFromStream(ModfileInputStream input) {
-        for (Module mod : getModulesArray()) {
+        for (Module mod : getModules()) {
             try {
-                Module result = mod.loadModFile(input);
+                mod.loadModFile(input);
                 input.seek(0);
-                return result; // <-- here this loading was a success!
-            } catch (Throwable ex) {
-                /* Ignoring */
+                return mod; // <-- here this loading was a success!
+            } catch (Throwable ignore) {
             }
         }
         return null;
@@ -170,9 +165,10 @@ public class ModuleFactory {
             Module mod = getModuleFromStreamByID(inputStream);
             // If the header gives no infos, it's obviously a Noise Tracker file
             // So let's try all loaders
-            if (mod != null)
-                return mod.loadModFile(inputStream);
-            else {
+            if (mod != null) {
+                mod.loadModFile(inputStream);
+                return mod;
+            } else {
                 mod = getModuleFromStream(inputStream);
                 if (mod != null)
                     return mod;

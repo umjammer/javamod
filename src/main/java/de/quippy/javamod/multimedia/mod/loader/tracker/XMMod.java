@@ -48,34 +48,11 @@ public class XMMod extends ProTrackerMod {
             "xm"
     };
 
-    /**
-     * Will be executed during class load
-     */
-    static {
-        ModuleFactory.registerModule(new XMMod());
-    }
-
     private int version;
     private int headerSize;
     private int flag;
     private String songMessage;
     private MidiMacros midiMacros;
-
-    /**
-     * Constructor for XMMod
-     */
-    public XMMod() {
-        super();
-    }
-
-    /**
-     * Constructor for XMMod
-     *
-     * @param fileName
-     */
-    protected XMMod(String fileName) {
-        super(fileName);
-    }
 
     @Override
     public String[] getFileExtensionList() {
@@ -118,11 +95,6 @@ public class XMMod extends ProTrackerMod {
         String xmID = inputStream.readString(17);
         inputStream.seek(0);
         return isXMMod(xmID);
-    }
-
-    @Override
-    protected Module getNewInstance(String fileName) {
-        return new XMMod(fileName);
     }
 
     /**

@@ -205,4 +205,9 @@ public abstract class MultimediaContainer {
      * @since 12.10.2007
      */
     public abstract Mixer createNewMixer();
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

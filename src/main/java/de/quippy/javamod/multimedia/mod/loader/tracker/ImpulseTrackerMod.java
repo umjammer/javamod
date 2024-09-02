@@ -74,13 +74,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
     private static final int cvtOPLInstrument = 0x40;  // FM instrument in MPTM
     private static final int cvtExternalSample = 0x80;  // Keep MPTM sample on disk
     private static final int cvtADPCMSample = 0xFF;  // ModPlug special
-
-    /**
-     * Will be executed during class load
-     */
-    static {
-        ModuleFactory.registerModule(new ImpulseTrackerMod());
-    }
+    private static final int cvtADPCMSample = 0xff;  // ModPlug special
 
     protected int cmwt;
     protected int special;
@@ -88,22 +82,6 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
     protected String songMessage;
     protected MidiMacros midiMacros;
     protected int pwDepth;
-
-    /**
-     * Constructor for ImpulseTrackerMod
-     */
-    public ImpulseTrackerMod() {
-        super();
-    }
-
-    /**
-     * Constructor for ImpulseTrackerMod
-     *
-     * @param fileName
-     */
-    protected ImpulseTrackerMod(String fileName) {
-        super(fileName);
-    }
 
     @Override
     public String[] getFileExtensionList() {
@@ -205,11 +183,6 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         String id = inputStream.readString(4);
         inputStream.seek(0);
         return id.equals("IMPM");
-    }
-
-    @Override
-    protected Module getNewInstance(String fileName) {
-        return new ImpulseTrackerMod(fileName);
     }
 
     @Override

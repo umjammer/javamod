@@ -48,13 +48,6 @@ public class ProTrackerMod extends Module {
             "stk", "nst", "mod", "wow"
     };
 
-    /**
-     * Will be executed during class load
-     */
-    static {
-        ModuleFactory.registerModule(new ProTrackerMod());
-    }
-
     private boolean isAmigaLike;            // Protracker like AMIGA mods. Others are played in XM-Mode
     private boolean isDeltaPacked;
     private boolean isStarTrekker;
@@ -64,20 +57,6 @@ public class ProTrackerMod extends Module {
     private boolean modSpeedIsTicks;        // changes playing behavior to set always speed (ticks), never BPM
     //	private boolean swapBytes;				// For .DTM files from Apocalypse Abyss, where the first 2108 bytes are swapped - we do not support that yet!
     private boolean ft2Tremolos;            // Tremolo Ramp Down Waveform behavior change for some mods (FT2 style)
-
-    /**
-     * Constructor for ProTrackerMod
-     */
-    public ProTrackerMod() {
-        super();
-    }
-
-    /**
-     * Constructor for ProTrackerMod
-     */
-    protected ProTrackerMod(String fileName) {
-        super(fileName);
-    }
 
 //    /**
 //     * Not yet used - let's see, if we need that once...
@@ -418,11 +397,6 @@ public class ProTrackerMod extends Module {
             // No pattern break operator in NoiseTracker
             pe.setEffektOp(0);
         }
-    }
-
-    @Override
-    protected Module getNewInstance(String fileName) {
-        return new ProTrackerMod(fileName);
     }
 
     @Override
