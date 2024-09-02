@@ -285,7 +285,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
             int read = fillRandomAccessBuffer(this.getFilePointer());
             if (read == -1) return -1;
         }
-        return ((int) randomAccessBuffer[randomAccessBuffer_readPointer++]) & 0xFF;
+        return ((int) randomAccessBuffer[randomAccessBuffer_readPointer++]) & 0xff;
     }
 
     /**
@@ -475,7 +475,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
         if (raFile != null)
             return readByte_internal();
         else
-            return (fullFileCache_readPointer < fullFileCache_length) ? ((int) fullFileCache[fullFileCache_readPointer++]) & 0xFF : -1;
+            return (fullFileCache_readPointer < fullFileCache_length) ? ((int) fullFileCache[fullFileCache_readPointer++]) & 0xff : -1;
     }
 
     /**
@@ -643,7 +643,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      */
     @Override
     public long readLong() throws IOException {
-        return ((long) (readInt()) << 32) + (readInt() & 0xFFFFFFFFL);
+        return ((long) (readInt()) << 32) + (readInt() & 0xffFFFFFFL);
     }
 
     /**
@@ -773,42 +773,42 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @since 31.12.2007
      */
     public int readMotorolaUnsignedWord() throws IOException {
-        return (((readByte() & 0xFF) << 8) | (readByte() & 0xFF)) & 0xFFFF;
+        return (((readByte() & 0xff) << 8) | (readByte() & 0xff)) & 0xffFF;
     }
 
     /**
      * @since 31.12.2007
      */
     public int readIntelUnsignedWord() throws IOException {
-        return ((readByte() & 0xFF) | ((readByte() & 0xFF) << 8)) & 0xFFFF;
+        return ((readByte() & 0xff) | ((readByte() & 0xff) << 8)) & 0xffFF;
     }
 
     /**
      * @since 31.12.2007
      */
     public short readMotorolaWord() throws IOException {
-        return (short) ((((readByte() & 0xFF) << 8) | (readByte() & 0xFF)) & 0xFFFF);
+        return (short) ((((readByte() & 0xff) << 8) | (readByte() & 0xff)) & 0xffFF);
     }
 
     /**
      * @since 31.12.2007
      */
     public short readIntelWord() throws IOException {
-        return (short) (((readByte() & 0xFF) | ((readByte() & 0xFF) << 8)) & 0xFFFF);
+        return (short) (((readByte() & 0xff) | ((readByte() & 0xff) << 8)) & 0xffFF);
     }
 
     /**
      * @since 31.12.2007
      */
     public int readMotorolaDWord() throws IOException {
-        return ((readByte() & 0xFF) << 24) | ((readByte() & 0xFF) << 16) | ((readByte() & 0xFF) << 8) | (readByte() & 0xFF);
+        return ((readByte() & 0xff) << 24) | ((readByte() & 0xff) << 16) | ((readByte() & 0xff) << 8) | (readByte() & 0xff);
     }
 
     /**
      * @since 31.12.2007
      */
     public int readIntelDWord() throws IOException {
-        return (readByte() & 0xFF) | ((readByte() & 0xFF) << 8) | ((readByte() & 0xFF) << 16) | ((readByte() & 0xFF) << 24);
+        return (readByte() & 0xff) | ((readByte() & 0xff) << 8) | ((readByte() & 0xff) << 16) | ((readByte() & 0xff) << 24);
     }
 
     /**
@@ -817,7 +817,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @since 05.08.2020
      */
     public long readMotorolaLong() throws IOException {
-        return (((long) readMotorolaDWord()) << 32) | (((long) readMotorolaDWord()) & 0xFFFFFFFF);
+        return (((long) readMotorolaDWord()) << 32) | (((long) readMotorolaDWord()) & 0xffFFFFFF);
     }
 
     /**
@@ -826,7 +826,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * @since 05.08.2020
      */
     public long readIntelLong() throws IOException {
-        return (((long) readIntelDWord()) & 0xFFFFFFFF) | (((long) readIntelDWord()) << 32);
+        return (((long) readIntelDWord()) & 0xffFFFFFF) | (((long) readIntelDWord()) << 32);
     }
 
     /**
@@ -844,7 +844,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
         if (size != 0) {
             int readBytes = (size > 8) ? 8 : size;
             for (int i = 0; i < readBytes; i++)
-                result = (result << 8) | (read() & 0xFF);
+                result = (result << 8) | (read() & 0xff);
             skip(size - readBytes);
         }
         return result;

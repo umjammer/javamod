@@ -24,6 +24,7 @@ package de.quippy.javamod.multimedia.sid;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.System.Logger;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -142,7 +143,7 @@ public class SIDContainer extends MultimediaContainer {
 //            int b;
 //            int index = 0;
 //            while ((b = in.read()) != -1) {
-//                sidTuneData[index++] = (short) (b & 0xFF);
+//                sidTuneData[index++] = (short) (b & 0xff);
 //                if (index >= sidTuneData.length) {
 //                    short[] newBuffer = new short[sidTuneData.length + size];
 //                    System.arraycopy(sidTuneData, 0, newBuffer, 0, sidTuneData.length);

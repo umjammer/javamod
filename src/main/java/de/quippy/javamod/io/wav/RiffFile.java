@@ -119,8 +119,8 @@ public class RiffFile {
                             byte[] br = new byte[8];
                             file.read(br, 0, 8);
                             fmode = RFM_READ;
-                            riff_header.ckID = ((br[0] << 24) & 0xFF000000) | ((br[1] << 16) & 0x00FF0000) | ((br[2] << 8) & 0x0000FF00) | (br[3] & 0x000000FF);
-                            riff_header.ckSize = ((br[7] << 24) & 0xFF000000) | ((br[6] << 16) & 0x00FF0000) | ((br[5] << 8) & 0x0000FF00) | (br[4] & 0x000000FF);
+                            riff_header.ckID = ((br[0] << 24) & 0xff000000) | ((br[1] << 16) & 0x00FF0000) | ((br[2] << 8) & 0x0000FF00) | (br[3] & 0x000000FF);
+                            riff_header.ckSize = ((br[7] << 24) & 0xff000000) | ((br[6] << 16) & 0x00FF0000) | ((br[5] << 8) & 0x0000FF00) | (br[4] & 0x000000FF);
                         } catch (IOException ioe) {
                             file.close();
                             fmode = RFM_UNKNOWN;
@@ -195,7 +195,7 @@ public class RiffFile {
      * Write NumBytes data.
      */
     public int write(short Data, int NumBytes) {
-        short theData = (short) (((Data >>> 8) & 0x00FF) | ((Data << 8) & 0xFF00));
+        short theData = (short) (((Data >>> 8) & 0x00FF) | ((Data << 8) & 0xff00));
         if (fmode != RFM_WRITE) {
             return DDC_INVALID_CALL;
         }
@@ -215,9 +215,9 @@ public class RiffFile {
     public int write(int Data, int NumBytes) {
         short theDataL = (short) ((Data >>> 16) & 0x0000FFFF);
         short theDataR = (short) (Data & 0x0000FFFF);
-        short theDataLI = (short) (((theDataL >>> 8) & 0x00FF) | ((theDataL << 8) & 0xFF00));
-        short theDataRI = (short) (((theDataR >>> 8) & 0x00FF) | ((theDataR << 8) & 0xFF00));
-        int theData = ((theDataRI << 16) & 0xFFFF0000) | (theDataLI & 0x0000FFFF);
+        short theDataLI = (short) (((theDataL >>> 8) & 0x00FF) | ((theDataL << 8) & 0xff00));
+        short theDataRI = (short) (((theDataR >>> 8) & 0x00FF) | ((theDataR << 8) & 0xff00));
+        int theData = ((theDataRI << 16) & 0xffFF0000) | (theDataLI & 0x0000FFFF);
         if (fmode != RFM_WRITE) {
             return DDC_INVALID_CALL;
         }
@@ -381,7 +381,7 @@ public class RiffFile {
                 0x20, 0x20, 0x20, 0x20
         };
         System.arraycopy(ChunkName.getBytes(), 0, p, 0, 4);
-        int ret = (((p[0] << 24) & 0xFF00_0000) | ((p[1] << 16) & 0x00FF_0000) | ((p[2] << 8) & 0x0000_FF00) | (p[3] & 0x0000_00FF));
+        int ret = (((p[0] << 24) & 0xff00_0000) | ((p[1] << 16) & 0x00FF_0000) | ((p[2] << 8) & 0x0000_FF00) | (p[3] & 0x0000_00FF));
         return ret;
     }
 

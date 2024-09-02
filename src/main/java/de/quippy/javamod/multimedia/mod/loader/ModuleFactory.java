@@ -25,17 +25,16 @@ package de.quippy.javamod.multimedia.mod.loader;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 
 import de.quippy.javamod.io.ModfileInputStream;
 
 
 /**
- * Returns the appropiate ModuleClass for the desired ModFile
+ * Returns the appropriate ModuleClass for the desired ModFile
  *
  * @author Daniel Becker
  * @since 21.04.2006
@@ -62,7 +61,6 @@ public class ModuleFactory {
     /**
      * Lazy instantiation access method
      *
-     * @return
      * @since 04.01.2010
      */
     private static Map<String, Module> getFileExtensionMap() {
@@ -75,13 +73,12 @@ public class ModuleFactory {
     /**
      * Lazy instantiation access method
      *
-     * @return
      * @since 04.01.2010
      */
     private static ServiceLoader<Module> getModules() {
         if (modules == null) {
             modules = ServiceLoader.load(Module.class);
-    }
+        }
         return modules;
     }
 
@@ -98,8 +95,6 @@ public class ModuleFactory {
     /**
      * Finds the appropriate loader through the IDs
      *
-     * @param input
-     * @return
      * @since 04.01.2010
      */
     private static Module getModuleFromStreamByID(ModfileInputStream input) {
@@ -116,8 +111,6 @@ public class ModuleFactory {
     /**
      * Finds the appropriate loader through simply loading it!
      *
-     * @param input
-     * @return
      * @since 13.06.2010
      */
     private static Module getModuleFromStream(ModfileInputStream input) {

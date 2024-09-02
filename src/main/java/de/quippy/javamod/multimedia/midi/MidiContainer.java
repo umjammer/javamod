@@ -199,11 +199,6 @@ public class MidiContainer extends MultimediaContainer {
         return MidiContainer.getInputMixerByName((currentProps != null) ? currentProps.getProperty(PROPERTY_MIDIPLAYER_MIXERNAME, DEFAULT_MIXERNAME) : DEFAULT_MIXERNAME);
     }
 
-    /**
-     * @param url
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongInfosFor(java.net.URL)
-     */
     @Override
     public Object[] getSongInfosFor(URL url) {
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
@@ -216,46 +211,26 @@ public class MidiContainer extends MultimediaContainer {
         return new Object[] {songName, duration};
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongName()
-     */
     @Override
     public String getSongName() {
         return super.getSongName();
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getFileExtensionList()
-     */
     @Override
     public String[] getFileExtensionList() {
         return MIDIFILEEXTENSION;
     }
 
-    /**
-     * @return the name of the group of files this container knows
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getName()
-     */
     @Override
     public String getName() {
         return "Midi-File";
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#canExport()
-     */
     @Override
     public boolean canExport() {
         return getCapture();
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInfoPanel()
-     */
     @Override
     public JPanel getInfoPanel() {
         if (midiInfoPanel == null) {
@@ -265,10 +240,6 @@ public class MidiContainer extends MultimediaContainer {
         return midiInfoPanel;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getConfigPanel()
-     */
     @Override
     public JPanel getConfigPanel() {
         if (midiConfigPanel == null) {
@@ -278,10 +249,6 @@ public class MidiContainer extends MultimediaContainer {
         return midiConfigPanel;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#createNewMixer()
-     */
     @Override
     public Mixer createNewMixer() {
         configurationSave(currentProps);
@@ -296,10 +263,6 @@ public class MidiContainer extends MultimediaContainer {
         return currentMixer;
     }
 
-    /**
-     * @param newProps
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationChanged(java.util.Properties)
-     */
     @Override
     public void configurationChanged(Properties newProps) {
         if (currentProps == null) currentProps = new Properties();
@@ -314,10 +277,6 @@ public class MidiContainer extends MultimediaContainer {
         }
     }
 
-    /**
-     * @param props
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationSave(java.util.Properties)
-     */
     @Override
     public void configurationSave(Properties props) {
         if (currentProps == null) currentProps = new Properties();
@@ -334,9 +293,6 @@ public class MidiContainer extends MultimediaContainer {
         }
     }
 
-    /**
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#cleanUp()
-     */
     @Override
     public void cleanUp() {
     }

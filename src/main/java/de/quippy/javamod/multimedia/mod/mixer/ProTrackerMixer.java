@@ -136,8 +136,8 @@ public class ProTrackerMixer extends BasicModMixer {
             case ModConstants.XM_LINEAR_TABLE:
                 // We have a different LUT table as original FT2 - to avoid the doubles used there
                 // So we need some adoption to the algorithm used in FT2 but stay as close as possible to the coding there:
-                int period = (newPeriod >> (ModConstants.PERIOD_SHIFT - 2)) & 0xFFFF;
-                int invPeriod = ((12 * 192 * 4) + 767 - period) & 0xFFFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
+                int period = (newPeriod >> (ModConstants.PERIOD_SHIFT - 2)) & 0xffFF;
+                int invPeriod = ((12 * 192 * 4) + 767 - period) & 0xffFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
                 int quotient = invPeriod / (12 * 16 * 4);
                 int remainder = period % (12 * 16 * 4);
                 int newFrequency = ModConstants.lintab[remainder] >> (((14 - quotient) & 0x1F) - 2); // values are 4 times bigger in FT2
@@ -185,7 +185,7 @@ public class ProTrackerMixer extends BasicModMixer {
             // With XM, 0x20 is the lowest tempo. Anything below changes ticks per row.
             // Moving that to the left will wrongly and unintentionally increase resulting BPM
             if (xmTempoFix && val >= 0x20 && val < 256) val -= 0x20;
-            val = (val << 8) | (patternElement.getEffektOp() & 0xFF);
+            val = (val << 8) | (patternElement.getEffektOp() & 0xff);
         }
         if (extendedRowsUsed != null) extendedRowsUsed.set(rowsUsed);
         return val;
@@ -218,7 +218,7 @@ public class ProTrackerMixer extends BasicModMixer {
         aktMemo.currentSample = aktMemo.assignedSample;
         if (aktMemo.assignedSample != null) note += aktMemo.assignedSample.transpose;
 
-        note &= 0xFF; // note is an uint8_t - simulate
+        note &= 0xff; // note is an uint8_t - simulate
         if (note >= 10 * 12)
             return; // this is an uint8 compare and works for <0 as well - well at least when we do not get *that* negative...
 
@@ -232,7 +232,7 @@ public class ProTrackerMixer extends BasicModMixer {
             // in favor of the uint8 used here, we re-implement it like FT2 does it. That way some quirks with
             // too low notes will result in the same behavior (i.e. a wrap around).
             //setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod = getFineTunePeriod(aktMemo, note));
-            int noteIndex = (((note - 1) & 0xFF) << 4) + ((aktMemo.currentFineTune >> 3) + 16); // 0..1920
+            int noteIndex = (((note - 1) & 0xff) << 4) + ((aktMemo.currentFineTune >> 3) + 16); // 0..1920
             aktMemo.currentNotePeriod = note2Period[noteIndex] << (ModConstants.PERIOD_SHIFT - 2); // table values are already shifted by 2
             setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod);
         }
@@ -440,13 +440,13 @@ public class ProTrackerMixer extends BasicModMixer {
                 if (isMOD && aktMemo.assignedEffektParam == 0) // No effect memory with MODs
                     aktMemo.portaStepUp = 0;
                 else if (aktMemo.assignedEffektParam != 0)
-                    aktMemo.portaStepUp = (aktMemo.assignedEffektParam & 0xFF) << ModConstants.PERIOD_SHIFT;
+                    aktMemo.portaStepUp = (aktMemo.assignedEffektParam & 0xff) << ModConstants.PERIOD_SHIFT;
                 break;
             case 0x02:            // Porta Down
                 if (isMOD && aktMemo.assignedEffektParam == 0) // No effect memory with MODs
                     aktMemo.portaStepDown = 0;
                 else if (aktMemo.assignedEffektParam != 0)
-                    aktMemo.portaStepDown = (aktMemo.assignedEffektParam & 0xFF) << ModConstants.PERIOD_SHIFT;
+                    aktMemo.portaStepDown = (aktMemo.assignedEffektParam & 0xff) << ModConstants.PERIOD_SHIFT;
                 break;
             case 0x03:            // Porta To Note
                 if (aktMemo.assignedEffektParam != 0)
@@ -650,7 +650,7 @@ public class ProTrackerMixer extends BasicModMixer {
                     if (isMOD) {
                         // We do it the next round in either doTickEffects or doRowEffects (with speed 1)
                         modSpeedSet = aktMemo.assignedEffektParam;
-                        if (modSpeedSet > 0xFF) modSpeedSet = 0xFF;
+                        if (modSpeedSet > 0xff) modSpeedSet = 0xff;
                     } else {
                         // FT:
                         currentBPM = calculateExtendedValue(aktMemo, null);
@@ -660,7 +660,7 @@ public class ProTrackerMixer extends BasicModMixer {
                     // FT2 appears to be decrementing the tick count before checking for zero,
                     // so it effectively counts down 65536 ticks with speed = 0 (song speed is a 16-bit variable in FT2)
                     if (isXM && aktMemo.assignedEffektParam == 0)
-                        currentTick = currentTempo = 0xFFFF;
+                        currentTick = currentTempo = 0xffFF;
                     else if (aktMemo.assignedEffektParam != 0)
                         currentTick = currentTempo = aktMemo.assignedEffektParam;
                 }
@@ -923,7 +923,7 @@ public class ProTrackerMixer extends BasicModMixer {
                 doKeyOff(aktMemo);
             } else if (hasNewNote(element)) { // KeyOff is not a note...
                 // because of p->note being uint8, we need to simulate
-                int note = (((aktMemo.assignedNoteIndex + aktMemo.currentTranspose - 1) & 0xFF) << 4) + ((aktMemo.currentFineTune >> 3) + 16);
+                int note = (((aktMemo.assignedNoteIndex + aktMemo.currentTranspose - 1) & 0xff) << 4) + ((aktMemo.currentFineTune >> 3) + 16);
                 if (note < (10 * 12 * 16) + 16) {
                     aktMemo.portaTargetNotePeriod = note2Period[note] << (ModConstants.PERIOD_SHIFT - 2);
                     if (aktMemo.portaTargetNotePeriod == aktMemo.currentNotePeriod)
@@ -989,7 +989,7 @@ public class ProTrackerMixer extends BasicModMixer {
         if (isMOD) {
             // PT BUG: sign removed before comparison, underflow not clamped!
             int tmpPeriod = aktMemo.currentNotePeriod >> ModConstants.PERIOD_SHIFT;
-            if ((tmpPeriod & 0xFFF) < 113)
+            if ((tmpPeriod & 0xffF) < 113)
                 aktMemo.currentNotePeriod = ((tmpPeriod & 0xF000) | 113) << ModConstants.PERIOD_SHIFT;
         } else {
             // FT2 bug, should've been unsigned comparison
@@ -1011,7 +1011,7 @@ public class ProTrackerMixer extends BasicModMixer {
         if (isMOD) {
             // PT BUG: sign removed before comparison, underflow not clamped!
             int tmpPeriod = aktMemo.currentNotePeriod >> ModConstants.PERIOD_SHIFT;
-            if ((tmpPeriod & 0xFFF) > 856)
+            if ((tmpPeriod & 0xffF) > 856)
                 aktMemo.currentNotePeriod = ((tmpPeriod & 0xF000) | 856) << ModConstants.PERIOD_SHIFT;
         } else {
             // FT2 bug, should've been unsigned comparison
@@ -1041,7 +1041,7 @@ public class ProTrackerMixer extends BasicModMixer {
         } else
             autoVibAmp = aktMemo.autoVibratoAmplitude;
 
-        aktMemo.autoVibratoTablePos = (aktMemo.autoVibratoTablePos + currentSample.vibratoRate) & 0xFF;
+        aktMemo.autoVibratoTablePos = (aktMemo.autoVibratoTablePos + currentSample.vibratoRate) & 0xff;
         int periodAdd = switch (currentSample.vibratoType & 0x03) {
             default -> ModConstants.XMAutoVibSineTab[aktMemo.autoVibratoTablePos];    // Sine
             case 1 -> (aktMemo.autoVibratoTablePos > 127) ? +0x40 : -0x40;            // Square

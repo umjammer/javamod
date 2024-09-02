@@ -26,6 +26,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.util.StringJoiner;
 
 import de.quippy.javamod.mixer.Mixer;
 
@@ -58,7 +59,7 @@ public final class PlayThread extends Thread implements Serializable {
         this.setDaemon(true);
         try {
             this.setPriority(Thread.MAX_PRIORITY);
-        } catch (SecurityException ex) { /*NOOP*/ }
+        } catch (SecurityException ex) { /* NOOP */ }
     }
 
     private void informListener() {
@@ -71,7 +72,7 @@ public final class PlayThread extends Thread implements Serializable {
             while (isRunning) {
                 try {
                     Thread.sleep(10L);
-                } catch (InterruptedException ex) { /*NOOP*/ }
+                } catch (InterruptedException ex) { /* NOO P*/ }
             }
         }
     }
@@ -106,5 +107,14 @@ public final class PlayThread extends Thread implements Serializable {
         this.isRunning = false;
         this.finishedNormaly = getCurrentMixer().hasFinished();
         informListener();
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", PlayThread.class.getSimpleName() + "[", "]")
+                .add("isRunning=" + isRunning)
+                .add("finishedNormaly=" + finishedNormaly)
+                .add("currentMixer=" + currentMixer)
+                .toString();
     }
 }

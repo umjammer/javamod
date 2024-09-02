@@ -22,6 +22,8 @@
 
 package de.quippy.javamod.multimedia.opl3;
 
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import javax.sound.sampled.AudioFormat;
 
 import de.quippy.javamod.mixer.BasicMixer;
@@ -30,12 +32,16 @@ import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.OplType;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.Version;
 import de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence;
 
+import static java.lang.System.getLogger;
+
 
 /**
  * @author Daniel Becker
  * @since 03.08.2020
  */
 public class OPL3Mixer extends BasicMixer {
+
+    private static final Logger logger = getLogger(OPL3Mixer.class.getName());
 
     private static final int ANZ_CHANNELS = 2;
     private static final int BITS_PER_SAMPLE = 16;
@@ -76,6 +82,7 @@ public class OPL3Mixer extends BasicMixer {
 
     protected void initialize() {
         opl = EmuOPL.createInstance(OPLVersion, sampleRate, opl3Sequence.getOPLType());
+logger.log(Level.DEBUG, opl);
 
         bufferSize = (int) ((MS_BUFFER_SIZE * ANZ_CHANNELS * sampleRate + 500) / 1000);
         while ((bufferSize % 4) != 0) bufferSize++;
@@ -194,14 +201,14 @@ public class OPL3Mixer extends BasicMixer {
 
                     // Clipping - always a good idea (sample is 32bit (int), but 16 bit is border):
                     if (samplel > 0x0000_7FFF) samplel = 0x0000_7FFF;
-                    else if (samplel < 0xFFFF_8000) samplel = 0xFFFF_8000;
+                    else if (samplel < 0xffFF_8000) samplel = 0xffFF_8000;
                     if (sampler > 0x0000_7FFF) sampler = 0x0000_7FFF;
-                    else if (sampler < 0xFFFF_8000) sampler = 0xFFFF_8000;
+                    else if (sampler < 0xffFF_8000) sampler = 0xffFF_8000;
 
-                    buffer[bufferIndex] = (byte) (samplel & 0xFF);
-                    buffer[bufferIndex + 1] = (byte) ((samplel >> 8) & 0xFF);
-                    buffer[bufferIndex + 2] = (byte) (sampler & 0xFF);
-                    buffer[bufferIndex + 3] = (byte) ((sampler >> 8) & 0xFF);
+                    buffer[bufferIndex] = (byte) (samplel & 0xff);
+                    buffer[bufferIndex + 1] = (byte) ((samplel >> 8) & 0xff);
+                    buffer[bufferIndex + 2] = (byte) (sampler & 0xff);
+                    buffer[bufferIndex + 3] = (byte) ((sampler >> 8) & 0xff);
                     samplesWritten++;
                     bufferIndex += 4;
                     if (bufferIndex >= bufferSize) {

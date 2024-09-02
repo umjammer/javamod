@@ -251,7 +251,7 @@ public class MultiTrackerMod extends ProTrackerMod {
                     for (int row = 0; row < beatsPerTrack; row++) {
                         PatternElement pe = patternContainer.createPatternElement(pattNum, row, chn);
 
-                        int readArray = (inputStream.readByte() & 0xFF) << 16 | (inputStream.readByte() & 0xFF) << 8 | (inputStream.readByte() & 0xFF);
+                        int readArray = (inputStream.readByte() & 0xff) << 16 | (inputStream.readByte() & 0xff) << 8 | (inputStream.readByte() & 0xff);
                         int note = (readArray & 0xFC0000) >> 18;
                         int instr = (readArray & 0x03F000) >> 12;
                         int effekt = (readArray & 0x000F00) >> 8;

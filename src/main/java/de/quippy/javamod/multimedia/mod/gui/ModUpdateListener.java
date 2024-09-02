@@ -55,8 +55,8 @@ public interface ModUpdateListener {
 
         public PatternPositionInformation(int sampleRate, long samplesMixed, long position) {
             super(sampleRate, samplesMixed);
-            this.patternIndex = (int) ((position >> 48) & 0xFFFF);
-            this.patternRow = (int) ((position >> 16) & 0xFFFF);
+            this.patternIndex = (int) ((position >> 48) & 0xffFF);
+            this.patternRow = (int) ((position >> 16) & 0xffFF);
         }
 
         public String toString() {

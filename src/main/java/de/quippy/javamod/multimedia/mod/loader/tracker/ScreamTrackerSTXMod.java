@@ -155,7 +155,7 @@ public class ScreamTrackerSTXMod extends ScreamTrackerOldMod {
                 int ton = inputStream.read();
                 instrument = inputStream.read();
                 switch (ton) {
-                    case 0xFF:
+                    case 0xff:
                         period = noteIndex = ModConstants.NO_NOTE;
                         break;
                     case 0xFE:
@@ -276,7 +276,7 @@ public class ScreamTrackerSTXMod extends ScreamTrackerOldMod {
             int highByte = inputStream.read();
             int lowByte = inputStream.readIntelUnsignedWord();
             long sampleOffset = (lowByte | (highByte << 16)) << 4;
-            if (sampleOffset > inputStream.getLength()) sampleOffset &= 0xFFFF;
+            if (sampleOffset > inputStream.getLength()) sampleOffset &= 0xffFF;
 
             if (instrumentType == 1) { // Sample
                 // Length

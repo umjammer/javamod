@@ -63,81 +63,42 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
 
     /**
      * We load Farandole Mods as S3M
-     *
-     * @param sampleRate
-     * @param doISP
-     * @param doNoLoops
-     * @param maxNNAChannels
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getModMixer(int, int, int, int)
      */
     @Override
     public BasicModMixer getModMixer(int sampleRate, int doISP, int doNoLoops, int maxNNAChannels) {
         return new ScreamTrackerMixer(this, sampleRate, doISP, doNoLoops, maxNNAChannels);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getPanningSeparation()
-     */
     @Override
     public int getPanningSeparation() {
         return 128;
     }
 
-    /**
-     * @param channel
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getPanningValue(int)
-     */
     @Override
     public int getPanningValue(int channel) {
         return panningValue[channel];
     }
 
-    /**
-     * @param channel
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getChannelVolume(int)
-     */
     @Override
     public int getChannelVolume(int channel) {
         return 64;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getFrequencyTable()
-     */
     @Override
     public int getFrequencyTable() {
         return ModConstants.STM_S3M_TABLE;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getSongMessage()
-     */
     @Override
     public String getSongMessage() {
         return songMessage;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getMidiConfig()
-     */
     @Override
     public MidiMacros getMidiConfig() {
         return null;
     }
 
-    /**
-     * @param inputStream
-     * @return
-     * @throws IOException
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#checkLoadingPossible(de.quippy.javamod.io.ModfileInputStream)
-     */
     @Override
     public boolean checkLoadingPossible(ModfileInputStream inputStream) throws IOException {
         int id = inputStream.readIntelDWord();
@@ -148,11 +109,6 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
     /**
      * Internal Routine for reading and converting a pattern entry
      *
-     * @param pattNum
-     * @param patternSize
-     * @param patternContainer
-     * @param inputStream
-     * @throws IOException
      * @since 13.08.2022
      */
     private void setPattern(int pattNum, int patternSize, PatternContainer patternContainer, ModfileInputStream inputStream) throws IOException {
@@ -264,8 +220,7 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
         int length = inputStream.readIntelDWord();
 
         // finetune Value>7 means negative 8..15= -8..-1
-        /*final int fine = */
-        inputStream.read(); // shall we use this?!
+        /* final int fine = */ inputStream.read(); // shall we use this?!
         current.setFineTune(0);
         current.setBaseFrequency(ModConstants.BASEFREQUENCY);
 
@@ -321,11 +276,6 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
         getInstrumentContainer().setSample(sampleIndex, current);
     }
 
-    /**
-     * @param inputStream
-     * @throws IOException
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#loadModFileInternal(de.quippy.javamod.io.ModfileInputStream)
-     */
     @Override
     protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
         setModType(ModConstants.MODTYPE_S3M); // Farandole is converted internally to s3m

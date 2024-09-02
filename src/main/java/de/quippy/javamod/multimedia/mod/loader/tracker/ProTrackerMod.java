@@ -366,7 +366,7 @@ public class ProTrackerMod extends Module {
             pe.setPeriod((note & 0x0FFF0000) >> 16);
         } else {
             pe.setInstrument(((note & 0xF000) >> 12) & getNSamples()); // &0x0F
-            pe.setPeriod((note & 0xFFFF0000) >> 16);
+            pe.setPeriod((note & 0xffFF0000) >> 16);
         }
 
         if (pe.getPeriod() < 14 || pe.getPeriod() > 6848)
@@ -380,7 +380,7 @@ public class ProTrackerMod extends Module {
         }
 
         pe.setEffekt((note & 0xF00) >> 8);
-        pe.setEffektOp(note & 0xFF);
+        pe.setEffektOp(note & 0xff);
 
         if (pe.getEffekt() == 0x0C && pe.getEffektOp() > 64) pe.setEffektOp(64);
         if (isStarTrekker) {

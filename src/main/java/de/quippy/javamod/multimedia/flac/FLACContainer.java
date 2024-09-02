@@ -24,6 +24,8 @@ package de.quippy.javamod.multimedia.flac;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.Properties;
 import javax.sound.sampled.AudioFormat;
@@ -37,12 +39,16 @@ import de.quippy.javamod.system.Helpers;
 import org.kc7bfi.jflac.FLACDecoder;
 import org.kc7bfi.jflac.metadata.VorbisComment;
 
+import static java.lang.System.getLogger;
+
 
 /**
  * @author Daniel Becker
  * @since 01.01.2011
  */
 public class FLACContainer extends MultimediaContainer {
+
+    private static final Logger logger = getLogger(FLACContainer.class.getName());
 
     private static final String[] FLACFILEEXTENSION = {
             "flac"
@@ -52,20 +58,11 @@ public class FLACContainer extends MultimediaContainer {
     private VorbisComment vorbisComment;
     private long duration;
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#canExport()
-     */
     @Override
     public boolean canExport() {
         return true;
     }
 
-    /**
-     * @param url
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInstance(java.net.URL)
-     */
     @Override
     public MultimediaContainer getInstance(URL url) {
         MultimediaContainer result = super.getInstance(url);
@@ -85,7 +82,7 @@ public class FLACContainer extends MultimediaContainer {
         } finally {
             if (inputStream != null) try {
                 inputStream.close();
-            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
+            } catch (IOException ex) { logger.log(Level.TRACE, "IGNORED", ex); }
         }
         return result;
     }
@@ -143,7 +140,7 @@ public class FLACContainer extends MultimediaContainer {
         } finally {
             if (inputStream != null) try {
                 inputStream.close();
-            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
+            } catch (IOException ex) { logger.log(Level.TRACE, "IGNORED", ex); }
         }
         return new Object[] {songName, duration};
     }

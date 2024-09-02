@@ -64,7 +64,6 @@ Debug.println("volume: " + volume);
     @Test
     @DisplayName("headless")
     void test2() throws Exception {
-        Helpers.registerAllClasses(); // TODO use service loader
         MultimediaContainerManager.setIsHeadlessMode(true);
         MultimediaContainer container = MultimediaContainerManager.getMultimediaContainer(mod);
         Mixer mixer = container.createNewMixer();

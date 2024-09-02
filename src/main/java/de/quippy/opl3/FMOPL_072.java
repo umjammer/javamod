@@ -93,7 +93,7 @@ public class FMOPL_072 {
 
     private static final int FINAL_SH = 0;
     private static final int MAXOUT = 0x0000_7FFF;
-    private static final int MINOUT = 0xFFFF_8000;
+    private static final int MINOUT = 0xffFF_8000;
 
     private static final int FREQ_SH = 16; // 16.16 fixed point (frequency calculations)
     private static final int EG_SH = 16; // 16.16 fixed point (EG timing)
@@ -299,10 +299,10 @@ public class FMOPL_072 {
 //		// ROM Emulation
 //		private final byte[] ROM = new byte[memory_size];
 //		private int read_byte(final int offset) {
-//			return ((int)ROM[offset])&0xFF;
+//			return ((int)ROM[offset])&0xff;
 //		}
 //		private void write_byte(final int offset, final int value) {
-//			ROM[offset] = (byte)(value&0xFF);
+//			ROM[offset] = (byte)(value&0xff);
 //		}
 //
 //		private int ADPCM_Read() {

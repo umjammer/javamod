@@ -133,7 +133,7 @@ public class PowerPackerFile {
                 }
                 if (n > nBytesLeft) n = nBytesLeft;
                 for (int i = 0; i < n; i++) {
-                    buffer[--nBytesLeft] = (byte) (bitBuffer.getBits(8) & 0xFF);
+                    buffer[--nBytesLeft] = (byte) (bitBuffer.getBits(8) & 0xff);
                 }
                 if (nBytesLeft == 0) break;
             }

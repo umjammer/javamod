@@ -279,7 +279,7 @@ public class AudioProcessor {
         neg_Bit = 1L << (sampleSizeInBits - 1);
         maxSample = neg_Bit - 1;
         minSample = -neg_Bit;
-        neg_mask = 0xFFFFFFFF ^ mask;
+        neg_mask = 0xffFFFFFF ^ mask;
 
         sampleBufferSize = (sourceDataLine == null) ? SAMPLEBUFFERSIZE : sourceDataLine.getBufferSize();
         sampleBuffer = new float[sampleBufferSize];
@@ -338,10 +338,10 @@ public class AudioProcessor {
             long sample = 0;
             if (isBigEndian) {
                 for (int b = bytesPerChannel - 1, s = 0; b >= 0; b--, s += 8)
-                    sample |= ((long) (resultSampleBuffer[ox + b] & 0xFF)) << s;
+                    sample |= ((long) (resultSampleBuffer[ox + b] & 0xff)) << s;
             } else {
                 for (int b = 0, s = 0; b < bytesPerChannel; b++, s += 8)
-                    sample |= ((long) (resultSampleBuffer[ox + b] & 0xFF)) << s;
+                    sample |= ((long) (resultSampleBuffer[ox + b] & 0xff)) << s;
             }
             if (isSigned) {
                 if ((sample & neg_Bit) != 0) sample |= neg_mask;
@@ -371,10 +371,10 @@ public class AudioProcessor {
             if (!isSigned) sample += neg_Bit;
             if (isBigEndian) {
                 for (int b = bytesPerChannel - 1, s = 0; b >= 0; b--, s += 8)
-                    resultSampleBuffer[ox + b] = (byte) ((sample >> s) & 0xFF);
+                    resultSampleBuffer[ox + b] = (byte) ((sample >> s) & 0xff);
             } else {
                 for (int b = 0, s = 0; b < bytesPerChannel; b++, s += 8)
-                    resultSampleBuffer[ox + b] = (byte) ((sample >> s) & 0xFF);
+                    resultSampleBuffer[ox + b] = (byte) ((sample >> s) & 0xff);
             }
         }
         return ox;

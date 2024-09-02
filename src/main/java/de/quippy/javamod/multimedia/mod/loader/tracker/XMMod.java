@@ -106,7 +106,7 @@ public class XMMod extends ProTrackerMod {
     private static void setIntoPatternElement(ModfileInputStream inputStream, PatternElement currentElement) throws IOException {
         int flags = inputStream.read();
         if ((flags & 0x80) == 0) { // is not packed
-            flags = 0xFF; // read all
+            flags = 0xff; // read all
             inputStream.skipBack(1); // and push back the note
         }
         int noteIndex = ((flags & 0x01) != 0) ? inputStream.read() : 0;
@@ -125,7 +125,7 @@ public class XMMod extends ProTrackerMod {
                 (noteIndex == ModConstants.KEY_OFF) ? ModConstants.KEY_OFF :
                         ModConstants.noteValues[noteIndex - 1]);
 
-        if (instrument == 0xFF) instrument = 0;
+        if (instrument == 0xff) instrument = 0;
         currentElement.setInstrument(instrument);
 
         if (volume != 0) {
@@ -249,17 +249,17 @@ public class XMMod extends ProTrackerMod {
 
         switch (useTable) {
             case ModConstants.XM_AMIGA_TABLE:
-                return (ModConstants.BASEFREQUENCY * 1712) / (ModConstants.FT2_amigaPeriods[C4Period] & 0xFFFF);
+                return (ModConstants.BASEFREQUENCY * 1712) / (ModConstants.FT2_amigaPeriods[C4Period] & 0xffFF);
             case ModConstants.XM_LINEAR_TABLE:
-                int period = ModConstants.FT2_linearPeriods[C4Period] & 0xFFFF;
+                int period = ModConstants.FT2_linearPeriods[C4Period] & 0xffFF;
                 // Original FT2 method with doubles - is a bit more precise in rounding
-//                int invPeriodDouble = ((12 * 192 * 4) - C4Period) & 0xFFFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
+//                int invPeriodDouble = ((12 * 192 * 4) - C4Period) & 0xffFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
 //                int quotientDouble = invPeriodDouble / (12 * 16 * 4);
 //                int remainderDouble = invPeriodDouble % (12 * 16 * 4);
 //                double logValue = (ModConstants.BASEFREQUENCY * 256d) * Math.pow(2d, (double) remainderDouble / (4d * 12d * 16d));
 //                double frequencyDouble = logValue * (1d / Math.pow(2d, (double) ((14 - quotientDouble) & 0x1F)));
 
-                int invPeriod = ((12 * 192 * 4) + 767 - period) & 0xFFFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
+                int invPeriod = ((12 * 192 * 4) + 767 - period) & 0xffFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
                 int quotient = invPeriod / (12 * 16 * 4);
                 int remainder = period % (12 * 16 * 4);
                 return ModConstants.lintab[remainder] >> (((14 - quotient) & 0x1F) - 2); // values are 4 times bigger in FT2
@@ -295,8 +295,8 @@ public class XMMod extends ProTrackerMod {
         setModType(ModConstants.MODTYPE_XM);
         setTrackerName(trackerName.trim());
         if (trackerName.startsWith("FastTracker v2.00") && headerSize == 276) {
-            int highVersion = (version >> 8) & 0xFF;
-            setTrackerName("FastTracker II V" + ModConstants.getAsHex(highVersion, (highVersion > 0x0f) ? 2 : 1) + "." + ModConstants.getAsHex(version & 0xFF, 2));
+            int highVersion = (version >> 8) & 0xff;
+            setTrackerName("FastTracker II V" + ModConstants.getAsHex(highVersion, (highVersion > 0x0f) ? 2 : 1) + "." + ModConstants.getAsHex(version & 0xff, 2));
             if (!trackerName.endsWith("   "))
                 setTrackerName(getTrackerName() + " (generic)");
         } else if (trackerName.equals("FastTracker v 2.00  ")) {

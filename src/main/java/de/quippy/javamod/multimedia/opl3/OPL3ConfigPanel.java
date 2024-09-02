@@ -174,7 +174,7 @@ public class OPL3ConfigPanel extends JPanel {
             oplVersion = new JComboBox<>();
             oplVersion.setName("oplVersion");
 
-            DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<>(EmuOPL.versionNames);
+            DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<>(EmuOPL.Version.versionNames());
             oplVersion.setModel(theModel);
             oplVersion.setFont(Helpers.getDialogFont());
             oplVersion.setEnabled(true);
@@ -222,13 +222,11 @@ public class OPL3ConfigPanel extends JPanel {
 
     private Version getOPLVersion() {
         int index = getOplVersion().getSelectedIndex();
-        return EmuOPL.getVersionForIndex(index);
+        return EmuOPL.Version.valueOf(index);
     }
 
     private void setOPLVersion(Version version) {
-        int index = EmuOPL.getIndexForVersion(version);
-        if (index == -1)
-            index = EmuOPL.getIndexForVersion(Enum.valueOf(Version.class, OPL3Container.DEFAULT_OPLVERSION));
+        int index = version.ordinal();
         getOplVersion().setSelectedIndex(index);
     }
 

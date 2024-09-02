@@ -33,8 +33,11 @@
 package de.quippy.javamod.multimedia.opl3.sequencer;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
 
 import de.quippy.javamod.io.RandomAccessInputStreamImpl;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
@@ -42,12 +45,16 @@ import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.OplType;
 import de.quippy.javamod.system.Helpers;
 
+import static java.lang.System.getLogger;
+
 
 /**
  * @author Daniel Becker
  * @since 03.08.2020
  */
 public class MIDSequence extends OPL3Sequence {
+
+    private static final Logger logger = getLogger(MIDSequence.class.getName());
 
     private static class midi_track {
 
@@ -57,16 +64,12 @@ public class MIDSequence extends OPL3Sequence {
         long iwait = 0;
         boolean on = false;
         int pv = 0;
-
-        midi_track() {
-            super();
-        }
     }
 
     private static class midi_channel {
 
         int inum = 0;
-        int[] ins = null;
+        int[] ins;
         int vol = 0;
         int nshift = 0;
         boolean on = false;
@@ -88,13 +91,13 @@ public class MIDSequence extends OPL3Sequence {
     private long pos = 0;
     private long sierra_pos = 0;
     private int subsongs = 0;
-    private int[] adlib_data = null;
+    private int[] adlib_data;
     private int adlib_style = 0;
     private int adlib_mode = 0;
-    private int[][] myinsbank = null;
-    private int[][] smyinsbank = null;
-    private midi_channel[] ch = null;
-    private int[][] chp = null;
+    private int[][] myinsbank;
+    private int[][] smyinsbank;
+    private midi_channel[] ch;
+    private int[][] chp;
     private int deltas = 0;
     private long msqtr = 0; // the only usage of msqtr is documented out
     private midi_track[] track = null;
@@ -121,20 +124,24 @@ public class MIDSequence extends OPL3Sequence {
     private static final int FILE_ADVSIERRA = 5;
     private static final int FILE_OLDLUCAS = 6;
 
-    // AdLib standard operator table
+    /** AdLib standard operator table */
     private static final int[] adlib_opadd = {0x00, 0x01, 0x02, 0x08, 0x09, 0x0A, 0x10, 0x11, 0x12};
 
-    // map CMF drum channels 12 - 15 to corresponding AdLib drum operators
-    // bass drum (channel 11) not mapped, cause it's handled like a normal instrument
+    /**
+     * map CMF drum channels 12 - 15 to corresponding AdLib drum operators
+     * bass drum (channel 11) not mapped, cause it's handled like a normal instrument
+     */
     private static final int[] map_chan = {0x14, 0x12, 0x15, 0x11};
 
-    // Standard AdLib frequency table
-    private static final int[] fnums = {0x16b, 0x181, 0x198, 0x1b0, 0x1ca, 0x1e5, 0x202, 0x220, 0x241, 0x263, 0x287, 0x2ae};
+    /** Standard AdLib frequency table */
+    private static final int[] fnums = {
+            0x16b, 0x181, 0x198, 0x1b0, 0x1ca, 0x1e5, 0x202, 0x220, 0x241, 0x263, 0x287, 0x2ae
+    };
 
-    // Map CMF drum channels 11 - 15 to corresponding AdLib drum channels
+    /** Map CMF drum channels 11 - 15 to corresponding AdLib drum channels */
     private static final int[] percussion_map = {6, 7, 8, 8, 7};
 
-    // This set of GM instrument patches was provided by Jorrit Rouwe...
+    /** This set of GM instrument patches was provided by Jorrit Rouwe... */
     private static final short[][] midi_fm_instruments = {
             {0x21, 0x21, 0x8f, 0x0c, 0xf2, 0xf2, 0x45, 0x76, 0x00, 0x00, 0x08, 0, 0, 0}, /* Acoustic Grand */
             {0x31, 0x21, 0x4b, 0x09, 0xf2, 0xf2, 0x54, 0x56, 0x00, 0x00, 0x08, 0, 0, 0}, /* Bright Acoustic */
@@ -266,7 +273,7 @@ public class MIDSequence extends OPL3Sequence {
             {0x00, 0x00, 0x00, 0x09, 0xf3, 0xf6, 0xf0, 0xc9, 0x00, 0x02, 0x0e, 0, 0, 0}  /* Gunshot */
     };
 
-    // logarithmic relationship between midi and FM volumes
+    /** logarithmic relationship between midi and FM volumes */
     private static final int[] my_midi_fm_vol_table = {
             0, 0xb, 0x10, 0x13, 0x16, 0x19, 0x1b, 0x1d, 0x20, 0x21,
             0x23, 0x25, 0x27, 0x28, 0x2a, 0x2b, 0x2d, 0x2e, 0x30, 0x31,
@@ -304,7 +311,7 @@ public class MIDSequence extends OPL3Sequence {
         if (pos < 0 || pos >= flen)
             return 0;
         else
-            return (long) (data[(int) pos]) & 0xFF;
+            return (long) (data[(int) pos]) & 0xff;
     }
 
     private long getnexti(int num) {
@@ -439,11 +446,6 @@ public class MIDSequence extends OPL3Sequence {
         firstRound = true;
     }
 
-    /**
-     * @param inputStream
-     * @throws IOException
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#readOPL3Sequence(de.quippy.javamod.io.RandomAccessInputStreamImpl)
-     */
     @Override
     protected void readOPL3Sequence(RandomAccessInputStreamImpl inputStream) throws IOException {
         if (inputStream == null || inputStream.available() <= 0) return;
@@ -452,11 +454,11 @@ public class MIDSequence extends OPL3Sequence {
 
         int[] magicBytes = new int[6];
         for (int i = 0; i < magicBytes.length; i++)
-            magicBytes[i] = inputStream.readByte() & 0xFF;
+            magicBytes[i] = inputStream.readByte() & 0xff;
 
         int type = 0;
         switch (magicBytes[0]) {
-            case 0x41: //ADL
+            case 0x41: // ADL
                 if (magicBytes[1] == 0x44 && magicBytes[2] == 0x4C && magicBytes[3] == 0x20)
                     type = FILE_LUCAS;
                 break;
@@ -476,12 +478,13 @@ public class MIDSequence extends OPL3Sequence {
                         type = FILE_SIERRA;
                 break;
             default:
-                long size = ((long) magicBytes[0] & 0xFF) | (((long) magicBytes[1] & 0xFF) << 8) | (((long) magicBytes[3] & 0xFF) << 24) | (((long) magicBytes[2] & 0xFF) << 16);
+                long size = ((long) magicBytes[0] & 0xff) | (((long) magicBytes[1] & 0xff) << 8) | (((long) magicBytes[3] & 0xff) << 24) | (((long) magicBytes[2] & 0xff) << 16);
                 if (size == lengthOfStream && magicBytes[4] == 0x41 && magicBytes[5] == 0x44)
                     type = FILE_OLDLUCAS;
         }
         if (type == 0) throw new IOException("Unsupported file type");
         this.type = type;
+logger.log(Level.DEBUG, "type: " + getTypeName());
         flen = lengthOfStream;
         data = new byte[(int) flen];
         inputStream.seek(0);
@@ -489,6 +492,7 @@ public class MIDSequence extends OPL3Sequence {
     }
 
     private void midi_write_adlib(EmuOPL opl, int r, int v) {
+logger.log(Level.TRACE, String.format("write: %04x, %02x", r, v));
         opl.writeOPL2(r, v);
         adlib_data[r] = v;
     }
@@ -563,7 +567,7 @@ public class MIDSequence extends OPL3Sequence {
         int oct = n / 12;
 
         midi_fm_volume(opl, voice, volume);
-        midi_write_adlib(opl, 0xA0 + voice, freq & 0xFF);
+        midi_write_adlib(opl, 0xA0 + voice, freq & 0xff);
 
         int c = ((freq & 0x300) >> 8) + ((oct & 7) << 2) + ((adlib_mode == ADLIB_MELODIC || voice < 6) ? (1 << 5) : 0);
         midi_write_adlib(opl, 0xB0 + voice, c);
@@ -620,6 +624,7 @@ public class MIDSequence extends OPL3Sequence {
                     track[curtrack].pv = v;
 
                     int c = v & 0x0f;
+logger.log(Level.TRACE, String.format("[%2X]", v));
                     switch (v & 0xf0) {
                         case 0x80: // note off
                             int note = (int) getnext(1);
@@ -722,9 +727,10 @@ public class MIDSequence extends OPL3Sequence {
                                         chp[on][2] = 0;
                                     }
                                 }
+logger.log(Level.TRACE, String.format("note on[%d]: %d", c, vel));
                             }
                             break;
-                        case 0xa0: /*key after touch */
+                        case 0xa0: // key after touch
                             note = (int) getnext(1);
                             vel = (int) getnext(1);
 //                            // this might all be good
@@ -732,10 +738,11 @@ public class MIDSequence extends OPL3Sequence {
 //                                if (chp[i][0] == c & chp[i][1] == note)
 //                                    midi_fm_playnote(opl, i, note + cnote[c], my_midi_fm_vol_table[(cvols[c] * vel) / 128] * 2);
                             break;
-                        case 0xb0: /* control change .. pitch bend? */
+                        case 0xb0: // control change .. pitch bend?
                             int ctrl = (int) getnext(1);
                             vel = (int) getnext(1);
 
+logger.log(Level.DEBUG, String.format("control change: %d, %02x, %02x", c, ctrl, vel));
                             switch (ctrl) {
                                 case 0x07:
                                     ch[c].vol = vel;
@@ -764,21 +771,19 @@ public class MIDSequence extends OPL3Sequence {
                                     break;
                             }
                             break;
-                        case 0xc0: /* patch change */
+                        case 0xc0: // patch change
                             int x = (int) getnext(1);
                             ch[c].inum = x & 0x7f;
                             for (int j = 0; j < 11; j++)
                                 ch[c].ins[j] = myinsbank[ch[c].inum][j];
+logger.log(Level.DEBUG, String.format("program change[%d]: %d", c, ch[c].inum));
                             break;
-                        case 0xd0: /* channel touch */
-                            /*int x = (int)*/
-                            getnext(1);
+                        case 0xd0: // channel touch
+                            /* int x = (int) */ getnext(1);
                             break;
-                        case 0xe0: /* pitch wheel */
-                            /*x =  (int)*/
-                            getnext(1);
-                            /*x =  (int)*/
-                            getnext(1);
+                        case 0xe0: // pitch wheel
+                            /* x = (int) */ getnext(1);
+                            /* x = (int) */ getnext(1);
                             break;
                         case 0xf0:
                             switch (v) {
@@ -807,6 +812,7 @@ public class MIDSequence extends OPL3Sequence {
                                         ch[channel].ins[7] = (int) (0xffL - ((getnext(1L) << 4) + getnext(1L)));
                                         ch[channel].ins[9] = (int) ((getnext(1L) << 4) + getnext(1L));
                                         ch[channel].ins[10] = (int) (getnext(1) << 4 + getnext(1));
+logger.log(Level.DEBUG, String.format("INS: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", ch[channel].ins[0], ch[channel].ins[1], ch[channel].ins[2], ch[channel].ins[3], ch[channel].ins[4], ch[channel].ins[5], ch[channel].ins[6], ch[channel].ins[7], ch[channel].ins[8], ch[channel].ins[9], ch[channel].ins[10]));
 
                                         // if ((i&1)==1) ch[channel].ins[10]=1;
 
@@ -829,7 +835,7 @@ public class MIDSequence extends OPL3Sequence {
                                     break;
                                 case 0xf5:
                                     break;
-                                case 0xf6: /* something */
+                                case 0xf6: // something
                                 case 0xf8:
                                 case 0xfa:
                                 case 0xfb:
@@ -846,7 +852,7 @@ public class MIDSequence extends OPL3Sequence {
                                     v = (int) getnext(1);
                                     l = getval();
                                     if (v == 0x51) {
-                                        msqtr = getnext(l); /* set tempo */
+                                        msqtr = getnext(l); // set tempo
                                     } else {
                                         for (int y = 0; y < l; y++) getnext(1);
                                     }
@@ -854,10 +860,11 @@ public class MIDSequence extends OPL3Sequence {
                             }
                             break;
                         default:
-                            /* if we get down here, an error occurred */
+                            // if we get down here, an error occurred
                             break;
                     }
 
+logger.log(Level.TRACE, String.format("pos: %d, end: %d", pos, track[curtrack].tend));
                     if (pos < track[curtrack].tend) {
                         long w;
                         if (type != FILE_SIERRA && type != FILE_ADVSIERRA)
@@ -883,7 +890,7 @@ public class MIDSequence extends OPL3Sequence {
                 if (track[curtrack].on && track[curtrack].pos < track[curtrack].tend) running = true; // not yet..
 
             if (running) {
-                iwait = 0xffffff; // bigger than any wait can be!
+                iwait = 0xff_ffff; // bigger than any wait can be!
                 for (int curtrack = 0; curtrack < 16; curtrack++)
                     if (track[curtrack].on && track[curtrack].pos < track[curtrack].tend && track[curtrack].iwait < iwait)
                         iwait = track[curtrack].iwait;
@@ -942,7 +949,7 @@ public class MIDSequence extends OPL3Sequence {
             ch[x].on = true;
         }
 
-        /* General init */
+        // General init
         for (int x = 0; x < 9; x++) {
             chp[x][0] = -1;
             chp[x][2] = 0;
@@ -964,7 +971,7 @@ public class MIDSequence extends OPL3Sequence {
             track[x].pv = 0;
         }
 
-        /* specific to file-type init */
+        // specific to file-type init
         pos = 0;
         int i = (int) getnext(1);
         switch (type) {
@@ -976,10 +983,12 @@ public class MIDSequence extends OPL3Sequence {
                 if (type != FILE_LUCAS) tins = 128;
                 getnext(11); /* skip header */
                 deltas = (int) getnext(2);
+logger.log(Level.DEBUG, String.format("deltas: %d", deltas));
                 getnext(4);
 
                 track[0].on = true;
                 track[0].tend = getnext(4);
+logger.log(Level.DEBUG, String.format("tracklen: %d", track[0].tend));
                 track[0].spos = pos;
                 break;
             case FILE_CMF:
@@ -1007,10 +1016,12 @@ public class MIDSequence extends OPL3Sequence {
 
                 pos = n; // jump to instruments
                 tins = i;
+logger.log(Level.TRACE, String.format("ioff: 0x%04x, moff: 0x%04x, deltas: %d, msqtr: %d, numi: %d", n, m, deltas, msqtr, tins));
                 for (int j = 0; j < i; j++) {
                     for (int l = 0; l < 16; l++) {
                         myinsbank[j][l] = (int) getnext(1);
                     }
+logger.log(Level.DEBUG, String.format("%d: %s", j, Arrays.toString((int[]) myinsbank[j])));
                 }
 
                 for (int x = 0; x < 16; x++)
@@ -1122,19 +1133,11 @@ public class MIDSequence extends OPL3Sequence {
         midi_fm_reset(opl);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#getRefresh()
-     */
     @Override
     public double getRefresh() {
         return (fwait > 0.01d ? fwait : 0.01d);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#getSongName()
-     */
     @Override
     public String getSongName() {
         if (title != null && !title.isEmpty())
@@ -1143,10 +1146,6 @@ public class MIDSequence extends OPL3Sequence {
             return MultimediaContainerManager.getSongNameFromURL(url);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#getAuthor()
-     */
     @Override
     public String getAuthor() {
         if (author != null && !author.isEmpty())
@@ -1155,10 +1154,6 @@ public class MIDSequence extends OPL3Sequence {
             return Helpers.EMPTY_STING;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#getDescription()
-     */
     @Override
     public String getDescription() {
         if (remarks != null && !remarks.isEmpty())
@@ -1167,10 +1162,6 @@ public class MIDSequence extends OPL3Sequence {
             return Helpers.EMPTY_STING;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#getTypeName()
-     */
     @Override
     public String getTypeName() {
         return switch (type) {
@@ -1184,19 +1175,11 @@ public class MIDSequence extends OPL3Sequence {
         };
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#getOPLType()
-     */
     @Override
     public OplType getOPLType() {
         return OplType.OPL2;
     }
 
-    /**
-     * @param url
-     * @see de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence#setURL(java.net.URL)
-     */
     @Override
     public void setURL(URL url) {
         this.url = url;

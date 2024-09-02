@@ -22,25 +22,51 @@
 
 package de.quippy.javamod.multimedia.opl3.emu;
 
+import java.util.Arrays;
+
+
 /**
  * @author Daniel Becker
  * @since 08.08.2020
  */
 public abstract class EmuOPL {
 
-    public enum Version {FMOPL_072_YM3526, FMOPL_072_YM3812, OPL3}
+    public enum Version {
+        FMOPL_072_YM3526("YM3526 (OPL2) V0.72  by Jarek Burczynski"),
+        FMOPL_072_YM3812("YM3812 (OPL2) V0.72  by Jarek Burczynski"),
+        OPL3("YMF262 (OPL3) V1.0.6 by Robson Cozendey");
+        public final String versionName;
 
-    public static final String[] versionNames = {
-            "YM3526 (OPL2) V0.72  by Jarek Burczynski",
-            "YM3812 (OPL2) V0.72  by Jarek Burczynski",
-            "YMF262 (OPL3) V1.0.6 by Robson Cozendey"
-    };
+        Version(String versionName) {
+            this.versionName = versionName;
+        }
 
-    public enum OplType {OPL2, DUAL_OPL2, OPL3}
+        public static String[] versionNames() {
+            return Arrays.stream(values()).map(e -> e.versionName).toArray(String[]::new);
+        }
 
-    public static final String[] oplTypeString = {
-            "OPL2", "Dual OPL2", "OPL3"
-    };
+        public static Version valueOf(int i) {
+            if (0 <= i && i < values().length) return values()[i];
+            else return null;
+        }
+    }
+
+    public enum OplType {
+        OPL2("OPL2"),
+        DUAL_OPL2("Dual OPL2"),
+        OPL3("OPL3");
+        public final String oplTypeString;
+
+        OplType(String oplTypeString) {
+            this.oplTypeString = oplTypeString;
+        }
+
+        /** @return nullable */
+        public static OplType valueOf(int i) {
+            if (0 <= i && i < values().length) return values()[i];
+            else return null;
+        }
+    }
 
     protected final float sampleRate;
     protected final Version ver;
@@ -60,40 +86,6 @@ public abstract class EmuOPL {
         this.ver = ver;
         this.sampleRate = sampleRate;
         this.oplType = oplType;
-    }
-
-    public static int getIndexForVersion(Version ver) {
-        return switch (ver) {
-            case FMOPL_072_YM3526 -> 0;
-            case FMOPL_072_YM3812 -> 1;
-            case OPL3 -> 2;
-        };
-    }
-
-    public static OplType getOPLTypeForIndex(int index) {
-        return switch (index) {
-            case 0 -> OplType.OPL2;
-            case 1 -> OplType.DUAL_OPL2;
-            case 2 -> OplType.OPL3;
-            default -> null;
-        };
-    }
-
-    public static int getIndexForOPLType(OplType OPLType) {
-        return switch (OPLType) {
-            case OPL2 -> 0;
-            case DUAL_OPL2 -> 1;
-            case OPL3 -> 2;
-        };
-    }
-
-    public static Version getVersionForIndex(int index) {
-        return switch (index) {
-            case 0 -> Version.FMOPL_072_YM3526;
-            case 1 -> Version.FMOPL_072_YM3812;
-            case 2 -> Version.OPL3;
-            default -> null;
-        };
     }
 
     /**

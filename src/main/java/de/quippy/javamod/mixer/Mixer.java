@@ -23,11 +23,13 @@
 package de.quippy.javamod.mixer;
 
 import java.io.File;
+import java.util.StringJoiner;
 import javax.sound.sampled.AudioFormat;
 
 import de.quippy.javamod.io.SoundOutputStream;
 import de.quippy.javamod.io.SoundOutputStreamImpl;
 import de.quippy.javamod.mixer.dsp.AudioProcessor;
+import de.quippy.javamod.multimedia.sid.SIDMixer;
 
 
 /**
@@ -52,7 +54,6 @@ public abstract class Mixer {
      * Constructor for Mixer
      */
     public Mixer() {
-        super();
         outputStream = null;
         audioFormat = null;
         audioProcessor = null;
@@ -275,4 +276,13 @@ public abstract class Mixer {
     public abstract int getCurrentKBperSecond();
 
     public abstract int getCurrentSampleRate();
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", SIDMixer.class.getSimpleName() + "[", "]")
+                .add("isStopping=" + isStopping())
+                .add("isPausing=" + isPausing())
+                .add("isInSeeking=" + isInSeeking())
+                .toString();
+    }
 }

@@ -31,12 +31,6 @@ import de.quippy.javamod.system.Helpers;
  */
 public class JavaModMainBase {
 
-    static {
-        // Now load and initialize all classes, that should not be
-        // initialized during play!
-        Helpers.registerAllClasses();
-    }
-
     /**
      * Constructor for JavaModMainBase
      */

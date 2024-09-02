@@ -40,14 +40,16 @@ public class PlayListEntry {
     private boolean isActive;
     private boolean isSelected;
     private String songName;
+    /** nullable */
     private Long duration;
+    /** nullable */
     private Long timeIndexInFile;
     private PlayList playList;
 
     /**
      * Constructor for PlayListEntry
      *
-     * @param file
+     * @param file the play list
      */
     public PlayListEntry(URL file, PlayList savedInPlaylist) {
         this.file = file;
@@ -80,7 +82,7 @@ public class PlayListEntry {
     }
 
     /**
-     * @param songName
+     * @param songName the song name
      * @since 27.02.2011
      */
     public synchronized void setSongName(String songName) {
@@ -161,7 +163,7 @@ public class PlayListEntry {
     }
 
     /**
-     * @return the songName if its not null
+     * @return the songName if it's not null
      * @since 27.02.2011
      */
     public synchronized String getQuickSongName() {
@@ -172,7 +174,7 @@ public class PlayListEntry {
     }
 
     /**
-     * @return the duration string if its not null
+     * @return the duration string if it's not null
      * @since 27.02.2011
      */
     public synchronized String getQuickDuration() {

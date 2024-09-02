@@ -231,7 +231,7 @@ logger.log(Level.DEBUG, "sid sampleRate: " + sampleRate);
         if (sidTune != null) {
             pausePlayback();
             songNumber = (int) (milliseconds / 1000L) + 1;
-//			sidTune.selectSong(songNumber);
+//			sidTune.selectSong(songNumber); // TODO impl
             sidPlayer.play(sidTune);
             parentSIDContainer.nameChanged();
             pausePlayback();
@@ -286,7 +286,7 @@ logger.log(Level.TRACE, "audioDriver: " + audioDriver);
             streamDriver.setOut(os);
 
             sidPlayer.play(sidTune);
-logger.log(Level.TRACE, "play");
+logger.log(Level.DEBUG, "play");
 
             do {
                 if (stopPositionIsReached()) setIsStopping();

@@ -466,7 +466,7 @@ abstract class Channel {
     void update_FNUML8() {
         int fnuml8 = opl3.registers[channelBaseAddress + ChannelData.FNUML8_Offset];
         // Frequency Number, low register.
-        fnuml = fnuml8 & 0xFF;
+        fnuml = fnuml8 & 0xff;
         updateOperators();
     }
 

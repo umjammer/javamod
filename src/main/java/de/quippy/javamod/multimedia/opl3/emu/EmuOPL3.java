@@ -31,8 +31,8 @@ import de.quippy.opl3.OPL3;
  */
 public class EmuOPL3 extends EmuOPL {
 
-    private OPL3 opl3 = null;
-    private int[] outBuffer = null;
+    private final OPL3 opl3;
+    private final int[] outBuffer;
 
     /**
      * Constructor for EmuOPL3

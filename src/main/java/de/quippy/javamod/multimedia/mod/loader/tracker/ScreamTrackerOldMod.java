@@ -163,7 +163,7 @@ public class ScreamTrackerOldMod extends Module {
         }
 
         pe.setEffekt((note & 0xF00) >> 8);
-        pe.setEffektOp(note & 0xFF);
+        pe.setEffektOp(note & 0xff);
 
         // All trackers say: "No effect memory" - but throwing them all out is a very bad idea!
         // For instance: if it is a porta2note effect, the effect is ignored when op is zero,
@@ -256,7 +256,7 @@ public class ScreamTrackerOldMod extends Module {
             int repeatStart = inputStream.readIntelUnsignedWord();
             int repeatStop = inputStream.readIntelUnsignedWord();
 
-            if (repeatStart < repeatStop && repeatStop != 0xFFFF)
+            if (repeatStart < repeatStop && repeatStop != 0xffFF)
                 current.setLoopType(ModConstants.LOOP_ON);
             else
                 current.setLoopType(0);

@@ -148,7 +148,7 @@ public class MPEGAudioFrameHeader {
         while (loc == -1) {
             byte test = raf.readByte();
 
-            if ((test & 0xFF) == 0xFF) {
+            if ((test & 0xff) == 0xff) {
                 test = raf.readByte();
 
                 if ((test & 0xE0) == 0xE0) {

@@ -356,8 +356,8 @@ public class MP3Mixer extends BasicMixer {
                     while (origLen-- > 0) {
                         s = samples[pos++];
                         if (allZero && s != 0) allZero = false;
-                        b[idx++] = (byte) (s & 0xFF);
-                        b[idx++] = (byte) ((s >> 8) & 0xFF);
+                        b[idx++] = (byte) (s & 0xff);
+                        b[idx++] = (byte) ((s >> 8) & 0xff);
                     }
 
                     if (!isFirstFrame || !allZero) writeSampleDataToLine(b, 0, len);

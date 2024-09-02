@@ -73,7 +73,6 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
     private static final int cvtPTM8to16 = 0x08;
     private static final int cvtOPLInstrument = 0x40;  // FM instrument in MPTM
     private static final int cvtExternalSample = 0x80;  // Keep MPTM sample on disk
-    private static final int cvtADPCMSample = 0xFF;  // ModPlug special
     private static final int cvtADPCMSample = 0xff;  // ModPlug special
 
     protected int cmwt;
@@ -146,7 +145,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         int[] points = new int[nPoints];
 
         for (int i = 0; i < nPoints; i++) {
-            values[i] = (inputStream.read() + add) & 0xFF;
+            values[i] = (inputStream.read() + add) & 0xff;
             points[i] = inputStream.readIntelUnsignedWord();
         }
 
@@ -213,7 +212,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         setNSamples(inputStream.readIntelUnsignedWord());
         // PatNum:   Number of patterns in song
         setNPattern(inputStream.readIntelUnsignedWord());
-        if (getNInstruments() > 0xFF || getNSamples() == 0 || getNPattern() == 0 || getSongLength() == 0)
+        if (getNInstruments() > 0xff || getNSamples() == 0 || getNPattern() == 0 || getSongLength() == 0)
             throw new IOException("Unsupported IT Module!");
 
         // Cwt:      Created with tracker.
@@ -312,10 +311,10 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         for (int i = 0; i < 64; i++) {
             int panValue = inputStream.read();
 
-            if (panValue == 100 || panValue == 0xFF || (panValue & 0x80) != 0) {
+            if (panValue == 100 || panValue == 0xff || (panValue & 0x80) != 0) {
                 // we simply store those, as mixer responds to these in "initializeMixer()"
                 panningValue[i] = panValue << 2;
-                if (panValue == 0xFF) hasFFPanningValue = true; // needed for sanity check for MPT-Version
+                if (panValue == 0xff) hasFFPanningValue = true; // needed for sanity check for MPT-Version
             } else {
                 panValue = (panValue & 0x7F) << 2;
                 if (panValue > 256) panValue = 256;
@@ -329,7 +328,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
             if (reserved == 0x54504D4F) //"OMPT"
                 setModType(getModType() | ModConstants.MODTYPE_OMPT);
             else if (mptVersion >= 0x01290000)
-                mptVersion |= reserved & 0xFFFF;
+                mptVersion |= reserved & 0xffFF;
             lastSavedWithVersion = mptVersion;
             if ((getModType() & ModConstants.MODTYPE_OMPT) == 0)
                 setTrackerName("OpenMPT " + ModConstants.getModPlugVersionString(lastSavedWithVersion) + ModConstants.COMPAT_MODE);
@@ -371,8 +370,8 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
             int vol = inputStream.read();
             if (vol < 0) vol = 0;
             else if (vol > 64) vol = 64;
-            if (panningValue[i] != (0xFF << 2))
-                channelVolume[i] = vol; // support 0xFF for disabled channel of MPT songs
+            if (panningValue[i] != (0xff << 2))
+                channelVolume[i] = vol; // support 0xff for disabled channel of MPT songs
         }
 
         // Orders:   This is the order in which the patterns are played.
@@ -450,7 +449,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         // now for some disguised MPTs
         if (version == 0x0217 && cmwt == 0x200 && reserved == 0) {
             if (hasModPlugExtensions ||
-                    arrangement != null && arrangement[arrangement.length - 1] == 0xFF ||
+                    arrangement != null && arrangement[arrangement.length - 1] == 0xff ||
                     hasFFPanningValue) {
                 lastSavedWithVersion = 0x01160000;
                 setTrackerName("ModPlug Tracker 1.09 - 1.16");
@@ -560,7 +559,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                     volumeEnvelopeValue[nPoints] = inputStream.read();
                     // end point indication: we can stop reading
                     // this is last data, file pointer is set to next instrument
-                    if (volumeEnvelopePosition[nPoints] == 0xFF) maxValues = nPoints;
+                    if (volumeEnvelopePosition[nPoints] == 0xff) maxValues = nPoints;
                 }
                 volumeEnvelope.setNPoints(maxValues);
                 volumeEnvelope.setPositions(volumeEnvelopePosition);
@@ -739,7 +738,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                     }
                     int noteIndex = lastNote[channel];
                     int period;
-                    if (noteIndex == 0xFF) { // Note Off!
+                    if (noteIndex == 0xff) { // Note Off!
                         noteIndex = period = ModConstants.KEY_OFF;
                     } else if (noteIndex == 0xFE) { // Volume Off!
                         noteIndex = period = ModConstants.NOTE_CUT;
@@ -928,8 +927,8 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                         } else if (version > 0x0214) {
                             setTrackerName("Impulse Tracker 2.14p" + (version - 0x0214));
                         } else {
-//							setTrackerName("Impulse Tracker V" + ModConstants.getAsHex((version>>8)&0xF, 1) + "." + ModConstants.getAsHex(version&0xFF, 2) + " (CmwT: " + ModConstants.getAsHex((cmwt>>8)&0xF, 1) + "." + ModConstants.getAsHex(cmwt&0xFF, 2) + ")");
-                            setTrackerName("Impulse Tracker V" + ModConstants.getAsHex((version >> 8) & 0xF, 1) + "." + ModConstants.getAsHex(version & 0xFF, 2));
+//							setTrackerName("Impulse Tracker V" + ModConstants.getAsHex((version>>8)&0xF, 1) + "." + ModConstants.getAsHex(version&0xff, 2) + " (CmwT: " + ModConstants.getAsHex((cmwt>>8)&0xF, 1) + "." + ModConstants.getAsHex(cmwt&0xff, 2) + ")");
+                            setTrackerName("Impulse Tracker V" + ModConstants.getAsHex((version >> 8) & 0xF, 1) + "." + ModConstants.getAsHex(version & 0xff, 2));
                         }
                     }
                     break;
@@ -937,7 +936,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                     setTrackerName("Schism Tracker " + ModConstants.getSchismVersionString((version << 16) | reserved));
                     break;
                 case 4:
-                    setTrackerName("pyIT V" + ModConstants.getAsHex((version >> 8) & 0xF, 1) + "." + ModConstants.getAsHex(version & 0xFF, 2));
+                    setTrackerName("pyIT V" + ModConstants.getAsHex((version >> 8) & 0xF, 1) + "." + ModConstants.getAsHex(version & 0xff, 2));
                     break;
                 case 6:
                     setTrackerName("BeRoTracker");
@@ -957,7 +956,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
             }
         }
         if (getTrackerName() == null || getTrackerName().isEmpty())
-            setTrackerName("Unknown Tracker V" + ModConstants.getAsHex((version >> 8) & 0xF, 1) + "." + ModConstants.getAsHex(version & 0xFF, 2) + "(ID: " + ((version & 0xF000) >> 12) + " CmwT: " + ModConstants.getAsHex((cmwt >> 8) & 0xF, 1) + "." + ModConstants.getAsHex(cmwt & 0xFF, 2) + ")");
+            setTrackerName("Unknown Tracker V" + ModConstants.getAsHex((version >> 8) & 0xF, 1) + "." + ModConstants.getAsHex(version & 0xff, 2) + "(ID: " + ((version & 0xF000) >> 12) + " CmwT: " + ModConstants.getAsHex((cmwt >> 8) & 0xF, 1) + "." + ModConstants.getAsHex(cmwt & 0xff, 2) + ")");
 
         // With OpenModPlug Files we create default channel colors if none are set
         if ((getModType() & (ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT)) != 0 && patternContainer.getChannelColors() == null)

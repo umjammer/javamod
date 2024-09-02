@@ -196,7 +196,7 @@ public class Envelope {
      */
     public int getXMResetPosition(int envTick, int envPos) {
         // uint16 cast...
-        return (envTick >= (positions[envPos] & 0xFFFF)) ? positions[envPos] - 1 : envTick;
+        return (envTick >= (positions[envPos] & 0xffFF)) ? positions[envPos] - 1 : envTick;
     }
 
     /**
@@ -251,8 +251,8 @@ public class Envelope {
                 // libmikmod code says: "Some broken XM editing program will only save the low byte of the position
                 // value. Try to compensate by adding the missing high byte."
                 // So, if position is smaller than prior position and no MSB is set:
-                if (positions[pos] < positions[pos - 1] && (positions[pos] & 0xFF00) == 0) {
-                    positions[pos] |= (positions[pos - 1] & 0xFF00); // add possible high byte of prior position
+                if (positions[pos] < positions[pos - 1] && (positions[pos] & 0xff00) == 0) {
+                    positions[pos] |= (positions[pos - 1] & 0xff00); // add possible high byte of prior position
                     if (positions[pos] < positions[pos - 1])
                         positions[pos] |= 0x0100; // still smaller? Force MSB set (OMPT does "+=" - which seems wrong)
                 }

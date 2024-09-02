@@ -57,9 +57,9 @@ public class PatternImagePanel extends JComponent implements Scrollable {
     private static final Color SELECTION_COLOR = new Color(0xc0c0c0);
     private static final Color PLAY_SELECTION_COLOR = new Color(0xffff80);
 
-    private static final Color[] BACKGROUND = {new Color(0xFFFFFF), new Color(0xf6f6f6)};
+    private static final Color[] BACKGROUND = {new Color(0xffffff), new Color(0xf6f6f6)};
     private static final Color[] FOREGROUND = {new Color(0x000000), new Color(0x787878)};
-    private static final Color[] BUTTONS = {new Color(0xCCCCCC), new Color(0xEEEEEE)};
+    private static final Color[] BUTTONS = {new Color(0xcccccc), new Color(0xeeeeee)};
     private static final Color[] HIGHLIGHT_LINE_1 = {new Color(0xe0e8e0), new Color(0xeaeaea)};
     private static final Color[] HIGHLIGHT_LINE_2 = {new Color(0xf2f6f2), new Color(0xf1f1f1)};
     private static final Color[] NOTE = {new Color(0x000080), new Color(0x888888)};
@@ -70,9 +70,9 @@ public class PatternImagePanel extends JComponent implements Scrollable {
             {new Color(0x808000), new Color(0xa8a8a8)}, // pitch
             {new Color(0x800000), new Color(0x888888)}, // global
             {new Color(0x400000), new Color(0x404040)}, // unknown
-            {new Color(0x808080), new Color(0x9A9A9A)}};// none
-    private static final Color[][] PATTERNLINE = {{new Color(0xCCCCCC), new Color(0xDDDDDD)},
-            {new Color(0xAAAAAA), new Color(0xBBBBBB)}};
+            {new Color(0x808080), new Color(0x9a9a9a)}};// none
+    private static final Color[][] PATTERNLINE = {{new Color(0xcccccc), new Color(0xdddddd)},
+            {new Color(0xaaaaaa), new Color(0xbbbbbb)}};
 
     private static final int PATTERN_ELEMENT_CHARS = 13;
     private static final int BUTTON_CHARS = 4;
@@ -83,21 +83,35 @@ public class PatternImagePanel extends JComponent implements Scrollable {
     private Color playSelectionColor = PLAY_SELECTION_COLOR;
 
     private Pattern prevPattern, currentPattern, nextPattern;
-    private final int[] columnPositionsX = new int[14]; // positions of pattern elements
-    private int buttonLength;            // length in pixel of the buttons
-    private int patternElementLength;    // length of a pattern element
-    private int patternRowLength;        // length of a row without button
-    private int fullRowLength;            // length of a row WITH button
-    private int fullRowsHeight;            // the height of all rows to draw
-    private int rowsAbove = -1;            // rows above our play indicator
-    private int rowsBelow = -1;            // rows below (and with) our play indicator. rowsAbove + rowsBelow are the full amount of displayable rows
-    private int currentChannels = -1;    // channels of the currentPattern
-    private int parentWidth = -1;        // width of the canvas (JViewport)
-    private int parentHeight = -1;        // height of the canvas (JViewport)
-    private Dimension charDim = null;    // dimensions of one char
+    /** positions of pattern elements */
+    private final int[] columnPositionsX = new int[14];
+    /** length in pixel of the buttons */
+    private int buttonLength;
+    /** length of a pattern element */
+    private int patternElementLength;
+    /** length of a row without button */
+    private int patternRowLength;
+    /** length of a row WITH button */
+    private int fullRowLength;
+    /** the height of all rows to draw */
+    private int fullRowsHeight;
+    /** rows above our play indicator */
+    private int rowsAbove = -1;
+    /** rows below (and with) our play indicator. rowsAbove + rowsBelow are the full amount of displayable rows */
+    private int rowsBelow = -1;
+    /** channels of the currentPattern */
+    private int currentChannels = -1;
+    /** width of the canvas (JViewport) */
+    private int parentWidth = -1;
+    /** height of the canvas (JViewport) */
+    private int parentHeight = -1;
+    /** dimensions of one char */
+    private Dimension charDim = null;
 
-    private PatternImagePosition currentPlayingRow = null;    // the current Pattern/row to display the payer marker on - if its our currentPattern
-    private PatternImagePosition currentEditingRow = null;    // the current Pattern/row to display the edit marker on
+    /** the current Pattern/row to display the payer marker on - if its our currentPattern */
+    private PatternImagePosition currentPlayingRow = null;
+    /** the current Pattern/row to display the edit marker on */
+    private PatternImagePosition currentEditingRow = null;
 
     /**
      * Constructor for PatternImagePanel
@@ -107,14 +121,15 @@ public class PatternImagePanel extends JComponent implements Scrollable {
         setDoubleBuffered(true);
     }
 
-    //	private Color getColorAsGrayscale(final Color c)
-//	{
+//    private Color getColorAsGrayscale(final Color c) {
 //		int gray = (((((c.getRed() + c.getGreen() + c.getBlue()) * 10) / 3 ) + 5) / 10)<<1;
 //		if (gray>255) gray = 255;
 //		else if (gray<0) gray = 0;
 //		return new Color(gray, gray, gray);
 //	}
-    // ------ Scrollable Interface ---------------------------------------------
+
+    // Scrollable Interface
+
     @Override
     public Dimension getPreferredScrollableViewportSize() {
         return getPreferredSize();
@@ -146,7 +161,8 @@ public class PatternImagePanel extends JComponent implements Scrollable {
     public boolean getScrollableTracksViewportHeight() {
         return false;
     }
-    // ------ JComponent Overrides ---------------------------------------------
+
+    // JComponent Overrides
 
     /**
      * @see javax.swing.JComponent#addNotify()
@@ -188,7 +204,8 @@ public class PatternImagePanel extends JComponent implements Scrollable {
         getCharDimensions();
     }
 
-    // ------ public methods ---------------------------------------------------
+    // public methods
+
     public Point model2View(PatternImagePosition position) {
         if (currentPattern == null || position == null) return null;
 
@@ -629,10 +646,6 @@ public class PatternImagePanel extends JComponent implements Scrollable {
         y = drawPattern(g, 0, y, 0, rowsBelow, nextPattern, false, clipping, charDim);
     }
 
-    /**
-     * @param g
-     * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
-     */
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);

@@ -99,10 +99,10 @@ public class ID3v2Tag {
      */
     public static byte[] convertIntToDWord(int value) {
         byte[] buf = new byte[4];
-        buf[0] = (byte) ((value >> 24) & 0xFF);
-        buf[1] = (byte) ((value >> 16) & 0xFF);
-        buf[2] = (byte) ((value >> 8) & 0xFF);
-        buf[3] = (byte) ((value) & 0xFF);
+        buf[0] = (byte) ((value >> 24) & 0xff);
+        buf[1] = (byte) ((value >> 16) & 0xff);
+        buf[2] = (byte) ((value >> 8) & 0xff);
+        buf[3] = (byte) ((value) & 0xff);
         return buf;
     }
 
@@ -114,7 +114,7 @@ public class ID3v2Tag {
      * @return
      */
     public static int convertDWordToInt(byte[] buf, int offset) {
-        return ((buf[offset] & 0xFF) << 24) | ((buf[offset + 1] & 0xFF) << 16) | ((buf[offset + 2] & 0xFF) << 8) | (buf[offset + 3] & 0xFF);
+        return ((buf[offset] & 0xff) << 24) | ((buf[offset + 1] & 0xff) << 16) | ((buf[offset + 2] & 0xff) << 8) | (buf[offset + 3] & 0xff);
     }
 
     /**

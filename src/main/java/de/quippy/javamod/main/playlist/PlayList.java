@@ -35,6 +35,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -679,11 +680,9 @@ public class PlayList {
                 String compare = line.toLowerCase();
                 int equalOp = line.indexOf('=');
                 String value = line.substring(equalOp + 1);
-//				if (compare.startsWith("numberofentries"))
-//				{
-//					numOfEntries = Integer.parseInt(value);
-//				}
-//				else
+//                if (compare.startsWith("numberofentries")) {
+//                    numOfEntries = Integer.parseInt(value);
+//                } else
                 if (compare.startsWith("file")) {
                     int index = Integer.parseInt(line.substring(4, equalOp)) - 1;
                     if (index > highestIndex) highestIndex = index;
@@ -780,10 +779,9 @@ public class PlayList {
      * @param playListURL
      * @param shuffle
      * @return
-     * @throws IOException
      * @since 02.01.2011
      */
-    private static PlayList readZIPFile(URL playListURL, boolean shuffle, boolean repeat) throws IOException {
+    private static PlayList readZIPFile(URL playListURL, boolean shuffle, boolean repeat) {
         List<File> entries = new ArrayList<>();
         ZipInputStream input = null;
         try {
@@ -795,10 +793,11 @@ public class PlayList {
                 entries.add(new File(zipFile.getCanonicalPath() + File.separatorChar + entry.getName()));
             }
         } catch (Throwable ex) {
+            logger.log(Level.TRACE, ex.getMessage(), ex);
         } finally {
             if (input != null) try {
                 input.close();
-            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
+            } catch (IOException ex) { logger.log(Level.TRACE, "IGNORED", ex); }
         }
         if (!entries.isEmpty())
             return new PlayList(entries.toArray(File[]::new), shuffle, repeat);
@@ -807,14 +806,13 @@ public class PlayList {
     }
 
     /**
-     * @param playListURL
-     * @param shuffle
-     * @param repeat
-     * @return
-     * @throws IOException
+     * @param playListURL the cue url
+     * @param shuffle shuffle enabled or not
+     * @param repeat repeat enabled or not
+     * @return a play list
      * @since 04.03.2012
      */
-    private static PlayList readCUEFile(URL playListURL, boolean shuffle, boolean repeat) throws IOException {
+    private static PlayList readCUEFile(URL playListURL, boolean shuffle, boolean repeat) {
         CueSheet cueSheet = CueSheet.createCueSheet(playListURL);
         // Now iterate throw the entries and create a playlist
         int list_index = 0;
@@ -823,8 +821,8 @@ public class PlayList {
         if (filesSize > 0) {
             List<PlayListEntry> entries = new ArrayList<>();
             for (CueFile cueFile : cueFiles) {
-                Object[] infos = MultimediaContainerManager.getSongInfosFor(cueFile.getFile());
-                long fullDuration = (infos[1] != null) ? (Long) infos[1] : -1;
+                Map<String, Object> infos = MultimediaContainerManager.getSongInfosFor(cueFile.getFile());
+                long fullDuration = (infos.get("duration") != null) ? (Long) infos.get("duration") : -1;
 
                 List<CueTrack> cueTracks = cueFile.getTracks();
                 int tracksSize = cueTracks.size();

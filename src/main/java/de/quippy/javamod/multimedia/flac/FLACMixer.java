@@ -93,19 +93,11 @@ public class FLACMixer extends BasicMixer {
         }
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getChannelCount()
-     */
     @Override
     public int getChannelCount() {
         return channels;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getCurrentKBperSecond()
-     */
     @Override
     public int getCurrentKBperSecond() {
         if (decoder != null) {
@@ -118,28 +110,16 @@ public class FLACMixer extends BasicMixer {
         return 0;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getCurrentSampleRate()
-     */
     @Override
     public int getCurrentSampleRate() {
         return sampleRate;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getLengthInMilliseconds()
-     */
     @Override
     public long getLengthInMilliseconds() {
         return lengthInMilliseconds;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getMillisecondPosition()
-     */
     @Override
     public long getMillisecondPosition() {
         if (decoder != null) {
@@ -153,18 +133,12 @@ public class FLACMixer extends BasicMixer {
         return 0;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#isSeekSupported()
-     */
     @Override
     public boolean isSeekSupported() {
         return true;
     }
 
     /**
-     * @param milliseconds
-     * @see de.quippy.javamod.mixer.BasicMixer#seek(long)
      * @since 13.02.2012
      */
     @Override
@@ -196,9 +170,6 @@ public class FLACMixer extends BasicMixer {
         }
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#startPlayback()
-     */
     @Override
     public void startPlayback() {
         initialize();
@@ -261,7 +232,7 @@ public class FLACMixer extends BasicMixer {
             if (inputStream != null) try {
                 inputStream.close();
                 inputStream = null;
-            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
+            } catch (IOException ex) { logger.log(Level.TRACE, "IGNORED", ex); }
         }
     }
 }

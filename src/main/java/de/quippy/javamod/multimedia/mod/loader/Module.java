@@ -242,22 +242,20 @@ public abstract class Module {
          */
         private int readbits(int b) {
             // Slow version but always working and easy to understand
-//			long value = 0;
-//			int i = b;
-//			while (i>0)
-//			{
-//				if (bitsRemain==0)
-//				{
-//					sourceIndex++;
-//					bitsRemain = 8;
-//				}
-//				value >>= 1;
-//				value |= (((long)sourceBuffer[sourceIndex] & 0x01) << 31) & 0xFFFFFFFF;
-//				sourceBuffer[sourceIndex] >>= 1;
-//				bitsRemain--;
-//				i--;
-//			}
-//			return (int)((value >> (32 - b)) & 0xFFFFFFFF);
+//            long value = 0;
+//            int i = b;
+//            while (i > 0) {
+//                if (bitsRemain == 0) {
+//                    sourceIndex++;
+//                    bitsRemain = 8;
+//                }
+//                value >>= 1;
+//                value |= (((long) sourceBuffer[sourceIndex] & 0x01) << 31) & 0xffff_ffff;
+//                sourceBuffer[sourceIndex] >>= 1;
+//                bitsRemain--;
+//                i--;
+//            }
+//            return (int) ((value >> (32 - b)) & 0xffff_ffff);
             // adopted version from OCP - much faster
             long value = 0;
             if (b <= bitsRemain) {
@@ -268,7 +266,7 @@ public abstract class Module {
                 int nbits = b - bitsRemain;
                 value = ((long) sourceBuffer[sourceIndex++]) & ((1 << bitsRemain) - 1);
                 while (nbits > 8) {
-                    value |= ((long) (sourceBuffer[sourceIndex++] & 0xFF)) << bitsRemain;
+                    value |= ((long) (sourceBuffer[sourceIndex++] & 0xff)) << bitsRemain;
                     nbits -= 8;
                     bitsRemain += 8;
                 }
@@ -276,7 +274,7 @@ public abstract class Module {
                 sourceBuffer[sourceIndex] >>= nbits;
                 bitsRemain = 8 - nbits;
             }
-            return (int) (value & 0xFFFFFFFF);
+            return (int) (value & 0xffff_ffff);
         }
 
         /**
@@ -333,7 +331,7 @@ public abstract class Module {
                             continue; // ... next value
                         }
                     } else if (width < 9) { // method 2 (7-8 bits)
-                        int border = (0xFF >> (9 - width)) - 4; // lower border for width chg
+                        int border = (0xff >> (9 - width)) - 4; // lower border for width chg
 
                         if (value > border && value <= (border + 8)) {
                             value -= border; // convert width to 1-8
@@ -342,7 +340,7 @@ public abstract class Module {
                         }
                     } else if (width == 9) { // method 3 (9 bits)
                         if ((value & 0x100) != 0) { // bit 8 set?
-                            width = (value + 1) & 0xFF; // new width...
+                            width = (value + 1) & 0xff; // new width...
                             continue; // ... and next value
                         }
                     } else { // illegal width, abort
@@ -353,10 +351,10 @@ public abstract class Module {
                     byte v; // sample value
                     if (width < 8) {
                         int shift = 8 - width;
-                        v = (byte) ((value << shift) & 0xFF);
+                        v = (byte) ((value << shift) & 0xff);
                         v >>= shift;
                     } else
-                        v = (byte) (value & 0xFF);
+                        v = (byte) (value & 0xff);
 
                     // integrate upon the sample values
                     d1 += v;
@@ -408,7 +406,7 @@ public abstract class Module {
                             continue; // ... next value
                         }
                     } else if (width < 17) { // method 2 (7-16 bits)
-                        int border = (0xFFFF >> (17 - width)) - 8; // lower border for width chg
+                        int border = (0xffFF >> (17 - width)) - 8; // lower border for width chg
 
                         if (value > border && value <= (border + 16)) {
                             value -= border; // convert width to 1-8
@@ -417,7 +415,7 @@ public abstract class Module {
                         }
                     } else if (width == 17) { // method 3 (17 bits)
                         if ((value & 0x10000) != 0) { // bit 16 set?
-                            width = (value + 1) & 0xFF; // new width...
+                            width = (value + 1) & 0xff; // new width...
                             continue; // ... and next value
                         }
                     } else { // illegal width, abort
@@ -428,7 +426,7 @@ public abstract class Module {
                     short v; // sample value
                     if (width < 16) {
                         int shift = 16 - width;
-                        v = (short) ((value << shift) & 0xFFFF);
+                        v = (short) ((value << shift) & 0xffFF);
                         v >>= shift;
                     } else
                         v = (short) value;
@@ -453,7 +451,7 @@ public abstract class Module {
     /**
      * Constructor for Module
      */
-    public Module() {
+    protected Module() {
         super();
         lengthInMilliseconds = -1;
         tempoMode = ModConstants.TEMPOMODE_CLASSIC;
@@ -468,8 +466,7 @@ public abstract class Module {
     /**
      * Loads a Module. This Method will delegate the task to loadModFile(InputStream)
      *
-     * @param fileName
-     * @return
+     * @param fileName by string
      */
     public void loadModFile(String fileName) throws IOException {
         loadModFile(new File(fileName));
@@ -479,16 +476,14 @@ public abstract class Module {
      * Loads a Module.
      * This Method will delegate the task to loadModFile(URL)
      *
-     * @param file
-     * @return
+     * @param file by file
      */
     public void loadModFile(File file) throws IOException {
         loadModFile(file.toURI().toURL());
     }
 
     /**
-     * @param url
-     * @return
+     * @param url by url
      * @since 12.10.2007
      */
     public void loadModFile(URL url) throws IOException {
@@ -504,8 +499,7 @@ public abstract class Module {
     }
 
     /**
-     * @param inputStream
-     * @return
+     * @param inputStream by mod file input stream
      * @throws IOException
      * @since 31.12.2007
      */
@@ -528,7 +522,7 @@ public abstract class Module {
         boolean isUnsigned = (flags & ModConstants.SM_PCMU) != 0;
         boolean is16Bit = (flags & ModConstants.SM_16BIT) != 0;
         boolean isBigEndian = (flags & ModConstants.SM_BigEndian) != 0;
-        //current.setStereo(isStereo); // just to be sure...
+//        current.setStereo(isStereo); // just to be sure...
 
         if (current.length > 0) {
             current.allocSampleData();
@@ -1330,7 +1324,7 @@ public abstract class Module {
                 inputStream.skipBack(4);
                 break;
             }
-//			System.out.println("case 0x"+ModConstants.getAsHex(code, 8) + ": //\"" + Helpers.retrieveAsString(new byte[] {(byte)((code>>24)&0xFF), (byte)((code>>16)&0xFF), (byte)((code>>8)&0xFF), (byte)(code&0xFF)}, 0, 4)+"\"");
+//			System.out.println("case 0x"+ModConstants.getAsHex(code, 8) + ": //\"" + Helpers.retrieveAsString(new byte[] {(byte)((code>>24)&0xff), (byte)((code>>16)&0xff), (byte)((code>>8)&0xff), (byte)(code&0xff)}, 0, 4)+"\"");
             // size of this property for ONE instrument
             int size = inputStream.readIntelWord();
             for (int i = 0; i < getNInstruments(); i++) {
@@ -1356,7 +1350,7 @@ public abstract class Module {
 //		System.out.println("\nExtendedSongProperties");
         while (inputStream.length() >= 6) {
             int code = inputStream.readIntelDWord();
-//			System.out.println("case 0x"+ModConstants.getAsHex(code, 8) + ": //\"" + Helpers.retrieveAsString(new byte[] {(byte)((code>>24)&0xFF), (byte)((code>>16)&0xFF), (byte)((code>>8)&0xFF), (byte)(code&0xFF)}, 0, 4)+"\"");
+//			System.out.println("case 0x"+ModConstants.getAsHex(code, 8) + ": //\"" + Helpers.retrieveAsString(new byte[] {(byte)((code>>24)&0xff), (byte)((code>>16)&0xff), (byte)((code>>8)&0xff), (byte)(code&0xff)}, 0, 4)+"\"");
             int size = inputStream.readIntelWord();
 
             if (code == 0x0438_3232) { // Start of MPTM extensions, non-ASCII ID or truncated field
@@ -1426,7 +1420,7 @@ public abstract class Module {
                             if (rgb[3] != 0)
                                 chnColors[c] = null;
                             else
-                                chnColors[c] = new Color((rgb[0] & 0xFF) | ((rgb[1] & 0xFF) << 8) | ((rgb[2] & 0xFF) << 16));
+                                chnColors[c] = new Color((rgb[0] & 0xff) | ((rgb[1] & 0xff) << 8) | ((rgb[2] & 0xff) << 16));
                         }
                     } else
                         inputStream.skip(size);
@@ -1445,7 +1439,7 @@ public abstract class Module {
                         for (int c = 64; c < loopLimit; c++) {
                             int pan = inputStream.read();
                             int vol = inputStream.read();
-                            if (pan != 0xFF) {
+                            if (pan != 0xff) {
                                 newChannelVolume[c] = vol;
                                 if (pan == 100 || (pan & 0x80) != 0) {
                                     // we simply store those, as mixer responds to these in "initializeMixer()"

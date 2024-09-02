@@ -89,7 +89,7 @@ public class ID3v2Footer {
 
         String result = new String(buf, ENC_TYPE);
         if (result.startsWith(TAG_START)) {
-            if ((((int) buf[3] & 0xFF) != 0xff) && (((int) buf[4] & 0xFF) != 0xff)) {
+            if ((((int) buf[3] & 0xff) != 0xff) && (((int) buf[4] & 0xff) != 0xff)) {
                 if (((int) buf[6] & 0x80) == 0 && ((int) buf[7] & 0x80) == 0 && ((int) buf[8] & 0x80) == 0 && ((int) buf[9] & 0x80) == 0) {
                     return true;
                 }

@@ -60,11 +60,6 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
 
     private boolean isStreaming;
 
-    /**
-     * @param mp3FileUrl
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInstance(java.net.URL)
-     */
     @Override
     public MultimediaContainer getInstance(URL mp3FileUrl) {
         MultimediaContainer result = super.getInstance(mp3FileUrl);

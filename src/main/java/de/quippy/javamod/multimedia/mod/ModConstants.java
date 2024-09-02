@@ -77,7 +77,7 @@ public class ModConstants {
     // PreAmp constants
     public static final int PREAMP_SHIFT = 8;
     public static final int MAX_MIXING_PREAMP = 1 << PREAMP_SHIFT; // the maximum sample preAmp
-    public static final int MIN_MIXING_PREAMP = (MAX_MIXING_PREAMP / 5) & 0xFFF0; // minimum value - used for e.g. ProTracker with more than 4 channels
+    public static final int MIN_MIXING_PREAMP = (MAX_MIXING_PREAMP / 5) & 0xffF0; // minimum value - used for e.g. ProTracker with more than 4 channels
 
     // Log tables for pre-amp - legacy MPT
     public static final int[] PreAmpTable = {
@@ -118,7 +118,7 @@ public class ModConstants {
     // Interpolation shift samples and clipping
     public static final int SAMPLE_SHIFT = 12;
     public static final long CLIPP32BIT_MAX = 0x000000007FFFFFFFL;
-    public static final long CLIPP32BIT_MIN = 0xFFFFFFFF80000000L;
+    public static final long CLIPP32BIT_MIN = 0xffFFFFFF80000000L;
 
     // Interpolation modes
     public static final int INTERPOLATION_NONE = 0;
@@ -188,7 +188,7 @@ public class ModConstants {
     public static final int FLTMODE_LOWPASS = 0;
     public static final int FLTMODE_HIGHPASS = 1;
     public static final int FLTMODE_BANDPASS = 2;
-    public static final int FLTMODE_UNCHANGED = 0xFF; // Definition of MPT Unchanged filter
+    public static final int FLTMODE_UNCHANGED = 0xff; // Definition of MPT Unchanged filter
     public static final int FILTER_SHIFT_BITS = 13;
     public static final long FILTER_PRECISION = 1L << FILTER_SHIFT_BITS;
     public static final long HALF_FILTER_PRECISION = FILTER_PRECISION >> 1;
@@ -945,7 +945,7 @@ public class ModConstants {
      * Translation for porta2note speed - 10 values
      */
     public static final int[] IT_VolColumnPortaNoteSpeedTranslation = {
-            0x00, 0x01, 0x04, 0x08, 0x10, 0x20, 0x40, 0x60, 0x80, 0xFF
+            0x00, 0x01, 0x04, 0x08, 0x10, 0x20, 0x40, 0x60, 0x80, 0xff
     };
 
     /**
@@ -1046,9 +1046,9 @@ public class ModConstants {
      */
     public static String getModPlugVersionString(int version) {
         if (version == 0) return "Unknown";
-        if ((version & 0xFFFF) == 0)
-            return String.format("%x.%02x", (version >> 24) & 0xFF, (version >> 16) & 0xFF);
-        return String.format("%x.%02x.%02x.%02x", (version >> 24) & 0xFF, (version >> 16) & 0xFF, (version >> 8) & 0xFF, version & 0xFF);
+        if ((version & 0xffFF) == 0)
+            return String.format("%x.%02x", (version >> 24) & 0xff, (version >> 16) & 0xff);
+        return String.format("%x.%02x.%02x.%02x", (version >> 24) & 0xff, (version >> 16) & 0xff, (version >> 8) & 0xff, version & 0xff);
     }
 
     /**
@@ -1059,12 +1059,12 @@ public class ModConstants {
      * @since 19.07.2024
      */
     public static String getSchismVersionString(int version) {
-        int cwtv = (version >> 16) & 0xFFF;
-        int extVersion = version & 0xFFFF;
+        int cwtv = (version >> 16) & 0xffF;
+        int extVersion = version & 0xffFF;
         if (cwtv > 0x50) {
             // version is days from 2009-10-31
             LocalDate d = LocalDate.of(2009, 10, 31);
-            if (cwtv < 0xFFF)
+            if (cwtv < 0xffF)
                 d = d.plusDays(cwtv - 0x50);
             else
                 d = d.plusDays(extVersion);
@@ -1119,7 +1119,7 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static int convertIntelWordToInt(final byte[] buf, final int offset) {
-//        return (buf[offset] & 0xFF) | ((buf[offset + 1] & 0xFF) << 8);
+//        return (buf[offset] & 0xff) | ((buf[offset + 1] & 0xff) << 8);
 //    }
 //
 //    /**
@@ -1130,7 +1130,7 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static int convertIntel3ByteToInt(final byte[] buf, final int offset) {
-//        return (buf[offset] & 0xFF) | ((buf[offset + 1] & 0xFF) << 8) | ((buf[offset + 2] & 0xFF) << 16);
+//        return (buf[offset] & 0xff) | ((buf[offset + 1] & 0xff) << 8) | ((buf[offset + 2] & 0xff) << 16);
 //    }
 //
 //    /**
@@ -1141,7 +1141,7 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static int convertIntelDWordToInt(final byte[] buf, final int offset) {
-//        return (buf[offset] & 0xFF) | ((buf[offset + 1] & 0xFF) << 8) | ((buf[offset + 2] & 0xFF) << 16) | ((buf[offset + 3] & 0xFF) << 24);
+//        return (buf[offset] & 0xff) | ((buf[offset + 1] & 0xff) << 8) | ((buf[offset + 2] & 0xff) << 16) | ((buf[offset + 3] & 0xff) << 24);
 //    }
 //
 //    /**
@@ -1152,7 +1152,7 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static int convertWordToInt(final byte[] buf, final int offset) {
-//        return ((buf[offset] & 0xFF) << 8) | (buf[offset + 1] & 0xFF);
+//        return ((buf[offset] & 0xff) << 8) | (buf[offset + 1] & 0xff);
 //    }
 //
 //    /**
@@ -1163,7 +1163,7 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static int convert3ByteToInt(final byte[] buf, final int offset) {
-//        return ((buf[offset] & 0xFF) << 16) | ((buf[offset + 1] & 0xFF) << 8) | (buf[offset + 2] & 0xFF);
+//        return ((buf[offset] & 0xff) << 16) | ((buf[offset + 1] & 0xff) << 8) | (buf[offset + 2] & 0xff);
 //    }
 
     /**
@@ -1174,7 +1174,7 @@ public class ModConstants {
      * @return
      */
     public static int convertDWordToInt(byte[] buf, int offset) {
-        return (buf[offset] & 0xFF) | ((buf[offset + 1] & 0xFF) << 8) | ((buf[offset + 2] & 0xFF) << 16) | ((buf[offset + 3] & 0xFF) << 24);
+        return (buf[offset] & 0xff) | ((buf[offset + 1] & 0xff) << 8) | ((buf[offset + 2] & 0xff) << 16) | ((buf[offset + 3] & 0xff) << 24);
     }
 
     // Conversions for sample data!
@@ -1236,7 +1236,7 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static long promoteUnsigned8BitToSigned16Bit(final long sample) {
-//        return (((sample) & 0xFF) - 0x80) << 8;
+//        return (((sample) & 0xff) - 0x80) << 8;
 //    }
 //
 //    /**
@@ -1246,7 +1246,7 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static long promoteUnsigned16BitToSigned16Bit(final long sample) {
-//        return (sample & 0xFFFF) - 0x8000;
+//        return (sample & 0xffFF) - 0x8000;
 //    }
 //
 //    /**
@@ -1257,7 +1257,7 @@ public class ModConstants {
 //     * @since 26.05.2006
 //     */
 //    public static long promoteUnsigned8BitToSigned24Bit(final long sample) {
-//        return (((sample) & 0xFF) - 0x80) << 16;
+//        return (((sample) & 0xff) - 0x80) << 16;
 //    }
 //
 //    /**
@@ -1267,7 +1267,7 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static long promoteUnsigned16BitToSigned24Bit(final long sample) {
-//        return ((sample & 0xFFFF) - 0x8000) << 8;
+//        return ((sample & 0xffFF) - 0x8000) << 8;
 //    }
 
     /**
@@ -1278,7 +1278,7 @@ public class ModConstants {
      * @since 26.05.2006
      */
     public static long promoteUnsigned8BitToSigned32Bit(long sample) {
-        return (((sample) & 0xFF) - 0x80) << 24;
+        return (((sample) & 0xff) - 0x80) << 24;
     }
 
     /**
@@ -1288,7 +1288,7 @@ public class ModConstants {
      * @return
      */
     public static long promoteUnsigned16BitToSigned32Bit(long sample) {
-        return ((sample & 0xFFFF) - 0x8000) << 16;
+        return ((sample & 0xffFF) - 0x8000) << 16;
     }
 
 //    /**
@@ -1298,7 +1298,7 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static long promoteUnsigned24BitToSigned24Bit(final long sample) {
-//        return (sample & 0xFF_FFFF) - 0x80_0000;
+//        return (sample & 0xff_FFFF) - 0x80_0000;
 //    }
 //
 //    /**
@@ -1308,7 +1308,7 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static long promoteSigned16BitToUnsigned8Bit(final long sample) {
-//        return ((sample >> 8) + 0x80) & 0xFF;
+//        return ((sample >> 8) + 0x80) & 0xff;
 //    }
 //
 //    /**
@@ -1318,7 +1318,7 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static long promoteSigned24BitToUnsigned24Bit(final long sample) {
-//        return (sample + 0x80_0000) & 0xFF_FFFF;
+//        return (sample + 0x80_0000) & 0xff_FFFF;
 //    }
 //
 //    /**
@@ -1328,7 +1328,7 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static long promoteUnsigned32BitToSigned32Bit(final long sample) {
-//        return (sample & 0xFFFF_FFFF) - 0x8000_0000;
+//        return (sample & 0xffFF_FFFF) - 0x8000_0000;
 //    }
 //
 //    /**
@@ -1338,6 +1338,6 @@ public class ModConstants {
 //     * @return
 //     */
 //    public static long promoteSigned32BitToUnsigned32Bit(final long sample) {
-//        return (sample + 0x8000_0000) & 0xFFFF_FFFF;
+//        return (sample + 0x8000_0000) & 0xffFF_FFFF;
 //    }
 }

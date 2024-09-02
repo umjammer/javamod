@@ -1101,47 +1101,6 @@ public class Helpers {
     }
 
     /**
-     * Registers all Classes that should not load during playback
-     * This is also for registering all supported "plugin" loaders at the factory
-     *
-     * @throws ClassNotFoundException
-     * @since 26.12.2007
-     */
-    public static void registerAllClasses() {
-        // Just load these in advance
-        try {
-            Class.forName("de.quippy.javamod.system.Helpers");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
-        }
-
-        // Interpolation Routines - doing pre-calculations through class loading
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mod.mixer.interpolation.CubicSpline");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mod.mixer.interpolation.Kaiser");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
-        }
-        try {
-            Class.forName("de.quippy.javamod.multimedia.mod.mixer.interpolation.WindowedFIR");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.ERROR, "JavaModMainBase: a class moved!", ex);
-        }
-
-        // SID WAVE Loading
-
-        try {
-            Class.forName("de.quippy.sidplay.resid_builder.resid.Wave");
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.INFO, "No SID WAVE support!");
-        }
-    }
-
-    /**
      * Opens a txt-File on the server containing the current populated
      * Version.
      * Compare to Helpers.VERSION

@@ -63,7 +63,6 @@ public class MultimediaContainerManager {
      * @since 12.10.2007
      */
     private MultimediaContainerManager() {
-        super();
     }
 
     /**
@@ -220,8 +219,8 @@ logger.log(Level.DEBUG, getFileExtensionMap());
      * This method will only do (!)localy(!) what is needed to pick up
      * the song name String at [0] and time in milliseconds as Long at [1]
      *
-     * @param url
-     * @return
+     * @param url the local source
+     * @return info map
      * @since 12.02.2011
      */
     public static Object[] getSongInfosFor(URL url) {
@@ -229,7 +228,7 @@ logger.log(Level.DEBUG, getFileExtensionMap());
             MultimediaContainer container = getMultimediaContainerSingleton(url);
             if (container != null) return container.getSongInfosFor(url);
         } catch (UnsupportedAudioFileException ex) {
-            //logger.log(Level.ERROR, "IGNORED", ex);
+            logger.log(Level.TRACE, "IGNORED", ex);
         }
         return new Object[] {getSongNameFromURL(url) + " UNSUPPORTED FILE", (long) -1};
     }

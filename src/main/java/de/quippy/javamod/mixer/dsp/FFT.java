@@ -111,7 +111,7 @@ public class FFT {
         long rest = 0;
         for (int i = 0; i < scale; i++) {
             bits -= 8;
-            rest = (rest << 8) | ((value >> bits) & 0xFF);
+            rest = (rest << 8) | ((value >> bits) & 0xff);
             long i2 = (sqrt << 5) + 1;
 
             int k0 = 0;

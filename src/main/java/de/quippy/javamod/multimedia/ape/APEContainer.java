@@ -23,6 +23,8 @@
 package de.quippy.javamod.multimedia.ape;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.Properties;
 import javax.swing.JPanel;
@@ -34,12 +36,16 @@ import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 
+import static java.lang.System.getLogger;
+
 
 /**
  * @author Daniel Becker
  * @since 22.12.2010
  */
 public class APEContainer extends MultimediaContainer {
+
+    private static final Logger logger = getLogger(APEContainer.class.getName());
 
     private static final String[] APEFILEEXTENSION = {
             "ape", "apl", "mac"
@@ -67,7 +73,7 @@ public class APEContainer extends MultimediaContainer {
         } finally {
             if (apeFile != null) try {
                 apeFile.close();
-            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
+            } catch (IOException ex) { logger.log(Level.TRACE, "IGNORED", ex); }
         }
         return result;
     }

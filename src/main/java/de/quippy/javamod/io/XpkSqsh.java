@@ -119,7 +119,7 @@ public class XpkSqsh {
     }
 
     private static int getLength(byte[] a, int i) {
-        return (a[i] & 0x7F) << 24 | (a[i + 1] & 0xFF) << 16 | (a[i + 2] & 0xFF) << 8 | a[i + 3] & 0xFF;
+        return (a[i] & 0x7F) << 24 | (a[i + 1] & 0xff) << 16 | (a[i + 2] & 0xff) << 8 | a[i + 3] & 0xff;
     }
 
     public byte[] unpackData(RandomAccessInputStream source) throws IOException {
@@ -138,24 +138,24 @@ public class XpkSqsh {
         int dstPos = 0;
         source.seek(srcPos);
         while (dstPos < dst.length) {
-            int chunkType = source.read() & 0xFF;
-            int headerChecksum = source.read() & 0xFF;
-            int dataChecksum = (source.read() & 0xFF) << 8 | source.read() & 0xFF;
-            int packedLength = (source.read() & 0xFF) << 8 | source.read() & 0xFF;
-            int unpackedLength = (source.read() & 0xFF) << 8 | source.read() & 0xFF;
+            int chunkType = source.read() & 0xff;
+            int headerChecksum = source.read() & 0xff;
+            int dataChecksum = (source.read() & 0xff) << 8 | source.read() & 0xff;
+            int packedLength = (source.read() & 0xff) << 8 | source.read() & 0xff;
+            int unpackedLength = (source.read() & 0xff) << 8 | source.read() & 0xff;
             headerChecksum ^= chunkType;
             headerChecksum ^= dataChecksum >> 8 ^ dataChecksum & 255;
             headerChecksum ^= packedLength >> 8 ^ packedLength & 255;
             headerChecksum ^= unpackedLength >> 8 ^ unpackedLength & 255;
             if (headerChecksum != 0) return false;
-            packedLength = (packedLength + 3) & 0xFFFC;
+            packedLength = (packedLength + 3) & 0xffFC;
             if (source.getFilePointer() + packedLength + 1 > source.getLength()) return false;
 
             byte[] src = new byte[packedLength];
             if (source.read(src, 0, packedLength) != packedLength) return false;
 
             for (int i = 0; i < packedLength; i += 2)
-                dataChecksum ^= (src[i] & 0xFF) << 8 | src[i + 1] & 0xFF;
+                dataChecksum ^= (src[i] & 0xff) << 8 | src[i + 1] & 0xff;
             if (dataChecksum != 0) return false;
             if (dstPos + unpackedLength > dst.length) return false;
 

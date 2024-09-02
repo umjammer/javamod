@@ -271,8 +271,8 @@ public class OGGMixer extends BasicMixer {
                     if (value > 32767) value = 32767;
                     else if (value < -32768) value = -32768;
 
-                    output[sampleIndex] = (byte) (value & 0xFF);
-                    output[sampleIndex + 1] = (byte) ((value >> 8) & 0xFF);
+                    output[sampleIndex] = (byte) (value & 0xff);
+                    output[sampleIndex + 1] = (byte) ((value >> 8) & 0xff);
 
                     sampleIndex += vorbisInfo.channels << 1;
                 }

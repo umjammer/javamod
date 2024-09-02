@@ -23,7 +23,6 @@
 package de.quippy.javamod.main.gui;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -63,7 +62,7 @@ public class PlayerConfigPanel extends JPanel {
         if (tabbedPane == null) {
             tabbedPane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
             tabbedPane.setFont(Helpers.getDialogFont());
-            List<MultimediaContainer> containerList = MultimediaContainerManager.getContainerArray();
+            Iterable<MultimediaContainer> containerList = MultimediaContainerManager.getContainers();
             for (MultimediaContainer container : containerList) {
                 JPanel configPanel = container.getConfigPanel();
                 if (configPanel != null) {

@@ -659,7 +659,7 @@ public abstract class BasicModMixer {
      * @since 30.03.2010
      */
     public long getCurrentPatternPosition() {
-        return ((long) (currentArrangement & 0xFFFF) << 48) | ((long) (currentPatternIndex & 0xFFFF) << 32) | ((long) (currentRow & 0xFFFF) << 16) | ((long) (currentTempo - currentTick) & 0xFFFF);
+        return ((long) (currentArrangement & 0xffFF) << 48) | ((long) (currentPatternIndex & 0xffFF) << 32) | ((long) (currentRow & 0xffFF) << 16) | ((long) (currentTempo - currentTick) & 0xffFF);
     }
 
     /**
@@ -882,10 +882,10 @@ public abstract class BasicModMixer {
             int cutOff = (aktMemo.cutOff & 0x7F) + aktMemo.swingCutOff;
             cutOff = (cutOff * (envModifier + 256)) >> 8;
             if (cutOff < 0) cutOff = 0;
-            else if (cutOff > 0xFF) cutOff = 0xFF;
+            else if (cutOff > 0xff) cutOff = 0xff;
             int resonance = (aktMemo.resonance & 0x7F) + aktMemo.swingResonance;
             if (resonance < 0) resonance = 0;
-            else if (resonance > 0xFF) resonance = 0xFF;
+            else if (resonance > 0xff) resonance = 0xff;
 
             double fac = (((mod.getSongFlags() & ModConstants.SONG_EXFILTERRANGE) != 0) ? (128.0d / (20.0d * 256.0d)) : (128.0d / (24.0d * 256.0d)));
             double frequency = 110.0d * Math.pow(2.0d, (double) cutOff * fac + 0.25d);
@@ -1200,7 +1200,7 @@ public abstract class BasicModMixer {
                 boolean volEnvOn = (aktMemo.tempVolEnv != -1) ? aktMemo.tempVolEnv == 1 : volumeEnv.on;
                 if (volEnvOn) {
                     long volPos = volumeEnv.updatePosition(aktMemo, aktMemo.volEnvTick, aktMemo.volXMEnvPos, true);
-                    aktMemo.volEnvTick = (int) (volPos & 0xFFFFFFFF);
+                    aktMemo.volEnvTick = (int) (volPos & 0xffFFFFFF);
                     aktMemo.volXMEnvPos = (int) (volPos >> 32);
                     int newVol = volumeEnv.getValueForPosition(aktMemo.volEnvTick, aktMemo.volXMEnvPos); // 0..512
                     currentVolume = (currentVolume * newVol) >> 9;
@@ -1213,7 +1213,7 @@ public abstract class BasicModMixer {
                 boolean panEnvOn = (aktMemo.tempPanEnv != -1) ? aktMemo.tempPanEnv == 1 : panningEnv.on;
                 if (panEnvOn) {
                     long panPos = panningEnv.updatePosition(aktMemo, aktMemo.panEnvTick, aktMemo.panXMEnvPos, false);
-                    aktMemo.panEnvTick = (int) (panPos & 0xFFFFFFFF);
+                    aktMemo.panEnvTick = (int) (panPos & 0xffFFFFFF);
                     aktMemo.panXMEnvPos = (int) (panPos >> 32);
                     int newPanValue = panningEnv.getValueForPosition(aktMemo.panEnvTick, aktMemo.panXMEnvPos) - 256; // result -256..256
                     currentPanning += (newPanValue * ((currentPanning >= 128) ? (256 - currentPanning) : currentPanning)) >> 8;
@@ -1231,7 +1231,7 @@ public abstract class BasicModMixer {
             if (pitchEnv != null) {
                 boolean pitchEnvOn = (aktMemo.tempPitchEnv != -1) ? aktMemo.tempPitchEnv == 1 : pitchEnv.on;
                 if (pitchEnvOn) { // only IT...
-                    aktMemo.pitchEnvTick = (int) (pitchEnv.updatePosition(aktMemo, aktMemo.pitchEnvTick, 0, false) & 0xFFFFFFFF);
+                    aktMemo.pitchEnvTick = (int) (pitchEnv.updatePosition(aktMemo, aktMemo.pitchEnvTick, 0, false) & 0xffFFFFFF);
                     int pitchValue = pitchEnv.getValueForPosition(aktMemo.pitchEnvTick, 0) - 256; // result -256..256
                     if (pitchEnv.filter)
                         setupChannelFilter(aktMemo, !aktMemo.filterOn, pitchValue);
@@ -1386,7 +1386,7 @@ public abstract class BasicModMixer {
                 aktMemo.currentInstrumentPanning = aktMemo.panning = 0x80;
             }
         } else {
-            aktMemo.currentInstrumentPanning = aktMemo.panning = param & 0xFF;
+            aktMemo.currentInstrumentPanning = aktMemo.panning = param & 0xff;
         }
         aktMemo.swingPanning = 0;
         aktMemo.doFastVolRamp = true; // panning should take place immediately - do not make it soft!
@@ -1419,10 +1419,10 @@ public abstract class BasicModMixer {
         char[] midiMacroArray = midiMacro.toCharArray();
         if (midiMacroArray.length == 0) return;
 
-        int macroCommand = ((midiMacroArray[0] & 0xFF) << 16) |
-                ((midiMacroArray[1] & 0xFF) << 24) |
-                ((midiMacroArray[2] & 0xFF)) |
-                ((midiMacroArray[3] & 0xFF) << 8);
+        int macroCommand = ((midiMacroArray[0] & 0xff) << 16) |
+                ((midiMacroArray[1] & 0xff) << 24) |
+                ((midiMacroArray[2] & 0xff)) |
+                ((midiMacroArray[3] & 0xff) << 8);
         macroCommand &= 0x7F5F7F5F;
 
         if (macroCommand == 0x30463046) { // internal code
@@ -1716,7 +1716,7 @@ public abstract class BasicModMixer {
         if (inst.randomVolumeVariation >= 0) {
             // MPT uses the sample volume, IT use inst.globalVolume
             //aktMemo.swingVolume = (((((inst.randomVolumeVariation * (swinger.nextInt() % 0x80))>>6)+1) * inst.globalVolume / 199);
-            aktMemo.swingVolume = (((((inst.randomVolumeVariation * (swinger.nextInt() % 0xFF)) >> 6) + 1) * aktMemo.currentInstrumentVolume) / 199);
+            aktMemo.swingVolume = (((((inst.randomVolumeVariation * (swinger.nextInt() % 0xff)) >> 6) + 1) * aktMemo.currentInstrumentVolume) / 199);
         }
         if (inst.randomPanningVariation >= 0) {
             aktMemo.swingPanning = ((inst.randomPanningVariation << 2) * (swinger.nextInt() % 0x80)) >> 7;

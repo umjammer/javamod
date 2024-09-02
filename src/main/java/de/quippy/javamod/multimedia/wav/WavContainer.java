@@ -23,6 +23,8 @@
 package de.quippy.javamod.multimedia.wav;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.Properties;
 import javax.sound.sampled.AudioFileFormat;
@@ -36,12 +38,16 @@ import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 
+import static java.lang.System.getLogger;
+
 
 /**
  * @author Daniel Becker
  * @since 14.10.2007
  */
 public class WavContainer extends MultimediaContainer {
+
+    private static final Logger logger = getLogger(WavContainer.class.getName());
 
     private static final String[] wavefile_Extensions;
 
@@ -71,7 +77,7 @@ public class WavContainer extends MultimediaContainer {
         } finally {
             if (audioInputStream != null) try {
                 audioInputStream.close();
-            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
+            } catch (IOException ex) { logger.log(Level.TRACE, "IGNORED", ex); }
         }
         return result;
     }
@@ -94,6 +100,7 @@ public class WavContainer extends MultimediaContainer {
                 duration = ((long) audioInputStream.available() / ((long) sampleSizeInBytes) / (long) channels) * 1000L / (long) sampleRate;
             }
         } catch (Throwable ex) {
+            logger.log(Level.TRACE, "IGNORED", ex);
         }
         return new Object[] {songName, duration};
     }

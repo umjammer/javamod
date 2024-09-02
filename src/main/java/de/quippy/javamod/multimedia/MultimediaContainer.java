@@ -51,19 +51,7 @@ public abstract class MultimediaContainer {
     }
 
     /**
-     * A default implementation. If you need a new instance,
-     * override this and do whatever is needed!
-     *
-     * @return
-     * @since 13.10.2007
-     */
-    public MultimediaContainer getInstance(URL url) {
-        setFileURL(url);
-        return this;
-    }
-
-    /**
-     * @return
+     * @return a file url
      * @since 13.10.2007
      */
     public URL getFileURL() {
@@ -71,7 +59,7 @@ public abstract class MultimediaContainer {
     }
 
     /**
-     * @param url
+     * @param url a file url
      * @since 19.12.2022
      */
     public void setFileURL(URL url) {
@@ -122,7 +110,6 @@ public abstract class MultimediaContainer {
     /**
      * Return the name of the song
      *
-     * @return
      * @since 21.09.2008
      */
     public String getSongName() {
@@ -133,16 +120,15 @@ public abstract class MultimediaContainer {
      * This method will only do (!)locally(!) what is needed to pick up
      * the song name String at [0] and time in milliseconds as Long at [1]
      *
-     * @param url
+     * @param url local source file
      * @return Object [] { String SongName, Long duration }
      * @since 12.02.2011
      */
     public abstract Object[] getSongInfosFor(URL url);
 
     /**
-     * Returns true if this mixers supports the export function
+     * Returns true if these mixers supports the export function
      *
-     * @return
      * @since 26.10.2007
      */
     public abstract boolean canExport();
@@ -150,7 +136,6 @@ public abstract class MultimediaContainer {
     /**
      * Return the info dialog panel
      *
-     * @return
      * @since 13.10.2007
      */
     public abstract JPanel getInfoPanel();
@@ -158,7 +143,6 @@ public abstract class MultimediaContainer {
     /**
      * Returns the config panel for this mixer
      *
-     * @return
      * @since 13.10.2007
      */
     public abstract JPanel getConfigPanel();
@@ -166,7 +150,6 @@ public abstract class MultimediaContainer {
     /**
      * The file extensions this container is responsible for
      *
-     * @return
      * @since 12.10.2007
      */
     public abstract String[] getFileExtensionList();
@@ -174,19 +157,18 @@ public abstract class MultimediaContainer {
     /**
      * A descriptive Name for e.g. a FileChooser
      *
-     * @return
      * @since 05.01.2008
      */
     public abstract String getName();
 
     /**
-     * @param newProps
+     * @param newProps new configuration
      * @since 13.10.2007
      */
     public abstract void configurationChanged(Properties newProps);
 
     /**
-     * @param props
+     * @param props the configuration to save
      * @since 14.10.2007
      */
     public abstract void configurationSave(Properties props);
@@ -201,7 +183,6 @@ public abstract class MultimediaContainer {
     /**
      * Get the mixer of this container
      *
-     * @return
      * @since 12.10.2007
      */
     public abstract Mixer createNewMixer();

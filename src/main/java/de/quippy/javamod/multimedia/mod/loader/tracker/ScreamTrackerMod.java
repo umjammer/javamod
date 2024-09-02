@@ -198,7 +198,7 @@ public class ScreamTrackerMod extends Module {
                     int ton = inputStream.read();
                     count--;
                     switch (ton) {
-                        case 0xFF:
+                        case 0xff:
                             noteIndex = period = ModConstants.NO_NOTE;
                             break;
                         case 0xFE:
@@ -334,7 +334,7 @@ public class ScreamTrackerMod extends Module {
         // prepare panningValue array with panning and mute status
         int[] tmpPanning = new int[32];
         for (int c = 0; c < 32; c++) {
-            int status = channelStatus[c] & 0xFF;
+            int status = channelStatus[c] & 0xff;
             if ((status & 0x80) != 0) { // Muted channel - not necessarily disabled (&0xF==0!)
                 tmpPanning[c] |= ModConstants.CHANNEL_IS_MUTED; // this is like IT does it, but in this case will also lead to a completely disabled channel without even doing effects
                 status &= ~0x80;
@@ -360,11 +360,11 @@ public class ScreamTrackerMod extends Module {
             getArrangement()[1] = 255;
         }
 
-        // if songLength is odd, there might be a 0xFF left...
+        // if songLength is odd, there might be a 0xff left...
         long startSeek = 96L + getSongLength();
         if ((songLength & 0x01) != 0) {
             byte skipByte = inputStream.readByte();
-            if (skipByte == 0xFF) startSeek++;
+            if (skipByte == 0xff) startSeek++;
         }
 
         int anzPointers = getNSamples() + getNPattern();
@@ -391,7 +391,7 @@ public class ScreamTrackerMod extends Module {
         channelMap = new int[32];
         int anzChannels = 0;
         for (int c = 0; c < 32; c++) {
-            int status = channelStatus[c] & 0xFF;
+            int status = channelStatus[c] & 0xff;
             if ((status & ~0x80) < 19 || !REMOVE_UNUSED_CHANNELS) { // active channel
                 tmpPanning[anzChannels] = tmpPanning[c];
                 channelMap[c] = anzChannels++;
@@ -434,7 +434,7 @@ public class ScreamTrackerMod extends Module {
             int highByte = inputStream.read();
             int lowByte = inputStream.readIntelUnsignedWord();
             long sampleOffset = (lowByte | (highByte << 16)) << 4;
-            if (sampleOffset > inputStream.getLength()) sampleOffset &= 0xFFFF;
+            if (sampleOffset > inputStream.getLength()) sampleOffset &= 0xffFF;
 
             if (instrumentType == 1) { // Sample
                 // Length
@@ -502,7 +502,7 @@ public class ScreamTrackerMod extends Module {
             current.setTranspose(0);
             int baseFreq = inputStream.readIntelDWord();
 
-            if (instrumentType > 1 && instrumentType < 8 && ((baseFreq < 1000 || baseFreq > 0xFFFF))) // If this is adlib
+            if (instrumentType > 1 && instrumentType < 8 && ((baseFreq < 1000 || baseFreq > 0xffFF))) // If this is adlib
                 baseFreq = ModConstants.BASEFREQUENCY;
             else if (baseFreq <= 0) baseFreq = ModConstants.BASEFREQUENCY;
             else if (baseFreq < 1024) baseFreq = 1024;
@@ -604,7 +604,7 @@ public class ScreamTrackerMod extends Module {
                 if (version == 0x5447)
                     trackerName = "Graoumf Tracker %1d.%02x";
                 else {
-                    setTrackerName("OpenMPT " + ModConstants.getModPlugVersionString(((version & 0xFFF) << 16) | extVersionInfo));
+                    setTrackerName("OpenMPT " + ModConstants.getModPlugVersionString(((version & 0xffF) << 16) | extVersionInfo));
                     // Set this as OMPT file - however there are no special things to handle then - so for now
                     setModType(getModType() | ModConstants.MODTYPE_OMPT);
                     songFlags |= ModConstants.SONG_S3M_GUS; // OpenMPT plays Sample Offset in GUS-Mode
@@ -626,7 +626,7 @@ public class ScreamTrackerMod extends Module {
         if (trackerName == null && (getTrackerName() == null || getTrackerName().isEmpty()))
             trackerName = ("Unknown Tracker (ID: " + ((version & 0xF000) >> 12) + ") %1d, %02x");
         if (trackerName != null)
-            setTrackerName(String.format(trackerName, (version >> 8) & 0x0F, version & 0xFF));
+            setTrackerName(String.format(trackerName, (version >> 8) & 0x0F, version & 0xff));
 
         // With OpenModPlug Files we create default channel colors if none are set
         // but only, if standards of S3M are broken (in this case: OOPL3 is needed)

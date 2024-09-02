@@ -187,7 +187,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
             PatternElement patternElement = currentPattern.getPatternRow(row).getPatternElement(aktMemo.channelNumber);
             if (patternElement.getEffekt() != 0x1B) break;
             rowsUsed++;
-            val = (val << 8) | (patternElement.getEffektOp() & 0xFF);
+            val = (val << 8) | (patternElement.getEffektOp() & 0xff);
         }
         if (extendedRowsUsed != null) extendedRowsUsed.set(rowsUsed);
         return val;
@@ -419,7 +419,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
             return x;
         }
 
-        // 0xFF can be fine slide up 15 or down 15. Per convention it is
+        // 0xff can be fine slide up 15 or down 15. Per convention it is
         // fine up 15, so we test fine up first.
         if (y == 0xF) { // Fine Slide Up or normal slide down 15 (0x0F)
             if (x != 0)
@@ -1009,7 +1009,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
                 }
                 if (newTempo > 0x20) currentBPM = newTempo;
                 if (isModPlug && currentBPM > 0x200) currentBPM = 0x200; // 512 for MPT ITex
-                else if (currentBPM > 0xFF) currentBPM = 0xFF;
+                else if (currentBPM > 0xff) currentBPM = 0xff;
                 break;
             case 0x15:            // Fine Vibrato
                 // This effect is identical to the vibrato, but has a 4x smaller amplitude (more precise).
@@ -1223,7 +1223,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
      * @since 29.06.2020
      */
     private int getVibratoDelta(int type, int position) {
-        position &= 0xFF;
+        position &= 0xff;
         return switch (type & 0x03) {
             default -> //Sinus
                     ModConstants.ITSinusTable[position];
@@ -1245,10 +1245,10 @@ public class ScreamTrackerMixer extends BasicModMixer {
 //        if (config.ITVibratoTremoloPanbrello) {
 
         // Schism / OpenMPT implementation adopted
-        int position = aktMemo.autoVibratoTablePos & 0xFF;
+        int position = aktMemo.autoVibratoTablePos & 0xff;
         // sweep = rate<<2, rate = speed, depth = depth
         int depth = aktMemo.autoVibratoAmplitude;
-        depth += currentSample.vibratoSweep & 0xFF;
+        depth += currentSample.vibratoSweep & 0xff;
         if (depth > maxDepth) depth = maxDepth;
         aktMemo.autoVibratoAmplitude = depth;
         depth >>= 8;
@@ -1282,7 +1282,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
 //            switch (currentSample.vibratoType & 0x07) {
 //                default:
 //                case 0:
-//                    periodAdd = -ModConstants.ITSinusTable[aktMemo.autoVibratoTablePos & 0xFF];        // Sine
+//                    periodAdd = -ModConstants.ITSinusTable[aktMemo.autoVibratoTablePos & 0xff];        // Sine
 //                    break;
 //                case 1:
 //                    periodAdd = (aktMemo.autoVibratoTablePos & 0x80) != 0 ? 0x40 : -0x40;                    // Square
@@ -1322,7 +1322,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
         boolean isTick0 = currentTick == currentTempo;
         boolean oldITEffects = (mod.getSongFlags() & ModConstants.SONG_ITOLDEFFECTS) != 0;
 
-        int vibPos = aktMemo.vibratoTablePos & 0xFF;
+        int vibPos = aktMemo.vibratoTablePos & 0xff;
         int periodAdd = getVibratoDelta(aktMemo.vibratoType, vibPos);
 
         int vdepth = 6;
@@ -1361,7 +1361,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
         } else
             setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod - (periodAdd << 2));
 
-        if (!isTick0 || (isIT && !oldITEffects)) aktMemo.vibratoTablePos = (vibPos + (aktMemo.vibratoStep << 2)) & 0xFF;
+        if (!isTick0 || (isIT && !oldITEffects)) aktMemo.vibratoTablePos = (vibPos + (aktMemo.vibratoStep << 2)) & 0xff;
     }
 
     /**
@@ -1779,7 +1779,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
                 } else if ((newTempo & 0xF0) == 0x10) {   // 0x1X
                     currentBPM += newTempo & 0xF;
                     if (isModPlug && currentBPM > 0x200) currentBPM = 0x200; // 512 for MPT ITex
-                    else if (currentBPM > 0xFF) currentBPM = 0xFF;
+                    else if (currentBPM > 0xff) currentBPM = 0xff;
                 }
                 break;
             case 0x15:            // Fine Vibrato

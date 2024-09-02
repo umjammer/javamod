@@ -87,8 +87,8 @@ public class ID3v2Header {
 
         String result = new String(buf, ENC_TYPE);
         if (result.startsWith(TAG_START)) {
-            if ((((int) buf[3] & 0xFF) < 0xff) && (((int) buf[4] & 0xFF) < 0xff)) {
-                if ((((int) buf[6] & 0xFF) < 0x80) && (((int) buf[7] & 0xFF) < 0x80) && (((int) buf[8] & 0xFF) < 0x80) && (((int) buf[9] & 0xFF) < 0x80)) {
+            if ((((int) buf[3] & 0xff) < 0xff) && (((int) buf[4] & 0xff) < 0xff)) {
+                if ((((int) buf[6] & 0xff) < 0x80) && (((int) buf[7] & 0xff) < 0x80) && (((int) buf[8] & 0xff) < 0x80) && (((int) buf[9] & 0xff) < 0x80)) {
                     return true;
                 }
             }
