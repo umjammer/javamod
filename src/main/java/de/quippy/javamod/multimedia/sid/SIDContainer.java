@@ -22,11 +22,11 @@
 
 package de.quippy.javamod.multimedia.sid;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.System.Logger;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import javax.swing.JPanel;
 
@@ -37,12 +37,16 @@ import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import libsidplay.sidtune.SidTune;
 import libsidplay.sidtune.SidTuneInfo;
 
+import static java.lang.System.getLogger;
+
 
 /**
  * @author Daniel Becker
  * @since 04.10.2009
  */
 public class SIDContainer extends MultimediaContainer {
+
+    private static final Logger logger = getLogger(SIDContainer.class.getName());
 
     /** these are copied from libsidplay.components.sidtune.defaultFileNameExt */
     private static final String[] SIDFILEEXTENSION = {
@@ -86,12 +90,11 @@ public class SIDContainer extends MultimediaContainer {
     private SIDInfoPanel sidInfoPanel;
 
     @Override
-    public MultimediaContainer getInstance(URL sidFileUrl) {
-        MultimediaContainer result = super.getInstance(sidFileUrl);
+    public void setFileURL(URL sidFileUrl) {
+        super.setFileURL(sidFileUrl);
         sidTune = loadSidTune(sidFileUrl);
         if (!MultimediaContainerManager.isHeadlessMode())
             ((SIDInfoPanel) getInfoPanel()).fillInfoPanelWith(getFileURL(), sidTune);
-        return result;
     }
 
     @Override
@@ -103,18 +106,19 @@ public class SIDContainer extends MultimediaContainer {
     }
 
     @Override
-    public Object[] getSongInfosFor(URL url) {
+    public Map<String, Object> getSongInfosFor(URL url) {
+        Map<String, Object> result = new HashMap<>();
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
         long duration = -1;
         try {
             SidTune sidTune = loadSidTune(url);
-            if (sidTune != null) {
-                songName = getShortDescriptionFrom(sidTune);
-                duration = sidTune.getInfo().getSongs() * 1000;
-            }
-        } catch (Throwable ex) {
+            songName = getShortDescriptionFrom(sidTune);
+            duration = sidTune.getInfo().getSongs() * 1000L;
+        } catch (Throwable ignored) {
         }
-        return new Object[] {songName, duration};
+        result.put("songName", songName);
+        result.put("duration", duration);
+        return result;
     }
 
     public void nameChanged() {
@@ -129,40 +133,21 @@ public class SIDContainer extends MultimediaContainer {
     }
 
     /**
-     * @param sidFileURL
+     * @param sidFileURL a sid url
      * @return a SIDTune
      * @since 11.10.2009
      */
     private static SidTune loadSidTune(URL sidFileURL) {
-        InputStream in = null;
         try {
-//            in = new FileOrPackedInputStream(sidFileURL);
-//            int size = in.available();
-//            if (size < 1024) size = 1024;
-//            short[] sidTuneData = new short[size];
-//            int b;
-//            int index = 0;
-//            while ((b = in.read()) != -1) {
-//                sidTuneData[index++] = (short) (b & 0xff);
-//                if (index >= sidTuneData.length) {
-//                    short[] newBuffer = new short[sidTuneData.length + size];
-//                    System.arraycopy(sidTuneData, 0, newBuffer, 0, sidTuneData.length);
-//                    sidTuneData = newBuffer;
-//                }
-//            }
             return SidTune.load(Path.of(sidFileURL.toURI()).toFile());
         } catch (Exception ex) {
             throw new RuntimeException(ex);
-        } finally {
-            if (in != null) try {
-                in.close();
-            } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
     }
 
     /**
-     * @param sidTune
-     * @return
+     * @param sidTune a sid tune
+     * @return short description
      * @since 12.02.2011
      */
     private static String getShortDescriptionFrom(SidTune sidTune) {
