@@ -10,14 +10,22 @@ Java MOD Player
 - mavenized
 - made libraries outsourced libraries as much as possible  
 
+| player | subtype                                                                    | status | library                                              | comment |
+|--------|----------------------------------------------------------------------------|--------|------------------------------------------------------|---------|
+| mod    | STK, NST, MOD, WOW, XM, FAR, MTM, STM, STS, STX, S3M, IT, MPTM, PowerPacke | ✅      | this                                                 |         |
+| opl    | ROL, LAA, CMF, DRO, SCI                                                    | ✅      | this                                                 |         |
+| sid    | SID                                                                        | ✅      | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)   |         |
+| vgm    | VGM, GBC, NSF, SPC                                                         | ✅      | [libgme](https://github.com/umjammer/vavi-sound-emu) |         |
+
 ## References
 
 * https://github.com/quippy-git/javamod
-* https://github.com/PotcFdk/JSIDPlay2
-* https://modarchive.org/
+* https://github.com/PotcFdk/JSIDPlay2 → [patched](https://github.com/umjammer/JSIDPlay2)
+* https://modarchive.org/ (mod download)
 
 ## TODO
 
+* sid mixer details
 * extract graphic equalizer ui
 * extract led scroll ui
 * java sound spi
