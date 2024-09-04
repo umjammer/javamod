@@ -24,6 +24,8 @@ package de.quippy.javamod.multimedia.mp3;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import javax.swing.JPanel;
 
@@ -114,7 +116,8 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
      * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongInfosFor(java.net.URL)
      */
     @Override
-    public Object[] getSongInfosFor(URL url) {
+    public Map<String, Object> getSongInfosFor(URL url) {
+        Map<String, Object> result = new HashMap<>();
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
         long duration = -1;
         RandomAccessInputStreamImpl inputStream = null;
@@ -137,7 +140,9 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
                 inputStream.close();
             } catch (IOException ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
         }
-        return new Object[] {songName, duration};
+        result.put("songName", songName);
+        result.put("duration", duration);
+        return result;
     }
 
     /**

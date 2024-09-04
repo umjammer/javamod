@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -124,7 +125,7 @@ public abstract class MultimediaContainer {
      * @return Object [] { String SongName, Long duration }
      * @since 12.02.2011
      */
-    public abstract Object[] getSongInfosFor(URL url);
+    public abstract Map<String, Object> getSongInfosFor(URL url);
 
     /**
      * Returns true if these mixers supports the export function

@@ -223,13 +223,16 @@ logger.log(Level.DEBUG, getFileExtensionMap());
      * @return info map
      * @since 12.02.2011
      */
-    public static Object[] getSongInfosFor(URL url) {
+    public static Map<String, Object> getSongInfosFor(URL url) {
         try {
             MultimediaContainer container = getMultimediaContainerSingleton(url);
             if (container != null) return container.getSongInfosFor(url);
         } catch (UnsupportedAudioFileException ex) {
             logger.log(Level.TRACE, "IGNORED", ex);
         }
-        return new Object[] {getSongNameFromURL(url) + " UNSUPPORTED FILE", (long) -1};
+        Map<String, Object> result = new HashMap<>();
+        result.put("songName", getSongNameFromURL(url) + " UNSUPPORTED FILE");
+        result.put("duration", -1L);
+        return result;
     }
 }

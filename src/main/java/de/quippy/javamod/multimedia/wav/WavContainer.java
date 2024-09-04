@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
@@ -83,7 +85,8 @@ public class WavContainer extends MultimediaContainer {
     }
 
     @Override
-    public Object[] getSongInfosFor(URL url) {
+    public Map<String, Object> getSongInfosFor(URL url) {
+        Map<String, Object> result = new HashMap<>();
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
         long duration = -1;
         try {
@@ -102,7 +105,9 @@ public class WavContainer extends MultimediaContainer {
         } catch (Throwable ex) {
             logger.log(Level.TRACE, "IGNORED", ex);
         }
-        return new Object[] {songName, duration};
+        result.put("songName", songName);
+        result.put("duration", duration);
+        return result;
     }
 
     @Override

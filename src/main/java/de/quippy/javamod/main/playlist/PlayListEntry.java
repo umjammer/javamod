@@ -24,6 +24,7 @@ package de.quippy.javamod.main.playlist;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Map;
 import java.util.Objects;
 
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
@@ -123,18 +124,18 @@ public class PlayListEntry {
 
     public synchronized String getFormattedName() {
         if (songName == null) {
-            Object[] infos = MultimediaContainerManager.getSongInfosFor(file);
-            songName = (String) infos[0];
-            if (duration == null) duration = (Long) infos[1];
+            Map<String, Object> infos = MultimediaContainerManager.getSongInfosFor(file);
+            songName = (String) infos.get("songName");
+            if (duration == null) duration = (Long) infos.get("duration");
         }
         return songName;
     }
 
     public synchronized long getDuration() {
         if (duration == null) {
-            Object[] infos = MultimediaContainerManager.getSongInfosFor(file);
-            duration = (Long) infos[1];
-            if (songName == null) songName = (String) infos[0];
+            Map<String, Object> infos = MultimediaContainerManager.getSongInfosFor(file);
+            duration = (Long) infos.getOrDefault("duration", 0L);
+            if (songName == null) songName = (String) infos.get("songName");
         }
         return duration;
     }

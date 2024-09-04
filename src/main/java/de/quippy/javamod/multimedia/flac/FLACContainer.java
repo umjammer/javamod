@@ -27,6 +27,8 @@ import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import javax.sound.sampled.AudioFormat;
 import javax.swing.JPanel;
@@ -123,7 +125,8 @@ public class FLACContainer extends MultimediaContainer {
     }
 
     @Override
-    public Object[] getSongInfosFor(URL url) {
+    public Map<String, Object> getSongInfosFor(URL url) {
+        Map<String, Object> result = new HashMap<>();
         String songName = MultimediaContainerManager.getSongNameFromURL(url);
         long duration = -1;
         InputStream inputStream = null;
@@ -142,7 +145,9 @@ public class FLACContainer extends MultimediaContainer {
                 inputStream.close();
             } catch (IOException ex) { logger.log(Level.TRACE, "IGNORED", ex); }
         }
-        return new Object[] {songName, duration};
+        result.put("songName", songName);
+        result.put("duration", duration);
+        return result;
     }
 
     @Override
