@@ -7,3 +7,4 @@ de.quippy.javamod.multimedia.flac.FLACContainer
 de.quippy.javamod.multimedia.midi.MidiContainer
 de.quippy.javamod.multimedia.opl3.OPL3Container
 de.quippy.javamod.multimedia.sid.SIDContainer
+de.quippy.javamod.multimedia.vgm.VGMContainer
