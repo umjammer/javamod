@@ -122,8 +122,8 @@ public class ModContainer extends MultimediaContainer {
     private SongUpdater songUpdater;
 
     @Override
-    public MultimediaContainer getInstance(URL url) {
-        MultimediaContainer result = super.getInstance(url);
+    public void setFileURL(URL url) {
+        super.setFileURL(url);
         try {
             // loading a new mod - so deregister this mixer and unwire listeners
             if (songUpdater != null) unwireListeners();
@@ -135,7 +135,6 @@ public class ModContainer extends MultimediaContainer {
             currentMod = null;
             logger.log(Level.ERROR, "[ModContainer] Failed with loading of " + url.toString(), ex);
         }
-        return result;
     }
 
     @Override

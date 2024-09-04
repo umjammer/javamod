@@ -62,8 +62,8 @@ public class APEContainer extends MultimediaContainer {
     }
 
     @Override
-    public MultimediaContainer getInstance(URL url) {
-        MultimediaContainer result = super.getInstance(url);
+    public void setFileURL(URL url) {
+        super.setFileURL(url);
         File apeFile = null;
         try {
             apeFile = File.createFile(url, "r");
@@ -77,7 +77,6 @@ public class APEContainer extends MultimediaContainer {
                 apeFile.close();
             } catch (IOException ex) { logger.log(Level.TRACE, "IGNORED", ex); }
         }
-        return result;
     }
 
     @Override

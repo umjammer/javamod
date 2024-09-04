@@ -86,8 +86,8 @@ public class OPL3Container extends MultimediaContainer {
     }
 
     @Override
-    public MultimediaContainer getInstance(URL url) {
-        MultimediaContainer result = super.getInstance(url);
+    public void setFileURL(URL url) {
+        super.setFileURL(url);
         try {
             opl3Sequence = OPL3Sequence.createOPL3Sequence(url, getSoundBankURL());
             if (!MultimediaContainerManager.isHeadlessMode())
@@ -95,7 +95,6 @@ public class OPL3Container extends MultimediaContainer {
         } catch (IOException ex) {
             logger.log(Level.ERROR, "Loading of sequence failed", ex);
         }
-        return result;
     }
 
     @Override

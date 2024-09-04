@@ -148,12 +148,11 @@ public class MidiContainer extends MultimediaContainer {
     }
 
     @Override
-    public MultimediaContainer getInstance(URL midiFileUrl) {
-        MultimediaContainer result = super.getInstance(midiFileUrl);
+    public void setFileURL(URL midiFileUrl) {
+        super.setFileURL(midiFileUrl);
         currentSequence = getSequenceFromURL(midiFileUrl);
         if (!MultimediaContainerManager.isHeadlessMode())
             ((MidiInfoPanel) getInfoPanel()).fillInfoPanelWith(currentSequence, getSongName());
-        return result;
     }
 
     /**

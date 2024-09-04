@@ -66,8 +66,8 @@ public class FLACContainer extends MultimediaContainer {
     }
 
     @Override
-    public MultimediaContainer getInstance(URL url) {
-        MultimediaContainer result = super.getInstance(url);
+    public void setFileURL(URL url) {
+        super.setFileURL(url);
         InputStream inputStream = null;
         try {
             inputStream = new FileOrPackedInputStream(url);
@@ -86,7 +86,6 @@ public class FLACContainer extends MultimediaContainer {
                 inputStream.close();
             } catch (IOException ex) { logger.log(Level.TRACE, "IGNORED", ex); }
         }
-        return result;
     }
 
     private static String getSongName(VorbisComment vorbisComment, URL forURL) {

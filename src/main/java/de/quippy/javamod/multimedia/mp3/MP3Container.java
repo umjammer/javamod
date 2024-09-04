@@ -63,8 +63,8 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
     private boolean isStreaming;
 
     @Override
-    public MultimediaContainer getInstance(URL mp3FileUrl) {
-        MultimediaContainer result = super.getInstance(mp3FileUrl);
+    public void setFileURL(URL mp3FileUrl) {
+        super.setFileURL(mp3FileUrl);
         isStreaming = !Helpers.isFile(mp3FileUrl);
         if (!isStreaming) {
             Header h = getHeaderFrom(mp3FileUrl);
@@ -75,7 +75,6 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
             mp3FileIDTags = null;
             ((MP3StreamInfoPanel) getInfoPanel()).clearFields();
         }
-        return result;
     }
 
     @Override

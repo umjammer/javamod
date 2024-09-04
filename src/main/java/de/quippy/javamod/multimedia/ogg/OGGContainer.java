@@ -47,12 +47,11 @@ public class OGGContainer extends MultimediaContainer {
     private OggMetaData oggMetaData = null;
 
     @Override
-    public MultimediaContainer getInstance(URL url) {
-        MultimediaContainer result = super.getInstance(url);
+    public void setFileURL(URL url) {
+        super.setFileURL(url);
         oggMetaData = new OggMetaData(url);
         if (!MultimediaContainerManager.isHeadlessMode())
             ((OGGInfoPanel) getInfoPanel()).fillInfoPanelWith(oggMetaData, getPrintableFileUrl());
-        return result;
     }
 
     @Override

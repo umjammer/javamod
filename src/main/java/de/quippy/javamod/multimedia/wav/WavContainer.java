@@ -67,8 +67,8 @@ public class WavContainer extends MultimediaContainer {
     }
 
     @Override
-    public MultimediaContainer getInstance(URL waveFileUrl) {
-        MultimediaContainer result = super.getInstance(waveFileUrl);
+    public void setFileURL(URL waveFileUrl) {
+        super.setFileURL(waveFileUrl);
         AudioInputStream audioInputStream = null;
         try {
             audioInputStream = AudioSystem.getAudioInputStream(new FileOrPackedInputStream(waveFileUrl));
@@ -81,7 +81,6 @@ public class WavContainer extends MultimediaContainer {
                 audioInputStream.close();
             } catch (IOException ex) { logger.log(Level.TRACE, "IGNORED", ex); }
         }
-        return result;
     }
 
     @Override

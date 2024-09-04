@@ -165,12 +165,13 @@ logger.log(Level.DEBUG, getFileExtensionMap());
      * @since 15.01.2024
      */
     public static MultimediaContainer getMultimediaContainer(URL url) throws UnsupportedAudioFileException {
-        MultimediaContainer baseContainer = getMultimediaContainerSingleton(url);
-        MultimediaContainer container = baseContainer.getInstance(url);
-        if (container == null)
-            throw new UnsupportedAudioFileException(url.getPath());
-        else
+        MultimediaContainer container = getMultimediaContainerSingleton(url);
+        try {
+            container.setFileURL(url);
             return container;
+        } catch (Exception e) {
+            throw (UnsupportedAudioFileException) new UnsupportedAudioFileException(url.getPath()).initCause(e);
+        }
     }
 
     public static MultimediaContainer getMultimediaContainer(URI uri) throws MalformedURLException, UnsupportedAudioFileException {
