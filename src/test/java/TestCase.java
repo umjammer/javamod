@@ -14,7 +14,6 @@ import de.quippy.javamod.main.gui.PlayThread;
 import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
-import de.quippy.javamod.system.Helpers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -72,8 +71,11 @@ Debug.println("volume: " + volume);
 
         CountDownLatch cdl = new CountDownLatch(1);
 
-        PlayThread playerThread = new PlayThread(mixer, thread -> {
-            if (!thread.isRunning()) cdl.countDown();
+        PlayThread playerThread = new PlayThread(mixer, thread -> { // TODO event not worked well
+Debug.println(thread);
+            if (thread.getCurrentMixer().hasFinished()) {
+                cdl.countDown();
+            }
         }); // TODO extract player from thread
         playerThread.start();
 
