@@ -47,7 +47,7 @@ import static java.lang.System.getLogger;
 /**
  * @author Daniel Becker
  * @since 03.10.2016
- * This class will wrap around a URL as a http-ressource
+ * This class will wrap around a URL as a http-resource
  * and read it. It will reflect on http headers and do a
  * reload if for instance "302 - moved"
  */
@@ -59,7 +59,7 @@ public class HttpResource implements Closeable {
     private static final String HEADER_CONTENTTYPE = "CONTENT-TYPE";
     private static final String HEADER_CONTENTLENGTH = "CONTENT-LENGTH";
 
-    private URL ressource;
+    private URL resource;
     private Socket socket;
     private boolean isHTTPS;
     private int port;
@@ -77,25 +77,25 @@ public class HttpResource implements Closeable {
     /**
      * Constructor for HttpResource
      *
-     * @param ressource
+     * @param resource
      */
-    public HttpResource(URL ressource) {
+    public HttpResource(URL resource) {
         super();
-        initialize(ressource);
+        initialize(resource);
     }
 
-    private void initialize(URL ressource) {
-        this.ressource = ressource;
-        String protocol = ressource.getProtocol().toLowerCase();
+    private void initialize(URL resource) {
+        this.resource = resource;
+        String protocol = resource.getProtocol().toLowerCase();
         isHTTPS = protocol.equals("https");
-        port = ressource.getPort();
+        port = resource.getPort();
         if (port < 0) { // no port specified - so get default!
             if (isHTTPS)
                 port = 443;
             else
                 port = 80;
         }
-        path = ressource.getPath();
+        path = resource.getPath();
         if (path == null || path.isEmpty()) path = "/";
     }
 
@@ -106,16 +106,12 @@ public class HttpResource implements Closeable {
      */
     private void open() {
         try {
-            socket = new Socket(ressource.getHost(), port);
+            socket = new Socket(resource.getHost(), port);
         } catch (IOException ex) {
-            logger.log(Level.ERROR, "Connection to ressource " + ressource.toString() + " failed", ex);
+            logger.log(Level.ERROR, "Connection to resource " + resource.toString() + " failed", ex);
         }
     }
 
-    /**
-     * @throws IOException
-     * @see java.io.Closeable#close()
-     */
     @Override
     public void close() throws IOException {
         if (socket != null) socket.close();
@@ -236,7 +232,7 @@ public class HttpResource implements Closeable {
     }
 
     /**
-     * read all headers and set error code, contenttype, ...
+     * read all headers and set error code, content type, ...
      *
      * @param reader
      * @since 03.10.2016
@@ -275,7 +271,7 @@ public class HttpResource implements Closeable {
      */
     public InputStream getResource(Map<String, String> additionalRequestHeaders, boolean keep_alive) throws IOException {
         if (isHTTPS) {
-            URLConnection con = ressource.openConnection();
+            URLConnection con = resource.openConnection();
             con.addRequestProperty("user-agent", user_agent);
             con.addRequestProperty("Connection", (keep_alive) ? "keep_alive" : "close");
             for (String key : additionalRequestHeaders.keySet()) {
@@ -295,7 +291,7 @@ public class HttpResource implements Closeable {
                 return result;
         } else {
             StringBuilder getString = new StringBuilder()
-                    .append("GET ").append(path).append(" HTTP/1.1\r\nHost: ").append(ressource.getHost())
+                    .append("GET ").append(path).append(" HTTP/1.1\r\nHost: ").append(resource.getHost())
                     .append("\r\nuser-agent: ").append(user_agent).append("\r\nAccept: */*\r\nAccept-Charset: ").append(accept_charset)
                     .append("\r\n");
             for (String key : additionalRequestHeaders.keySet()) {

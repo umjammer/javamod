@@ -513,18 +513,18 @@ public class PatternImagePanel extends JComponent implements Scrollable {
             }
 
             // VolumeColumn
-            if (element.getVolumeEffekt() == 0) {
+            if (element.getVolumeEffect() == 0) {
                 g.setColor((markColumn == PatternImagePosition.COLUMN_VOLEFFECT_OP) ? Color.WHITE : FOREGROUND[colorIndex]);
                 g.drawString("..", x + columnPositionsX[6], y); // one empty
             } else {
                 int volEffectType = element.getVolEffectCategory();
                 g.setColor((markColumn == PatternImagePosition.COLUMN_VOLEFFECT) ? Color.WHITE : EFFECT[volEffectType][colorIndex]);
-                g.drawString(Character.toString(element.getVolumeColumEffektChar()), x + columnPositionsX[4], y);
+                g.drawString(Character.toString(element.getVolumeColumEffectChar()), x + columnPositionsX[4], y);
                 g.setColor((markColumn == PatternImagePosition.COLUMN_VOLEFFECT_OP) ? Color.WHITE : EFFECT[volEffectType][colorIndex]);
-                g.drawString(ModConstants.getAsHex(element.getVolumeEffektOp(), 2), x + columnPositionsX[6], y);
+                g.drawString(ModConstants.getAsHex(element.getVolumeEffectOp(), 2), x + columnPositionsX[6], y);
             }
-            // EffektColumn
-            if (element.getEffekt() == 0 && element.getEffektOp() == 0) {
+            // EffectColumn
+            if (element.getEffect() == 0 && element.getEffectOp() == 0) {
                 g.setColor((markColumn == PatternImagePosition.COLUMN_EFFECT) ? Color.WHITE : FOREGROUND[colorIndex]);
                 g.drawString(".", x + columnPositionsX[8], y);
                 g.setColor((markColumn == PatternImagePosition.COLUMN_EFFECT_OP) ? Color.WHITE : FOREGROUND[colorIndex]);
@@ -532,9 +532,9 @@ public class PatternImagePanel extends JComponent implements Scrollable {
             } else {
                 int effectType = element.getEffectCategory();
                 g.setColor((markColumn == PatternImagePosition.COLUMN_EFFECT) ? Color.WHITE : EFFECT[effectType][colorIndex]);
-                g.drawString(Character.toString(element.getEffektChar()), x + columnPositionsX[8], y);
+                g.drawString(Character.toString(element.getEffectChar()), x + columnPositionsX[8], y);
                 g.setColor((markColumn == PatternImagePosition.COLUMN_EFFECT_OP) ? Color.WHITE : EFFECT[effectType][colorIndex]);
-                g.drawString(ModConstants.getAsHex(element.getEffektOp(), 2), x + columnPositionsX[10], y);
+                g.drawString(ModConstants.getAsHex(element.getEffectOp(), 2), x + columnPositionsX[10], y);
             }
             g.setColor(PATTERNLINE[0][colorIndex]);
             g.drawLine(x + columnPositionsX[12], y - charDim.height, x + columnPositionsX[12], y);

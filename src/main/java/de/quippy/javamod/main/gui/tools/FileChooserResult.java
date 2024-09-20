@@ -27,7 +27,7 @@ import javax.swing.filechooser.FileFilter;
 
 
 /**
- * Returns the filechooser selection
+ * Returns the file chooser selection
  * We need the selected FileFilter to select
  * the appropriate wave file encoding
  *

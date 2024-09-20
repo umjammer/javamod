@@ -44,7 +44,7 @@ public class XmasConfigPanel extends JPanel {
     @Serial
     private static final long serialVersionUID = 4069039567731397482L;
 
-    private static final String BULBS_PATH = "/de/quippy/javamod/main/gui/ressources/lightbulbs/";
+    private static final String BULBS_PATH = "/de/quippy/javamod/main/gui/resources/lightbulbs/";
     private static final int ANZ_BULBS = 15;
 
     private JTabbedPane screenSelectionPanel = null;

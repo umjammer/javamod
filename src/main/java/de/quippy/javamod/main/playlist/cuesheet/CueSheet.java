@@ -205,7 +205,7 @@ public class CueSheet {
                         Integer sec = (int) ((milliIndex / 1000L) % 60L);
                         milliIndex -= (min.longValue() * 60L + sec.longValue()) * 1000;
                         Integer frame = (int) (((milliIndex * 75) + 500L) / 1000L);
-                        String timeIndex = String.format("%02d:%02d:%02d", min, sec, frame);
+                        String timeIndex = "%02d:%02d:%02d".formatted(min, sec, frame);
                         bw.write("    INDEX " + index + " " + timeIndex + "\r\n");
                     }
                 }

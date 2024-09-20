@@ -25,7 +25,7 @@ package de.quippy.javamod.mixer.dsp.pitchshift;
 import java.util.Arrays;
 import javax.sound.sampled.AudioFormat;
 
-import de.quippy.javamod.mixer.dsp.DSPEffekt;
+import de.quippy.javamod.mixer.dsp.DSPEffect;
 import de.quippy.javamod.mixer.dsp.FFT2;
 import de.quippy.javamod.system.FastMath;
 
@@ -50,7 +50,7 @@ import de.quippy.javamod.system.FastMath;
  * @author Daniel Becker
  * @since 21.01.2012
  */
-public class PitchShift implements DSPEffekt {
+public class PitchShift implements DSPEffect {
 
     private static final int MAXFIFO = 2;
 
@@ -105,7 +105,7 @@ public class PitchShift implements DSPEffekt {
     /**
      * @param audioFormat
      * @param sampleBufferLength
-     * @see de.quippy.javamod.mixer.dsp.DSPEffekt#initialize(javax.sound.sampled.AudioFormat, int)
+     * @see DSPEffect#initialize(javax.sound.sampled.AudioFormat, int)
      */
     @Override
     public void initialize(AudioFormat audioFormat, int sampleBufferLength) {
@@ -118,7 +118,7 @@ public class PitchShift implements DSPEffekt {
 
     /**
      * @param active
-     * @see de.quippy.javamod.mixer.dsp.DSPEffekt#setIsActive(boolean)
+     * @see DSPEffect#setIsActive(boolean)
      */
     @Override
     public void setIsActive(boolean active) {
@@ -127,7 +127,7 @@ public class PitchShift implements DSPEffekt {
 
     /**
      * @return
-     * @see de.quippy.javamod.mixer.dsp.DSPEffekt#isActive()
+     * @see DSPEffect#isActive()
      */
     @Override
     public boolean isActive() {
@@ -339,7 +339,7 @@ public class PitchShift implements DSPEffekt {
     }
 
     @Override
-    public synchronized int doEffekt(float[] ringBuffer, int start, int length) {
+    public synchronized int doEffect(float[] ringBuffer, int start, int length) {
         if (!isActive) return length;
 
         if (gRover == 0) gRover = (int) inFifoLatency;

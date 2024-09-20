@@ -8,7 +8,7 @@
 Java MOD Player
 
 - mavenized
-- made libraries outsourced libraries as much as possible  
+- made libraries outsourced as much as possible  
 
 | player | subtype                                                                    | status | library                                              | comment |
 |--------|----------------------------------------------------------------------------|--------|------------------------------------------------------|---------|

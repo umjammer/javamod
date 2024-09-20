@@ -26,8 +26,6 @@ import java.io.IOException;
 
 import de.quippy.javamod.io.ModfileInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
-import de.quippy.javamod.multimedia.mod.loader.Module;
-import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternContainer;
@@ -208,7 +206,7 @@ public class MultiTrackerMod extends ProTrackerMod {
             current.setBaseFrequency(ModConstants.IT_fineTuneTable[(fine >> 4) + 8]);
             current.setTranspose(0);
 
-            // Voplume 64 is maximum
+            // Volume 64 is maximum
             current.setVolume((vol > 64) ? 64 : vol);
             current.setGlobalVolume(ModConstants.MAXSAMPLEVOLUME);
 
@@ -254,8 +252,8 @@ public class MultiTrackerMod extends ProTrackerMod {
                         int readArray = (inputStream.readByte() & 0xff) << 16 | (inputStream.readByte() & 0xff) << 8 | (inputStream.readByte() & 0xff);
                         int note = (readArray & 0xFC0000) >> 18;
                         int instr = (readArray & 0x03F000) >> 12;
-                        int effekt = (readArray & 0x000F00) >> 8;
-                        int effektOp = (readArray & 0x0000FF);
+                        int effect = (readArray & 0x000F00) >> 8;
+                        int effectOp = (readArray & 0x0000FF);
                         if (note > 0 && note < 72) {
                             int noteIndex = note + 25;
                             if (noteIndex < ModConstants.noteValues.length) {
@@ -264,8 +262,8 @@ public class MultiTrackerMod extends ProTrackerMod {
                             }
                         }
                         pe.setInstrument(instr);
-                        pe.setEffekt(effekt);
-                        pe.setEffektOp(effektOp);
+                        pe.setEffect(effect);
+                        pe.setEffectOp(effectOp);
 
                         patternContainer.setPatternElement(pe);
                     }

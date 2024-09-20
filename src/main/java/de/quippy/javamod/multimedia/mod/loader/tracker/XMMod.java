@@ -26,8 +26,6 @@ import java.io.IOException;
 
 import de.quippy.javamod.io.ModfileInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
-import de.quippy.javamod.multimedia.mod.loader.Module;
-import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope.EnvelopeType;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Instrument;
@@ -130,16 +128,16 @@ public class XMMod extends ProTrackerMod {
 
         if (volume != 0) {
             if (volume >= 0x10 && volume <= 0x50) {
-                currentElement.setVolumeEffekt(1);
-                currentElement.setVolumeEffektOp(volume - 0x10);
+                currentElement.setVolumeEffect(1);
+                currentElement.setVolumeEffectOp(volume - 0x10);
             } else {
-                currentElement.setVolumeEffekt((volume >> 4) - 0x4);
-                currentElement.setVolumeEffektOp(volume & 0x0F);
+                currentElement.setVolumeEffect((volume >> 4) - 0x4);
+                currentElement.setVolumeEffectOp(volume & 0x0F);
             }
         }
 
-        currentElement.setEffekt(effect);
-        currentElement.setEffektOp(effectOp);
+        currentElement.setEffect(effect);
+        currentElement.setEffectOp(effectOp);
     }
 
     /**
@@ -576,7 +574,7 @@ public class XMMod extends ProTrackerMod {
                     if (len < inputStream.getLength())
                         inputStream.skip(len);
                     else
-                        break; // somthing bad happend...
+                        break; // something bad happend...
                 }
             }
         }

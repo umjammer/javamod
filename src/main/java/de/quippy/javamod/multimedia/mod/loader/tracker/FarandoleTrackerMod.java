@@ -26,8 +26,6 @@ import java.io.IOException;
 
 import de.quippy.javamod.io.ModfileInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
-import de.quippy.javamod.multimedia.mod.loader.Module;
-import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternContainer;
@@ -147,67 +145,67 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
                 currentElement.setInstrument(inst + 1);
 
                 if (note > 0 || vol > 0) {
-                    currentElement.setVolumeEffekt(0x01); // Default setVolume effect
-                    currentElement.setVolumeEffektOp((vol > 16) ? 64 : (vol - 1) << 2); // max 64 instead 16
+                    currentElement.setVolumeEffect(0x01); // Default setVolume effect
+                    currentElement.setVolumeEffectOp((vol > 16) ? 64 : (vol - 1) << 2); // max 64 instead 16
                 }
 
-                int effekt = eff >> 4;
-                int effektOp = eff & 0x0F;
+                int effect = eff >> 4;
+                int effectOp = eff & 0x0F;
 
-                if (effekt == 0x09) { // special treatment!
-                    currentElement.setVolumeEffekt(0x01); // Default setVolume effect
-                    currentElement.setVolumeEffektOp((effektOp + 1) << 2); // max 64 instead 15
-                    effekt = effektOp = 0;
+                if (effect == 0x09) { // special treatment!
+                    currentElement.setVolumeEffect(0x01); // Default setVolume effect
+                    currentElement.setVolumeEffectOp((effectOp + 1) << 2); // max 64 instead 15
+                    effect = effectOp = 0;
                 }
 
                 // Translation:
-                switch (effekt) {
+                switch (effect) {
                     case 0x01: // Porta Up
-                        effekt = 0x06;
-                        effektOp |= 0xF0; // fine porta
+                        effect = 0x06;
+                        effectOp |= 0xF0; // fine porta
                         break;
                     case 0x02: // Porta Down
-                        effekt = 0x05;
-                        effektOp |= 0xF0;
+                        effect = 0x05;
+                        effectOp |= 0xF0;
                         break;
                     case 0x03: // Porta To Note
-                        effekt = 0x07;
-                        effektOp <<= 2;
+                        effect = 0x07;
+                        effectOp <<= 2;
                         break;
                     case 0x04: // Retrig
-                        effekt = 0x11;
-                        effektOp = (6 / (1 + effektOp)) + 1; // ugh?
+                        effect = 0x11;
+                        effectOp = (6 / (1 + effectOp)) + 1; // ugh?
                         break;
                     case 0x05: // set Vibrato Depth
-                        effekt = 0x08;
+                        effect = 0x08;
                         break;
                     case 0x06: // Vibrato Speed
-                        effekt = 0x08;
-                        effektOp <<= 4;
+                        effect = 0x08;
+                        effectOp <<= 4;
                         break;
                     case 0x07: // Volume Slide Up
-                        effekt = 0x04;
-                        effektOp <<= 4;
+                        effect = 0x04;
+                        effectOp <<= 4;
                         break;
                     case 0x08: // Volume Slide Down
-                        effekt = 0x04;
+                        effect = 0x04;
                         break;
 //                    case 0x0A: // Port to Volume
 //                        break;
                     case 0x0B:// set Balance
-                        effekt = 0x13;
-                        effektOp |= 0x80; // set Fine Panning
+                        effect = 0x13;
+                        effectOp |= 0x80; // set Fine Panning
                         break;
                     case 0x0D: // Fine Tempo Down
                         break;
                     case 0x0E: // Fine Tempo Up
                         break;
                     case 0x0F:
-                        effekt = 0x01;
+                        effect = 0x01;
                         break;
                 }
-                currentElement.setEffekt(effekt);
-                currentElement.setEffektOp(effektOp);
+                currentElement.setEffect(effect);
+                currentElement.setEffectOp(effectOp);
             }
         }
     }

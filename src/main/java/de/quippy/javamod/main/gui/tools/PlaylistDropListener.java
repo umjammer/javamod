@@ -102,7 +102,7 @@ public class PlaylistDropListener extends DropTargetAdapter {
                     }
                 }
                 PlayList playList = PlayList.createNewListWithFiles(urls.toArray(URL[]::new), false, false);
-                callBack.playlistRecieved(dtde, playList, addToLastLoaded);
+                callBack.playlistReceived(dtde, playList, addToLastLoaded);
             }
         } catch (Exception ex) {
             logger.log(Level.ERROR, "[MainForm::DropListener]", ex);

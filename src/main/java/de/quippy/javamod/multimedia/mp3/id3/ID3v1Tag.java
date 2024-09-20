@@ -373,7 +373,7 @@ public class ID3v1Tag {
      * than 115, but supports values from 0-255.
      *
      * @param newGenre the genre of the tag
-     * @throws ID3FieldDataException if the value supplie is invalid
+     * @throws ID3FieldDataException if the value supplied is invalid
      */
     public void setGenre(int newGenre) throws ID3FieldDataException {
         if ((newGenre <= MAX_GENRE) && (newGenre >= 0)) {

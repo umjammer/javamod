@@ -47,13 +47,13 @@ public final class PlayThread extends Thread implements Serializable {
     private transient final Mixer currentMixer;
     private final PlayThreadEventListener listener;
     private volatile boolean isRunning;
-    private volatile boolean finishedNormaly;
+    private volatile boolean finishedNormally;
 
     public PlayThread(Mixer currentMixer, PlayThreadEventListener listener) {
         if (currentMixer == null) throw new IllegalArgumentException("Provided Mixer was NULL");
         this.currentMixer = currentMixer;
         this.isRunning = false;
-        this.finishedNormaly = false;
+        this.finishedNormally = false;
         this.listener = listener;
         this.setName("PlayThread");
         this.setDaemon(true);
@@ -63,7 +63,7 @@ public final class PlayThread extends Thread implements Serializable {
     }
 
     private void informListener() {
-        listener.playThreadEventOccured(this);
+        listener.playThreadEventOccurred(this);
     }
 
     public void stopPlayback() {
@@ -72,7 +72,7 @@ public final class PlayThread extends Thread implements Serializable {
             while (isRunning) {
                 try {
                     Thread.sleep(10L);
-                } catch (InterruptedException ex) { /* NOO P*/ }
+                } catch (InterruptedException ex) { /* NOOP */ }
             }
         }
     }
@@ -90,14 +90,14 @@ public final class PlayThread extends Thread implements Serializable {
         return isRunning;
     }
 
-    public boolean getHasFinishedNormaly() {
-        return finishedNormaly;
+    public boolean getHasFinishedNormally() {
+        return finishedNormally;
     }
 
     @Override
     public void run() {
         this.isRunning = true;
-        this.finishedNormaly = false;
+        this.finishedNormally = false;
         informListener();
         try {
             getCurrentMixer().startPlayback();
@@ -105,7 +105,7 @@ public final class PlayThread extends Thread implements Serializable {
             logger.log(Level.ERROR, "[PlayThread::run]", ex);
         }
         this.isRunning = false;
-        this.finishedNormaly = getCurrentMixer().hasFinished();
+        this.finishedNormally = getCurrentMixer().hasFinished();
         informListener();
     }
 
@@ -113,7 +113,7 @@ public final class PlayThread extends Thread implements Serializable {
     public String toString() {
         return new StringJoiner(", ", PlayThread.class.getSimpleName() + "[", "]")
                 .add("isRunning=" + isRunning)
-                .add("finishedNormaly=" + finishedNormaly)
+                .add("finishedNormally=" + finishedNormally)
                 .add("currentMixer=" + currentMixer)
                 .toString();
     }

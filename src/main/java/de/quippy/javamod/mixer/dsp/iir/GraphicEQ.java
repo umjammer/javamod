@@ -24,20 +24,20 @@ package de.quippy.javamod.mixer.dsp.iir;
 
 import javax.sound.sampled.AudioFormat;
 
-import de.quippy.javamod.mixer.dsp.DSPEffekt;
+import de.quippy.javamod.mixer.dsp.DSPEffect;
 import de.quippy.javamod.mixer.dsp.iir.filter.IIRBandpassFilter;
 import de.quippy.javamod.mixer.dsp.iir.filter.IIRFilter;
 import de.quippy.javamod.mixer.dsp.iir.filter.IIRFilterBase;
 
 
 /**
- * Here we have the effekt callback which will register with AudioProcessor
+ * Here we have the effect callback which will register with AudioProcessor
  * This class will create all bands, give access to the gain per band
  * and give a preamp which can be calculated
  *
  * @author Daniel Becker
  */
-public class GraphicEQ implements DSPEffekt {
+public class GraphicEQ implements DSPEffect {
 
     private static final float Q = 1.4f;
     private static final int[] CENTER_FREQUENCIES = {
@@ -144,11 +144,11 @@ public class GraphicEQ implements DSPEffekt {
      * @param buffer
      * @param start
      * @param length
-     * @see de.quippy.javamod.mixer.dsp.DSPEffekt#doEffekt(float[], int, int)
+     * @see DSPEffect#doEffect(float[], int, int)
      * @since 09.01.2012
      */
     @Override
-    public int doEffekt(float[] buffer, int start, int length) {
+    public int doEffect(float[] buffer, int start, int length) {
         if (!isActive) return length;
         return theFilter.doFilter(buffer, start, length, usedBands);
     }

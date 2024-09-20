@@ -69,7 +69,7 @@ public class MIDSequence extends OPL3Sequence {
     private static class midi_channel {
 
         int inum = 0;
-        int[] ins;
+        final int[] ins;
         int vol = 0;
         int nshift = 0;
         boolean on = false;
@@ -91,13 +91,13 @@ public class MIDSequence extends OPL3Sequence {
     private long pos = 0;
     private long sierra_pos = 0;
     private int subsongs = 0;
-    private int[] adlib_data;
+    private final int[] adlib_data;
     private int adlib_style = 0;
     private int adlib_mode = 0;
-    private int[][] myinsbank;
-    private int[][] smyinsbank;
-    private midi_channel[] ch;
-    private int[][] chp;
+    private final int[][] myinsbank;
+    private final int[][] smyinsbank;
+    private final midi_channel[] ch;
+    private final int[][] chp;
     private int deltas = 0;
     private long msqtr = 0; // the only usage of msqtr is documented out
     private midi_track[] track = null;
@@ -492,7 +492,7 @@ logger.log(Level.DEBUG, "type: " + getTypeName());
     }
 
     private void midi_write_adlib(EmuOPL opl, int r, int v) {
-logger.log(Level.TRACE, String.format("write: %04x, %02x", r, v));
+logger.log(Level.TRACE, "write: %04x, %02x".formatted(r, v));
         opl.writeOPL2(r, v);
         adlib_data[r] = v;
     }
@@ -624,7 +624,7 @@ logger.log(Level.TRACE, String.format("write: %04x, %02x", r, v));
                     track[curtrack].pv = v;
 
                     int c = v & 0x0f;
-logger.log(Level.TRACE, String.format("[%2X]", v));
+logger.log(Level.TRACE, "[%2X]".formatted(v));
                     switch (v & 0xf0) {
                         case 0x80: // note off
                             int note = (int) getnext(1);
@@ -727,7 +727,7 @@ logger.log(Level.TRACE, String.format("[%2X]", v));
                                         chp[on][2] = 0;
                                     }
                                 }
-logger.log(Level.TRACE, String.format("note on[%d]: %d", c, vel));
+logger.log(Level.TRACE, "note on[%d]: %d".formatted(c, vel));
                             }
                             break;
                         case 0xa0: // key after touch
@@ -742,7 +742,7 @@ logger.log(Level.TRACE, String.format("note on[%d]: %d", c, vel));
                             int ctrl = (int) getnext(1);
                             vel = (int) getnext(1);
 
-logger.log(Level.DEBUG, String.format("control change: %d, %02x, %02x", c, ctrl, vel));
+logger.log(Level.DEBUG, "control change: %d, %02x, %02x".formatted(c, ctrl, vel));
                             switch (ctrl) {
                                 case 0x07:
                                     ch[c].vol = vel;
@@ -776,7 +776,7 @@ logger.log(Level.DEBUG, String.format("control change: %d, %02x, %02x", c, ctrl,
                             ch[c].inum = x & 0x7f;
                             for (int j = 0; j < 11; j++)
                                 ch[c].ins[j] = myinsbank[ch[c].inum][j];
-logger.log(Level.DEBUG, String.format("program change[%d]: %d", c, ch[c].inum));
+logger.log(Level.DEBUG, "program change[%d]: %d".formatted(c, ch[c].inum));
                             break;
                         case 0xd0: // channel touch
                             /* int x = (int) */ getnext(1);
@@ -812,7 +812,7 @@ logger.log(Level.DEBUG, String.format("program change[%d]: %d", c, ch[c].inum));
                                         ch[channel].ins[7] = (int) (0xffL - ((getnext(1L) << 4) + getnext(1L)));
                                         ch[channel].ins[9] = (int) ((getnext(1L) << 4) + getnext(1L));
                                         ch[channel].ins[10] = (int) (getnext(1) << 4 + getnext(1));
-logger.log(Level.DEBUG, String.format("INS: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", ch[channel].ins[0], ch[channel].ins[1], ch[channel].ins[2], ch[channel].ins[3], ch[channel].ins[4], ch[channel].ins[5], ch[channel].ins[6], ch[channel].ins[7], ch[channel].ins[8], ch[channel].ins[9], ch[channel].ins[10]));
+logger.log(Level.DEBUG, "INS: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x".formatted(ch[channel].ins[0], ch[channel].ins[1], ch[channel].ins[2], ch[channel].ins[3], ch[channel].ins[4], ch[channel].ins[5], ch[channel].ins[6], ch[channel].ins[7], ch[channel].ins[8], ch[channel].ins[9], ch[channel].ins[10]));
 
                                         // if ((i&1)==1) ch[channel].ins[10]=1;
 
@@ -864,7 +864,7 @@ logger.log(Level.DEBUG, String.format("INS: %02x %02x %02x %02x %02x %02x %02x %
                             break;
                     }
 
-logger.log(Level.TRACE, String.format("pos: %d, end: %d", pos, track[curtrack].tend));
+logger.log(Level.TRACE, "pos: %d, end: %d".formatted(pos, track[curtrack].tend));
                     if (pos < track[curtrack].tend) {
                         long w;
                         if (type != FILE_SIERRA && type != FILE_ADVSIERRA)
@@ -983,12 +983,12 @@ logger.log(Level.TRACE, String.format("pos: %d, end: %d", pos, track[curtrack].t
                 if (type != FILE_LUCAS) tins = 128;
                 getnext(11); /* skip header */
                 deltas = (int) getnext(2);
-logger.log(Level.DEBUG, String.format("deltas: %d", deltas));
+logger.log(Level.DEBUG, "deltas: %d".formatted(deltas));
                 getnext(4);
 
                 track[0].on = true;
                 track[0].tend = getnext(4);
-logger.log(Level.DEBUG, String.format("tracklen: %d", track[0].tend));
+logger.log(Level.DEBUG, "tracklen: %d".formatted(track[0].tend));
                 track[0].spos = pos;
                 break;
             case FILE_CMF:
@@ -1016,12 +1016,12 @@ logger.log(Level.DEBUG, String.format("tracklen: %d", track[0].tend));
 
                 pos = n; // jump to instruments
                 tins = i;
-logger.log(Level.TRACE, String.format("ioff: 0x%04x, moff: 0x%04x, deltas: %d, msqtr: %d, numi: %d", n, m, deltas, msqtr, tins));
+logger.log(Level.TRACE, "ioff: 0x%04x, moff: 0x%04x, deltas: %d, msqtr: %d, numi: %d".formatted(n, m, deltas, msqtr, tins));
                 for (int j = 0; j < i; j++) {
                     for (int l = 0; l < 16; l++) {
                         myinsbank[j][l] = (int) getnext(1);
                     }
-logger.log(Level.DEBUG, String.format("%d: %s", j, Arrays.toString((int[]) myinsbank[j])));
+logger.log(Level.DEBUG, "%d: %s".formatted(j, Arrays.toString(myinsbank[j])));
                 }
 
                 for (int x = 0; x < 16; x++)

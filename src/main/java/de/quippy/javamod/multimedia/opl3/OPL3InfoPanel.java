@@ -186,7 +186,7 @@ public class OPL3InfoPanel extends JPanel {
         if (opl3DescriptionLabel == null) {
             opl3DescriptionLabel = new JLabel();
             opl3DescriptionLabel.setName("opl3DescriptionLabel");
-            opl3DescriptionLabel.setText("Song Informations:");
+            opl3DescriptionLabel.setText("Song Information:");
             opl3DescriptionLabel.setFont(Helpers.getDialogFont());
         }
         return opl3DescriptionLabel;
@@ -196,12 +196,12 @@ public class OPL3InfoPanel extends JPanel {
         if (opl3DescriptionScrollPane == null) {
             opl3DescriptionScrollPane = new JScrollPane();
             opl3DescriptionScrollPane.setName("opl3DescriptionScrollPane");
-            opl3DescriptionScrollPane.setViewportView(getOPL3Desciption());
+            opl3DescriptionScrollPane.setViewportView(getOPL3Description());
         }
         return opl3DescriptionScrollPane;
     }
 
-    private JTextArea getOPL3Desciption() {
+    private JTextArea getOPL3Description() {
         if (opl3Description == null) {
             opl3Description = new JTextArea();
             opl3Description.setName("opl3Description");
@@ -215,6 +215,6 @@ public class OPL3InfoPanel extends JPanel {
         getOPL3Name().setText(opl3Sequence.getSongName());
         getOPL3FileType().setText(opl3Sequence.getTypeName());
         getOPL3Author().setText(opl3Sequence.getAuthor());
-        getOPL3Desciption().setText(opl3Sequence.getDescription());
+        getOPL3Description().setText(opl3Sequence.getDescription());
     }
 }

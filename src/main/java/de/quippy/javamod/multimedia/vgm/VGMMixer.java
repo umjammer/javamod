@@ -30,9 +30,9 @@ public class VGMMixer extends BasicMixer {
 
     private static final Logger logger = getLogger(VGMMixer.class.getName());
 
-    private int sampleRate = 44100;
+    private final int sampleRate = 44100;
 
-    private String file;
+    private final String file;
 
     VGMMixer(String file) {
         this.file = file;

@@ -78,9 +78,9 @@ public class ModInstrumentDialog extends JDialog {
 
     private static final int SAMPLE_MAP_LINE_LENGTH = 15;
 
-    public static final String BUTTONPLAY_INACTIVE = "/de/quippy/javamod/main/gui/ressources/play.gif";
-    public static final String BUTTONPLAY_ACTIVE = "/de/quippy/javamod/main/gui/ressources/play_aktiv.gif";
-    public static final String BUTTONPLAY_NORMAL = "/de/quippy/javamod/main/gui/ressources/play_normal.gif";
+    public static final String BUTTONPLAY_INACTIVE = "/de/quippy/javamod/main/gui/resources/play.gif";
+    public static final String BUTTONPLAY_ACTIVE = "/de/quippy/javamod/main/gui/resources/play_aktiv.gif";
+    public static final String BUTTONPLAY_NORMAL = "/de/quippy/javamod/main/gui/resources/play_normal.gif";
 
     private ImageIcon buttonPlay_Active = null;
     private ImageIcon buttonPlay_Inactive = null;
@@ -1227,8 +1227,8 @@ public class ModInstrumentDialog extends JDialog {
         getCutOffVariation().setText(Integer.toString(newInstrument.randomCutOffVariation));
 
         getActionNNA().setText(getNNAActionString(newInstrument.NNA));
-        getCheckDNA().setText(getDNACheckString(newInstrument.dublicateNoteCheck));
-        getActionDNA().setText(getDNAActionString(newInstrument.dublicateNoteAction));
+        getCheckDNA().setText(getDNACheckString(newInstrument.duplicateNoteCheck));
+        getActionDNA().setText(getDNAActionString(newInstrument.duplicateNoteAction));
 
         getPlugin().setText(Integer.toString(newInstrument.plugin));
         getMidiChannel().setText(Integer.toString(newInstrument.midiChannel));

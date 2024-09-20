@@ -23,7 +23,6 @@
 package de.quippy.javamod.main.gui.tools;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.filechooser.FileFilter;
@@ -42,14 +41,14 @@ public class FileChooserFilter extends FileFilter {
     private String description;
 
     /**
-     * FileChooserFilter - Konstruktorkommentar.
+     * FileChooserFilter - Constructor Comment.
      */
     public FileChooserFilter() {
         super();
     }
 
     /**
-     * FileChooserFilter - Konstruktorkommentar.
+     * FileChooserFilter - Constructor Comment.
      *
      * @param extension   java.lang.String
      * @param description java.lang.String
@@ -61,7 +60,7 @@ public class FileChooserFilter extends FileFilter {
     }
 
     /**
-     * FileChooserFilter - Konstruktorkommentar.
+     * FileChooserFilter - Constructor Comment.
      *
      * @param extension java.lang.String
      */
@@ -70,7 +69,7 @@ public class FileChooserFilter extends FileFilter {
     }
 
     /**
-     * FileChooserFilter - Konstruktorkommentar.
+     * FileChooserFilter - Constructor Comment.
      *
      * @param extensions  java.lang.String[]
      * @param description java.lang.String

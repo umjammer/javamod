@@ -260,7 +260,7 @@ logger.log(Level.DEBUG, "oplType: " + oplType);
 
                     if (pos >= length) return false;
                     int value = data[pos++] & 0xff;
-logger.log(Level.DEBUG, String.format("%d, %d, %d, %02x", oplType.ordinal(), bank, index, value));
+logger.log(Level.TRACE, "%d, %d, %d, %02x".formatted(oplType.ordinal(), bank, index, value));
                     if (oplType == OplType.OPL2)
                         opl.writeOPL2(index, value);
                     else if (oplType == OplType.DUAL_OPL2) {

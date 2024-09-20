@@ -140,7 +140,7 @@ public class MultimediaContainerManager {
         String fileName = url.getPath();
 
         // we default to mp3 with wrong extensions
-logger.log(Level.DEBUG, getFileExtensionMap());
+logger.log(Level.TRACE, getFileExtensionMap());
         MultimediaContainer baseContainer = getFileExtensionMap().get(Helpers.getExtensionFrom(fileName));
         if (baseContainer == null)
             baseContainer = getFileExtensionMap().get(Helpers.getPreceedingExtensionFrom(fileName));
@@ -217,7 +217,7 @@ logger.log(Level.DEBUG, getFileExtensionMap());
     }
 
     /**
-     * This method will only do (!)localy(!) what is needed to pick up
+     * This method will only do (!)locally(!) what is needed to pick up
      * the song name String at [0] and time in milliseconds as Long at [1]
      *
      * @param url the local source

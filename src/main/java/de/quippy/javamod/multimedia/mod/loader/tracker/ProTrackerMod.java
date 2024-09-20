@@ -27,7 +27,6 @@ import java.io.IOException;
 import de.quippy.javamod.io.ModfileInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.Module;
-import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternContainer;
@@ -379,23 +378,23 @@ public class ProTrackerMod extends Module {
                 pe.setPeriod(0);
         }
 
-        pe.setEffekt((note & 0xF00) >> 8);
-        pe.setEffektOp(note & 0xff);
+        pe.setEffect((note & 0xF00) >> 8);
+        pe.setEffectOp(note & 0xff);
 
-        if (pe.getEffekt() == 0x0C && pe.getEffektOp() > 64) pe.setEffektOp(64);
+        if (pe.getEffect() == 0x0C && pe.getEffectOp() > 64) pe.setEffectOp(64);
         if (isStarTrekker) {
-            if (pe.getEffekt() == 0x0E) {
+            if (pe.getEffect() == 0x0E) {
                 // No support for StarTrekker assembly macros
-                pe.setEffekt(0);
-                pe.setEffektOp(0);
-            } else if (pe.getEffekt() == 0x0F && pe.getEffektOp() > 0x1F) {
+                pe.setEffect(0);
+                pe.setEffectOp(0);
+            } else if (pe.getEffect() == 0x0F && pe.getEffectOp() > 0x1F) {
                 // StarTrekker caps speed at 31 ticks per row
-                pe.setEffektOp(0x1F);
+                pe.setEffectOp(0x1F);
             }
         }
-        if (isNoiseTracker && pe.getEffekt() == 0x0D) {
+        if (isNoiseTracker && pe.getEffect() == 0x0D) {
             // No pattern break operator in NoiseTracker
-            pe.setEffektOp(0);
+            pe.setEffectOp(0);
         }
     }
 

@@ -749,33 +749,33 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
     }
 
     private JButton createEffectLabel(int channelNumber) {
-        JButton effektLabel = new JButton();
-        effektLabel.setName("EffectLabel_" + channelNumber);
-        effektLabel.setText(Helpers.EMPTY_STING);
-        effektLabel.setHorizontalAlignment(SwingConstants.LEFT);
-        effektLabel.setFont(Helpers.getDialogFont());
-        effektLabel.setToolTipText("Channel " + (channelNumber + 1) + " current effect");
-        effektLabel.setBackground(PatternImagePanel.getButtonColor());
-        effektLabel.setBorder(null);
-        effektLabel.setBorderPainted(false);
-        effektLabel.setMargin(Helpers.NULL_INSETS);
-        effektLabel.setSize(CHANNELBUTTON_SIZE);
-        effektLabel.setMinimumSize(CHANNELBUTTON_SIZE);
-        effektLabel.setMaximumSize(CHANNELBUTTON_SIZE);
-        effektLabel.setPreferredSize(CHANNELBUTTON_SIZE);
-        effektLabel.addActionListener(e -> doMute(TOGGLEMUTE, channelNumber));
-        effektLabel.addMouseListener(new MouseAdapter() {
+        JButton effectLabel = new JButton();
+        effectLabel.setName("EffectLabel_" + channelNumber);
+        effectLabel.setText(Helpers.EMPTY_STING);
+        effectLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        effectLabel.setFont(Helpers.getDialogFont());
+        effectLabel.setToolTipText("Channel " + (channelNumber + 1) + " current effect");
+        effectLabel.setBackground(PatternImagePanel.getButtonColor());
+        effectLabel.setBorder(null);
+        effectLabel.setBorderPainted(false);
+        effectLabel.setMargin(Helpers.NULL_INSETS);
+        effectLabel.setSize(CHANNELBUTTON_SIZE);
+        effectLabel.setMinimumSize(CHANNELBUTTON_SIZE);
+        effectLabel.setMaximumSize(CHANNELBUTTON_SIZE);
+        effectLabel.setPreferredSize(CHANNELBUTTON_SIZE);
+        effectLabel.addActionListener(e -> doMute(TOGGLEMUTE, channelNumber));
+        effectLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 if (e.isConsumed()) return;
                 if (SwingUtilities.isRightMouseButton(e)) {
                     selectedChannelNumber = channelNumber;
-                    getPopup().show(effektLabel, e.getX(), e.getY());
+                    getPopup().show(effectLabel, e.getX(), e.getY());
                     e.consume();
                 }
             }
         });
-        return effektLabel;
+        return effectLabel;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * @(#) DSPEffekt.java
+ * @(#) DSPEffect.java
  *
  * Created on 09.01.2012 by Daniel Becker
  *
@@ -28,11 +28,11 @@ import javax.sound.sampled.AudioFormat;
 /**
  * @author Daniel Becker
  */
-public interface DSPEffekt {
+public interface DSPEffect {
 
     void initialize(AudioFormat audioFormat, int sampleBufferLength);
 
-    int doEffekt(float[] buffer, int start, int length);
+    int doEffect(float[] buffer, int start, int length);
 
     void setIsActive(boolean active);
 

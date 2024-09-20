@@ -125,7 +125,7 @@ public class ID3v2Frames<K, V> extends HashMap<K, V> {
 
     /**
      * Returns a string representation of this object.  Returns the toStrings
-     * of all the frames contained within seperated by line breaks.
+     * of all the frames contained within separated by line breaks.
      *
      * @return a string representation of this object
      */

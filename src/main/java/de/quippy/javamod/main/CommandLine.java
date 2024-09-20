@@ -176,11 +176,11 @@ public class CommandLine extends JavaModMainBase implements PlayThreadEventListe
 
     /**
      * @param thread
-     * @see de.quippy.javamod.main.gui.PlayThreadEventListener#playThreadEventOccured(de.quippy.javamod.main.gui.PlayThread)
+     * @see de.quippy.javamod.main.gui.PlayThreadEventListener#playThreadEventOccurred(de.quippy.javamod.main.gui.PlayThread)
      */
     @Override
-    public void playThreadEventOccured(PlayThread thread) {
-        if (!thread.isRunning() && thread.getHasFinishedNormaly()) {
+    public void playThreadEventOccurred(PlayThread thread) {
+        if (!thread.isRunning() && thread.getHasFinishedNormally()) {
             if (currentPlayList != null && currentPlayList.next())
                 loadMultimediaFile(currentPlayList.getCurrentEntry().getFile());
             else
@@ -284,7 +284,7 @@ public class CommandLine extends JavaModMainBase implements PlayThreadEventListe
                 me.parseParameters(args);
                 me.loadMultimediaOrPlayListFile(me.modFileName);
                 me.doStartPlaying();
-                while (!me.playerThread.getHasFinishedNormaly()) {
+                while (!me.playerThread.getHasFinishedNormally()) {
                     Thread.sleep(10L);
                     if (!me.playerThread.isRunning()) break;
                 }

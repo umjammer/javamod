@@ -180,7 +180,7 @@ public class ID3v2ExtendedHeader {
      * Return an array of bytes representing this extended header in the
      * standard format to be written to a file.
      *
-     * @return a binary represenation of this extended header
+     * @return a binary representation of this extended header
      */
     public byte[] getBytes() {
         byte[] b = new byte[size];

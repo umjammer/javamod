@@ -33,7 +33,7 @@ public interface MultimediaContainerEventListener extends EventListener {
 
     /**
      * Will get fired if an event of interest is raised. This is actually
-     * only once the case: if an mp3 is streamd and the IcyInputStream
+     * only once the case: if a mp3 is streamed and the IcyInputStream
      * gets a new Title
      *
      * @param event

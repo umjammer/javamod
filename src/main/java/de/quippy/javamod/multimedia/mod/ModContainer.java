@@ -241,10 +241,10 @@ public class ModContainer extends MultimediaContainer {
             ModInfoPanel infoPanel = (ModInfoPanel) getInfoPanel();
             infoPanel.setPatternDialogLocation(Helpers.getPointFromString(newProps.getProperty(PROPERTY_PATTERN_POS, "-1x-1")));
             infoPanel.setPatternDialogSize(Helpers.getDimensionFromString(newProps.getProperty(PROPERTY_PATTERN_SIZE, "640x480")));
-            infoPanel.setPatternDialogVisable(Boolean.parseBoolean(newProps.getProperty(PROPERTY_PATTERN_VISABLE, "false")));
+            infoPanel.setPatternDialogVisible(Boolean.parseBoolean(newProps.getProperty(PROPERTY_PATTERN_VISABLE, "false")));
             infoPanel.setSampleDialogLocation(Helpers.getPointFromString(newProps.getProperty(PROPERTY_SAMPLE_POS, "-1x-1")));
             infoPanel.setSampleDialogSize(Helpers.getDimensionFromString(newProps.getProperty(PROPERTY_SAMPLE_SIZE, "640x480")));
-            infoPanel.setSampleDialogVisable(Boolean.parseBoolean(newProps.getProperty(PROPERTY_SAMPLE_VISABLE, "false")));
+            infoPanel.setSampleDialogVisible(Boolean.parseBoolean(newProps.getProperty(PROPERTY_SAMPLE_VISABLE, "false")));
             infoPanel.setInstrumentDialogLocation(Helpers.getPointFromString(newProps.getProperty(PROPERTY_INSTRUMENT_POS, "-1x-1")));
             infoPanel.setInstrumentDialogSize(Helpers.getDimensionFromString(newProps.getProperty(PROPERTY_INSTRUMENT_SIZE, "640x480")));
             infoPanel.setInstrumentDialogVisible(Boolean.parseBoolean(newProps.getProperty(PROPERTY_INSTRUMENT_VISABLE, "false")));
@@ -267,15 +267,15 @@ public class ModContainer extends MultimediaContainer {
             ModPatternDialog patternDialog = ((ModInfoPanel) getInfoPanel()).getModPatternDialog();
             props.setProperty(PROPERTY_PATTERN_POS, Helpers.getStringFromPoint(patternDialog.getLocation()));
             props.setProperty(PROPERTY_PATTERN_SIZE, Helpers.getStringFromDimension(patternDialog.getSize()));
-            props.setProperty(PROPERTY_PATTERN_VISABLE, Boolean.toString(((ModInfoPanel) getInfoPanel()).getModPatternDialogisVisible()));
+            props.setProperty(PROPERTY_PATTERN_VISABLE, Boolean.toString(((ModInfoPanel) getInfoPanel()).getModPatternDialogsVisible()));
             ModSampleDialog sampleDialog = ((ModInfoPanel) getInfoPanel()).getModSampleDialog();
             props.setProperty(PROPERTY_SAMPLE_POS, Helpers.getStringFromPoint(sampleDialog.getLocation()));
             props.setProperty(PROPERTY_SAMPLE_SIZE, Helpers.getStringFromDimension(sampleDialog.getSize()));
-            props.setProperty(PROPERTY_SAMPLE_VISABLE, Boolean.toString(((ModInfoPanel) getInfoPanel()).getModSampleDialogisVisible()));
+            props.setProperty(PROPERTY_SAMPLE_VISABLE, Boolean.toString(((ModInfoPanel) getInfoPanel()).getModSampleDialogsVisible()));
             ModInstrumentDialog instrumentDialog = ((ModInfoPanel) getInfoPanel()).getModInstrumentDialog();
             props.setProperty(PROPERTY_INSTRUMENT_POS, Helpers.getStringFromPoint(instrumentDialog.getLocation()));
             props.setProperty(PROPERTY_INSTRUMENT_SIZE, Helpers.getStringFromDimension(instrumentDialog.getSize()));
-            props.setProperty(PROPERTY_INSTRUMENT_VISABLE, Boolean.toString(((ModInfoPanel) getInfoPanel()).getModInstrumentDialogisVisible()));
+            props.setProperty(PROPERTY_INSTRUMENT_VISABLE, Boolean.toString(((ModInfoPanel) getInfoPanel()).getModInstrumentDialogsVisible()));
         }
 
         if (props != null) {

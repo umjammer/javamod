@@ -92,7 +92,7 @@ public class SimpleProgressDialog extends JDialog implements ProgressDialog {
     }
 
     protected void initialize() {
-        setName("SimplePrograssDialog");
+        setName("SimpleProgressDialog");
         setContentPane(getDownloadPane());
         pack();
         setLocation(Helpers.getFrameCenteredLocation(this, getOwner()));

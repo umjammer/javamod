@@ -116,7 +116,7 @@ public class Helpers {
     /** Codepage used when reading from ICY Input-Streams */
     public static final String CODING_ICY = "ISO-8859-15";
 
-    public static final String DEFAULTFONTPATH = "/de/quippy/javamod/main/gui/ressources/lucon.ttf";
+    public static final String DEFAULTFONTPATH = "/de/quippy/javamod/main/gui/resources/lucon.ttf";
     private static Font DIALOG_FONT = null;
     private static Font TEXTAREA_FONT = null;
 

@@ -28,8 +28,6 @@ import java.lang.System.Logger.Level;
 
 import de.quippy.javamod.io.ModfileInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
-import de.quippy.javamod.multimedia.mod.loader.Module;
-import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope.EnvelopeType;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Instrument;
@@ -494,7 +492,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                 inputStream.skip(2);
                 currentIns.setVolumeFadeOut(inputStream.readIntelUnsignedWord() << 6);
                 currentIns.setNNA(inputStream.read());
-                currentIns.setDublicateNoteCheck(inputStream.read());
+                currentIns.setDuplicateNoteCheck(inputStream.read());
                 inputStream.skip(2); // TrackerVersion, that saved the instrument - ignored
                 inputStream.skip(2); // NoS - ignored
                 currentIns.setGlobalVolume(128);
@@ -502,8 +500,8 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                 currentIns.setDefaultPan(128);
             } else {
                 currentIns.setNNA(inputStream.read());
-                currentIns.setDublicateNoteCheck(inputStream.read());
-                currentIns.setDublicateNoteAction(inputStream.read());
+                currentIns.setDuplicateNoteCheck(inputStream.read());
+                currentIns.setDuplicateNoteAction(inputStream.read());
                 currentIns.setVolumeFadeOut(inputStream.readIntelUnsignedWord() << 5);
                 currentIns.setPitchPanSeparation(inputStream.read());
                 currentIns.setPitchPanCenter(inputStream.read());
@@ -833,8 +831,8 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                         lastVolCmd[channel] = volCmd;
                         lastVolOp[channel] = volOp;
                     }
-                    element.setVolumeEffekt(lastVolCmd[channel]);
-                    element.setVolumeEffektOp(lastVolOp[channel]);
+                    element.setVolumeEffect(lastVolCmd[channel]);
+                    element.setVolumeEffectOp(lastVolOp[channel]);
                 }
                 if ((lastMask[channel] & 0x08) != 0 || (lastMask[channel] & 0x80) != 0) {
                     if ((lastMask[channel] & 0x08) != 0) {
@@ -843,8 +841,8 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                         lastData[channel] = inputStream.read();
                         patternDataLength--;
                     }
-                    element.setEffekt(lastCmd[channel]);
-                    element.setEffektOp(lastData[channel]);
+                    element.setEffect(lastCmd[channel]);
+                    element.setEffectOp(lastData[channel]);
                 }
             }
         }
@@ -962,7 +960,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         if ((getModType() & (ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT)) != 0 && patternContainer.getChannelColors() == null)
             patternContainer.createMPTMDefaultRainbowColors();
 
-        // avoid devision by zero at calculateSamplesPerTick
+        // avoid division by zero at calculateSamplesPerTick
         if (rowsPerBeat == 0 && tempoMode == ModConstants.TEMPOMODE_MODERN) rowsPerBeat = 1;
     }
 }

@@ -100,7 +100,7 @@ public class InstrumentsContainer {
     }
 
     /**
-     * Add all sample length values to retrive the complete
+     * Add all sample length values to retrieve the complete
      * amount. Is used only by the ProtrackerMods
      *
      * @return

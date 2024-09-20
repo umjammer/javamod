@@ -255,21 +255,21 @@ public class ModInfoPanel extends JPanel {
         }
     }
 
-    public boolean getModPatternDialogisVisible() {
+    public boolean getModPatternDialogsVisible() {
         if (oldModPatternDialogVisibility == -1)
             return getModPatternDialog().isVisible();
         else
             return oldModPatternDialogVisibility != 0;
     }
 
-    public boolean getModSampleDialogisVisible() {
+    public boolean getModSampleDialogsVisible() {
         if (oldModSampleDialogVisibility == -1)
             return getModSampleDialog().isVisible();
         else
             return oldModSampleDialogVisibility != 0;
     }
 
-    public boolean getModInstrumentDialogisVisible() {
+    public boolean getModInstrumentDialogsVisible() {
         if (oldModInstrumentDialogVisibility == -1)
             return getModInstrumentDialog().isVisible();
         else
@@ -291,10 +291,10 @@ public class ModInfoPanel extends JPanel {
     }
 
     /**
-     * @param newPatternDialogVisable the patternDialogVisable to set
+     * @param newPatternDialogVisible the patternDialogVisable to set
      */
-    protected void setPatternDialogVisable(boolean newPatternDialogVisable) {
-        oldModPatternDialogVisibility = (newPatternDialogVisable) ? 1 : 0;
+    protected void setPatternDialogVisible(boolean newPatternDialogVisible) {
+        oldModPatternDialogVisibility = (newPatternDialogVisible) ? 1 : 0;
     }
 
     /**
@@ -312,10 +312,10 @@ public class ModInfoPanel extends JPanel {
     }
 
     /**
-     * @param newSampleDialogVisable the sampleDialogVisable to set
+     * @param newSampleDialogVisible the sampleDialogVisable to set
      */
-    protected void setSampleDialogVisable(boolean newSampleDialogVisable) {
-        oldModSampleDialogVisibility = (newSampleDialogVisable) ? 1 : 0;
+    protected void setSampleDialogVisible(boolean newSampleDialogVisible) {
+        oldModSampleDialogVisibility = (newSampleDialogVisible) ? 1 : 0;
     }
 
     /**

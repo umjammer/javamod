@@ -35,7 +35,7 @@ public class EmuFMOPL_072 extends EmuOPL {
 //    private static final int CLOCK_RATE = 3579545;
     private static final int CLOCK_RATE = 3579552;    // 49716 * 72, Base Clock of Chip - is said to be 3.579MHz
 
-    private FM_OPL[] opl;
+    private final FM_OPL[] opl;
 
     /**
      * Constructor for EmuFMOPL_072

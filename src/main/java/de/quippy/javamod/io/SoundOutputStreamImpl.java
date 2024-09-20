@@ -39,7 +39,7 @@ import static java.lang.System.getLogger;
 
 
 /**
- * This outputstream will wrap audiolines and file-exports
+ * This output stream will wrap audio lines and file-exports
  * so that the mixers do not have to think about it.
  *
  * @author Daniel Becker
@@ -72,8 +72,8 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @param audioFormat      the Format of delivered Audio
      * @param audioProcessor   the class of the audioProcessor - if any
      * @param exportFile       exportFile - the File to write to
-     * @param playDuringExport if true, data will be send to line and file
-     * @param keepSilent       if true, 0 bytes will be send to the line
+     * @param playDuringExport if true, data will be sent to line and file
+     * @param keepSilent       if true, 0 bytes will be sent to the line
      */
     public SoundOutputStreamImpl(AudioFormat audioFormat, AudioProcessor audioProcessor, File exportFile, boolean playDuringExport, boolean keepSilent) {
         this();
@@ -114,10 +114,10 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
                     setBalance(currentBalance);
                     openAudioProcessor();
                 } else
-                    logger.log(Level.INFO, "Audioformat is not supported");
+                    logger.log(Level.INFO, "Audio format is not supported");
             } catch (Exception ex) {
                 sourceLine = null;
-                logger.log(Level.ERROR, "Error occured when opening audio device", ex);
+                logger.log(Level.ERROR, "Error occurred when opening audio device", ex);
             }
         }
     }
@@ -146,7 +146,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
             int result = waveExportFile.openForWrite(exportFile, audioFormat);
             if (result != WaveFile.DDC_SUCCESS) {
                 waveExportFile = null;
-                logger.log(Level.ERROR, "Creation of exportfile was NOT successfull! " + exportFile.getAbsolutePath());
+                logger.log(Level.ERROR, "Creation of export file was NOT successfull! " + exportFile.getAbsolutePath());
             }
         }
     }

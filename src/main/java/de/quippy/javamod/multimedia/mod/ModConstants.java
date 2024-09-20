@@ -729,7 +729,7 @@ public class ModConstants {
     };
     /**
      * This table is used by the stm, s3m, it mods, manly for the
-     * old "fineTune" effekt as they are downward compatible
+     * old "fineTune" effect as they are downward compatible
      * calculated by 8363*2^((i-8)/(12*8))
      */
     public static final int[] IT_fineTuneTable = {
@@ -1047,8 +1047,8 @@ public class ModConstants {
     public static String getModPlugVersionString(int version) {
         if (version == 0) return "Unknown";
         if ((version & 0xffFF) == 0)
-            return String.format("%x.%02x", (version >> 24) & 0xff, (version >> 16) & 0xff);
-        return String.format("%x.%02x.%02x.%02x", (version >> 24) & 0xff, (version >> 16) & 0xff, (version >> 8) & 0xff, version & 0xff);
+            return "%x.%02x".formatted((version >> 24) & 0xff, (version >> 16) & 0xff);
+        return "%x.%02x.%02x.%02x".formatted((version >> 24) & 0xff, (version >> 16) & 0xff, (version >> 8) & 0xff, version & 0xff);
     }
 
     /**
@@ -1070,7 +1070,7 @@ public class ModConstants {
                 d = d.plusDays(extVersion);
             return DATE_FORMATER.format(d);
         }
-        return String.format("0.%x", cwtv);
+        return "0.%x".formatted(cwtv);
     }
 
 //    private static final int ST2TempoFactor[] = {140, 50, 25, 15, 10, 7, 6, 4, 3, 3, 2, 2, 2, 2, 1, 1};

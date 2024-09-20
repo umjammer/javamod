@@ -109,7 +109,7 @@ public abstract class Module {
      * cases, but the advantage of this is it's decompression speed which might
      * enable sometimes players or even synthesizer chips to decompress IT
      * samples in real-time. And you can still pack these compressed samples with
-     * "normal" algorithms and get better results than these algorothms would
+     * "normal" algorithms and get better results than these algorithms would
      * ever achieve alone.
      * <p>
      * some assumptions i made (and which also pulse made - and without which it
@@ -176,11 +176,11 @@ public abstract class Module {
      * this time it depends on the highest bit:
      * - if 0, the last 8 [16] bits will be integrated and stored
      * - if 1, the last 8 [16] bits (+1) will be used as new bit width.
-     * any other width isnt supposed to exist and will result in a premature
+     * any other width isn't supposed to exist and will result in a premature
      * exit of the decompressor.
      * <p>
      * Few annotations:
-     * - The compressed data is processed in blocks of 0x8000 bytes. I dont
+     * - The compressed data is processed in blocks of 0x8000 bytes. I don't
      * know the reason of this (it's definitely NOT better concerning compres-
      * sion ratio), i just think that it has got something to do with Pulse's
      * EMS memory handling or such. Anyway, this was really nasty to find
@@ -365,7 +365,7 @@ public abstract class Module {
                     blkpos++;
                 }
 
-                // now subtract block lenght from total length and go on
+                // now subtract block length from total length and go on
                 anzSamples -= blklen;
             }
 
@@ -440,7 +440,7 @@ public abstract class Module {
                     blkpos++;
                 }
 
-                // now subtract block lenght from total length and go on
+                // now subtract block length from total length and go on
                 anzSamples -= blklen;
             }
 
@@ -1060,7 +1060,7 @@ public abstract class Module {
     }
 
     /**
-     * @param newLengthInMilliseconds the lenthInMilliseconds to set
+     * @param newLengthInMilliseconds the lengthInMilliseconds to set
      */
     public void setLengthInMilliseconds(long newLengthInMilliseconds) {
         lengthInMilliseconds = newLengthInMilliseconds;
@@ -1250,10 +1250,10 @@ public abstract class Module {
                 ins.NNA = (int) inputStream.readIntelBytes(size);
                 break;
             case 0x4443542E: //"DCT." DuplicateNoteCheck
-                ins.dublicateNoteCheck = (int) inputStream.readIntelBytes(size);
+                ins.duplicateNoteCheck = (int) inputStream.readIntelBytes(size);
                 break;
             case 0x444E412E: //"DNA." DuplicateNoteAction
-                ins.dublicateNoteAction = (int) inputStream.readIntelBytes(size);
+                ins.duplicateNoteAction = (int) inputStream.readIntelBytes(size);
                 break;
             case 0x50532E2E: //"PS..." PanSwing
                 ins.randomPanningVariation = (int) inputStream.readIntelBytes(size);
@@ -1271,7 +1271,7 @@ public abstract class Module {
             case 0x4D422E2E: //"MB.." MidiBank
                 ins.midiBank = (int) inputStream.readIntelBytes(size);
                 break;
-            case 0x4D502E2E: //"MP.." MidiProgramm
+            case 0x4D502E2E: //"MP.." MidiProgram
                 ins.midiProgram = (int) inputStream.readIntelBytes(size);
                 break;
             case 0x4D432E2E: //"MC.." MidiChannel

@@ -88,7 +88,7 @@ public class MP3Mixer extends BasicMixer {
         this.tagParseListener = tagParseListener;
     }
 
-    private InputStream createHttpRessource(URL mp3FileUrl) throws IOException {
+    private InputStream createHttpResource(URL mp3FileUrl) throws IOException {
         InputStream result = null;
         if (httpResource != null) httpResource.close();
         httpResource = new HttpResource(mp3FileUrl);
@@ -109,7 +109,7 @@ public class MP3Mixer extends BasicMixer {
             if (!isStreaming()) {
                 inputStream = new FileOrPackedInputStream(mp3FileUrl);
             } else {
-                InputStream httpInputStream = createHttpRessource(mp3FileUrl);
+                InputStream httpInputStream = createHttpResource(mp3FileUrl);
                 if (httpInputStream != null)
                     inputStream = new IcyInputStream(new BufferedInputStream(httpInputStream), tagParseListener, httpResource.getResourceHeaders());
             }
@@ -141,13 +141,13 @@ public class MP3Mixer extends BasicMixer {
                 if (Helpers.isHTTP(mp3FileUrl)) {
                     isStreaming = Boolean.TRUE;
 //                    try {
-//                        InputStream inputStream = createHttpRessource(mp3FileUrl);
+//                        InputStream inputStream = createHttpResource(mp3FileUrl);
 //                        if (inputStream != null) {
 //                            inputStream.close();
 //                            return (isStreaming = Boolean.TRUE).booleanValue();
 //                        }
 //                    } catch (Throwable ex) {
-//                        logger.log(Level.ERROR, "[MP3Mixer::isStreamaing]", ex);
+//                        logger.log(Level.ERROR, "[MP3Mixer::isStreaming]", ex);
 //                    }
                 } else
                     isStreaming = Boolean.FALSE;

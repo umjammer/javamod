@@ -111,8 +111,8 @@ public class MidiMacros {
             case SFxReso -> "F0F001z";
             case SFxFltMode -> "F0F002z";
             case SFxDryWet -> "F0F003z";
-            case SFxCC -> String.format("Bc%02X", subType & 0x7F);
-            case SFxPlugParam -> String.format("F0F%03X", (subType & 0x17F) + 0x80);
+            case SFxCC -> "Bc%02X".formatted(subType & 0x7F);
+            case SFxPlugParam -> "F0F%03X".formatted((subType & 0x17F) + 0x80);
             case SFxChannelAT -> "Dcz";
             case SFxPolyAT -> "Acnz";
             case SFxPitch -> "Ec00z";

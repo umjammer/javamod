@@ -26,8 +26,6 @@ import java.io.IOException;
 
 import de.quippy.javamod.io.ModfileInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
-import de.quippy.javamod.multimedia.mod.loader.Module;
-import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternContainer;
@@ -149,8 +147,8 @@ public class ScreamTrackerSTXMod extends ScreamTrackerOldMod {
             int noteIndex = 0;
             int instrument = 0;
             int volume = -1;
-            int effekt = 0;
-            int effektOp = 0;
+            int effect = 0;
+            int effectOp = 0;
             if ((mask & 0x20) != 0) { // Note and Sample follow
                 int ton = inputStream.read();
                 instrument = inputStream.read();
@@ -176,8 +174,8 @@ public class ScreamTrackerSTXMod extends ScreamTrackerOldMod {
                 volume = inputStream.read();
             }
             if ((mask & 0x80) != 0) { // Effects!
-                effekt = inputStream.read();
-                effektOp = inputStream.read();
+                effect = inputStream.read();
+                effectOp = inputStream.read();
             }
             if (channel != -1) {
                 PatternRow currentRow = getPatternContainer().getPatternRow(pattNum, row);
@@ -186,11 +184,11 @@ public class ScreamTrackerSTXMod extends ScreamTrackerOldMod {
                 currentElement.setPeriod(period);
                 currentElement.setInstrument(instrument);
                 if (volume != -1) {
-                    currentElement.setVolumeEffekt(1);
-                    currentElement.setVolumeEffektOp((volume > 64) ? 64 : volume);
+                    currentElement.setVolumeEffect(1);
+                    currentElement.setVolumeEffectOp((volume > 64) ? 64 : volume);
                 }
-                currentElement.setEffekt(effekt);
-                currentElement.setEffektOp(effektOp);
+                currentElement.setEffect(effect);
+                currentElement.setEffectOp(effectOp);
             }
         }
     }
@@ -289,13 +287,13 @@ public class ScreamTrackerSTXMod extends ScreamTrackerOldMod {
                 int repeatStop = inputStream.readIntelDWord();
                 if (repeatStop > sampleLength) repeatStop = sampleLength;
 
-                int repeateLength = repeatStop - repeatStart;
-                if ((repeatStart > repeatStop) || repeateLength < 8)
-                    repeatStart = repeatStop = repeateLength = 0;
+                int repeatLength = repeatStop - repeatStart;
+                if ((repeatStart > repeatStop) || repeatLength < 8)
+                    repeatStart = repeatStop = repeatLength = 0;
 
                 current.setLoopStart(repeatStart);
                 current.setLoopStop(repeatStop);
-                current.setLoopLength(repeateLength);
+                current.setLoopLength(repeatLength);
 
                 // Defaults for non-existent SustainLoop
                 current.setSustainLoopStart(0);

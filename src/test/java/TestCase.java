@@ -71,7 +71,7 @@ Debug.println("volume: " + volume);
 
         CountDownLatch cdl = new CountDownLatch(1);
 
-        PlayThread playerThread = new PlayThread(mixer, thread -> { // TODO event not worked well
+        PlayThread playerThread = new PlayThread(mixer, thread -> { // TODO event does not work well
 Debug.println(thread);
             if (thread.getCurrentMixer().hasFinished()) {
                 cdl.countDown();

@@ -145,7 +145,7 @@ logger.log(Level.DEBUG, opl);
      * @param doVirtualStereo
      * @since 14.08.2020
      */
-    public void setDoVirtualSereoMix(boolean doVirtualStereo) {
+    public void setDoVirtualStereoMix(boolean doVirtualStereo) {
         this.doVirtualStereo = doVirtualStereo;
     }
 
@@ -180,7 +180,7 @@ logger.log(Level.DEBUG, opl);
                     int sampler = fromOPL3[1];
                     fromOPL3[0] = fromOPL3[1] = 0;
 
-                    // WideStrereo Mixing - but only with stereo
+                    // WideStereo Mixing - but only with stereo
                     if (doVirtualStereo && opl.getOPLType() != OplType.OPL2) {
                         wideLBuffer[writePointer] = samplel;
                         wideRBuffer[writePointer++] = sampler;
