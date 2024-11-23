@@ -139,15 +139,13 @@ logger.log(Level.TRACE, "sampleRate: " + sampleRate);
             openAudioDevice();
             if (!isInitialized()) return;
 
-            boolean finished = false;
-
             StreamEngine engine = new StreamEngine(os);
             player.setEngine(engine);
 
             player.loadFile(file);
             player.setTrack(1);
             player.play();
-logger.log(Level.DEBUG, "play");
+logger.log(Level.DEBUG, "play: " + player.isPlaying());
 
             do {
                 if (stopPositionIsReached()) setIsStopping();
@@ -160,21 +158,17 @@ logger.log(Level.DEBUG, "play");
                     player.pause();
                     setIsPaused();
                     while (isPaused()) {
-                        try {
-                            Thread.sleep(10L);
-                        } catch (InterruptedException ex) { /* noop */ }
+                        try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
                     }
                 }
                 if (isInSeeking()) {
                     setIsSeeking();
                     while (isInSeeking()) {
-                        try {
-                            Thread.sleep(10L);
-                        } catch (InterruptedException ex) { /*noop*/ }
+                        try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
                     }
                 }
-            } while (!finished);
-            if (finished) setHasFinished(); // Piece was played full
+            } while (player.isPlaying());
+            if (!player.isPlaying()) setHasFinished(); // Piece was played full
         } catch(Throwable ex) {
             throw new RuntimeException(ex);
         } finally {
