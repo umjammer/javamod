@@ -5,7 +5,7 @@
 
   <groupId>net.sourceforge.javamod</groupId>
   <artifactId>JavaMod</artifactId>
-  <version>3.9.5v</version>
+  <version>3.9.6</version>
 
   <build>
     <plugins>
