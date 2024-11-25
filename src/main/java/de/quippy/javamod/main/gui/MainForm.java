@@ -132,24 +132,24 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
     @Serial
     private static final long serialVersionUID = -2737074464335059959L;
 
-    private static final String DEFAULTWINDOWICONPATH = "/de/quippy/javamod/main/gui/ressources/quippy_the_kangaroo_about.gif";
-    private static final String DEFAULTTRAYICONPATH = "/de/quippy/javamod/main/gui/ressources/quippy_the_kangaroo_about.gif";
+    private static final String DEFAULTWINDOWICONPATH = "/de/quippy/javamod/main/gui/resources/quippy_the_kangaroo_about.gif";
+    private static final String DEFAULTTRAYICONPATH = "/de/quippy/javamod/main/gui/resources/quippy_the_kangaroo_about.gif";
 
-    public static final String BUTTONPLAY_INACTIVE = "/de/quippy/javamod/main/gui/ressources/play.gif";
-    public static final String BUTTONPLAY_ACTIVE = "/de/quippy/javamod/main/gui/ressources/play_aktiv.gif";
-    public static final String BUTTONPLAY_NORMAL = "/de/quippy/javamod/main/gui/ressources/play_normal.gif";
-    public static final String BUTTONPAUSE_INACTIVE = "/de/quippy/javamod/main/gui/ressources/pause.gif";
-    public static final String BUTTONPAUSE_ACTIVE = "/de/quippy/javamod/main/gui/ressources/pause_aktiv.gif";
-    public static final String BUTTONPAUSE_NORMAL = "/de/quippy/javamod/main/gui/ressources/pause_normal.gif";
-    public static final String BUTTONSTOP_INACTIVE = "/de/quippy/javamod/main/gui/ressources/stop.gif";
-    public static final String BUTTONSTOP_ACTIVE = "/de/quippy/javamod/main/gui/ressources/stop_aktiv.gif";
-    public static final String BUTTONSTOP_NORMAL = "/de/quippy/javamod/main/gui/ressources/stop_normal.gif";
-    public static final String BUTTONPREV_INACTIVE = "/de/quippy/javamod/main/gui/ressources/prev.gif";
-    public static final String BUTTONPREV_ACTIVE = "/de/quippy/javamod/main/gui/ressources/prev_aktiv.gif";
-    public static final String BUTTONPREV_NORMAL = "/de/quippy/javamod/main/gui/ressources/prev_normal.gif";
-    public static final String BUTTONNEXT_INACTIVE = "/de/quippy/javamod/main/gui/ressources/next.gif";
-    public static final String BUTTONNEXT_ACTIVE = "/de/quippy/javamod/main/gui/ressources/next_aktiv.gif";
-    public static final String BUTTONNEXT_NORMAL = "/de/quippy/javamod/main/gui/ressources/next_normal.gif";
+    public static final String BUTTONPLAY_INACTIVE = "/de/quippy/javamod/main/gui/resources/play.gif";
+    public static final String BUTTONPLAY_ACTIVE = "/de/quippy/javamod/main/gui/resources/play_aktiv.gif";
+    public static final String BUTTONPLAY_NORMAL = "/de/quippy/javamod/main/gui/resources/play_normal.gif";
+    public static final String BUTTONPAUSE_INACTIVE = "/de/quippy/javamod/main/gui/resources/pause.gif";
+    public static final String BUTTONPAUSE_ACTIVE = "/de/quippy/javamod/main/gui/resources/pause_aktiv.gif";
+    public static final String BUTTONPAUSE_NORMAL = "/de/quippy/javamod/main/gui/resources/pause_normal.gif";
+    public static final String BUTTONSTOP_INACTIVE = "/de/quippy/javamod/main/gui/resources/stop.gif";
+    public static final String BUTTONSTOP_ACTIVE = "/de/quippy/javamod/main/gui/resources/stop_aktiv.gif";
+    public static final String BUTTONSTOP_NORMAL = "/de/quippy/javamod/main/gui/resources/stop_normal.gif";
+    public static final String BUTTONPREV_INACTIVE = "/de/quippy/javamod/main/gui/resources/prev.gif";
+    public static final String BUTTONPREV_ACTIVE = "/de/quippy/javamod/main/gui/resources/prev_aktiv.gif";
+    public static final String BUTTONPREV_NORMAL = "/de/quippy/javamod/main/gui/resources/prev_normal.gif";
+    public static final String BUTTONNEXT_INACTIVE = "/de/quippy/javamod/main/gui/resources/next.gif";
+    public static final String BUTTONNEXT_ACTIVE = "/de/quippy/javamod/main/gui/resources/next_aktiv.gif";
+    public static final String BUTTONNEXT_NORMAL = "/de/quippy/javamod/main/gui/resources/next_normal.gif";
 
     private static final String PROPERTYFILENAME = ".javamod.properties";
     private static final String PROPERTY_SEARCHPATH = "javamod.path.loadpath";
@@ -757,7 +757,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
      * @since 08.03.2011
      */
     @Override
-    public void playlistRecieved(DropTargetDropEvent dtde, PlayList dropResult, URL addToLastLoaded) {
+    public void playlistReceived(DropTargetDropEvent dtde, PlayList dropResult, URL addToLastLoaded) {
         if (addToLastLoaded != null) addFileToLastLoaded(addToLastLoaded);
         if (dropResult != null) {
             doStopPlaying();
@@ -2046,15 +2046,15 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
 
     /**
      * @param thread
-     * @see de.quippy.javamod.main.gui.PlayThreadEventListener#playThreadEventOccured(de.quippy.javamod.main.gui.PlayThread)
+     * @see de.quippy.javamod.main.gui.PlayThreadEventListener#playThreadEventOccurred(de.quippy.javamod.main.gui.PlayThread)
      */
     @Override
-    public void playThreadEventOccured(PlayThread thread) {
+    public void playThreadEventOccurred(PlayThread thread) {
         if (thread.isRunning()) {
             getButton_Play().setIcon(buttonPlay_Active);
         } else { // Signaling: not running-->Piece finished...
             getButton_Play().setIcon(buttonPlay_normal);
-            if (thread.getHasFinishedNormaly()) {
+            if (thread.getHasFinishedNormally()) {
                 boolean ok = doNextPlayListEntry();
                 if (!ok) doStopPlaying();
             }
@@ -2172,7 +2172,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
                     searchPath = f.getAbsolutePath();
                 }
             } else {
-                playlistRecieved(null, PlayList.createNewListWithFiles(files, false, false), null);
+                playlistReceived(null, PlayList.createNewListWithFiles(files, false, false), null);
             }
         }
     }

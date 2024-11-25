@@ -33,5 +33,5 @@ import de.quippy.javamod.main.playlist.PlayList;
  */
 public interface PlaylistDropListenerCallBack {
 
-    void playlistRecieved(DropTargetDropEvent dtde, PlayList dropResult, URL addToLastLoaded);
+    void playlistReceived(DropTargetDropEvent dtde, PlayList dropResult, URL addToLastLoaded);
 }

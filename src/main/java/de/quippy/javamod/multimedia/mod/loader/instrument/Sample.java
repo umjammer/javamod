@@ -37,41 +37,68 @@ import de.quippy.javamod.system.Helpers;
  */
 public class Sample {
 
-    public String name;            // Name of the sample
-    public int length;            // full length (already *2 --> Mod-Format)
-    public int sampleType;        // normalized loading flags (signed, unsigned, 8-Bit, compressed, ...)
-    public int fineTune;        // Finetuning -8..+8
-    public int volume;            // Basisvolume
-    public int loopStart;        // # of the loop start (already *2 --> Mod-Fomat)
-    public int loopStop;        // # of the loop end   (already *2 --> Mod-Fomat)
-    public int loopLength;        // length of the loop
-    public int loopType;        // 0: no Looping, 1: normal, 2: Sustain, 4: pingpong 8: Sustain pingpong
-    public int transpose;        // PatternNote + transpose
-    public int baseFrequency;    // BaseFrequency
-    public boolean isStereo;    // true, if this is a stereo-sample
+    /** Name of the sample */
+    public String name;
+    /** full length (already *2 --> Mod-Format) */
+    public int length;
+    /** normalized loading flags (signed, unsigned, 8-Bit, compressed, ...) */
+    public int sampleType;
+    /** Finetuning -8..+8 */
+    public int fineTune;
+    /** Basisvolume */
+    public int volume;
+    /** # of the loop start (already *2 --> Mod-Fomat) */
+    public int loopStart;
+    /** # of the loop end   (already *2 --> Mod-Fomat) */
+    public int loopStop;
+    /** length of the loop */
+    public int loopLength;
+    /** 0: no Looping, 1: normal, 2: Sustain, 4: pingpong 8: Sustain pingpong */
+    public int loopType;
+    /** PatternNote + transpose */
+    public int transpose;
+    /** BaseFrequency */
+    public int baseFrequency;
+    /** true, if this is a stereo-sample */
+    public boolean isStereo;
 
     //S3M:
-    public int type;            // always 1 for a sample, 1-7 AdLib (2:Melody 3:Basedrum 4:Snare 5:Tom 6:Cym 7:HiHat)
-    public String dosFileName;    // DOS File-Name
-    public int flags;            // flag: 1:Looping sample 2:Stereo 4:16Bit-Sample...
+    /** always 1 for a sample, 1-7 AdLib (2:Melody 3:Basedrum 4:Snare 5:Tom 6:Cym 7:HiHat) */
+    public int type;
+    /** DOS File-Name */
+    public String dosFileName;
+    /** flag: 1:Looping sample 2:Stereo 4:16Bit-Sample... */
+    public int flags;
 
     // XM
-    public boolean setPanning;    // set the panning
-    public int defaultPanning;    // default Panning
-    public int vibratoType;        // Vibrato Type
-    public int vibratoSweep;    // Vibrato Sweep
-    public int vibratoDepth;    // Vibrato Depth
-    public int vibratoRate;        // Vibrato Rate
-    public int XM_reserved;        // reserved, but some magic with 0xAD and SM_ADPCM4...
+    /** set the panning */
+    public boolean setPanning;
+    /** default Panning */
+    public int defaultPanning;
+    /** Vibrato Type */
+    public int vibratoType;
+    /** Vibrato Sweep */
+    public int vibratoSweep;
+    /** Vibrato Depth */
+    public int vibratoDepth;
+    /** Vibrato Rate */
+    public int vibratoRate;
+    /** reserved, but some magic with 0xAD and SM_ADPCM4... */
+    public int XM_reserved;
 
     // IT
-    public int sustainLoopStart;// SustainLoopStart
-    public int sustainLoopStop; // SustainLoopEnd
-    public int sustainLoopLength; // SustainLoop Length
-    public int flag_CvT;        // Flag for Instrument Save
-    public int globalVolume;    // GlobalVolume
+    /** SustainLoopStart */
+    public int sustainLoopStart;
+    /** SustainLoopEnd */
+    public int sustainLoopStop;
+    /** SustainLoop Length */
+    public int sustainLoopLength;
+    /** Flag for Instrument Save */
+    public int flag_CvT;
+    /** GlobalVolume */
+    public int globalVolume;
 
-    // Interploation Magic
+    // Interpolation Magic
     private int interpolationStopLoop;
     private int interpolationStopSustain;
     private int interpolationStartLoop;

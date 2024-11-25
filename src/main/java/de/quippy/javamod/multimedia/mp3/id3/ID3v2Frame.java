@@ -230,7 +230,7 @@ public class ID3v2Frame {
      * Set the data for this frame.  This does nothing if this frame is read
      * only.
      *
-     * @param newData a byte array contianing the new data
+     * @param newData a byte array containing the new data
      */
     public void setFrameData(byte[] newData) {
         if (!readOnly) {
@@ -400,7 +400,7 @@ public class ID3v2Frame {
      * Returns the group identifier if added.  Otherwise the null byte is
      * returned.
      *
-     * @return the groupd identifier if added, null byte otherwise
+     * @return the grouped identifier if added, null byte otherwise
      */
     public byte getGroup() {
         return group;

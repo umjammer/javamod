@@ -64,7 +64,7 @@ public class ID3v2Tag {
      * @param raf the file to write/read the tag information to/from
      * @throws FileNotFoundException if an error occurs
      * @throws IOException           if an error occurs
-     * @throws ID3v2FormatException  if an exisiting id3v2 tag isn't correct
+     * @throws ID3v2FormatException  if an existing id3v2 tag isn't correct
      */
     public ID3v2Tag(RandomAccessInputStream raf) throws IOException, ID3v2FormatException {
         frames = new ID3v2Frames<>();

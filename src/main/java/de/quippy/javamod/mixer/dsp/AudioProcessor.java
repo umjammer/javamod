@@ -6,10 +6,10 @@
  *
  * Next the writeSampleData is capable of directing all sample data to
  * signal processing call backs doing their things and will return a
- * byte array of sampledata coresponding to the audio format provided
+ * byte array of sample data corresponding to the audio format provided
  *
  * Depending on the frames per second this data is then send split into
- * left and right channel to all callbacks who whant to be informed.
+ * left and right channel to all callbacks who want to be informed.
  *
  * Created on 29.09.2007 by Daniel Becker
  *
@@ -50,7 +50,7 @@ public class AudioProcessor {
     private final int desiredBufferSize;
     private final long waitForNanos;
     private final List<DspProcessorCallBack> callBacks;
-    private final List<DSPEffekt> effectCallBacks;
+    private final List<DSPEffect> effectCallBacks;
 
     private static final int SAMPLEBUFFERSIZE = 96000;
     private SourceDataLine sourceDataLine;
@@ -203,7 +203,7 @@ public class AudioProcessor {
      * @param effectCallBack
      * @since 15.01.2012
      */
-    public synchronized void addEffectListener(DSPEffekt effectCallBack) {
+    public synchronized void addEffectListener(DSPEffect effectCallBack) {
         if (!effectCallBacks.contains(effectCallBack)) effectCallBacks.add(effectCallBack);
     }
 
@@ -211,13 +211,13 @@ public class AudioProcessor {
      * @param effectCallBack
      * @since 15.01.2012
      */
-    public synchronized void removeEffectListener(DSPEffekt effectCallBack) {
+    public synchronized void removeEffectListener(DSPEffect effectCallBack) {
         effectCallBacks.remove(effectCallBack);
     }
 
     private synchronized void initializeEffects(AudioFormat audioFormat, int sampleBufferLength) {
         int size = effectCallBacks.size();
-        for (DSPEffekt effectCallBack : effectCallBacks) {
+        for (DSPEffect effectCallBack : effectCallBacks) {
             effectCallBack.initialize(audioFormat, sampleBufferLength);
         }
     }
@@ -225,8 +225,8 @@ public class AudioProcessor {
     private synchronized int callEffects(float[] buffer, int start, int length) {
         int size = effectCallBacks.size();
         int anzSamples = length;
-        for (DSPEffekt effectCallBack : effectCallBacks) {
-            anzSamples = effectCallBack.doEffekt(buffer, start, anzSamples);
+        for (DSPEffect effectCallBack : effectCallBacks) {
+            anzSamples = effectCallBack.doEffect(buffer, start, anzSamples);
         }
         return anzSamples;
     }

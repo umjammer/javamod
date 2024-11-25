@@ -151,7 +151,7 @@ public class OPL3ConfigPanel extends JPanel {
                     if (parent != null) {
                         OPL3Mixer currentMixer = parent.getCurrentMixer();
                         if (currentMixer != null)
-                            currentMixer.setDoVirtualSereoMix(getVirtualStereo().isSelected());
+                            currentMixer.setDoVirtualStereoMix(getVirtualStereo().isSelected());
                     }
                 }
             });

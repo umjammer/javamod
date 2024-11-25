@@ -233,7 +233,7 @@ public class IcyInputStream extends BufferedInputStream {
             }
             metaint = nextIndex;
             if (nextIndex > -1) { // there is meta-data in the Stream
-                // now read till the first block of Meta-Data occours
+                // now read till the first block of Meta-Data occurs
                 byte[] primaryBuffer = new byte[nextIndex];
                 int pos = 0;
                 while (pos < nextIndex) pos += super.read(primaryBuffer, pos, nextIndex - pos);

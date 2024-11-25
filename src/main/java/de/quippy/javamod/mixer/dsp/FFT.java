@@ -142,7 +142,7 @@ public class FFT {
     }
 
     /**
-     * The main routine. We expect sampledata with 1.0<=x<=-1.0
+     * The main routine. We expect sample data with 1.0<=x<=-1.0
      * The return value (magnitude) will be in the same spectrum.
      *
      * @param pSample

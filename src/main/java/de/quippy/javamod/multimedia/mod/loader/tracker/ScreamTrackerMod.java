@@ -22,12 +22,15 @@
 
 package de.quippy.javamod.multimedia.mod.loader.tracker;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.Module;
-import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternContainer;
@@ -164,12 +167,25 @@ public class ScreamTrackerMod extends Module {
     }
 
     /**
+     * 44 + 4 = 48 bytes
+     * @since 3.9.6
+     */
+    @Override
+    public boolean checkLoadingPossible(InputStream inputStream) throws IOException {
+        DataInput di = new DataInputStream(inputStream);
+        di.skipBytes(0x2c);
+        byte[] buf = new byte[4];
+        di.readFully(buf);
+        return S3M_ID.equals(new String(buf));
+    }
+
+    /**
      * Set a Pattern by interpreting
      *
      * @param inputStream
      * @param pattNum
      */
-    private void setPattern(int pattNum, ModfileInputStream inputStream) throws IOException {
+    private void setPattern(int pattNum, RandomAccessInputStream inputStream) throws IOException {
         int row = 0;
         PatternRow currentRow = getPatternContainer().getPatternRow(pattNum, row);
 
@@ -191,8 +207,8 @@ public class ScreamTrackerMod extends Module {
                 int noteIndex = 0;
                 int instrument = 0;
                 int volume = -1;
-                int effekt = 0;
-                int effektOp = 0;
+                int effect = 0;
+                int effectOp = 0;
 
                 if ((packByte & 0x20) != 0) { // Note and Sample follow
                     int ton = inputStream.read();
@@ -227,9 +243,9 @@ public class ScreamTrackerMod extends Module {
                 }
 
                 if ((packByte & 0x80) != 0) { // Effects!
-                    effekt = inputStream.read();
+                    effect = inputStream.read();
                     count--;
-                    effektOp = inputStream.read();
+                    effectOp = inputStream.read();
                     count--;
                 }
 
@@ -240,22 +256,22 @@ public class ScreamTrackerMod extends Module {
                     currentElement.setInstrument(instrument);
                     if (volume != -1) {
                         if (volume >= 128 && volume <= 192) {
-                            currentElement.setVolumeEffekt(0x08);
-                            currentElement.setVolumeEffektOp(volume - 128);
+                            currentElement.setVolumeEffect(0x08);
+                            currentElement.setVolumeEffectOp(volume - 128);
                         } else {
-                            currentElement.setVolumeEffekt(1);
-                            currentElement.setVolumeEffektOp((volume > 64) ? 64 : volume);
+                            currentElement.setVolumeEffect(1);
+                            currentElement.setVolumeEffectOp((volume > 64) ? 64 : volume);
                         }
                     }
-                    currentElement.setEffekt(effekt);
-                    currentElement.setEffektOp(effektOp);
+                    currentElement.setEffect(effect);
+                    currentElement.setEffectOp(effectOp);
                 }
             }
         }
     }
 
     @Override
-    protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
+    protected void loadModFileInternal(RandomAccessInputStream inputStream) throws IOException {
         setModType(ModConstants.MODTYPE_S3M);
         setSongRestart(0);
 
@@ -402,7 +418,7 @@ public class ScreamTrackerMod extends Module {
         panningValue = new int[anzChannels];
         System.arraycopy(tmpPanning, 0, panningValue, 0, anzChannels);
         // At this point we could now sort for the effects order. What? Yes!
-        // Because ST3 does some ideocracy: Channels get a label like L1 or R2
+        // Because ST3 does some idiocracy: Channels get a label like L1 or R2
         // channels without such a label are inactive / not present. We got rid
         // of those above.
         // Effects are now interpreted: first all L1-L8 than R1-R8.
@@ -412,7 +428,7 @@ public class ScreamTrackerMod extends Module {
         // read the samples
         InstrumentsContainer instrumentContainer = new InstrumentsContainer(this, 0, getNSamples());
         setInstrumentContainer(instrumentContainer);
-        int gusAdresses = 0;
+        int gusAddresses = 0;
         boolean anySamples = false;
         for (int i = 0; i < getNSamples(); i++) {
             long pointer = paraPointers[i];
@@ -448,13 +464,13 @@ public class ScreamTrackerMod extends Module {
                 int repeatStop = inputStream.readIntelDWord();
                 if (repeatStop > sampleLength) repeatStop = sampleLength;
 
-                int repeateLength = repeatStop - repeatStart;
-                if ((repeatStart > repeatStop) || repeateLength < 2)
-                    repeatStart = repeatStop = repeateLength = 0;
+                int repeatLength = repeatStop - repeatStart;
+                if ((repeatStart > repeatStop) || repeatLength < 2)
+                    repeatStart = repeatStop = repeatLength = 0;
 
                 current.setLoopStart(repeatStart);
                 current.setLoopStop(repeatStop);
-                current.setLoopLength(repeateLength);
+                current.setLoopLength(repeatLength);
 
                 // Defaults for non-existent SustainLoop
                 current.setSustainLoopStart(0);
@@ -511,7 +527,7 @@ public class ScreamTrackerMod extends Module {
             // Again reserved data - but we pick out the GUS addresses. Schism and ModPlug use that to identify certain playback quirks
             inputStream.skip(4);
             int gusAdress = inputStream.readIntelUnsignedWord();
-            gusAdresses |= gusAdress;
+            gusAddresses |= gusAdress;
             inputStream.skip(6);
 
             // SampleName
@@ -574,10 +590,10 @@ public class ScreamTrackerMod extends Module {
                 break;
             case 1:
                 trackerName = "ScreamTracker %1d.%02x";
-                if (gusAdresses > 1) {
+                if (gusAddresses > 1) {
                     trackerName += " (GUS)";
                     songFlags |= ModConstants.SONG_S3M_GUS;
-                } else if (gusAdresses <= 1 || version == 0x1300 || !anySamples) {
+                } else if (gusAddresses <= 1 || version == 0x1300 || !anySamples) {
                     trackerName += " (SB)";
                     songFlags &= ~ModConstants.SONG_S3M_GUS;
                 }
@@ -592,7 +608,7 @@ public class ScreamTrackerMod extends Module {
                 if (version <= 0x3214)
                     trackerName = "Impulse Tracker %1d.%02x";
                 else
-                    setTrackerName(String.format("Impulse Tracker 2.14p%d", version - 0x3214));
+                    setTrackerName("Impulse Tracker 2.14p%d".formatted(version - 0x3214));
                 break;
             case 4:
                 if (version == 0x4100)

@@ -28,7 +28,7 @@ package de.quippy.javamod.multimedia.mod.midi;
 
 import java.io.IOException;
 
-import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.system.Helpers;
 
 
@@ -111,8 +111,8 @@ public class MidiMacros {
             case SFxReso -> "F0F001z";
             case SFxFltMode -> "F0F002z";
             case SFxDryWet -> "F0F003z";
-            case SFxCC -> String.format("Bc%02X", subType & 0x7F);
-            case SFxPlugParam -> String.format("F0F%03X", (subType & 0x17F) + 0x80);
+            case SFxCC -> "Bc%02X".formatted(subType & 0x7F);
+            case SFxPlugParam -> "F0F%03X".formatted((subType & 0x17F) + 0x80);
             case SFxChannelAT -> "Dcz";
             case SFxPolyAT -> "Acnz";
             case SFxPitch -> "Ec00z";
@@ -296,7 +296,7 @@ public class MidiMacros {
      * @throws IOException
      * @since 15.06.2020
      */
-    public void loadFrom(ModfileInputStream inputStream) throws IOException {
+    public void loadFrom(RandomAccessInputStream inputStream) throws IOException {
         for (int i = 0; i < ANZ_GLB; i++) midiGlobal[i] = inputStream.readString(MACRO_LEN);
         for (int i = 0; i < ANZ_SFX; i++) midiSFXExt[i] = inputStream.readString(MACRO_LEN);
         for (int i = 0; i < ANZ_ZXX; i++) midiZXXExt[i] = inputStream.readString(MACRO_LEN);

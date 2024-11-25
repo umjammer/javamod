@@ -94,7 +94,7 @@ public class DoubleProgressDialog extends JDialog implements ProgressDialog {
     }
 
     private void initialize() {
-        setName("DoublePrograssDialog");
+        setName("DoubleProgressDialog");
         setContentPane(getDownloadPane());
         pack();
         setLocation(Helpers.getFrameCenteredLocation(this, getOwner()));

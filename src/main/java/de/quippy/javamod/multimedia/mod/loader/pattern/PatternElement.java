@@ -49,10 +49,10 @@ public abstract class PatternElement {
     protected int period;
     protected int noteIndex;
     protected int instrument;
-    protected int effekt;
-    protected int effektOp;
-    protected int volumeEffekt;
-    protected int volumeEffektOp;
+    protected int effect;
+    protected int effectOp;
+    protected int volumeEffect;
+    protected int volumeEffectOp;
 
     /**
      * Constructor for PatternElement
@@ -67,17 +67,17 @@ public abstract class PatternElement {
         this.period = 0;
         this.noteIndex = 0;
         this.instrument = 0;
-        this.volumeEffekt = 0;
-        this.volumeEffektOp = 0;
-        this.effekt = 0;
-        this.effektOp = 0;
+        this.volumeEffect = 0;
+        this.volumeEffectOp = 0;
+        this.effect = 0;
+        this.effectOp = 0;
     }
 
     /**
      * @return the char representation of the current effect op
      * @since 09.01.2024
      */
-    public abstract char getEffektChar();
+    public abstract char getEffectChar();
 
     /**
      * @return the name of the effect op
@@ -95,7 +95,7 @@ public abstract class PatternElement {
      * @return the char representation of the current volume effect op
      * @since 09.01.2024
      */
-    public abstract char getVolumeColumEffektChar();
+    public abstract char getVolumeColumEffectChar();
 
     /**
      * @return the name of the volume effect op
@@ -129,19 +129,19 @@ public abstract class PatternElement {
         else
             sb.append(ModConstants.getAsHex(instrument, 2));
 
-        if (volumeEffekt == 0)
+        if (volumeEffect == 0)
             sb.append(" ..");
         else {
-            sb.append(getVolumeColumEffektChar());
-            sb.append(ModConstants.getAsHex(volumeEffektOp, 2));
+            sb.append(getVolumeColumEffectChar());
+            sb.append(ModConstants.getAsHex(volumeEffectOp, 2));
         }
 
         sb.append(' ');
-        if (effekt == 0 && effektOp == 0)
+        if (effect == 0 && effectOp == 0)
             sb.append("...");
         else {
-            sb.append(getEffektChar());
-            sb.append(ModConstants.getAsHex(effektOp, 2));
+            sb.append(getEffectChar());
+            sb.append(ModConstants.getAsHex(effectOp, 2));
         }
     }
 
@@ -174,31 +174,31 @@ public abstract class PatternElement {
     }
 
     /**
-     * @return Returns the effekt.
+     * @return Returns the effect.
      */
-    public int getEffekt() {
-        return effekt;
+    public int getEffect() {
+        return effect;
     }
 
     /**
-     * @param effekt The effekt to set.
+     * @param effect The effect to set.
      */
-    public void setEffekt(int effekt) {
-        this.effekt = effekt;
+    public void setEffect(int effect) {
+        this.effect = effect;
     }
 
     /**
-     * @return Returns the effektOp.
+     * @return Returns the effectOp.
      */
-    public int getEffektOp() {
-        return effektOp;
+    public int getEffectOp() {
+        return effectOp;
     }
 
     /**
-     * @param effektOp The effektOp to set.
+     * @param effectOp The effectOp to set.
      */
-    public void setEffektOp(int effektOp) {
-        this.effektOp = effektOp;
+    public void setEffectOp(int effectOp) {
+        this.effectOp = effectOp;
     }
 
     /**
@@ -274,28 +274,28 @@ public abstract class PatternElement {
     /**
      * @return Returns the volume.
      */
-    public int getVolumeEffekt() {
-        return volumeEffekt;
+    public int getVolumeEffect() {
+        return volumeEffect;
     }
 
     /**
-     * @param volumeEffekt The volume to set.
+     * @param volumeEffect The volume to set.
      */
-    public void setVolumeEffekt(int volumeEffekt) {
-        this.volumeEffekt = volumeEffekt;
+    public void setVolumeEffect(int volumeEffect) {
+        this.volumeEffect = volumeEffect;
     }
 
     /**
-     * @return Returns the assignedVolumeEffektOp.
+     * @return Returns the assignedVolumeEffectOp.
      */
-    public int getVolumeEffektOp() {
-        return volumeEffektOp;
+    public int getVolumeEffectOp() {
+        return volumeEffectOp;
     }
 
     /**
-     * @param volumeEffektOp The assignedVolumeEffektOp to set.
+     * @param volumeEffectOp The assignedVolumeEffectOp to set.
      */
-    public void setVolumeEffektOp(int volumeEffektOp) {
-        this.volumeEffektOp = volumeEffektOp;
+    public void setVolumeEffectOp(int volumeEffectOp) {
+        this.volumeEffectOp = volumeEffectOp;
     }
 }

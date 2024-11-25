@@ -70,9 +70,9 @@ public class ModSampleDialog extends JDialog {
     private static final String[] AUTOVIBRATO_TYPES = new String[] {"Sine", "Square", "Ramp Up", "Ramp Down", "Random"};
     private static final String[] ZOOM_TYPES = new String[] {"Auto", "1:1", "2:1", "4:1", "8:1", "16:1", "32:1"};
 
-    public static final String BUTTONPLAY_INACTIVE = "/de/quippy/javamod/main/gui/ressources/play.gif";
-    public static final String BUTTONPLAY_ACTIVE = "/de/quippy/javamod/main/gui/ressources/play_aktiv.gif";
-    public static final String BUTTONPLAY_NORMAL = "/de/quippy/javamod/main/gui/ressources/play_normal.gif";
+    public static final String BUTTONPLAY_INACTIVE = "/de/quippy/javamod/main/gui/resources/play.gif";
+    public static final String BUTTONPLAY_ACTIVE = "/de/quippy/javamod/main/gui/resources/play_aktiv.gif";
+    public static final String BUTTONPLAY_NORMAL = "/de/quippy/javamod/main/gui/resources/play_normal.gif";
 
     private static final int ADLIB_SIZE = 46;
     private static final int ATTACK_POS = 1;

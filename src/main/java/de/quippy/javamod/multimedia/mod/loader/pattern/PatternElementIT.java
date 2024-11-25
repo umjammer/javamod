@@ -47,11 +47,11 @@ public class PatternElementIT extends PatternElement {
 
     /**
      * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement#getEffektChar()
+     * @see de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement#getEffectChar()
      */
     @Override
-    public char getEffektChar() {
-        return (effekt == 0x1B) ? '#' : (effekt == 0 && effektOp != 0) ? '.' : (char) ('A' + effekt - 1);
+    public char getEffectChar() {
+        return (effect == 0x1B) ? '#' : (effect == 0 && effectOp != 0) ? '.' : (char) ('A' + effect - 1);
     }
 
     /**
@@ -60,7 +60,7 @@ public class PatternElementIT extends PatternElement {
      */
     @Override
     public String getEffectName() {
-        switch (effekt) {
+        switch (effect) {
             case 0x00:
                 return Helpers.EMPTY_STING;
             case 0x01:
@@ -100,8 +100,8 @@ public class PatternElementIT extends PatternElement {
             case 0x12:
                 return "Tremolo";
             case 0x13:        // Extended
-                int effektOpEx = effektOp & 0x0F;
-                switch (effektOp >> 4) {
+                int effectOpEx = effectOp & 0x0F;
+                switch (effectOp >> 4) {
                     case 0x1:
                         return "Glissando";
                     case 0x2:
@@ -115,7 +115,7 @@ public class PatternElementIT extends PatternElement {
                     case 0x6:
                         return "Pattern Delay Frame";
                     case 0x7:    // set NNA and others
-                        switch (effektOpEx) {
+                        switch (effectOpEx) {
                             case 0x0:
                                 return "Note Cut all NNAs";
                             case 0x1:
@@ -147,7 +147,7 @@ public class PatternElementIT extends PatternElement {
                     case 0x8:
                         return "Set Fine Panning";
                     case 0x9:    // Sound Control
-                        switch (effektOpEx) {
+                        switch (effectOpEx) {
                             case 0x0:
                                 return "No Surround";
                             case 0x1:
@@ -174,7 +174,7 @@ public class PatternElementIT extends PatternElement {
                     case 0xA:
                         return "Set High Offset";
                     case 0xB:
-                        if (effektOpEx == 0) return "Jump Loop Set";
+                        if (effectOpEx == 0) return "Jump Loop Set";
                         else return "Jump Loop";
                     case 0xC:
                         return "Note Cut";
@@ -189,9 +189,9 @@ public class PatternElementIT extends PatternElement {
                 break;
             case 0x14:
                 return
-                        (effektOp >> 4 == 0) ?    // 0x0X
+                        (effectOp >> 4 == 0) ?    // 0x0X
                                 "Set BPM (slower)" :
-                                (effektOp >> 4 == 1) ?    // 0x1X
+                                (effectOp >> 4 == 1) ?    // 0x1X
                                         "Set BPM (faster)" :
                                         "Set BPM";        // else
             case 0x15:
@@ -211,7 +211,7 @@ public class PatternElementIT extends PatternElement {
             case 0x1C:
                 return "Smooth Midi Macro";
         }
-        //logger.log(Level.ERROR, "Unknown: " + ModConstants.getAsHex(effekt, 2) + "/" + ModConstants.getAsHex(effektOp, 2));
+        //logger.log(Level.ERROR, "Unknown: " + ModConstants.getAsHex(effect, 2) + "/" + ModConstants.getAsHex(effectOp, 2));
         return Helpers.EMPTY_STING;
     }
 
@@ -221,9 +221,9 @@ public class PatternElementIT extends PatternElement {
      */
     @Override
     public int getEffectCategory() {
-        switch (effekt) {
+        switch (effect) {
             case 0x00:
-                return (effektOp == 0) ? EFFECT_NORMAL : EFFECT_NONE;
+                return (effectOp == 0) ? EFFECT_NORMAL : EFFECT_NONE;
             case 0x01:
                 return EFFECT_GLOBAL;
             case 0x02:
@@ -261,8 +261,8 @@ public class PatternElementIT extends PatternElement {
             case 0x12:
                 return EFFECT_VOLUME;
             case 0x13: // Extended
-                int effektOpEx = effektOp & 0x0F;
-                switch (effektOp >> 4) {
+                int effectOpEx = effectOp & 0x0F;
+                switch (effectOp >> 4) {
                     case 0x1:
                         return EFFECT_PITCH;
                     case 0x2:
@@ -276,7 +276,7 @@ public class PatternElementIT extends PatternElement {
                     case 0x6:
                         return EFFECT_GLOBAL;
                     case 0x7: // set NNA and others
-                        switch (effektOpEx) {
+                        switch (effectOpEx) {
                             case 0x0:
                                 return EFFECT_NORMAL;
                             case 0x1:
@@ -308,7 +308,7 @@ public class PatternElementIT extends PatternElement {
                     case 0x8:
                         return EFFECT_PANNING;
                     case 0x9: // Sound Control
-                        switch (effektOpEx) {
+                        switch (effectOpEx) {
                             case 0x0:
                                 return EFFECT_PANNING;
                             case 0x1:
@@ -370,11 +370,11 @@ public class PatternElementIT extends PatternElement {
 
     /**
      * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement#getVolumeColumEffektChar()
+     * @see de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement#getVolumeColumEffectChar()
      */
     @Override
-    public char getVolumeColumEffektChar() {
-        return switch (volumeEffekt) {
+    public char getVolumeColumEffectChar() {
+        return switch (volumeEffect) {
             case 0x01 -> 'v';
             case 0x02 -> 'd';
             case 0x03 -> 'c';
@@ -400,7 +400,7 @@ public class PatternElementIT extends PatternElement {
      */
     @Override
     public String getVolEffectName() {
-        switch (volumeEffekt) {
+        switch (volumeEffect) {
             case 0x00:
                 return Helpers.EMPTY_STING;
             case 0x01:
@@ -416,7 +416,7 @@ public class PatternElementIT extends PatternElement {
             case 0x06:
                 return "Set Vibrato Speed"; // normally not existent with IT
             case 0x07:
-                if (volumeEffektOp != 0) return "Set Vibrato Depth";
+                if (volumeEffectOp != 0) return "Set Vibrato Depth";
                 else return "Vibrato";
             case 0x08:
                 return "Set Panning";
@@ -433,7 +433,7 @@ public class PatternElementIT extends PatternElement {
             case 0x0E:
                 return "Sample cues";
         }
-        //logger.log(Level.ERROR, "Unknown: " + ModConstants.getAsHex(assignedVolumeEffekt, 2) + "/" + ModConstants.getAsHex(assignedVolumeEffektOp, 2));
+        //logger.log(Level.ERROR, "Unknown: " + ModConstants.getAsHex(assignedVolumeEffect, 2) + "/" + ModConstants.getAsHex(assignedVolumeEffectOp, 2));
         return Helpers.EMPTY_STING;
     }
 
@@ -443,7 +443,7 @@ public class PatternElementIT extends PatternElement {
      */
     @Override
     public int getVolEffectCategory() {
-        return switch (volumeEffekt) {
+        return switch (volumeEffect) {
             case 0x00 -> EFFECT_NORMAL;
             case 0x01 -> EFFECT_VOLUME;
             case 0x02 -> EFFECT_VOLUME;

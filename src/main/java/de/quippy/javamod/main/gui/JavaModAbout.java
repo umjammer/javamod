@@ -40,7 +40,7 @@ public class JavaModAbout extends JDialog {
     @Serial
     private static final long serialVersionUID = 134421312687144510L;
 
-    private static final String DEFAULTICONPATH = "ressources/quippy_the_kangaroo_about.gif";
+    private static final String DEFAULTICONPATH = "resources/quippy_the_kangaroo_about.gif";
 
     private JPanel baseContentPane = null;
     private javax.swing.JButton button_GIF = null;

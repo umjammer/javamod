@@ -85,7 +85,7 @@ public class PatternImagePosition {
                 sb.append("Instrument");
                 break;
             case COLUMN_VOLEFFECT:
-                sb.append("Volumn Effect");
+                sb.append("Volume Effect");
                 break;
             case COLUMN_VOLEFFECT_OP:
                 sb.append("Volume Effect OP");

@@ -39,7 +39,7 @@ import static java.lang.System.getLogger;
 
 
 /**
- * This outputstream will wrap audiolines and file-exports
+ * This output stream will wrap audio lines and file-exports
  * so that the mixers do not have to think about it.
  *
  * @author Daniel Becker
@@ -72,8 +72,8 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
      * @param audioFormat      the Format of delivered Audio
      * @param audioProcessor   the class of the audioProcessor - if any
      * @param exportFile       exportFile - the File to write to
-     * @param playDuringExport if true, data will be send to line and file
-     * @param keepSilent       if true, 0 bytes will be send to the line
+     * @param playDuringExport if true, data will be sent to line and file
+     * @param keepSilent       if true, 0 bytes will be sent to the line
      */
     public SoundOutputStreamImpl(AudioFormat audioFormat, AudioProcessor audioProcessor, File exportFile, boolean playDuringExport, boolean keepSilent) {
         this();
@@ -114,10 +114,10 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
                     setBalance(currentBalance);
                     openAudioProcessor();
                 } else
-                    logger.log(Level.INFO, "Audioformat is not supported");
+                    logger.log(Level.INFO, "Audio format is not supported");
             } catch (Exception ex) {
                 sourceLine = null;
-                logger.log(Level.ERROR, "Error occured when opening audio device", ex);
+                logger.log(Level.ERROR, "Error occurred when opening audio device", ex);
             }
         }
     }
@@ -146,7 +146,7 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
             int result = waveExportFile.openForWrite(exportFile, audioFormat);
             if (result != WaveFile.DDC_SUCCESS) {
                 waveExportFile = null;
-                logger.log(Level.ERROR, "Creation of exportfile was NOT successfull! " + exportFile.getAbsolutePath());
+                logger.log(Level.ERROR, "Creation of export file was NOT successfull! " + exportFile.getAbsolutePath());
             }
         }
     }
@@ -333,10 +333,6 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
         }
     }
 
-    /**
-     * @param balance
-     * @see de.quippy.javamod.io.SoundOutputStream#setBalance(float)
-     */
     @Override
     public synchronized void setBalance(float balance) {
         currentBalance = balance;
@@ -347,74 +343,41 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
         }
     }
 
-    /**
-     * @param audioProcessor
-     * @see de.quippy.javamod.io.SoundOutputStream#setAudioProcessor(de.quippy.javamod.mixer.dsp.AudioProcessor)
-     */
     @Override
     public synchronized void setAudioProcessor(AudioProcessor audioProcessor) {
         this.audioProcessor = audioProcessor;
     }
 
-    /**
-     * @param exportFile
-     * @see de.quippy.javamod.io.SoundOutputStream#setExportFile(java.io.File)
-     */
     @Override
     public synchronized void setExportFile(File exportFile) {
         this.exportFile = exportFile;
     }
 
-    /**
-     * @param waveExportFile
-     * @see de.quippy.javamod.io.SoundOutputStream#setWaveExportFile(de.quippy.javamod.io.wav.WaveFile)
-     */
     @Override
     public synchronized void setWaveExportFile(WaveFile waveExportFile) {
         this.waveExportFile = waveExportFile;
     }
 
-    /**
-     * @param playDuringExport
-     * @see de.quippy.javamod.io.SoundOutputStream#setPlayDuringExport(boolean)
-     */
     @Override
     public synchronized void setPlayDuringExport(boolean playDuringExport) {
         this.playDuringExport = playDuringExport;
     }
 
-    /**
-     * @param keepSilent
-     * @see de.quippy.javamod.io.SoundOutputStream#setKeepSilent(boolean)
-     */
     @Override
     public synchronized void setKeepSilent(boolean keepSilent) {
         this.keepSilent = keepSilent;
     }
 
-    /**
-     * @param otherStream
-     * @return
-     * @see de.quippy.javamod.io.SoundOutputStream#matches(de.quippy.javamod.io.SoundOutputStream)
-     */
     @Override
     public boolean matches(SoundOutputStream otherStream) {
         return getAudioFormat().matches(otherStream.getAudioFormat());
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.io.SoundOutputStream#getAudioFormat()
-     */
     @Override
     public synchronized AudioFormat getAudioFormat() {
         return audioFormat;
     }
 
-    /**
-     * @param newAudioFormat
-     * @see de.quippy.javamod.io.SoundOutputStream#changeAudioFormatTo(javax.sound.sampled.AudioFormat)
-     */
     @Override
     public synchronized void changeAudioFormatTo(AudioFormat newAudioFormat) {
         boolean reOpen = sourceLine != null && sourceLine.isOpen();
@@ -423,21 +386,12 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
         if (reOpen) open();
     }
 
-    /**
-     * @param newAudioFormat
-     * @param newSourceLineBufferSize
-     * @see de.quippy.javamod.io.SoundOutputStream#changeAudioFormatTo(javax.sound.sampled.AudioFormat, int)
-     */
     @Override
     public synchronized void changeAudioFormatTo(AudioFormat newAudioFormat, int newSourceLineBufferSize) {
         sourceLineBufferSize = newSourceLineBufferSize;
         changeAudioFormatTo(newAudioFormat);
     }
 
-    /**
-     * @param newSourceLineBufferSize
-     * @see de.quippy.javamod.io.SoundOutputStream#setSourceLineBufferSize(int)
-     */
     @Override
     public synchronized void setSourceLineBufferSize(int newSourceLineBufferSize) {
         sourceLineBufferSize = newSourceLineBufferSize;

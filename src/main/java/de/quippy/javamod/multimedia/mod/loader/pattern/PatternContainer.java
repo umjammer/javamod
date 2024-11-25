@@ -61,10 +61,6 @@ public class PatternContainer {
         for (int i = 0; i < anzPattern; i++) createPattern(i, rows, channels);
     }
 
-    /**
-     * @return
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -77,7 +73,7 @@ public class PatternContainer {
     }
 
     /**
-     * Set this PatternContainer to have Patterns with nChannels channels afterwards
+     * Set this PatternContainer to have Patterns with nChannels channels afterward
      *
      * @param nChannels
      * @since 24.11.2023
@@ -318,8 +314,8 @@ public class PatternContainer {
             if (c > 0 && (channelNames == null || channelNames[c] == null || channelNames[c].isEmpty() || !channelNames[c].equals(channelNames[c - 1])))
                 group++;
             double hue = group * hueFactor;    // 0...2pi
-            final double saturation = 0.3d;            // 0...2/3
-            final double brightness = 1.2d;            // 0...4/3
+            final double saturation = 0.3d;    // 0...2/3
+            final double brightness = 1.2d;    // 0...4/3
             int r = (int) Math.min(brightness * (1 + saturation * (Math.cos(hue) - 1.0)) * 255d, 255d);
             int g = (int) Math.min(brightness * (1 + saturation * (Math.cos(hue - 2.09439) - 1.0)) * 255d, 255d);
             int b = (int) Math.min(brightness * (1 + saturation * (Math.cos(hue + 2.09439) - 1.0)) * 255d, 255d);

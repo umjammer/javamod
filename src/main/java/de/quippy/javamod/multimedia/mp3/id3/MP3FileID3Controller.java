@@ -304,7 +304,7 @@ public class MP3FileID3Controller {
 
     /**
      * Set the text of the text frame specified by the id (id3v2 only).  The
-     * id should be one of the static strings specifed in ID3v2Frames class.
+     * id should be one of the static strings specified in ID3v2Frames class.
      * All id's that begin with 'T' (excluding "TXXX") are considered text
      * frames.
      *
@@ -711,7 +711,7 @@ public class MP3FileID3Controller {
     }
 
     /**
-     * Returns the textual information contained in the frame specifed by the
+     * Returns the textual information contained in the frame specified by the
      * id.  If the frame does not contain any textual information or does not
      * exist, then the empty string is returned (id3v2 only).  The id should
      * be one of the static strings defined in the ID3v2Frames class.

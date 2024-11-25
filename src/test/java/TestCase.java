@@ -17,10 +17,12 @@ import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
+
+import static vavix.util.DelayedWorker.later;
 
 
 /**
@@ -30,7 +32,6 @@ import vavi.util.properties.annotation.PropsEntity;
  * @version 0.00 2024-08-27 nsano initial version <br>
  */
 @PropsEntity(url = "file:local.properties")
-@EnabledIf("localPropertiesExists")
 class TestCase {
 
     static boolean localPropertiesExists() {
@@ -41,18 +42,25 @@ class TestCase {
     float volume = 0.2f;
 
     @Property
-    String mod;
+    String mod = "src/test/resources/test.mod";
+
+    static boolean onIde = System.getProperty("vavi.test", "").equals("ide");
+    static long time = onIde ? 1000 * 1000 : 9 * 1000;
 
     @BeforeEach
     void setup() throws Exception {
         if (localPropertiesExists()) {
             PropsEntity.Util.bind(this);
         }
-Debug.println("volume: " + volume);
+
+        System.setProperty("libgme.endless", "false" /*String.valueOf(onIde)*/);
+
+Debug.println("volume: " + volume + ", vgm.endless: " + System.getProperty("libgme.endless"));
     }
 
     @Test
     @DisplayName("gui")
+    @EnabledIfSystemProperty(named = "vavi.ide", matches = "ide")
     void test1() throws Exception {
         JavaMod.main(new String[] {mod});
 
@@ -71,14 +79,28 @@ Debug.println("volume: " + volume);
 
         CountDownLatch cdl = new CountDownLatch(1);
 
-        PlayThread playerThread = new PlayThread(mixer, thread -> { // TODO event not worked well
-Debug.println(thread);
+        PlayThread playerThread = new PlayThread(mixer, thread -> { // TODO event does not work well
+Debug.println("event: " + thread);
             if (thread.getCurrentMixer().hasFinished()) {
                 cdl.countDown();
             }
         }); // TODO extract player from thread
         playerThread.start();
 
+        if (!onIde) later(time, cdl::countDown);
         cdl.await();
+    }
+
+    @Test
+    @DisplayName("headless and thread-less")
+    @EnabledIfSystemProperty(named = "vavi.test", matches = "ide")
+    void test3() throws Exception {
+        MultimediaContainerManager.setIsHeadlessMode(true);
+        MultimediaContainer container = MultimediaContainerManager.getMultimediaContainer(mod);
+        Mixer mixer = container.createNewMixer();
+        mixer.setSoundOutputStream(new SoundOutputStreamImpl());
+        mixer.setVolume(volume);
+Debug.println("sampleRate: " + mixer.getCurrentSampleRate() + ", channels: " + mixer.getChannelCount());
+        mixer.startPlayback();
     }
 }

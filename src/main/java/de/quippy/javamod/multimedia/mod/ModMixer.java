@@ -75,7 +75,6 @@ public class ModMixer extends BasicMixer {
      * Constructor for ModMixer
      */
     public ModMixer(Module mod, int sampleSizeInBits, int channels, int sampleRate, int doISP, boolean doWideStereoMix, boolean doNoiseReduction, boolean doMegaBass, boolean doDCremoval, int doNoLoops, int maxNNAChannels, int msBufferSize, int ditherFilter, int ditherType, boolean ditherByPass) {
-        super();
         this.mod = mod;
         this.sampleSizeInBits = sampleSizeInBits;
         this.channels = channels;
@@ -101,7 +100,7 @@ public class ModMixer extends BasicMixer {
         // For the DSP-Output
         outputBufferSize = bufferSize * channels; // For each channel!
 
-        // Now for the bits (linebuffer):
+        // Now for the bits (line buffer):
         int bytesPerSample = sampleSizeInBits >> 3; // DIV 8;
         outputBufferSize *= bytesPerSample;
         output = new byte[outputBufferSize];
@@ -352,25 +351,17 @@ public class ModMixer extends BasicMixer {
         return modMixer;
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#isSeekSupported()
-     */
     @Override
     public boolean isSeekSupported() {
         return true;
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#getMillisecondPosition()
-     */
     @Override
     public long getMillisecondPosition() {
         return currentSamplesWritten * 1000L / (long) sampleRate;
     }
 
     /**
-     * @param milliseconds
-     * @see de.quippy.javamod.mixer.BasicMixer#seek(long)
      * @since 13.02.2012
      */
     @Override
@@ -378,9 +369,6 @@ public class ModMixer extends BasicMixer {
         currentSamplesWritten = modMixer.seek(milliseconds);
     }
 
-    /**
-     * @see de.quippy.javamod.mixer.Mixer#getLengthInMilliseconds()
-     */
     @Override
     public long getLengthInMilliseconds() {
         if (mod.getLengthInMilliseconds() == -1)
@@ -388,10 +376,6 @@ public class ModMixer extends BasicMixer {
         return mod.getLengthInMilliseconds();
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getChannelCount()
-     */
     @Override
     public int getChannelCount() {
         if (modMixer != null)
@@ -400,19 +384,11 @@ public class ModMixer extends BasicMixer {
             return 0;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getCurrentKBperSecond()
-     */
     @Override
     public int getCurrentKBperSecond() {
         return (getChannelCount() * sampleSizeInBits * sampleRate) / 1000;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.mixer.Mixer#getCurrentSampleRate()
-     */
     @Override
     public int getCurrentSampleRate() {
         return sampleRate;
@@ -474,7 +450,7 @@ public class ModMixer extends BasicMixer {
                         // MegaBass
                         if (doMegaBass) modDSP.processMegaBass(samples);
 
-                        // WideStrereo Mixing - but only with stereo
+                        // WideStereo Mixing - but only with stereo
                         //if (doWideStereoMix && channels>1) modDSP.processWideStereo(samples);
                         if (doWideStereoMix && channels > 1) modDSP.processStereoSurround(samples);
 
@@ -490,8 +466,8 @@ public class ModMixer extends BasicMixer {
                         if (samples[1] > maximum) samples[1] = maximum;
                         else if (samples[1] < minimum) samples[1] = minimum;
 
-                        // and after that put them into the outputbuffer
-                        // to write to the soundstream
+                        // and after that put them into the output buffer
+                        // to write to the sound stream
                         if (channels == 2) {
                             for (int i = 0; i < rounds; i++) {
                                 output[ox] = (byte) samples[0];
@@ -530,7 +506,7 @@ public class ModMixer extends BasicMixer {
                     while (isPaused()) {
                         try {
                             Thread.sleep(10L);
-                        } catch (InterruptedException ex) { /*noop*/ }
+                        } catch (InterruptedException ex) { /* noop */ }
                     }
                 }
                 if (isInSeeking()) {
@@ -538,7 +514,7 @@ public class ModMixer extends BasicMixer {
                     while (isInSeeking()) {
                         try {
                             Thread.sleep(10L);
-                        } catch (InterruptedException ex) { /*noop*/ }
+                        } catch (InterruptedException ex) { /* noop */ }
                     }
                 }
             }

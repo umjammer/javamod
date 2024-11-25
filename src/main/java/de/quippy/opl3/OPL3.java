@@ -578,11 +578,11 @@ class Channel2op extends Channel {
 
         int f_number = (fnumh << 8) + fnuml;
 
-        String str = String.format("channelBaseAddress: %d\n", channelBaseAddress) +
-                String.format("f_number: %d, block: %d\n", f_number, block) +
-                String.format("cnt: %d, feedback: %d\n", cnt, fb) +
-                String.format("op1:\n%s", op1.toString()) +
-                String.format("op2:\n%s", op2.toString());
+        String str = "channelBaseAddress: %d\n".formatted(channelBaseAddress) +
+                "f_number: %d, block: %d\n".formatted(f_number, block) +
+                "cnt: %d, feedback: %d\n".formatted(cnt, fb) +
+                "op1:\n%s".formatted(op1.toString()) +
+                "op2:\n%s".formatted(op2.toString());
 
         return str;
     }
@@ -702,13 +702,13 @@ class Channel4op extends Channel {
 
         int f_number = (fnumh << 8) + fnuml;
 
-        String str = String.format("channelBaseAddress: %d\n", channelBaseAddress) +
-                String.format("f_number: %d, block: %d\n", f_number, block) +
-                String.format("cnt: %d, feedback: %d\n", cnt, fb) +
-                String.format("op1:\n%s", op1.toString()) +
-                String.format("op2:\n%s", op2.toString()) +
-                String.format("op3:\n%s", op3.toString()) +
-                String.format("op4:\n%s", op4.toString());
+        String str = "channelBaseAddress: %d\n".formatted(channelBaseAddress) +
+                "f_number: %d, block: %d\n".formatted(f_number, block) +
+                "cnt: %d, feedback: %d\n".formatted(cnt, fb) +
+                "op1:\n%s".formatted(op1.toString()) +
+                "op2:\n%s".formatted(op2.toString()) +
+                "op3:\n%s".formatted(op3.toString()) +
+                "op4:\n%s".formatted(op4.toString());
 
         return str;
     }
@@ -887,10 +887,10 @@ class Operator {
 
         double operatorFrequency = f_number * Math.pow(2, block - 1) * OPL3Data.sampleRate / Math.pow(2, 19) * OperatorData.multTable[mult];
 
-        str.append(String.format("operatorBaseAddress: %d\n", operatorBaseAddress));
-        str.append(String.format("operatorFrequency: %f\n", operatorFrequency));
-        str.append(String.format("mult: %d, ar: %d, dr: %d, sl: %d, rr: %d, ws: %d\n", mult, ar, dr, sl, rr, ws));
-        str.append(String.format("am: %d, vib: %d, ksr: %d, egt: %d, ksl: %d, tl: %d\n", am, vib, ksr, egt, ksl, tl));
+        str.append("operatorBaseAddress: %d\n".formatted(operatorBaseAddress));
+        str.append("operatorFrequency: %f\n".formatted(operatorFrequency));
+        str.append("mult: %d, ar: %d, dr: %d, sl: %d, rr: %d, ws: %d\n".formatted(mult, ar, dr, sl, rr, ws));
+        str.append("am: %d, vib: %d, ksr: %d, egt: %d, ksl: %d, tl: %d\n".formatted(am, vib, ksr, egt, ksl, tl));
 
         return str.toString();
     }
@@ -1061,7 +1061,7 @@ class EnvelopeGenerator {
                 } else
                     stage = Stage.SUSTAIN;
             case SUSTAIN:
-                // The Sustain stage is mantained all the time of the Key ON,
+                // The Sustain stage is maintained all the time of the Key ON,
                 // even if we are in non-sustaining mode.
                 // This is necessary because, if the key is still pressed, we can
                 // change back and forth the state of EGT, and it will release and
@@ -1138,10 +1138,10 @@ class EnvelopeGenerator {
         double decayPeriodInSeconds = EnvelopeGeneratorData.decayAndReleaseTimeValuesTable[actualDecayRate][0] / 1000d;
         double releasePeriodInSeconds = EnvelopeGeneratorData.decayAndReleaseTimeValuesTable[actualReleaseRate][0] / 1000d;
         String str = "Envelope Generator: \n" +
-                String.format("\tATTACK  %f s, rate %d. \n", attackPeriodInSeconds, actualAttackRate) +
-                String.format("\tDECAY   %f s, rate %d. \n", decayPeriodInSeconds, actualDecayRate) +
-                String.format("\tSL      %f dB. \n", sustainLevel) +
-                String.format("\tRELEASE %f s, rate %d. \n", releasePeriodInSeconds, actualReleaseRate) +
+                "\tATTACK  %f s, rate %d. \n".formatted(attackPeriodInSeconds, actualAttackRate) +
+                "\tDECAY   %f s, rate %d. \n".formatted(decayPeriodInSeconds, actualDecayRate) +
+                "\tSL      %f dB. \n".formatted(sustainLevel) +
+                "\tRELEASE %f s, rate %d. \n".formatted(releasePeriodInSeconds, actualReleaseRate) +
                 "\n";
 
         return str;
@@ -1195,7 +1195,7 @@ class PhaseGenerator {
 
     @Override
     public String toString() {
-        return String.format("Operator frequency: %f Hz.\n", OPL3Data.sampleRate * phaseIncrement);
+        return "Operator frequency: %f Hz.\n".formatted(OPL3Data.sampleRate * phaseIncrement);
     }
 }
 
@@ -1259,7 +1259,7 @@ class TomTomTopCymbalChannel extends RhythmChannel {
 class TopCymbalOperator extends Operator {
 
     final static int topCymbalOperatorBaseAddress = 0x15;
-    // [QUIPPY] Cymbal and highats are far to silent. We add some "loudness" with the operator
+    // [QUIPPY] Cymbal and high hats are far to silent. We add some "loudness" with the operator
     final static double attenuation = 5d;
 
     TopCymbalOperator(OPL3 opl3, int baseAddress) {
@@ -1326,7 +1326,7 @@ class HighHatOperator extends TopCymbalOperator {
 class SnareDrumOperator extends Operator {
 
     final static int snareDrumOperatorBaseAddress = 0x14;
-    //[QUIPPY] Same as with high hats and cymbals
+    // [QUIPPY] Same as with high hats and cymbals
     final static double attenuation = 5d;
 
     SnareDrumOperator(OPL3 opl3) {
@@ -1366,7 +1366,7 @@ class SnareDrumOperator extends Operator {
 class TomTomOperator extends Operator {
 
     final static int tomTomOperatorBaseAddress = 0x12;
-    //[QUIPPY] Same as with high hats and cymbals and snare
+    // [QUIPPY] Same as with high hats and cymbals and snare
     final static double attenuation = 5d;
 
     TomTomOperator(OPL3 opl3) {
@@ -1395,7 +1395,7 @@ class BassDrumChannel extends Channel2op {
         // Bass Drum ignores first operator, when it is in series.
         if (cnt == 1) op1.ar = 0;
         super.getChannelOutput(output);
-        //[QUIPPY] Base Drum is also too silent. This is
+        // [QUIPPY] Base Drum is also too silent. This is
         // however a dirty hack!
         for (int i = 0; i < output.length; i++) output[i] *= 2;
     }
@@ -1662,7 +1662,7 @@ class EnvelopeGeneratorData {
             {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3},
             {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
     };
-    // These attack periods in miliseconds were taken from the YMF278B manual. 
+    // These attack periods in milliseconds were taken from the YMF278B manual.
     // The attack actual rates range from 0 to 63, with different data for 
     // 0%-100% and for 10%-90%: 
     final static double[][] attackTimeValuesTable = {
@@ -1687,7 +1687,7 @@ class EnvelopeGeneratorData {
             {0.00, 0.00}, {0.00, 0.00}, {0.00, 0.00}, {0.00, 0.00}
     };
 
-    // These decay and release periods in miliseconds were taken from the YMF278B manual. 
+    // These decay and release periods in milliseconds were taken from the YMF278B manual.
     // The rate index range from 0 to 63, with different data for 
     // 0%-100% and for 10%-90%: 
     final static double[][] decayAndReleaseTimeValuesTable = {

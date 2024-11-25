@@ -88,11 +88,11 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
     /** lines to show more when scrolling */
     private static final int PLUS_LINES_VISABLE = 2;
 
-    public static final String BUTTONSAVE = "/de/quippy/javamod/main/gui/ressources/save.gif";
-    public static final String BUTTONSHUFFLE = "/de/quippy/javamod/main/gui/ressources/shuffle.gif";
-    public static final String BUTTONREPEAT = "/de/quippy/javamod/main/gui/ressources/repeat.gif";
-    public static final String BUTTONREPEAT_ACTIVE = "/de/quippy/javamod/main/gui/ressources/repeat_active.gif";
-    public static final String BUTTONREPEAT_NORMAL = "/de/quippy/javamod/main/gui/ressources/repeat_normal.gif";
+    public static final String BUTTONSAVE = "/de/quippy/javamod/main/gui/resources/save.gif";
+    public static final String BUTTONSHUFFLE = "/de/quippy/javamod/main/gui/resources/shuffle.gif";
+    public static final String BUTTONREPEAT = "/de/quippy/javamod/main/gui/resources/repeat.gif";
+    public static final String BUTTONREPEAT_ACTIVE = "/de/quippy/javamod/main/gui/resources/repeat_active.gif";
+    public static final String BUTTONREPEAT_NORMAL = "/de/quippy/javamod/main/gui/resources/repeat_normal.gif";
 
     private JDialog parentFrame = null;
     private PlayList playList;
@@ -483,11 +483,11 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                                 e.consume();
                                 break;
                             case KeyEvent.VK_PAGE_UP:
-                                doMoveSelectionInList(-(getMaxVisableRows() - 1));
+                                doMoveSelectionInList(-(getMaxVisibleRows() - 1));
                                 e.consume();
                                 break;
                             case KeyEvent.VK_PAGE_DOWN:
-                                doMoveSelectionInList(getMaxVisableRows() - 1);
+                                doMoveSelectionInList(getMaxVisibleRows() - 1);
                                 e.consume();
                                 break;
                             case KeyEvent.VK_ENTER:
@@ -670,7 +670,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                     for (int i = 0; i <= lastIndex; i++) {
                         playList.remove(selectedEntries[i].getIndexInPlaylist());
                     }
-                    createList(getFirstVisableIndex());
+                    createList(getFirstVisibleIndex());
                     firePlaylistChanged();
                     playList.setSelectedElement((markAfterDeletion < 0) ? 0 : markAfterDeletion);
                     doMakeIndexVisible(markAfterDeletion);
@@ -690,7 +690,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                     if (!allEntry.isSelected())
                         playList.remove(allEntry.getIndexInPlaylist());
                 }
-                createList(getFirstVisableIndex());
+                createList(getFirstVisibleIndex());
                 firePlaylistChanged();
             } finally {
                 playlistUpdateThread.restart();
@@ -800,7 +800,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             playlistUpdateThread.halt();
             try {
                 playList.doShuffle();
-                createList(getFirstVisableIndex());
+                createList(getFirstVisibleIndex());
             } finally {
                 playlistUpdateThread.restart();
             }
@@ -946,13 +946,13 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
         return null;
     }
 
-    private int getMaxVisableRows() {
+    private int getMaxVisibleRows() {
         Rectangle size = getScrollPane().getVisibleRect();
         Point p = new Point(0, (int) size.getHeight());
         return getSelectedIndexFromPoint(p, true) - 1;
     }
 
-    private int getFirstVisableIndex() {
+    private int getFirstVisibleIndex() {
         int size = playList.size();
         for (int i = 0; i < size; i++) {
             Element element = getTableRowDocumentElementForIndex(i);
@@ -1045,11 +1045,11 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
      * @param dtde
      * @param dropResult
      * @param addToLastLoaded
-     * @see de.quippy.javamod.main.gui.tools.PlaylistDropListenerCallBack#playlistRecieved(java.awt.dnd.DropTargetDropEvent, de.quippy.javamod.main.playlist.PlayList, java.net.URL)
+     * @see de.quippy.javamod.main.gui.tools.PlaylistDropListenerCallBack#playlistReceived(java.awt.dnd.DropTargetDropEvent, de.quippy.javamod.main.playlist.PlayList, java.net.URL)
      * @since 08.03.2011
      */
     @Override
-    public void playlistRecieved(DropTargetDropEvent dtde, PlayList dropResult, URL addToLastLoaded) {
+    public void playlistReceived(DropTargetDropEvent dtde, PlayList dropResult, URL addToLastLoaded) {
         if (playList == null) {
             setNewPlaylist(dropResult);
             firePlaylistChanged();
@@ -1070,7 +1070,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
                     else if (index > playList.size()) index = playList.size();
                 }
                 playList.addAllAt(index, dropResult);
-                createList(getFirstVisableIndex());
+                createList(getFirstVisibleIndex());
                 firePlaylistChanged();
             } finally {
                 playlistUpdateThread.restart();
@@ -1133,7 +1133,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
         return html;
     }
 
-    private void createList(int makeThisIndexVisable) {
+    private void createList(int makeThisIndexVisible) {
         StringBuilder fullText = new StringBuilder("<HTML><HEAD><TITLE>PlayList</TITLE></HEAD><BODY><TABLE ID=\"TABLE\" WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">");
 
         if (playList != null) {
@@ -1151,7 +1151,7 @@ public class PlayListGUI extends JPanel implements PlaylistChangedListener, Play
             try {
                 getPlaylistTextArea().setText(fullText.toString());
                 getPlaylistTextArea().select(0, 0);
-                doMakeIndexVisible((makeThisIndexVisable < 0) ? 0 : makeThisIndexVisable);
+                doMakeIndexVisible((makeThisIndexVisible < 0) ? 0 : makeThisIndexVisible);
             } catch (Throwable ex) {
                 logger.log(Level.ERROR, "PlayListGui::createList", ex);
             }

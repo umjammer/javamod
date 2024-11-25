@@ -84,7 +84,7 @@ public class CircularBuffer<E> implements Serializable {
      * is greater or equal to popPointer) or we will enlarge the space between
      * push- and popPointer.<br>
      * This operation is not thread safe! If one thread pushes or resizes and another one
-     * is popping, this <i>will</i> result in unforseeable results.
+     * is popping, this <i>will</i> result in unforeseeable results.
      *
      * @param addSize
      * @since 02.12.2023

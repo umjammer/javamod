@@ -78,12 +78,11 @@ public class GaplessSoundOutputStreamImpl extends SoundOutputStreamImpl {
             }
         } catch (Exception ex) {
             sourceLine = null;
-            logger.log(Level.ERROR, "Error occured when opening audio device", ex);
+            logger.log(Level.ERROR, "Error occurred when opening audio device", ex);
         }
     }
 
     /**
-     * @see de.quippy.javamod.io.SoundOutputStreamImpl#open()
      * @since 27.02.2011
      */
     @Override
@@ -92,12 +91,11 @@ public class GaplessSoundOutputStreamImpl extends SoundOutputStreamImpl {
         if (playDuringExport || exportFile == null)
             openSourceLine();
         else
-            openAudioProcessor(); // open AudioProcessor (DSP-Effekts) when only exporting
+            openAudioProcessor(); // open AudioProcessor (DSP-Effects) when only exporting
         openExportFile();
     }
 
     /**
-     * @see de.quippy.javamod.io.SoundOutputStreamImpl#close()
      * @since 27.02.2011
      */
     @Override
@@ -119,8 +117,6 @@ public class GaplessSoundOutputStreamImpl extends SoundOutputStreamImpl {
     }
 
     /**
-     * @param newAudioFormat
-     * @see de.quippy.javamod.io.SoundOutputStreamImpl#changeAudioFormatTo(javax.sound.sampled.AudioFormat)
      * @since 25.02.2011
      */
     @Override

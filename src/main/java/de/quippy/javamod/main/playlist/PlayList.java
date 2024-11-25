@@ -266,7 +266,7 @@ public class PlayList {
 
     /**
      * set the current Element by timeIndex - this is only done
-     * when the time index referes to a single file in the playlist
+     * when the time index referees to a single file in the playlist
      * This Method refers to the starttimeIndex and Duration of each entry
      * The index is searched in the current entries file
      *

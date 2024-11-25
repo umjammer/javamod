@@ -22,12 +22,15 @@
 
 package de.quippy.javamod.multimedia.mod.loader.tracker;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.Module;
-import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternContainer;
@@ -120,9 +123,9 @@ public class ScreamTrackerOldMod extends Module {
         // of the header
         byte[] header = new byte[32];
         inputStream.read(header);
-        if (//header[28]!=0x1A ||	// EOF - there seem to be exceptions to this rule
-                header[29] != 2 ||        // FileType == 2 (1: we do not load, but is valid STM!)
-                        header[30] != 2 ||        // VerHi && VerMin we want to support
+        if (// header[28] != 0x1A ||	   // EOF - there seem to be exceptions to this rule
+                header[29] != 2 ||         // FileType == 2 (1: we do not load, but is valid STM!)
+                        header[30] != 2 || // VerHi && VerMin we want to support
                         (header[31] != 0 && header[31] != 10 && header[31] != 20 && header[31] != 21)) {
             return false;
         }
@@ -138,23 +141,44 @@ public class ScreamTrackerOldMod extends Module {
     }
 
     /**
+     * 32 + 28 + 4 = 64 bytes
+     * @since 3.9.6
+     */
+    @Override
+    public boolean checkLoadingPossible(InputStream inputStream) throws IOException {
+        DataInput di = new DataInputStream(inputStream);
+        byte[] header = new byte[32];
+        di.readFully(header);
+        if (header[29] != 2 || header[30] != 2 ||
+                (header[31] != 0 && header[31] != 10 && header[31] != 20 && header[31] != 21)) {
+            return false;
+        }
+        for (int c = 20; c < 28; c++) {
+            if (header[c] < 0x20 || header[c] > 0x7E)
+                return false;
+        }
+        di.skipBytes(0x3c - 32); // - 32 is header.length
+        byte[] buf = new byte[4];
+        return !S3M_ID.equals(new String(buf));
+    }
+
+    /**
      * Read the STM pattern data
      *
      * @param pattNum
      * @param row
      * @param channel
      * @param note
-     * @return
      */
     private static void createNewPatternElement(PatternContainer patternContainer, int pattNum, int row, int channel, int note) {
         PatternElement pe = patternContainer.createPatternElement(pattNum, row, channel);
 
         pe.setInstrument((note & 0xF80000) >> 19);
 
-        int oktave = (note & 0xF0000000) >> 28;
-        if (oktave != -1) {
+        int octave = (note & 0xF0000000) >> 28;
+        if (octave != -1) {
             int ton = (note & 0x0F000000) >> 24;
-            int index = (oktave + 3) * 12 + ton; // fit to it octaves
+            int index = (octave + 3) * 12 + ton; // fit to it octaves
             pe.setPeriod((index < ModConstants.noteValues.length) ? ModConstants.noteValues[index] : 0);
             pe.setNoteIndex(index + 1);
         } else {
@@ -162,23 +186,23 @@ public class ScreamTrackerOldMod extends Module {
             pe.setNoteIndex(0);
         }
 
-        pe.setEffekt((note & 0xF00) >> 8);
-        pe.setEffektOp(note & 0xff);
+        pe.setEffect((note & 0xF00) >> 8);
+        pe.setEffectOp(note & 0xff);
 
         // All trackers say: "No effect memory" - but throwing them all out is a very bad idea!
         // For instance: if it is a porta2note effect, the effect is ignored when op is zero,
         // however, the note is not played instead.
-        //if (pe.getEffektOp()==0) pe.setEffekt(0);
+        //if (pe.getEffectOp()==0) pe.setEffect(0);
 
         int volume = ((note & 0x70000) >> 16) | ((note & 0xF000) >> 9);
         if (volume <= 64) {
-            pe.setVolumeEffekt(1);
-            pe.setVolumeEffektOp(volume);
+            pe.setVolumeEffect(1);
+            pe.setVolumeEffectOp(volume);
         }
     }
 
     @Override
-    protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
+    protected void loadModFileInternal(RandomAccessInputStream inputStream) throws IOException {
         setModType(ModConstants.MODTYPE_STM);
         setNSamples(31);
         setNChannels(4);
@@ -297,14 +321,14 @@ public class ScreamTrackerOldMod extends Module {
 
         // always space for 128 pattern... With STMs we need to guess the arrangement length
         allocArrangement(128);
-        int currentSongLenth = -1;
+        int currentSongLength = -1;
         for (int i = 0; i < 128; i++) {
             int nextPatternIndex = inputStream.read();
             getArrangement()[i] = nextPatternIndex;
-            if (currentSongLenth == -1 && nextPatternIndex == 99) currentSongLenth = i;
+            if (currentSongLength == -1 && nextPatternIndex == 99) currentSongLength = i;
         }
-        while (getArrangement()[currentSongLenth - 1] >= getNPattern()) currentSongLenth--;
-        setSongLength(currentSongLenth);
+        while (getArrangement()[currentSongLength - 1] >= getNPattern()) currentSongLength--;
+        setSongLength(currentSongLength);
 
         PatternContainer patternContainer = new PatternContainer(this, getNPattern(), 64, getNChannels());
         setPatternContainer(patternContainer);

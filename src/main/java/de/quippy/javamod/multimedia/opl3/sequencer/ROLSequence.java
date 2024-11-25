@@ -20,7 +20,7 @@
  * Java port of ROL.CPP by OPLx for adplug project
  *
  * Java port and optimizations by Daniel Becker
- * - verified loading against my old Effekter loading routine
+ * - verified loading against my old Effector loading routine
  *   -> check for section start during load - some ROLs are corrupt!
  *   -> That the fillers contain the name of following section is undocumented
  *      but AdLib Composer wrote those
@@ -117,14 +117,14 @@ public class ROLSequence extends OPL3Sequence {
 
     // ----
 
-    private String FILLER_NOTE_SECTION = "Voix"; // Effekter uses "Notes" here - my bad!
+    private String FILLER_NOTE_SECTION = "Voix"; // Effector uses "Notes" here - my bad!
     private static final String FILLER_EFFEKTER_SECTION = "Notes";
     private static final String FILLER_TIMBRE_SECTION = "Timbre";
     private static final String FILLER_VOLUME_SECTION = "Volume";
     private static final String FILLER_PITCH_SECTION = "Pitch";
 
     // ----
-    private static final String EFFEKTER_MAGIC_STRING = "EFFEKTER"; // We can handle my own written effekter files.
+    private static final String EFFEKTER_MAGIC_STRING = "EFFEKTER"; // We can handle my own written effecter files.
 
     // ----
 
@@ -572,7 +572,7 @@ public class ROLSequence extends OPL3Sequence {
         if (mpROLHeader.version_major != skVersionMajor || mpROLHeader.version_minor != skVersionMinor)
             throw new IOException("Unsupported ROL-File version V" + mpROLHeader.version_major + "." + mpROLHeader.version_minor);
 
-        // Effekter uses "Notes" instead of "Voix" for next voice section
+        // Effector uses "Notes" instead of "Voix" for next voice section
         if (mpROLHeader.comment.toUpperCase().contains(EFFEKTER_MAGIC_STRING))
             FILLER_NOTE_SECTION = FILLER_EFFEKTER_SECTION;
 
@@ -767,7 +767,7 @@ public class ROLSequence extends OPL3Sequence {
     @Override
     public String getTypeName() {
         if (mpROLHeader != null)
-            return (mpROLHeader.comment.contains(EFFEKTER_MAGIC_STRING) ? "Effekter V1.0 written" : "AdLib Composer written") + " AdLib ROL File V" + mpROLHeader.version_major + '.' + mpROLHeader.version_minor;
+            return (mpROLHeader.comment.contains(EFFEKTER_MAGIC_STRING) ? "Effector V1.0 written" : "AdLib Composer written") + " AdLib ROL File V" + mpROLHeader.version_major + '.' + mpROLHeader.version_minor;
         else
             return "AdLib ROL File (no ROL Header?!)";
     }

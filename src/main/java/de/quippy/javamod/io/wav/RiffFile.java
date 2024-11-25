@@ -47,22 +47,35 @@ public class RiffFile {
     }
 
     // DDCRET
-    public static final int DDC_SUCCESS = 0; // The operation succeded
-    public static final int DDC_FAILURE = 1; // The operation failed for unspecified reasons
-    public static final int DDC_OUT_OF_MEMORY = 2; // Operation failed due to running out of memory
-    public static final int DDC_FILE_ERROR = 3; // Operation encountered file I/O error
-    public static final int DDC_INVALID_CALL = 4; // Operation was called with invalid parameters
-    public static final int DDC_USER_ABORT = 5; // Operation was aborted by the user
-    public static final int DDC_INVALID_FILE = 6; // File format does not match
+    /** The operation succeeded */
+    public static final int DDC_SUCCESS = 0;
+    /** The operation failed for unspecified reasons */
+    public static final int DDC_FAILURE = 1;
+    /** Operation failed due to running out of memory */
+    public static final int DDC_OUT_OF_MEMORY = 2;
+    /** Operation encountered file I/O error */
+    public static final int DDC_FILE_ERROR = 3;
+    /** Operation was called with invalid parameters */
+    public static final int DDC_INVALID_CALL = 4;
+    /** Operation was aborted by the user */
+    public static final int DDC_USER_ABORT = 5;
+    /** File format does not match */
+    public static final int DDC_INVALID_FILE = 6;
 
     // RiffFileMode
-    public static final int RFM_UNKNOWN = 0; // undefined type (can use to mean "N/A" or "not open")
-    public static final int RFM_WRITE = 1; // open for write
-    public static final int RFM_READ = 2; // open for read
+    /** undefined type (can use to mean "N/A" or "not open") */
+    public static final int RFM_UNKNOWN = 0;
+    /** open for write */
+    public static final int RFM_WRITE = 1;
+    /** open for read */
+    public static final int RFM_READ = 2;
 
-    private final RiffChunkHeader riff_header; // header for whole file
-    protected int fmode; // current file I/O mode
-    protected RandomAccessFile file; // I/O stream to use
+    /** header for whole file */
+    private final RiffChunkHeader riff_header;
+    /** current file I/O mode */
+    protected int fmode;
+    /** I/O stream to use */
+    protected RandomAccessFile file;
 
     /**
      * Dummy Constructor

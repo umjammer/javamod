@@ -57,13 +57,13 @@ public class PitchShiftGUI extends JPanel {
     private JPanel pitchShiftPanel = null;
     private JPanel scaleShiftPanel = null;
     private JSlider pitchSlider = null;
-    private JLabel pitchMinLable = null;
-    private JLabel pitchCenterLable = null;
-    private JLabel pitchMaxLable = null;
+    private JLabel pitchMinLabel = null;
+    private JLabel pitchCenterLabel = null;
+    private JLabel pitchMaxLabel = null;
     private JSlider sampleScaleSlider = null;
-    private JLabel scaleMinLable = null;
-    private JLabel scaleCenterLable = null;
-    private JLabel scaleMaxLable = null;
+    private JLabel scaleMinLabel = null;
+    private JLabel scaleCenterLabel = null;
+    private JLabel scaleMaxLabel = null;
     private JLabel presetOversamplingLabel = null;
     private JComboBox<Integer> presetOversampling = null;
     private JLabel presetFrameSizeLabel = null;
@@ -239,27 +239,27 @@ public class PitchShiftGUI extends JPanel {
     }
 
     public javax.swing.JLabel getPitchMinLabel() {
-        if (pitchMinLable == null) {
-            pitchMinLable = new JLabel("one octave down");
-            pitchMinLable.setFont(Helpers.getDialogFont());
+        if (pitchMinLabel == null) {
+            pitchMinLabel = new JLabel("one octave down");
+            pitchMinLabel.setFont(Helpers.getDialogFont());
         }
-        return pitchMinLable;
+        return pitchMinLabel;
     }
 
     public javax.swing.JLabel getPitchCenterLabel() {
-        if (pitchCenterLable == null) {
-            pitchCenterLable = new JLabel("center");
-            pitchCenterLable.setFont(Helpers.getDialogFont());
+        if (pitchCenterLabel == null) {
+            pitchCenterLabel = new JLabel("center");
+            pitchCenterLabel.setFont(Helpers.getDialogFont());
         }
-        return pitchCenterLable;
+        return pitchCenterLabel;
     }
 
     public javax.swing.JLabel getPitchMaxLabel() {
-        if (pitchMaxLable == null) {
-            pitchMaxLable = new JLabel("one octave up");
-            pitchMaxLable.setFont(Helpers.getDialogFont());
+        if (pitchMaxLabel == null) {
+            pitchMaxLabel = new JLabel("one octave up");
+            pitchMaxLabel.setFont(Helpers.getDialogFont());
         }
-        return pitchMaxLable;
+        return pitchMaxLabel;
     }
 
     private JSlider getScaleSlider() {
@@ -296,26 +296,26 @@ public class PitchShiftGUI extends JPanel {
     }
 
     public javax.swing.JLabel getScaleMinLabel() {
-        if (scaleMinLable == null) {
-            scaleMinLable = new JLabel("half speed");
-            scaleMinLable.setFont(Helpers.getDialogFont());
+        if (scaleMinLabel == null) {
+            scaleMinLabel = new JLabel("half speed");
+            scaleMinLabel.setFont(Helpers.getDialogFont());
         }
-        return scaleMinLable;
+        return scaleMinLabel;
     }
 
     public javax.swing.JLabel getScaleCenterLabel() {
-        if (scaleCenterLable == null) {
-            scaleCenterLable = new JLabel("normal");
-            scaleCenterLable.setFont(Helpers.getDialogFont());
+        if (scaleCenterLabel == null) {
+            scaleCenterLabel = new JLabel("normal");
+            scaleCenterLabel.setFont(Helpers.getDialogFont());
         }
-        return scaleCenterLable;
+        return scaleCenterLabel;
     }
 
     public javax.swing.JLabel getScaleMaxLabel() {
-        if (scaleMaxLable == null) {
-            scaleMaxLable = new JLabel("double speed");
-            scaleMaxLable.setFont(Helpers.getDialogFont());
+        if (scaleMaxLabel == null) {
+            scaleMaxLabel = new JLabel("double speed");
+            scaleMaxLabel.setFont(Helpers.getDialogFont());
         }
-        return scaleMaxLable;
+        return scaleMaxLabel;
     }
 }

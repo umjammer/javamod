@@ -22,14 +22,16 @@
 
 package de.quippy.javamod.multimedia.mod.loader.tracker;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 
 import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
-import de.quippy.javamod.multimedia.mod.loader.Module;
-import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope.EnvelopeType;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Instrument;
@@ -49,6 +51,8 @@ import static java.lang.System.getLogger;
 public class ImpulseTrackerMod extends ScreamTrackerMod {
 
     private static final Logger logger = getLogger(ImpulseTrackerMod.class.getName());
+
+    public static final String MAGIC = "IMPM";
 
     private static final int[] autovibit2xm = new int[] {0, 3, 1, 4, 2, 0, 0, 0};
     private static final String[] MODFILEEXTENSION = {
@@ -123,13 +127,13 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
     }
 
     /**
-     * @param env
+     * @param env the envelope
      * @param add
      * @param maxValue
-     * @param inputStream
-     * @throws IOException
+     * @param inputStream {@link RandomAccessInputStream}
+     * @throws IOException when an io error occurs
      */
-    private static void readEnvelopeData(Envelope env, int add, int maxValue, ModfileInputStream inputStream) throws IOException {
+    private static void readEnvelopeData(Envelope env, int add, int maxValue, RandomAccessInputStream inputStream) throws IOException {
         long pos = inputStream.getFilePointer();
 
         env.setITType(inputStream.read());
@@ -157,7 +161,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         inputStream.seek(pos + 82L);
     }
 
-    private static String[] readNames(ModfileInputStream inputStream, int marker, int stringSize) throws IOException {
+    private static String[] readNames(RandomAccessInputStream inputStream, int marker, int stringSize) throws IOException {
         String[] result = null;
         long readMarker = inputStream.readIntelDWord();
         if (readMarker == marker) {
@@ -173,7 +177,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
     }
 
     /**
-     * @param inputStream
+     * @param inputStream {@link ModfileInputStream}
      * @return true, if this is an impulse tracker mod, false if this is not clear
      * @see de.quippy.javamod.multimedia.mod.loader.Module#checkLoadingPossible(de.quippy.javamod.io.ModfileInputStream)
      */
@@ -181,11 +185,23 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
     public boolean checkLoadingPossible(ModfileInputStream inputStream) throws IOException {
         String id = inputStream.readString(4);
         inputStream.seek(0);
-        return id.equals("IMPM");
+        return id.equals(MAGIC);
+    }
+
+    /**
+     * 4 bytes
+     * @since 3.9.6
+     */
+    @Override
+    public boolean checkLoadingPossible(InputStream inputStream) throws IOException {
+        DataInput di = new DataInputStream(inputStream);
+        byte[] buf = new byte[4];
+        di.readFully(buf);
+        return MAGIC.equals(new String(buf));
     }
 
     @Override
-    protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
+    protected void loadModFileInternal(RandomAccessInputStream inputStream) throws IOException {
         setModType(ModConstants.MODTYPE_IT);
         setSongRestart(0);
         tempoMode = ModConstants.TEMPOMODE_CLASSIC;
@@ -195,7 +211,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
 
         // IT-ID:
         setModID(inputStream.readString(4));
-        if (!getModID().equals("IMPM")) throw new IOException("Unsupported IT Module!");
+        if (!getModID().equals(MAGIC)) throw new IOException("Unsupported IT Module!");
 
         // Songname
         setSongName(inputStream.readString(26));
@@ -494,7 +510,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                 inputStream.skip(2);
                 currentIns.setVolumeFadeOut(inputStream.readIntelUnsignedWord() << 6);
                 currentIns.setNNA(inputStream.read());
-                currentIns.setDublicateNoteCheck(inputStream.read());
+                currentIns.setDuplicateNoteCheck(inputStream.read());
                 inputStream.skip(2); // TrackerVersion, that saved the instrument - ignored
                 inputStream.skip(2); // NoS - ignored
                 currentIns.setGlobalVolume(128);
@@ -502,8 +518,8 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                 currentIns.setDefaultPan(128);
             } else {
                 currentIns.setNNA(inputStream.read());
-                currentIns.setDublicateNoteCheck(inputStream.read());
-                currentIns.setDublicateNoteAction(inputStream.read());
+                currentIns.setDuplicateNoteCheck(inputStream.read());
+                currentIns.setDuplicateNoteAction(inputStream.read());
                 currentIns.setVolumeFadeOut(inputStream.readIntelUnsignedWord() << 5);
                 currentIns.setPitchPanSeparation(inputStream.read());
                 currentIns.setPitchPanCenter(inputStream.read());
@@ -833,8 +849,8 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                         lastVolCmd[channel] = volCmd;
                         lastVolOp[channel] = volOp;
                     }
-                    element.setVolumeEffekt(lastVolCmd[channel]);
-                    element.setVolumeEffektOp(lastVolOp[channel]);
+                    element.setVolumeEffect(lastVolCmd[channel]);
+                    element.setVolumeEffectOp(lastVolOp[channel]);
                 }
                 if ((lastMask[channel] & 0x08) != 0 || (lastMask[channel] & 0x80) != 0) {
                     if ((lastMask[channel] & 0x08) != 0) {
@@ -843,8 +859,8 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                         lastData[channel] = inputStream.read();
                         patternDataLength--;
                     }
-                    element.setEffekt(lastCmd[channel]);
-                    element.setEffektOp(lastData[channel]);
+                    element.setEffect(lastCmd[channel]);
+                    element.setEffectOp(lastData[channel]);
                 }
             }
         }
@@ -962,7 +978,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         if ((getModType() & (ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT)) != 0 && patternContainer.getChannelColors() == null)
             patternContainer.createMPTMDefaultRainbowColors();
 
-        // avoid devision by zero at calculateSamplesPerTick
+        // avoid division by zero at calculateSamplesPerTick
         if (rowsPerBeat == 0 && tempoMode == ModConstants.TEMPOMODE_MODERN) rowsPerBeat = 1;
     }
 }

@@ -23,7 +23,6 @@
 package de.quippy.javamod.main.gui;
 
 import java.io.Serial;
-import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;

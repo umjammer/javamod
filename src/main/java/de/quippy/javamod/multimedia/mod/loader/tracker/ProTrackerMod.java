@@ -22,12 +22,15 @@
 
 package de.quippy.javamod.multimedia.mod.loader.tracker;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.Module;
-import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternContainer;
@@ -127,11 +130,32 @@ public class ProTrackerMod extends Module {
         inputStream.seek(1080);
         int magicNumber = inputStream.readMotorolaDWord();
         inputStream.seek(0);
+        return checkLoadingPossible(modID, magicNumber);
+    }
+
+    /**
+     * 1080 + 4 + 1080 + 4 = 2168 bytes
+     * @since 3.9.6
+     */
+    @Override
+    public boolean checkLoadingPossible(InputStream inputStream) throws IOException {
+        DataInput di = new DataInputStream(inputStream);
+        di.skipBytes(1080);
+        byte[] buf = new byte[4];
+        di.readFully(buf);
+        String modID = new String(buf);
+        di.skipBytes(1080 - 4); // - 4 is buf.length
+        int magicNumber = di.readInt();
+        return checkLoadingPossible(modID, magicNumber);
+    }
+
+    /** */
+    private static boolean checkLoadingPossible(String modID, int magicNumber) {
         return modID.equals("M.K.") || modID.equals("M!K!") || modID.equals("PATT") || modID.equals("NSMS") || modID.equals("LARD") ||
                 modID.equals("M&K!") || modID.equals("FEST") || modID.equals("N.T.") ||
                 modID.equals("OKTA") || modID.equals("OCTA") ||
                 modID.equals("CD81") || modID.equals("CD61") ||
-                magicNumber == 0x4D000000 || magicNumber == 0x38000000 ||
+                magicNumber == 0x4D00_0000 || magicNumber == 0x3800_0000 ||
                 modID.startsWith("FA0") ||
                 modID.startsWith("FLT") || modID.startsWith("EX0") ||
                 modID.endsWith("CHN") ||
@@ -143,9 +167,9 @@ public class ProTrackerMod extends Module {
     }
 
     /**
-     * @param modID
-     * @param magicNumber
-     * @return
+     * @param modID mod id
+     * @param magicNumber magic number
+     * @return mod type
      * @since 21.04.2006
      */
     private String getModType(String modID, int magicNumber) {
@@ -186,7 +210,7 @@ public class ProTrackerMod extends Module {
                     return "Oktalyzer (Atari " + modID + ")";
                 }
             }
-            if (magicNumber == 0x4D000000 || magicNumber == 0x38000000) {
+            if (magicNumber == 0x4D00_0000 || magicNumber == 0x3800_0000) {
                 isDeltaPacked = true;
                 if (modID.charAt(0) == '8') setNChannels(8);
                 else setNChannels(4);
@@ -255,7 +279,7 @@ public class ProTrackerMod extends Module {
      * @throws IOException
      * @since 23.01.2024
      */
-    private int calculateSampleDataCount(ModfileInputStream inputStream) throws IOException {
+    private int calculateSampleDataCount(RandomAccessInputStream inputStream) throws IOException {
         long reSeek = inputStream.getFilePointer();
         int fullSampleLength = 0;
         long seek = inputStream.getLength();
@@ -298,12 +322,12 @@ public class ProTrackerMod extends Module {
      * @return
      */
     private int calculatePatternCount(int fileSize, int fullSampleLength) {
-        int headerLen = 150;                    // Name+SongLen+CIAA+SongArrangement
-        if (getNSamples() > 15) headerLen += 4;    // Kennung
+        int headerLen = 150;                    // Name + SongLen + CIAA + SongArrangement
+        if (getNSamples() > 15) headerLen += 4; // Kennung
 
         int spaceForPattern = fileSize - headerLen - fullSampleLength;
 
-        // Lets find out about the highest Patternnumber used
+        // Let's find out about the highest Patternnumber used
         // in the song arrangement
         int maxPatternNumber = 0;
         for (int i = 0; i < getSongLength(); i++) {
@@ -333,7 +357,7 @@ public class ProTrackerMod extends Module {
         if (bytesLeft > 0) { // It does not fit!
             if (maxPatternNumber > patternCount) {
                 // The modfile is too short. The highest pattern is reaching into
-                // the sampledata, but it has to be read!
+                // the sample data, but it has to be read!
                 bytesLeft -= bytesPerPattern;
                 setNPattern(maxPatternNumber + 1);
             } else {
@@ -362,11 +386,11 @@ public class ProTrackerMod extends Module {
         PatternElement pe = patternContainer.createPatternElement(pattNum, row, channel);
 
         if (getNSamples() > 15) {
-            pe.setInstrument((((note & 0xF0000000) >> 24) | ((note & 0xF000) >> 12)) & getNSamples()); // & 0x1F
-            pe.setPeriod((note & 0x0FFF0000) >> 16);
+            pe.setInstrument((((note & 0xf000_0000) >> 24) | ((note & 0xf000) >> 12)) & getNSamples()); // & 0x1F
+            pe.setPeriod((note & 0x0fff_0000) >> 16);
         } else {
-            pe.setInstrument(((note & 0xF000) >> 12) & getNSamples()); // &0x0F
-            pe.setPeriod((note & 0xffFF0000) >> 16);
+            pe.setInstrument(((note & 0xf000) >> 12) & getNSamples()); // & 0x0F
+            pe.setPeriod((note & 0xffff_0000) >> 16);
         }
 
         if (pe.getPeriod() < 14 || pe.getPeriod() > 6848)
@@ -379,28 +403,28 @@ public class ProTrackerMod extends Module {
                 pe.setPeriod(0);
         }
 
-        pe.setEffekt((note & 0xF00) >> 8);
-        pe.setEffektOp(note & 0xff);
+        pe.setEffect((note & 0xf00) >> 8);
+        pe.setEffectOp(note & 0xff);
 
-        if (pe.getEffekt() == 0x0C && pe.getEffektOp() > 64) pe.setEffektOp(64);
+        if (pe.getEffect() == 0x0c && pe.getEffectOp() > 64) pe.setEffectOp(64);
         if (isStarTrekker) {
-            if (pe.getEffekt() == 0x0E) {
+            if (pe.getEffect() == 0x0e) {
                 // No support for StarTrekker assembly macros
-                pe.setEffekt(0);
-                pe.setEffektOp(0);
-            } else if (pe.getEffekt() == 0x0F && pe.getEffektOp() > 0x1F) {
+                pe.setEffect(0);
+                pe.setEffectOp(0);
+            } else if (pe.getEffect() == 0x0f && pe.getEffectOp() > 0x1f) {
                 // StarTrekker caps speed at 31 ticks per row
-                pe.setEffektOp(0x1F);
+                pe.setEffectOp(0x1f);
             }
         }
-        if (isNoiseTracker && pe.getEffekt() == 0x0D) {
+        if (isNoiseTracker && pe.getEffect() == 0x0d) {
             // No pattern break operator in NoiseTracker
-            pe.setEffektOp(0);
+            pe.setEffectOp(0);
         }
     }
 
     @Override
-    protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
+    protected void loadModFileInternal(RandomAccessInputStream inputStream) throws IOException {
         inputStream.seek(1080);
         setModID(inputStream.readString(4));
         inputStream.seek(1080);
@@ -452,7 +476,7 @@ public class ProTrackerMod extends Module {
 
             // volume 64 is maximum
             int vol = inputStream.read() & 0x7F;
-            current.setVolume((vol > 64) ? 64 : vol);
+            current.setVolume(Math.min(vol, 64));
             current.setGlobalVolume(ModConstants.MAXSAMPLEVOLUME);
 
             // Repeat start and stop

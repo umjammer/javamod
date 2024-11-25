@@ -39,6 +39,7 @@ import sidplay.audio.AudioConfig;
 import sidplay.audio.AudioDriver;
 import sidplay.audio.JWAVDriver.JWAVStreamDriver;
 import sidplay.ini.IniConfig;
+import sidplay.player.State;
 
 import static java.lang.System.getLogger;
 
@@ -222,8 +223,6 @@ logger.log(Level.DEBUG, "sid sampleRate: " + sampleRate);
     }
 
     /**
-     * @param milliseconds
-     * @see de.quippy.javamod.mixer.BasicMixer#seek(long)
      * @since 13.02.2012
      */
     @Override
@@ -231,7 +230,7 @@ logger.log(Level.DEBUG, "sid sampleRate: " + sampleRate);
         if (sidTune != null) {
             pausePlayback();
             songNumber = (int) (milliseconds / 1000L) + 1;
-//			sidTune.selectSong(songNumber); // TODO impl
+//            sidTune.selectSong(songNumber); // TODO impl
             sidPlayer.play(sidTune);
             parentSIDContainer.nameChanged();
             pausePlayback();
@@ -264,8 +263,12 @@ logger.log(Level.DEBUG, "sid sampleRate: " + sampleRate);
 
             @Override
             public void write(byte[] b, int off, int len) throws IOException {
+                try {
 logger.log(Level.TRACE, "write: " + len + ", " + sidPlayer.stateProperty().get());
-                writeSampleDataToLine(b, off, len);
+                    writeSampleDataToLine(b, off, len);
+                } catch (Exception e) {
+logger.log(Level.TRACE, "stream closed?: " + sidPlayer.stateProperty().get() + ", " + e.toString());
+                }
             }
         };
 
@@ -274,8 +277,6 @@ logger.log(Level.TRACE, "sampleRate: " + sampleRate);
             setAudioFormat(new AudioFormat(this.sampleRate, 16, 2, true, false));
             openAudioDevice();
             if (!isInitialized()) return;
-
-            boolean finished = false;
 
             AudioDriver audioDriver = sidConfig.getAudioSection().getAudio().getAudioDriver();
 logger.log(Level.TRACE, "audioDriver: " + audioDriver);
@@ -286,7 +287,10 @@ logger.log(Level.TRACE, "audioDriver: " + audioDriver);
             streamDriver.setOut(os);
 
             sidPlayer.play(sidTune);
-logger.log(Level.DEBUG, "play");
+            while (sidPlayer.stateProperty().get() != State.PLAY) {
+                try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
+            }
+logger.log(Level.DEBUG, "play: " + sidPlayer.stateProperty().get());
 
             do {
                 if (stopPositionIsReached()) setIsStopping();
@@ -299,21 +303,18 @@ logger.log(Level.DEBUG, "play");
                     sidPlayer.pauseContinue();
                     setIsPaused();
                     while (isPaused()) {
-                        try {
-                            Thread.sleep(10L);
-                        } catch (InterruptedException ex) { /* noop */ }
+                        try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
                     }
                 }
                 if (isInSeeking()) {
                     setIsSeeking();
                     while (isInSeeking()) {
-                        try {
-                            Thread.sleep(10L);
-                        } catch (InterruptedException ex) { /*noop*/ }
+                        try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
                     }
                 }
-            } while (!finished);
-            if (finished) setHasFinished(); // Piece was played full
+                try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
+            } while (sidPlayer.stateProperty().get() == State.PLAY);
+            if (sidPlayer.stateProperty().get() != State.PLAY) setHasFinished(); // Piece was played full
         } catch(Throwable ex) {
             throw new RuntimeException(ex);
         } finally {
