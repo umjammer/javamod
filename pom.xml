@@ -57,6 +57,11 @@
   <dependencies>
     <dependency>
       <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-commons</artifactId>
+      <version>1.1.14</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
       <artifactId>jlayer</artifactId>
       <version>1.0.3</version>
     </dependency>
@@ -78,7 +83,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / net.sourceforge.jmac -->
       <artifactId>jmac</artifactId>
-      <version>1.7.5v</version>
+      <version>1.7.6v</version>
     </dependency>
     <dependency>
       <groupId>com.github.umjammer.JSIDPlay2</groupId> <!-- com.github.umjammer.JSIDPlay2 / jsidplay2 -->
@@ -138,7 +143,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / vavi -->
       <artifactId>vavi-sound-emu</artifactId>
-      <version>0.0.2v</version>
+      <version>0.0.5</version>
     </dependency>
 
     <dependency>
@@ -154,13 +159,6 @@
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-commons</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-commons</artifactId>
-      <version>1.1.13</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

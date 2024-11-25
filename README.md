@@ -10,12 +10,36 @@ Java MOD Player
 - mavenized
 - made libraries outsourced as much as possible  
 
-| player | subtype                                                                    | status | library                                              | comment |
-|--------|----------------------------------------------------------------------------|--------|------------------------------------------------------|---------|
-| mod    | STK, NST, MOD, WOW, XM, FAR, MTM, STM, STS, STX, S3M, IT, MPTM, PowerPacke | ✅      | this                                                 |         |
-| opl    | ROL, LAA, CMF, DRO, SCI                                                    | ✅      | this                                                 |         |
-| sid    | SID                                                                        | ✅      | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)   |         |
-| vgm    | VGM, GBC, NSF, SPC                                                         | ✅      | [libgme](https://github.com/umjammer/vavi-sound-emu) |         |
+| player | subtype                                                                     | status | spi             | library                                              | comment                    |
+|--------|-----------------------------------------------------------------------------|--------|-----------------|------------------------------------------------------|----------------------------|
+| mod    | STK, NST, MOD, WOW, XM, FAR, MTM, STM, STS, STX, S3M, IT, MPTM, PowerPacker | ✅      | ✅               | this                                                 |                            |
+| opl    | ROL, LAA, CMF, DRO, SCI                                                     | ✅      | TBD             | this                                                 | opl3 class is duplicated   |
+| sid    | SID                                                                         | ✅      | TBD             | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)   |                            |
+| vgm    | VGM, GBC, NSF, SPC                                                          | ✅      | ✅<sup>[1]</sup> | [libgme](https://github.com/umjammer/vavi-sound-emu) | gbc,nsf,spc are not tested |
+
+<sub>[1] implemented in [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu)</sub>
+
+## Install
+
+ * [maven](https://jitpack.io/#umjammer/javamod)
+
+## Usage
+
+```java
+  AudioInputStream modAis = AudioSystem.getAudioInputStream(new BufferedInputStream(Files.newInputStream(mod), MAX_BUFFER_SIZE));
+  AudioFormat inFormat = sourceAis.getFormat();
+  AudioFormat outFormat = new AudioFormat(inFormat.getSampleRate(), 16, inFormat.getChannels(), true, inFormat.isBigEndian());
+  AudioInputStream pcmAis = AudioSystem.getAudioInputStream(outFormat, modAis);
+  SourceDataLine line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, pcmAis.getFormat()));
+  line.open(pcmAis.getFormat());
+  line.start();
+  byte[] buffer = new byte[line.getBufferSize()];
+  int bytesRead;
+  while ((bytesRead = pcmAis.read(buffer)) != -1) {
+    line.write(buffer, 0, bytesRead);
+  }
+  line.drain();
+```
 
 ## References
 
@@ -28,7 +52,7 @@ Java MOD Player
 * sid mixer details
 * extract graphic equalizer ui
 * extract led scroll ui
-* java sound spi
+* ~~java sound spi~~ sid, opl
 
 ---
 
