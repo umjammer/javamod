@@ -22,9 +22,13 @@
 
 package de.quippy.javamod.multimedia.mod.loader.tracker;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope.EnvelopeType;
@@ -96,12 +100,24 @@ public class XMMod extends ProTrackerMod {
     }
 
     /**
+     * 17 bytes
+     * @since 3.9.6
+     */
+    @Override
+    public boolean checkLoadingPossible(InputStream inputStream) throws IOException {
+        DataInput di = new DataInputStream(inputStream);
+        byte[] xmID = new byte[17];
+        di.readFully(xmID);
+        return isXMMod(new String(xmID));
+    }
+
+    /**
      * @param currentElement
      * @param inputStream
      * @throws IOException
      * @since 26.05.2006
      */
-    private static void setIntoPatternElement(ModfileInputStream inputStream, PatternElement currentElement) throws IOException {
+    private static void setIntoPatternElement(RandomAccessInputStream inputStream, PatternElement currentElement) throws IOException {
         int flags = inputStream.read();
         if ((flags & 0x80) == 0) { // is not packed
             flags = 0xff; // read all
@@ -148,7 +164,7 @@ public class XMMod extends ProTrackerMod {
      * @throws IOException
      * @since 23.01.2024
      */
-    private void readXMPattern(ModfileInputStream inputStream) throws IOException {
+    private void readXMPattern(RandomAccessInputStream inputStream) throws IOException {
         PatternContainer patternContainer = new PatternContainer(this, getNPattern());
         for (int pattNum = 0; pattNum < getNPattern(); pattNum++) {
             long LSEEK = inputStream.getFilePointer();
@@ -211,7 +227,7 @@ public class XMMod extends ProTrackerMod {
      * @throws IOException
      * @since 23.01.2024
      */
-    private void readXMSampleData(ModfileInputStream inputStream, InstrumentsContainer instrumentContainer, int anzSamples, int sampleOffsetIndex) throws IOException {
+    private void readXMSampleData(RandomAccessInputStream inputStream, InstrumentsContainer instrumentContainer, int anzSamples, int sampleOffsetIndex) throws IOException {
         for (int samIndex = 0; samIndex < anzSamples; samIndex++) {
             Sample current = instrumentContainer.getSample(samIndex + sampleOffsetIndex);
             readSampleData(current, inputStream);
@@ -266,7 +282,7 @@ public class XMMod extends ProTrackerMod {
     }
 
     @Override
-    protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
+    protected void loadModFileInternal(RandomAccessInputStream inputStream) throws IOException {
         setBaseVolume(ModConstants.MAXGLOBALVOLUME);
         setMixingPreAmp(ModConstants.MIN_MIXING_PREAMP);
 

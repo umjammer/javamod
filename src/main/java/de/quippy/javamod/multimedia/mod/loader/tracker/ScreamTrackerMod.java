@@ -22,9 +22,13 @@
 
 package de.quippy.javamod.multimedia.mod.loader.tracker;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.Module;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
@@ -163,12 +167,25 @@ public class ScreamTrackerMod extends Module {
     }
 
     /**
+     * 44 + 4 = 48 bytes
+     * @since 3.9.6
+     */
+    @Override
+    public boolean checkLoadingPossible(InputStream inputStream) throws IOException {
+        DataInput di = new DataInputStream(inputStream);
+        di.skipBytes(0x2c);
+        byte[] buf = new byte[4];
+        di.readFully(buf);
+        return S3M_ID.equals(new String(buf));
+    }
+
+    /**
      * Set a Pattern by interpreting
      *
      * @param inputStream
      * @param pattNum
      */
-    private void setPattern(int pattNum, ModfileInputStream inputStream) throws IOException {
+    private void setPattern(int pattNum, RandomAccessInputStream inputStream) throws IOException {
         int row = 0;
         PatternRow currentRow = getPatternContainer().getPatternRow(pattNum, row);
 
@@ -254,7 +271,7 @@ public class ScreamTrackerMod extends Module {
     }
 
     @Override
-    protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
+    protected void loadModFileInternal(RandomAccessInputStream inputStream) throws IOException {
         setModType(ModConstants.MODTYPE_S3M);
         setSongRestart(0);
 

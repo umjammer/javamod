@@ -22,9 +22,13 @@
 
 package de.quippy.javamod.multimedia.mod.loader.tracker;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
@@ -128,12 +132,32 @@ public class ScreamTrackerSTXMod extends ScreamTrackerOldMod {
     }
 
     /**
+     * 64 bytes
+     * @since 3.9.6
+     */
+    @Override
+    public boolean checkLoadingPossible(InputStream inputStream) throws IOException {
+        DataInput di = new DataInputStream(inputStream);
+        di.skipBytes(0x14);
+        byte[] stmID = new byte[8];
+        di.readFully(stmID);
+        for (int c = 0; c < 8; c++) {
+            if (stmID[c] < 0x20 || stmID[c] > 0x7E)
+                return false;
+        }
+        inputStream.skipNBytes(0x3C - 0x14 - 8);
+        byte[] buf = new byte[4];
+        di.readFully(buf);
+        return S3M_ID.equals(new String(buf));
+    }
+
+    /**
      * Set a Pattern by interpreting
      *
-     * @param inputStream
-     * @param pattNum
+     * @param pattNum pattern number
+     * @param inputStream {@link RandomAccessInputStream}
      */
-    private void setPattern(int pattNum, ModfileInputStream inputStream) throws IOException {
+    private void setPattern(int pattNum, RandomAccessInputStream inputStream) throws IOException {
         int row = 0;
         while (row < 64) {
             int mask = inputStream.read();
@@ -194,7 +218,7 @@ public class ScreamTrackerSTXMod extends ScreamTrackerOldMod {
     }
 
     @Override
-    protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
+    protected void loadModFileInternal(RandomAccessInputStream inputStream) throws IOException {
         setModType(ModConstants.MODTYPE_S3M);
         // is apparently not stereo
 //        songFlags |= ModConstants.SONG_ISSTEREO;

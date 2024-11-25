@@ -23,6 +23,7 @@
 package de.quippy.javamod.multimedia.mod;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.URL;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.Properties;
 import javax.swing.JPanel;
 
+import de.quippy.javamod.io.SpiModfileInputStream;
 import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
@@ -135,6 +137,15 @@ public class ModContainer extends MultimediaContainer {
             currentMod = null;
             logger.log(Level.ERROR, "[ModContainer] Failed with loading of " + url.toString(), ex);
         }
+    }
+
+    /**
+     * for javax.sound.spi
+     * @since 3.9.6
+     */
+    public void setInputStream(InputStream stream) throws IOException {
+        currentMod = ModuleFactory.getModuleFromStream(stream);
+        currentMod.loadModFile(new SpiModfileInputStream(stream));
     }
 
     @Override

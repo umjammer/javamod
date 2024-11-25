@@ -25,10 +25,12 @@ package de.quippy.javamod.multimedia.mod.loader;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
 
 import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Instrument;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
@@ -66,9 +68,12 @@ public abstract class Module {
     private int[] arrangement;
     private long[] msTimeIndex;
     private boolean[] arrangementPositionPlayed;
-    private int baseVolume; // 0..128
-    private int mixingPreAmp; //0..256 (see ModConstants.MAX_MIXING_PREAMP)
-    private int synthMixingPreAmp; // 0..256 like mixingPreAmp but for synth Channels
+    /** 0..128 */
+    private int baseVolume;
+    /** 0..256 (see ModConstants.MAX_MIXING_PREAMP) */
+    private int mixingPreAmp;
+    /** 0..256 like mixingPreAmp but for synth Channels */
+    private int synthMixingPreAmp;
 
     protected int songFlags;
 
@@ -206,22 +211,22 @@ public abstract class Module {
      */
     private static class ITDeCompressor {
 
-        // StreamData
-        private final ModfileInputStream input;
+        /** StreamData */
+        private final RandomAccessInputStream input;
         // Block of Data
         private byte[] sourceBuffer;
         private int sourceIndex;
         // Destination (24Bit signed mono!)
         private final long[] destBuffer;
         private int destIndex;
-        // Samples to fill
+        /** Samples to fill */
         private int anzSamples;
-        // Bits remaining
+        /** Bits remaining */
         private int bitsRemain;
-        // true, if we have IT Version >2.15 packed Data
+        /** true, if we have IT Version >2.15 packed Data */
         private final boolean isIT215;
 
-        public ITDeCompressor(long[] buffer, int length, boolean isIT215, ModfileInputStream inputStream) {
+        public ITDeCompressor(long[] buffer, int length, boolean isIT215, RandomAccessInputStream inputStream) {
             this.input = inputStream;
             this.sourceBuffer = null;
             this.sourceIndex = 0;
@@ -236,11 +241,11 @@ public abstract class Module {
          * reads b bits from the stream
          * Works for 8 bit streams but 8 or 16 bit samples
          *
-         * @param b
-         * @return
+         * @param b bits count
+         * @return bit read
          * @since 03.11.2007
          */
-        private int readbits(int b) {
+        private int readBits(int b) {
             // Slow version but always working and easy to understand
 //            long value = 0;
 //            int i = b;
@@ -280,7 +285,7 @@ public abstract class Module {
         /**
          * gets block of compressed data from file
          *
-         * @return
+         * @return success or not
          * @since 03.11.2007
          */
         private boolean readblock() throws IOException {
@@ -299,15 +304,15 @@ public abstract class Module {
         /**
          * This will decompress to 8 Bit samples
          *
-         * @return
+         * @return success or not
          * @since 03.11.2007
          */
         public boolean decompress8() throws IOException {
-            int blklen;        // length of compressed data block in samples
-            int blkpos;        // position in block
-            int width;        // actual "bit width"
-            int value;        // value read from file to be processed
-            byte d1, d2;    // integrator buffers (d2 for it2.15)
+            int blklen;  // length of compressed data block in samples
+            int blkpos;  // position in block
+            int width;   // actual "bit width"
+            int value;   // value read from file to be processed
+            byte d1, d2; // integrator buffers (d2 for it2.15)
 
             // now unpack data till the dest buffer is full
             while (anzSamples > 0) {
@@ -321,12 +326,12 @@ public abstract class Module {
 
                 // now uncompress the data block
                 while (blkpos < blklen) {
-                    value = readbits(width); // read bits
+                    value = readBits(width); // read bits
 
                     if (width < 7) { // method 1 (1-6 bits)
                         if (value == (1 << (width - 1))) // check for "100..."
                         {
-                            value = readbits(3) + 1; // yes -> read new width;
+                            value = readBits(3) + 1; // yes -> read new width;
                             width = (value < width) ? value : value + 1; // and expand it
                             continue; // ... next value
                         }
@@ -375,21 +380,21 @@ public abstract class Module {
         /**
          * This will decompress to 16 Bit samples
          *
-         * @return
+         * @return success or not
          * @since 03.11.2007
          */
         public boolean decompress16() throws IOException {
-            int blklen;        // length of compressed data block in samples
-            int blkpos;        // position in block
-            int width;        // actual "bit width"
-            int value;        // value read from file to be processed
-            short d1, d2;    // integrator buffers (d2 for it2.15)
+            int blklen;   // length of compressed data block in samples
+            int blkpos;   // position in block
+            int width;    // actual "bit width"
+            int value;    // value read from file to be processed
+            short d1, d2; // integrator buffers (d2 for it2.15)
 
             // now unpack data till the dest buffer is full
             while (anzSamples > 0) {
                 // read a new block of compressed data and reset variables
                 if (!readblock()) return false;
-                blklen = (anzSamples < 0x4000) ? anzSamples : 0x4000; // 0x4000 samples => 0x8000 bytes again
+                blklen = Math.min(anzSamples, 0x4000); // 0x4000 samples => 0x8000 bytes again
                 blkpos = 0;
 
                 width = 17; // start with width of 17 bits
@@ -397,11 +402,11 @@ public abstract class Module {
 
                 // now uncompress the data block
                 while (blkpos < blklen) {
-                    value = readbits(width); // read bits
+                    value = readBits(width); // read bits
 
                     if (width < 7) { // method 1 (1-6 bits)
                         if (value == (1 << (width - 1))) { // check for "100..."
-                            value = readbits(4) + 1; // yes -> read new width;
+                            value = readBits(4) + 1; // yes -> read new width;
                             width = (value < width) ? value : value + 1; // and expand it
                             continue; // ... next value
                         }
@@ -500,7 +505,7 @@ public abstract class Module {
 
     /**
      * @param inputStream by mod file input stream
-     * @throws IOException
+     * @throws IOException when an io error occurs
      * @since 31.12.2007
      */
     public void loadModFile(ModfileInputStream inputStream) throws IOException {
@@ -509,14 +514,21 @@ public abstract class Module {
     }
 
     /**
+     * for javax.sound.spi (don't use for other purpose)
+     * @since 3.9.6
+     */
+    public void loadModFile(RandomAccessInputStream inputStream) throws IOException {
+        loadModFileInternal(inputStream);
+    }
+
+    /**
      * Loads samples
      *
-     * @param current
-     * @param inputStream
-     * @return the new offset after loading
+     * @param current sample
+     * @param inputStream {@link RandomAccessInputStream}
      * @since 03.11.2007
      */
-    protected void readSampleData(Sample current, ModfileInputStream inputStream) throws IOException {
+    protected void readSampleData(Sample current, RandomAccessInputStream inputStream) throws IOException {
         int flags = current.sampleType;
         boolean isStereo = (flags & ModConstants.SM_STEREO) != 0;
         boolean isUnsigned = (flags & ModConstants.SM_PCMU) != 0;
@@ -622,20 +634,24 @@ public abstract class Module {
     /**
      * Returns true if the loader thinks this mod can be loaded by him
      *
-     * @param inputStream
-     * @return
-     * @throws IOException
+     * @param inputStream {@link ModfileInputStream}
+     * @return the loader thinks this mod can be loaded
+     * @throws IOException when an io error occurs
      * @since 10.01.2010
      */
     public abstract boolean checkLoadingPossible(ModfileInputStream inputStream) throws IOException;
 
     /**
-     * @param inputStream
-     * @return
-     * @throws IOException
+     * for javax.sound.spi
+     */
+    public abstract boolean checkLoadingPossible(InputStream inputStream) throws IOException;
+
+    /**
+     * @param inputStream {@link RandomAccessInputStream}
+     * @throws IOException when an io error occurs
      * @since 31.12.2007
      */
-    protected abstract void loadModFileInternal(ModfileInputStream inputStream) throws IOException;
+    protected abstract void loadModFileInternal(RandomAccessInputStream inputStream) throws IOException;
 
     /**
      * @return Returns the mixer.
@@ -656,16 +672,16 @@ public abstract class Module {
     /**
      * Give panning value 0..256 (128 is center)
      *
-     * @param channel
-     * @return
+     * @param channel channel for panning
+     * @return panning left 0 ~ 256 right
      */
     public abstract int getPanningValue(int channel);
 
     /**
      * Give the channel volume for this channel. 0->64
      *
-     * @param channel
-     * @return
+     * @param channel channel for volume change
+     * @return volume
      * @since 25.06.2006
      */
     public abstract int getChannelVolume(int channel);
@@ -675,14 +691,14 @@ public abstract class Module {
      * Return 1: XM IT AmigaMod Table
      * Return 2: XM IT Linear Frequency Table
      *
-     * @return
+     * @return table
      */
     public abstract int getFrequencyTable();
 
     /**
      * Returns the IT / XM Song Message, if any
      *
-     * @return
+     * @return song message
      * @since 15.06.2020
      */
     public abstract String getSongMessage();
@@ -695,7 +711,7 @@ public abstract class Module {
     public abstract MidiMacros getMidiConfig();
 
     /**
-     * @return
+     * @return tremolo?
      * @since 15.12.2023
      */
     public abstract boolean getFT2Tremolo();
@@ -707,7 +723,7 @@ public abstract class Module {
     public abstract boolean getModSpeedIsTicks();
 
     /**
-     * @param length
+     * @param length range
      * @since 25.06.2006
      */
     protected void allocArrangement(int length) {
@@ -1089,7 +1105,7 @@ public abstract class Module {
     }
 
     /**
-     * @return
+     * @return frequency table string
      * @since 18.12.2023
      */
     public String getFrequencyTableString() {
@@ -1109,7 +1125,7 @@ public abstract class Module {
     }
 
     /**
-     * @return
+     * @return short info string
      * @since 29.03.2010
      */
     public String toShortInfoString() {
@@ -1156,13 +1172,13 @@ public abstract class Module {
      * wrongly now (reads only 8 bits instead of 16 bits).
      * We support this for backwards compatibility
      *
-     * @param inputStream
-     * @param ins
-     * @param size
-     * @throws IOException
+     * @param inputStream mod stream
+     * @param ins instrument
+     * @param size bytes to read
+     * @throws IOException when an error occurs
      * @since 13.02.2024
      */
-    protected static void readExtendedFlags(ModfileInputStream inputStream, Instrument ins, int size) throws IOException {
+    protected static void readExtendedFlags(RandomAccessInputStream inputStream, Instrument ins, int size) throws IOException {
         int flag = (int) inputStream.readIntelBytes(size); // OMPT reads only 8 bits, but flags indicate 16 bit! We rely on "size"
         if ((flag & dFdd_VOLUME) != 0) ins.volumeEnvelope.on = true;
         if ((flag & dFdd_VOLSUSTAIN) != 0) ins.volumeEnvelope.sustain = true;
@@ -1185,14 +1201,14 @@ public abstract class Module {
     }
 
     /**
-     * @param inputStream
-     * @param ins
-     * @param code
-     * @param size
-     * @throws IOException
+     * @param inputStream mod stream
+     * @param ins ins instrument
+     * @param code field type code
+     * @param size size to read
+     * @throws IOException when an error occurs
      * @since 03.02.2024
      */
-    protected static void readInstrumentExtensionField(ModfileInputStream inputStream, Instrument ins, int code, int size) throws IOException {
+    protected static void readInstrumentExtensionField(RandomAccessInputStream inputStream, Instrument ins, int code, int size) throws IOException {
         if (size > inputStream.length() || ins == null) return;
         switch (code) {
             case 0x56522E2E: //"VR.." VOLRampUp
@@ -1305,18 +1321,18 @@ public abstract class Module {
     }
 
     /**
-     * @param inputStream
-     * @return
-     * @throws IOException
+     * @param inputStream mod stream
+     * @return success or not
+     * @throws IOException when an error occurs
      * @since 19.01.2024
      */
-    protected boolean loadExtendedInstrumentProperties(ModfileInputStream inputStream) throws IOException {
+    protected boolean loadExtendedInstrumentProperties(RandomAccessInputStream inputStream) throws IOException {
         int marker = inputStream.readIntelDWord();
         if (marker != 0x4D505458) { // MPTX - ModPlugExtraInstrumentInfo
             inputStream.skipBack(4);
             return false;
         }
-//		System.out.println("\nExtendedInstrumentProperties");
+//logger.log(TRACE, "ExtendedInstrumentProperties");
         while (inputStream.length() >= 6) {
             int code = inputStream.readIntelDWord();
             if (code == 0x4D505453 || // Start of MPTM extensions, non-ASCII ID or truncated field
@@ -1324,7 +1340,7 @@ public abstract class Module {
                 inputStream.skipBack(4);
                 break;
             }
-//			System.out.println("case 0x"+ModConstants.getAsHex(code, 8) + ": //\"" + Helpers.retrieveAsString(new byte[] {(byte)((code>>24)&0xff), (byte)((code>>16)&0xff), (byte)((code>>8)&0xff), (byte)(code&0xff)}, 0, 4)+"\"");
+//logger.log(TRACE, "case 0x"+ModConstants.getAsHex(code, 8) + ": //\"" + Helpers.retrieveAsString(new byte[] {(byte)((code>>24)&0xff), (byte)((code>>16)&0xff), (byte)((code>>8)&0xff), (byte)(code&0xff)}, 0, 4)+"\"");
             // size of this property for ONE instrument
             int size = inputStream.readIntelWord();
             for (int i = 0; i < getNInstruments(); i++) {
@@ -1335,22 +1351,22 @@ public abstract class Module {
     }
 
     /**
-     * @param inputStream
-     * @param ignoreChannelCount
-     * @return
-     * @throws IOException
+     * @param inputStream mod stream
+     * @param ignoreChannelCount ignore channel count or not
+     * @return success or not
+     * @throws IOException when an error occurs
      * @since 03.02.2024
      */
-    protected boolean loadExtendedSongProperties(ModfileInputStream inputStream, boolean ignoreChannelCount) throws IOException {
+    protected boolean loadExtendedSongProperties(RandomAccessInputStream inputStream, boolean ignoreChannelCount) throws IOException {
         int marker = inputStream.readIntelDWord();
         if (marker != 0x4D50_5453) { // MPTS - ModPlugExtraSongInfo
             inputStream.skipBack(4);
             return false;
         }
-//		System.out.println("\nExtendedSongProperties");
+//logger.log(TRACE, "ExtendedSongProperties");
         while (inputStream.length() >= 6) {
             int code = inputStream.readIntelDWord();
-//			System.out.println("case 0x"+ModConstants.getAsHex(code, 8) + ": //\"" + Helpers.retrieveAsString(new byte[] {(byte)((code>>24)&0xff), (byte)((code>>16)&0xff), (byte)((code>>8)&0xff), (byte)(code&0xff)}, 0, 4)+"\"");
+//logger.log(TRACE, "case 0x"+ModConstants.getAsHex(code, 8) + ": //\"" + Helpers.retrieveAsString(new byte[] {(byte)((code>>24)&0xff), (byte)((code>>16)&0xff), (byte)((code>>8)&0xff), (byte)(code&0xff)}, 0, 4)+"\"");
             int size = inputStream.readIntelWord();
 
             if (code == 0x0438_3232) { // Start of MPTM extensions, non-ASCII ID or truncated field

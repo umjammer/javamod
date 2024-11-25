@@ -22,11 +22,15 @@
 
 package de.quippy.javamod.multimedia.mod.loader.tracker;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 
 import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope.EnvelopeType;
@@ -47,6 +51,8 @@ import static java.lang.System.getLogger;
 public class ImpulseTrackerMod extends ScreamTrackerMod {
 
     private static final Logger logger = getLogger(ImpulseTrackerMod.class.getName());
+
+    public static final String MAGIC = "IMPM";
 
     private static final int[] autovibit2xm = new int[] {0, 3, 1, 4, 2, 0, 0, 0};
     private static final String[] MODFILEEXTENSION = {
@@ -121,13 +127,13 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
     }
 
     /**
-     * @param env
+     * @param env the envelope
      * @param add
      * @param maxValue
-     * @param inputStream
-     * @throws IOException
+     * @param inputStream {@link RandomAccessInputStream}
+     * @throws IOException when an io error occurs
      */
-    private static void readEnvelopeData(Envelope env, int add, int maxValue, ModfileInputStream inputStream) throws IOException {
+    private static void readEnvelopeData(Envelope env, int add, int maxValue, RandomAccessInputStream inputStream) throws IOException {
         long pos = inputStream.getFilePointer();
 
         env.setITType(inputStream.read());
@@ -155,7 +161,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         inputStream.seek(pos + 82L);
     }
 
-    private static String[] readNames(ModfileInputStream inputStream, int marker, int stringSize) throws IOException {
+    private static String[] readNames(RandomAccessInputStream inputStream, int marker, int stringSize) throws IOException {
         String[] result = null;
         long readMarker = inputStream.readIntelDWord();
         if (readMarker == marker) {
@@ -171,7 +177,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
     }
 
     /**
-     * @param inputStream
+     * @param inputStream {@link ModfileInputStream}
      * @return true, if this is an impulse tracker mod, false if this is not clear
      * @see de.quippy.javamod.multimedia.mod.loader.Module#checkLoadingPossible(de.quippy.javamod.io.ModfileInputStream)
      */
@@ -179,11 +185,23 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
     public boolean checkLoadingPossible(ModfileInputStream inputStream) throws IOException {
         String id = inputStream.readString(4);
         inputStream.seek(0);
-        return id.equals("IMPM");
+        return id.equals(MAGIC);
+    }
+
+    /**
+     * 4 bytes
+     * @since 3.9.6
+     */
+    @Override
+    public boolean checkLoadingPossible(InputStream inputStream) throws IOException {
+        DataInput di = new DataInputStream(inputStream);
+        byte[] buf = new byte[4];
+        di.readFully(buf);
+        return MAGIC.equals(new String(buf));
     }
 
     @Override
-    protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
+    protected void loadModFileInternal(RandomAccessInputStream inputStream) throws IOException {
         setModType(ModConstants.MODTYPE_IT);
         setSongRestart(0);
         tempoMode = ModConstants.TEMPOMODE_CLASSIC;
@@ -193,7 +211,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
 
         // IT-ID:
         setModID(inputStream.readString(4));
-        if (!getModID().equals("IMPM")) throw new IOException("Unsupported IT Module!");
+        if (!getModID().equals(MAGIC)) throw new IOException("Unsupported IT Module!");
 
         // Songname
         setSongName(inputStream.readString(26));

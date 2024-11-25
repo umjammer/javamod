@@ -23,8 +23,10 @@
 package de.quippy.javamod.multimedia.mod.loader.tracker;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
@@ -33,6 +35,8 @@ import de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement;
 import de.quippy.javamod.multimedia.mod.midi.MidiMacros;
 import de.quippy.javamod.multimedia.mod.mixer.BasicModMixer;
 import de.quippy.javamod.multimedia.mod.mixer.ScreamTrackerMixer;
+import vavi.io.LittleEndianDataInput;
+import vavi.io.LittleEndianDataInputStream;
 
 
 /**
@@ -105,11 +109,22 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
     }
 
     /**
+     * 4 bytes
+     * @since 3.9.6
+     */
+    @Override
+    public boolean checkLoadingPossible(InputStream inputStream) throws IOException {
+        LittleEndianDataInput ledi = new LittleEndianDataInputStream(inputStream);
+        int id = ledi.readInt();
+        return id == FARFILEMAGIC;
+    }
+
+    /**
      * Internal Routine for reading and converting a pattern entry
      *
      * @since 13.08.2022
      */
-    private void setPattern(int pattNum, int patternSize, PatternContainer patternContainer, ModfileInputStream inputStream) throws IOException {
+    private void setPattern(int pattNum, int patternSize, PatternContainer patternContainer, RandomAccessInputStream inputStream) throws IOException {
         //final int rows = (patternSizes[pattNum] - 2) / (16 * 4); // documentation: 16 Channels, 4 bytes each
         int rows = (patternSize - 2) >> 6;
 
@@ -210,7 +225,7 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
         }
     }
 
-    private void readSampleData(int sampleIndex, ModfileInputStream inputStream) throws IOException {
+    private void readSampleData(int sampleIndex, RandomAccessInputStream inputStream) throws IOException {
         Sample current = new Sample();
         current.setName(inputStream.readString(32));
 
@@ -275,7 +290,7 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
     }
 
     @Override
-    protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
+    protected void loadModFileInternal(RandomAccessInputStream inputStream) throws IOException {
         setModType(ModConstants.MODTYPE_S3M); // Farandole is converted internally to s3m
         setNChannels(16);
         setBaseVolume(ModConstants.MAXGLOBALVOLUME);

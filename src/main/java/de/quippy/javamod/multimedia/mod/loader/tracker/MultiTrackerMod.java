@@ -22,9 +22,13 @@
 
 package de.quippy.javamod.multimedia.mod.loader.tracker;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
@@ -40,6 +44,8 @@ import de.quippy.javamod.multimedia.mod.mixer.ProTrackerMixer;
  * @since 15.08.2022
  */
 public class MultiTrackerMod extends ProTrackerMod {
+
+    public static final String MAGIC = "MTM";
 
     private static final String[] MODFILEEXTENSION = {
             "mtm"
@@ -95,11 +101,23 @@ public class MultiTrackerMod extends ProTrackerMod {
     public boolean checkLoadingPossible(ModfileInputStream inputStream) throws IOException {
         String id = inputStream.readString(3);
         inputStream.seek(0);
-        return id.equals("MTM");
+        return id.equals(MAGIC);
+    }
+
+    /**
+     * 3 bytes
+     * @since 3.9.6
+     */
+    @Override
+    public boolean checkLoadingPossible(InputStream inputStream) throws IOException {
+        DataInput di = new DataInputStream(inputStream);
+        byte[] buf = new byte[3];
+        di.readFully(buf);
+        return MAGIC.equals(new String(buf));
     }
 
     @Override
-    protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
+    protected void loadModFileInternal(RandomAccessInputStream inputStream) throws IOException {
         songFlags = ModConstants.SONG_AMIGALIMITS;
         songFlags |= ModConstants.SONG_ISSTEREO;
         setModType(ModConstants.MODTYPE_MOD); // MultiTracker mods are converted to ProTracker
@@ -144,7 +162,7 @@ public class MultiTrackerMod extends ProTrackerMod {
         }
 
         // Sanity check
-        if (!id.equals("MTM") || version >= 0x20 || lastOrder > 127 || beatsPerTrack > 64 || numChannels > 32 || numChannels == 0)
+        if (!id.equals(MAGIC) || version >= 0x20 || lastOrder > 127 || beatsPerTrack > 64 || numChannels > 32 || numChannels == 0)
             throw new IOException("Unsupported MultiTrackerMod MOD");
 
         setBaseVolume(ModConstants.MAXGLOBALVOLUME);

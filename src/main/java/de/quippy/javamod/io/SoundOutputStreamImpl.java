@@ -333,10 +333,6 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
         }
     }
 
-    /**
-     * @param balance
-     * @see de.quippy.javamod.io.SoundOutputStream#setBalance(float)
-     */
     @Override
     public synchronized void setBalance(float balance) {
         currentBalance = balance;
@@ -347,74 +343,41 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
         }
     }
 
-    /**
-     * @param audioProcessor
-     * @see de.quippy.javamod.io.SoundOutputStream#setAudioProcessor(de.quippy.javamod.mixer.dsp.AudioProcessor)
-     */
     @Override
     public synchronized void setAudioProcessor(AudioProcessor audioProcessor) {
         this.audioProcessor = audioProcessor;
     }
 
-    /**
-     * @param exportFile
-     * @see de.quippy.javamod.io.SoundOutputStream#setExportFile(java.io.File)
-     */
     @Override
     public synchronized void setExportFile(File exportFile) {
         this.exportFile = exportFile;
     }
 
-    /**
-     * @param waveExportFile
-     * @see de.quippy.javamod.io.SoundOutputStream#setWaveExportFile(de.quippy.javamod.io.wav.WaveFile)
-     */
     @Override
     public synchronized void setWaveExportFile(WaveFile waveExportFile) {
         this.waveExportFile = waveExportFile;
     }
 
-    /**
-     * @param playDuringExport
-     * @see de.quippy.javamod.io.SoundOutputStream#setPlayDuringExport(boolean)
-     */
     @Override
     public synchronized void setPlayDuringExport(boolean playDuringExport) {
         this.playDuringExport = playDuringExport;
     }
 
-    /**
-     * @param keepSilent
-     * @see de.quippy.javamod.io.SoundOutputStream#setKeepSilent(boolean)
-     */
     @Override
     public synchronized void setKeepSilent(boolean keepSilent) {
         this.keepSilent = keepSilent;
     }
 
-    /**
-     * @param otherStream
-     * @return
-     * @see de.quippy.javamod.io.SoundOutputStream#matches(de.quippy.javamod.io.SoundOutputStream)
-     */
     @Override
     public boolean matches(SoundOutputStream otherStream) {
         return getAudioFormat().matches(otherStream.getAudioFormat());
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.io.SoundOutputStream#getAudioFormat()
-     */
     @Override
     public synchronized AudioFormat getAudioFormat() {
         return audioFormat;
     }
 
-    /**
-     * @param newAudioFormat
-     * @see de.quippy.javamod.io.SoundOutputStream#changeAudioFormatTo(javax.sound.sampled.AudioFormat)
-     */
     @Override
     public synchronized void changeAudioFormatTo(AudioFormat newAudioFormat) {
         boolean reOpen = sourceLine != null && sourceLine.isOpen();
@@ -423,21 +386,12 @@ public class SoundOutputStreamImpl implements SoundOutputStream {
         if (reOpen) open();
     }
 
-    /**
-     * @param newAudioFormat
-     * @param newSourceLineBufferSize
-     * @see de.quippy.javamod.io.SoundOutputStream#changeAudioFormatTo(javax.sound.sampled.AudioFormat, int)
-     */
     @Override
     public synchronized void changeAudioFormatTo(AudioFormat newAudioFormat, int newSourceLineBufferSize) {
         sourceLineBufferSize = newSourceLineBufferSize;
         changeAudioFormatTo(newAudioFormat);
     }
 
-    /**
-     * @param newSourceLineBufferSize
-     * @see de.quippy.javamod.io.SoundOutputStream#setSourceLineBufferSize(int)
-     */
     @Override
     public synchronized void setSourceLineBufferSize(int newSourceLineBufferSize) {
         sourceLineBufferSize = newSourceLineBufferSize;

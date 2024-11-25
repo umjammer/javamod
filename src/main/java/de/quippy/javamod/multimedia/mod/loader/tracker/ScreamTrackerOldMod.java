@@ -22,9 +22,13 @@
 
 package de.quippy.javamod.multimedia.mod.loader.tracker;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.Module;
 import de.quippy.javamod.multimedia.mod.loader.instrument.InstrumentsContainer;
@@ -119,9 +123,9 @@ public class ScreamTrackerOldMod extends Module {
         // of the header
         byte[] header = new byte[32];
         inputStream.read(header);
-        if (//header[28]!=0x1A ||	// EOF - there seem to be exceptions to this rule
-                header[29] != 2 ||        // FileType == 2 (1: we do not load, but is valid STM!)
-                        header[30] != 2 ||        // VerHi && VerMin we want to support
+        if (// header[28] != 0x1A ||	   // EOF - there seem to be exceptions to this rule
+                header[29] != 2 ||         // FileType == 2 (1: we do not load, but is valid STM!)
+                        header[30] != 2 || // VerHi && VerMin we want to support
                         (header[31] != 0 && header[31] != 10 && header[31] != 20 && header[31] != 21)) {
             return false;
         }
@@ -137,13 +141,34 @@ public class ScreamTrackerOldMod extends Module {
     }
 
     /**
+     * 32 + 28 + 4 = 64 bytes
+     * @since 3.9.6
+     */
+    @Override
+    public boolean checkLoadingPossible(InputStream inputStream) throws IOException {
+        DataInput di = new DataInputStream(inputStream);
+        byte[] header = new byte[32];
+        di.readFully(header);
+        if (header[29] != 2 || header[30] != 2 ||
+                (header[31] != 0 && header[31] != 10 && header[31] != 20 && header[31] != 21)) {
+            return false;
+        }
+        for (int c = 20; c < 28; c++) {
+            if (header[c] < 0x20 || header[c] > 0x7E)
+                return false;
+        }
+        di.skipBytes(0x3c - 32); // - 32 is header.length
+        byte[] buf = new byte[4];
+        return !S3M_ID.equals(new String(buf));
+    }
+
+    /**
      * Read the STM pattern data
      *
      * @param pattNum
      * @param row
      * @param channel
      * @param note
-     * @return
      */
     private static void createNewPatternElement(PatternContainer patternContainer, int pattNum, int row, int channel, int note) {
         PatternElement pe = patternContainer.createPatternElement(pattNum, row, channel);
@@ -177,7 +202,7 @@ public class ScreamTrackerOldMod extends Module {
     }
 
     @Override
-    protected void loadModFileInternal(ModfileInputStream inputStream) throws IOException {
+    protected void loadModFileInternal(RandomAccessInputStream inputStream) throws IOException {
         setModType(ModConstants.MODTYPE_STM);
         setNSamples(31);
         setNChannels(4);

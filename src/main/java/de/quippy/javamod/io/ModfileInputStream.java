@@ -53,7 +53,7 @@ public class ModfileInputStream extends RandomAccessInputStreamImpl {
      * @param file
      * @throws FileNotFoundException
      */
-    public ModfileInputStream(File file) throws FileNotFoundException, IOException {
+    public ModfileInputStream(File file) throws IOException {
         super(file);
         this.fileName = file.getAbsolutePath();
         checkForPackedFiles();
@@ -65,7 +65,7 @@ public class ModfileInputStream extends RandomAccessInputStreamImpl {
      * @param fileName
      * @throws FileNotFoundException
      */
-    public ModfileInputStream(String fileName) throws FileNotFoundException, IOException {
+    public ModfileInputStream(String fileName) throws IOException {
         super(fileName);
         this.fileName = fileName;
         checkForPackedFiles();
@@ -79,7 +79,7 @@ public class ModfileInputStream extends RandomAccessInputStreamImpl {
      * @throws FileNotFoundException
      * @throws MalformedURLException
      */
-    public ModfileInputStream(URL fromUrl) throws IOException, FileNotFoundException, MalformedURLException {
+    public ModfileInputStream(URL fromUrl) throws IOException, MalformedURLException {
         super(fromUrl);
         this.fileName = Helpers.createLocalFileStringFromURL(fromUrl, false);
         checkForPackedFiles();

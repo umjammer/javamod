@@ -24,6 +24,9 @@ package de.quippy.javamod.multimedia.mod.loader;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +34,8 @@ import java.util.ServiceLoader;
 import java.util.Set;
 
 import de.quippy.javamod.io.ModfileInputStream;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -40,6 +45,8 @@ import de.quippy.javamod.io.ModfileInputStream;
  * @since 21.04.2006
  */
 public class ModuleFactory {
+
+    private static final Logger logger = getLogger(ModuleFactory.class.getName());
 
     private static Map<String, Module> fileExtensionMap;
     private static ServiceLoader<Module> modules;
@@ -106,6 +113,33 @@ public class ModuleFactory {
             }
         }
         return null;
+    }
+
+    /**
+     * factory for javax.sound.spi
+     * @throws IllegalArgumentException no suitable module for the inout stream
+     * @throws IllegalArgumentException mark must be supported
+     * @since 3.9.6
+     */
+    public static Module getModuleFromStream(InputStream input) {
+        if (!input.markSupported()) {
+            throw new IllegalArgumentException("mark must be supported");
+        }
+        for (Module mod : getModules()) {
+            try {
+                input.mark(8192);
+                if (mod.checkLoadingPossible(input)) return mod;
+            } catch (IOException ex) {
+                /* Ignoring */
+            } finally {
+                try {
+                    input.reset();
+                } catch (IOException e) {
+logger.log(Level.TRACE, e);
+                }
+            }
+        }
+        throw new IllegalArgumentException("no suitable module for the input stream");
     }
 
     /**

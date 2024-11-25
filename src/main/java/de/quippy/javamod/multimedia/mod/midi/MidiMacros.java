@@ -28,7 +28,7 @@ package de.quippy.javamod.multimedia.mod.midi;
 
 import java.io.IOException;
 
-import de.quippy.javamod.io.ModfileInputStream;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.system.Helpers;
 
 
@@ -296,7 +296,7 @@ public class MidiMacros {
      * @throws IOException
      * @since 15.06.2020
      */
-    public void loadFrom(ModfileInputStream inputStream) throws IOException {
+    public void loadFrom(RandomAccessInputStream inputStream) throws IOException {
         for (int i = 0; i < ANZ_GLB; i++) midiGlobal[i] = inputStream.readString(MACRO_LEN);
         for (int i = 0; i < ANZ_SFX; i++) midiSFXExt[i] = inputStream.readString(MACRO_LEN);
         for (int i = 0; i < ANZ_ZXX; i++) midiZXXExt[i] = inputStream.readString(MACRO_LEN);

@@ -42,8 +42,10 @@ import de.quippy.javamod.multimedia.mod.midi.MidiMacros;
  */
 public class ProTrackerMixer extends BasicModMixer {
 
-    // Pointer to the correct mapping table - like FT2 does it to not
-    // check all the time
+    /**
+     * Pointer to the correct mapping table - like FT2 does it to not
+     * check all the time
+     */
     private int[] note2Period;
 
     /**
@@ -53,11 +55,6 @@ public class ProTrackerMixer extends BasicModMixer {
         super(mod, sampleRate, doISP, doNoLoops, maxNNAChannels);
     }
 
-    /**
-     * @param channel
-     * @param aktMemo
-     * @see de.quippy.javamod.multimedia.mod.mixer.BasicModMixer#initializeMixer(int, de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory)
-     */
     @Override
     protected void initializeMixer(int channel, ChannelMemory aktMemo) {
         if (isXM) {
@@ -72,8 +69,6 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * Sets the borders for Portas
      *
-     * @param aktMemo
-     * @see de.quippy.javamod.multimedia.mod.mixer.BasicModMixer#setPeriodBorders(de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory)
      * @since 17.06.2010
      */
     @Override
@@ -87,19 +82,13 @@ public class ProTrackerMixer extends BasicModMixer {
         }
     }
 
-    /**
-     * @param aktMemo
-     * @param period
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.mixer.BasicModMixer#getFineTunePeriod(de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory, int)
-     */
     @Override
     protected int getFineTunePeriod(ChannelMemory aktMemo, int period) {
         int noteIndex = period - 1; // Period is only a note index now. No period - easier lookup
         switch (frequencyTableType) {
             case ModConstants.AMIGA_TABLE:
                 int lookUpFineTune = ((aktMemo.currentFineTune < 0) ? aktMemo.currentFineTune + 16 : aktMemo.currentFineTune) * 37;
-                int proTrackerIndex = noteIndex - (3 * 12); // the noteindex we use has 3 more octaves than the PT period table
+                int proTrackerIndex = noteIndex - (3 * 12); // the note index we use has 3 more octaves than the PT period table
                 if (proTrackerIndex > 35) proTrackerIndex = 35;
                 return ModConstants.periodTable[lookUpFineTune + proTrackerIndex] << ModConstants.PERIOD_SHIFT;
 
@@ -113,11 +102,6 @@ public class ProTrackerMixer extends BasicModMixer {
         }
     }
 
-    /**
-     * @param aktMemo
-     * @param newPeriod
-     * @see de.quippy.javamod.multimedia.mod.mixer.BasicModMixer#setNewPlayerTuningFor(de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory, int)
-     */
     @Override
     protected void setNewPlayerTuningFor(ChannelMemory aktMemo, int newPeriod) {
         aktMemo.currentNotePeriodSet = newPeriod;
@@ -192,8 +176,8 @@ public class ProTrackerMixer extends BasicModMixer {
     }
 
     /**
-     * @param aktMemo
-     * @param forNote
+     * @param aktMemo memory
+     * @param forNote note no. or {@link ModConstants#KEY_OFF}
      * @since 11.07.2024
      */
     protected void triggerFTNote(ChannelMemory aktMemo, int forNote) {
@@ -242,7 +226,7 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * Convenient Method of FT2 retriggerInstrument
      *
-     * @param aktMemo
+     * @param aktMemo memory
      * @since 09.07.2024
      */
     protected void triggerFTInstrument(ChannelMemory aktMemo) {
@@ -257,7 +241,7 @@ public class ProTrackerMixer extends BasicModMixer {
      * Trigger the ProTracker period - doRetrg()
      * From NoteDelay, setNewInstrumentAndPeriod
      *
-     * @param aktMemo
+     * @param aktMemo memory
      * @since 11.07.2024
      */
     private void triggerPTPeriod(ChannelMemory aktMemo) {
@@ -267,7 +251,7 @@ public class ProTrackerMixer extends BasicModMixer {
     }
 
     /**
-     * @param aktMemo
+     * @param aktMemo memory
      * @since 26.07.2024
      */
     protected void doKeyOff(ChannelMemory aktMemo) {
@@ -289,8 +273,6 @@ public class ProTrackerMixer extends BasicModMixer {
     }
 
     /**
-     * @param aktMemo
-     * @see de.quippy.javamod.multimedia.mod.mixer.BasicModMixer#setNewInstrumentAndPeriod(de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory)
      * @since 14.07.2024
      */
     @Override
@@ -401,8 +383,6 @@ public class ProTrackerMixer extends BasicModMixer {
 
     /**
      * Do the effects of a row. This is mostly the setting of effects
-     *
-     * @param aktMemo
      */
     @Override
     protected void doRowEffects(ChannelMemory aktMemo) {
@@ -492,7 +472,7 @@ public class ProTrackerMixer extends BasicModMixer {
                 if (newSampleOffset != 0) {
                     if (rowsUsed.get() == 0) { // old behavior
                         aktMemo.sampleOffset = aktMemo.highSampleOffset << 16 | newSampleOffset << 8;
-//						aktMemo.highSampleOffset = 0; // set zero after usage?!
+//                        aktMemo.highSampleOffset = 0; // set zero after usage?!
                     } else
                         aktMemo.sampleOffset = newSampleOffset;
                 }
@@ -834,10 +814,10 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * FT2 Compatibility. This way we do not need to try it, we are...
      *
-     * @param aktMemo
-     * @param myPeriod
-     * @param arpNote
-     * @return
+     * @param aktMemo memory
+     * @param myPeriod period
+     * @param arpNote note
+     * @return period
      * @since 14.03.2024
      */
     private int adjustFTPeriodFromNote(ChannelMemory aktMemo, int myPeriod, int arpNote) {
@@ -871,7 +851,7 @@ public class ProTrackerMixer extends BasicModMixer {
     }
 
     /**
-     * @param aktMemo
+     * @param aktMemo memory
      * @since 14.03.2024
      */
     private void doArpeggio(ChannelMemory aktMemo) {
@@ -888,7 +868,7 @@ public class ProTrackerMixer extends BasicModMixer {
     }
 
     /**
-     * @param aktMemo
+     * @param aktMemo memory
      * @since 20.03.2024
      */
     protected void preparePortaToNoteEffect(ChannelMemory aktMemo) {
@@ -945,7 +925,7 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * Convenient Method for the Porta to note Effect
      *
-     * @param aktMemo
+     * @param aktMemo memory
      */
     protected void doPortaToNoteEffect(ChannelMemory aktMemo) {
         // in FT2, things are very special
@@ -981,7 +961,7 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * Convenient Method for the Porta Up Effect
      *
-     * @param aktMemo
+     * @param aktMemo memory
      * @since 08.06.2020
      */
     private void doPortaUp(ChannelMemory aktMemo, int op) {
@@ -1003,7 +983,7 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * Convenient Method for the Porta Down Effect
      *
-     * @param aktMemo
+     * @param aktMemo memory
      * @since 08.06.2020
      */
     private void doPortaDown(ChannelMemory aktMemo, int op) {
@@ -1060,9 +1040,9 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * returns values in the range of -255..255
      *
-     * @param type
-     * @param position
-     * @return
+     * @param type type
+     * @param position position
+     * @return overrun
      * @since 29.06.2020
      */
     private static int getVibratoDelta(int type, int position) {
@@ -1085,7 +1065,7 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * Convenient Method for the vibrato effect
      *
-     * @param aktMemo
+     * @param aktMemo memory
      */
     private void doVibratoEffect(ChannelMemory aktMemo) {
         boolean isTick0 = currentTick == currentTempo;
@@ -1101,7 +1081,7 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * Convenient Method for the tremolo effect
      *
-     * @param aktMemo
+     * @param aktMemo memory
      */
     private void doTremoloEffect(ChannelMemory aktMemo) {
         boolean isTick0 = currentTick == currentTempo;
@@ -1126,7 +1106,7 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * Convenient Method for the panbrello effect (only OMPT extended XM style!)
      *
-     * @param aktMemo
+     * @param aktMemo memory
      */
     private void doPirandelloEffect(ChannelMemory aktMemo) {
         int pDelta = getVibratoDelta(aktMemo.panbrelloType, (aktMemo.panbrelloTablePos + 0x10) >> 2); // start with top value and be slow
@@ -1142,7 +1122,7 @@ public class ProTrackerMixer extends BasicModMixer {
      * It was basically implemented in FT2 for STM compatibility.
      * However, as it is an FT2 effect, we should do it as FT2 implemented it
      *
-     * @param aktMemo
+     * @param aktMemo memory
      */
     private void doTremorEffect(ChannelMemory aktMemo) {
         // For FT we need two parameter: tremorParam (we use tremorOntimeSet) and tremorPos (we use tremorOfftimeSet)
@@ -1171,7 +1151,7 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * Convenient Method for the VolumeSlide effect
      *
-     * @param aktMemo
+     * @param aktMemo memory
      */
     private void doVolumeSlideEffect(ChannelMemory aktMemo, int volumeSlideValue) {
         if ((volumeSlideValue & 0xF0) == 0) {
@@ -1191,7 +1171,7 @@ public class ProTrackerMixer extends BasicModMixer {
      * Convenient Method for the Global VolumeSlide effect
      * Only on Tick Zero!
      *
-     * @param aktMemo
+     * @param aktMemo memory
      * @since 21.06.2006
      */
     private void doGlobalVolumeSlideEffect(ChannelMemory aktMemo) {
@@ -1207,7 +1187,7 @@ public class ProTrackerMixer extends BasicModMixer {
     }
 
     /**
-     * @param aktMemo
+     * @param aktMemo memory
      * @param element
      * @since 18.01.2024
      */
@@ -1256,7 +1236,7 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * Convenient Method for the VolumeSlide Effect
      *
-     * @param aktMemo
+     * @param aktMemo memory
      */
     private void doPanningSlideEffect(ChannelMemory aktMemo) {
         aktMemo.doSurround = false;
@@ -1390,7 +1370,7 @@ public class ProTrackerMixer extends BasicModMixer {
      * Why MPT does also consider sustainLoops (MODs do not have that) is beyond
      * my knowledge...
      *
-     * @param aktMemo
+     * @param aktMemo memory
      * @since 31.01.2024
      */
     private void doFunkIt(ChannelMemory aktMemo) {
@@ -1418,7 +1398,7 @@ public class ProTrackerMixer extends BasicModMixer {
      * E8x was sometimes entirely replaced with code used for demo fx syncing in
      * demo mod players
      *
-     * @param aktMemo
+     * @param aktMemo memory
      * @since 09.03.2024
      */
     private void doKarplusStrong(ChannelMemory aktMemo) {
@@ -1485,8 +1465,8 @@ public class ProTrackerMixer extends BasicModMixer {
     }
 
     /**
-     * @param aktMemo
-     * @param position
+     * @param aktMemo memory
+     * @param position position
      * @since 02.07.2024
      */
     protected void setEnvelopePosition(ChannelMemory aktMemo, int position) {
@@ -1507,7 +1487,7 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * Do the Effects during Ticks
      *
-     * @param aktMemo
+     * @param aktMemo memory
      */
     @Override
     protected void doTickEffects(ChannelMemory aktMemo) {
@@ -1704,10 +1684,6 @@ public class ProTrackerMixer extends BasicModMixer {
         }
     }
 
-    /**
-     * @param aktMemo
-     * @see de.quippy.javamod.multimedia.mod.mixer.BasicModMixer#doVolumeColumnTickEffect(de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory)
-     */
     @Override
     protected void doVolumeColumnTickEffect(ChannelMemory aktMemo) {
         if (aktMemo.assignedVolumeEffect == 0) return;
