@@ -8,14 +8,15 @@
 Java MOD Player
 
 - mavenized
-- made libraries outsourced as much as possible  
+- made libraries outsourced as much as possible
+- javax.sound.spi compliant
 
-| player | subtype                                                                     | status | spi             | library                                              | comment                    |
-|--------|-----------------------------------------------------------------------------|--------|-----------------|------------------------------------------------------|----------------------------|
-| mod    | STK, NST, MOD, WOW, XM, FAR, MTM, STM, STS, STX, S3M, IT, MPTM, PowerPacker | ✅      | ✅               | this                                                 |                            |
-| opl    | ROL, LAA, CMF, DRO, SCI                                                     | ✅      | TBD             | this                                                 | opl3 class is duplicated   |
-| sid    | SID                                                                         | ✅      | TBD             | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)   |                            |
-| vgm    | VGM, GBC, NSF, SPC                                                          | ✅      | ✅<sup>[1]</sup> | [libgme](https://github.com/umjammer/vavi-sound-emu) | gbc,nsf,spc are not tested |
+| player | subtype                                                                     | status |       spi       | library                                              | comment                    |
+|--------|-----------------------------------------------------------------------------|:------:|:---------------:|------------------------------------------------------|----------------------------|
+| mod    | STK, NST, MOD, WOW, XM, FAR, MTM, STM, STS, STX, S3M, IT, MPTM, PowerPacker |   ✅    |        ✅        | this                                                 |                            |
+| opl    | ROL, LAA, CMF, DRO, SCI                                                     |   ✅    |        ✅        | this                                                 | opl3 class is duplicated   |
+| sid    | SID                                                                         |   ✅    |       TBD       | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)   |                            |
+| vgm    | VGM, GBC, NSF, SPC                                                          |   ✅    | ✅<sup>[1]</sup> | [libgme](https://github.com/umjammer/vavi-sound-emu) | gbc,nsf,spc are not tested |
 
 <sub>[1] implemented in [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu)</sub>
 
@@ -53,6 +54,8 @@ Java MOD Player
 * extract graphic equalizer ui
 * extract led scroll ui
 * ~~java sound spi~~ sid, opl
+* i made input stream wrapper, so methods for input stream are no more needed?
+* rename to vavi-sound-mod
 
 ---
 

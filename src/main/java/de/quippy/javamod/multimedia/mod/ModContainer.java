@@ -36,6 +36,7 @@ import de.quippy.javamod.io.SpiModfileInputStream;
 import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
+import de.quippy.javamod.multimedia.SpiMultimediaContainer;
 import de.quippy.javamod.multimedia.mod.gui.ModInstrumentDialog;
 import de.quippy.javamod.multimedia.mod.gui.ModPatternDialog;
 import de.quippy.javamod.multimedia.mod.gui.ModSampleDialog;
@@ -44,6 +45,7 @@ import de.quippy.javamod.multimedia.mod.loader.Module;
 import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.system.Helpers;
 
+import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.getLogger;
 
 
@@ -51,7 +53,7 @@ import static java.lang.System.getLogger;
  * @author Daniel Becker
  * @since 12.10.2007
  */
-public class ModContainer extends MultimediaContainer {
+public class ModContainer extends MultimediaContainer implements SpiMultimediaContainer {
 
     private static final Logger logger = getLogger(ModContainer.class.getName());
 
@@ -139,10 +141,22 @@ public class ModContainer extends MultimediaContainer {
         }
     }
 
+    @Override
+    public boolean isSupported(InputStream stream) {
+        try {
+            Module mod = ModuleFactory.getModuleFromStream(stream);
+logger.log(DEBUG, "mod: " + mod.getClass().getName());
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     /**
      * for javax.sound.spi
      * @since 3.9.6
      */
+    @Override
     public void setInputStream(InputStream stream) throws IOException {
         currentMod = ModuleFactory.getModuleFromStream(stream);
         currentMod.loadModFile(new SpiModfileInputStream(stream));

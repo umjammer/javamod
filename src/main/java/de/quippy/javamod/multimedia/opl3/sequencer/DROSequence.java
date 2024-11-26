@@ -29,17 +29,19 @@
 package de.quippy.javamod.multimedia.opl3.sequencer;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.Arrays;
 
-import de.quippy.javamod.io.RandomAccessInputStreamImpl;
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.OplType;
 import de.quippy.javamod.system.Helpers;
+import vavi.io.LittleEndianDataInputStream;
 
 import static java.lang.System.getLogger;
 
@@ -74,6 +76,8 @@ public class DROSequence extends OPL3Sequence {
     private int pos;
     private int bank;
 
+    protected static final String MAGIC = "DBRAWOPL";
+
     /**
      * Constructor for DROSequence
      */
@@ -82,13 +86,45 @@ public class DROSequence extends OPL3Sequence {
     }
 
     @Override
-    protected void readOPL3Sequence(RandomAccessInputStreamImpl inputStream) throws IOException {
+    protected boolean isSupportedExtension(String extension) {
+        return "DRO".equals(extension);
+    }
+
+    @Override
+    protected boolean isSupported(InputStream stream) {
+        LittleEndianDataInputStream dis = new LittleEndianDataInputStream(stream);
+        try {
+            dis.mark(12);
+
+            byte[] id = new byte[8];
+            dis.readFully(id);
+            if (!Arrays.equals(MAGIC.getBytes(), id)) {
+                return false;
+            }
+
+            int v = dis.readInt() & 0xffff;
+logger.log(Level.DEBUG, "dro version: " + v);
+            return v <= 2;
+        } catch (IOException e) {
+logger.log(Level.WARNING, e.getMessage(), e);
+            return false;
+        } finally {
+            try {
+                dis.reset();
+            } catch (IOException e) {
+logger.log(Level.DEBUG, e.toString());
+            }
+        }
+    }
+
+    @Override
+    protected void readOPL3Sequence(RandomAccessInputStream inputStream) throws IOException {
         if (inputStream == null || inputStream.available() <= 0) return;
 
         byte[] magicBytes = new byte[8];
         inputStream.read(magicBytes, 0, 8);
         magic = Helpers.retrieveAsString(magicBytes, 0, 8);
-        if (!magic.equals("DBRAWOPL")) throw new IOException("Unsupported file type (unknown magic bytes)");
+        if (!magic.equals(MAGIC)) throw new IOException("Unsupported file type (unknown magic bytes)");
 
         version = inputStream.readIntelDWord();
 logger.log(Level.DEBUG, "version: " + (version & 0xffff));
@@ -151,13 +187,13 @@ logger.log(Level.DEBUG, "oplType: " + oplType);
                     int what = inputStream.read();
                     if (what != -1) {
                         switch (what) {
-                            case 0x1A:
+                            case 0x1a:
                                 title = inputStream.readString(40);
                                 break;
-                            case 0x1B:
+                            case 0x1b:
                                 author = inputStream.readString(40);
                                 break;
-                            case 0x1C:
+                            case 0x1c:
                                 description = inputStream.readString(1023);
                                 break;
                         }

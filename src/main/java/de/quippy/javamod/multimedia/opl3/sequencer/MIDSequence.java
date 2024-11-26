@@ -32,13 +32,16 @@
 
 package de.quippy.javamod.multimedia.opl3.sequencer;
 
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.io.RandomAccessInputStreamImpl;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
@@ -66,7 +69,7 @@ public class MIDSequence extends OPL3Sequence {
         int pv = 0;
     }
 
-    private static class midi_channel {
+    private static class midiChannel {
 
         int inum = 0;
         final int[] ins;
@@ -74,7 +77,7 @@ public class MIDSequence extends OPL3Sequence {
         int nshift = 0;
         boolean on = false;
 
-        midi_channel() {
+        midiChannel() {
             super();
             ins = new int[11];
         }
@@ -89,14 +92,14 @@ public class MIDSequence extends OPL3Sequence {
     private String remarks = null;
     private long flen = 0;
     private long pos = 0;
-    private long sierra_pos = 0;
+    private long sierraPos = 0;
     private int subsongs = 0;
-    private final int[] adlib_data;
-    private int adlib_style = 0;
-    private int adlib_mode = 0;
+    private final int[] adlibData;
+    private int adlibStyle = 0;
+    private int adlibMode = 0;
     private final int[][] myinsbank;
     private final int[][] smyinsbank;
-    private final midi_channel[] ch;
+    private final midiChannel[] ch;
     private final int[][] chp;
     private int deltas = 0;
     private long msqtr = 0; // the only usage of msqtr is documented out
@@ -125,13 +128,13 @@ public class MIDSequence extends OPL3Sequence {
     private static final int FILE_OLDLUCAS = 6;
 
     /** AdLib standard operator table */
-    private static final int[] adlib_opadd = {0x00, 0x01, 0x02, 0x08, 0x09, 0x0A, 0x10, 0x11, 0x12};
+    private static final int[] adlibOpadd = {0x00, 0x01, 0x02, 0x08, 0x09, 0x0A, 0x10, 0x11, 0x12};
 
     /**
      * map CMF drum channels 12 - 15 to corresponding AdLib drum operators
      * bass drum (channel 11) not mapped, cause it's handled like a normal instrument
      */
-    private static final int[] map_chan = {0x14, 0x12, 0x15, 0x11};
+    private static final int[] mapChan = {0x14, 0x12, 0x15, 0x11};
 
     /** Standard AdLib frequency table */
     private static final int[] fnums = {
@@ -139,10 +142,10 @@ public class MIDSequence extends OPL3Sequence {
     };
 
     /** Map CMF drum channels 11 - 15 to corresponding AdLib drum channels */
-    private static final int[] percussion_map = {6, 7, 8, 8, 7};
+    private static final int[] percussionMap = {6, 7, 8, 8, 7};
 
     /** This set of GM instrument patches was provided by Jorrit Rouwe... */
-    private static final short[][] midi_fm_instruments = {
+    private static final short[][] midiFmInstruments = {
             {0x21, 0x21, 0x8f, 0x0c, 0xf2, 0xf2, 0x45, 0x76, 0x00, 0x00, 0x08, 0, 0, 0}, /* Acoustic Grand */
             {0x31, 0x21, 0x4b, 0x09, 0xf2, 0xf2, 0x54, 0x56, 0x00, 0x00, 0x08, 0, 0, 0}, /* Bright Acoustic */
             {0x31, 0x21, 0x49, 0x09, 0xf2, 0xf2, 0x55, 0x76, 0x00, 0x00, 0x08, 0, 0, 0}, /* Electric Grand */
@@ -295,49 +298,105 @@ public class MIDSequence extends OPL3Sequence {
      */
     public MIDSequence() {
         super();
-        adlib_data = new int[256];
+        adlibData = new int[256];
         myinsbank = new int[128][16];
         smyinsbank = new int[128][16];
         chp = new int[18][3];
 
-        ch = new midi_channel[16];
-        for (int i = 0; i < ch.length; i++) ch[i] = new midi_channel();
+        ch = new midiChannel[16];
+        for (int i = 0; i < ch.length; i++) ch[i] = new midiChannel();
 
         track = new midi_track[16];
         for (int i = 0; i < track.length; i++) track[i] = new midi_track();
     }
 
-    private long datalook(long pos) {
+    @Override
+    protected boolean isSupportedExtension(String extension) {
+        return Arrays.asList("LAA", "CMF", "SCI").contains(extension);
+    }
+
+    @Override
+    protected boolean isSupported(InputStream stream) {
+        DataInputStream dis = new DataInputStream(stream);
+        try {
+            dis.mark(6);
+
+            int lengthOfStream = dis.available();
+
+            byte[] magic = new byte[6];
+            dis.readFully(magic);
+
+            int type = 0;
+            switch (magic[0] & 0xff) {
+                case 0x41: // ADL
+                    if (magic[1] == 0x44 && magic[2] == 0x4C && magic[3] == 0x20)
+                        type = FILE_LUCAS;
+                    break;
+                case 0x4D: // MThd
+                    if (magic[1] == 0x54 && magic[2] == 0x68 && magic[3] == 0x64)
+                        type = FILE_MIDI;
+                    break;
+                case 0x43: // CTMF
+                    if (magic[1] == 0x54 && magic[2] == 0x4d && magic[3] == 0x46)
+                        type = FILE_CMF;
+                    break;
+                case 0x84:
+                    if (magic[1] == 0 && loadSierraIns(url))
+                        if ((magic[2] & 0xff) == 0xF0)
+                            type = FILE_ADVSIERRA;
+                        else
+                            type = FILE_SIERRA;
+                    break;
+                default:
+                    long size = ((long) magic[0] & 0xff) | (((long) magic[1] & 0xff) << 8) | (((long) magic[3] & 0xff) << 24) | (((long) magic[2] & 0xff) << 16);
+                    if (size == lengthOfStream && magic[4] == 0x41 && magic[5] == 0x44)
+                        type = FILE_OLDLUCAS;
+            }
+logger.log(Level.DEBUG, "mid type: " + type);
+            return type != 0;
+        } catch (IOException e) {
+logger.log(Level.WARNING, e.getMessage(), e);
+            return false;
+        } finally {
+            try {
+                dis.reset();
+            } catch (IOException e) {
+ logger.log(Level.DEBUG, e.toString());
+            }
+        }
+    }
+
+    private long dataLook(long pos) {
         if (pos < 0 || pos >= flen)
             return 0;
         else
             return (long) (data[(int) pos]) & 0xff;
     }
 
-    private long getnexti(int num) {
+    private long getNextI(int num) {
         long v = 0;
 
         for (int i = 0; i < num; i++) {
-            v += (datalook(pos++) << (8 * i));
+            v += (dataLook(pos++) << (8 * i));
         }
         return v;
     }
 
-    private long getnext(long num) {
+    private long getNext(long num) {
         long v = 0;
 
         for (long i = 0; i < num; i++) {
             v <<= 8;
-            v += datalook(pos++);
+            v += dataLook(pos++);
         }
         return v;
     }
 
-    private long getval() {
-        long b = getnext(1);
+    private long getVal() {
+        long b = getNext(1);
         long v = b & 0x7f;
         while ((b & 0x80) != 0) {
-            b = getnext(1);
+            b = getNext(1);
             v = (v << 7) + (b & 0x7F);
         }
         return v;
@@ -359,12 +418,11 @@ public class MIDSequence extends OPL3Sequence {
      * As javamod constantly works with URLs instead of File, this is a bit
      * more tricky...
      *
-     * @param fileURL
-     * @return
-     * @throws IOException
+     * @param fileURL input file url
+     * @return success or not
      * @since 04.08.2020
      */
-    private boolean load_sierra_ins(URL fileURL) {
+    private boolean loadSierraIns(URL fileURL) {
         // get patch.003 URL with 3 char prefix of fileURL
         String fileName = Helpers.getFileNameFromURL(fileURL);
         if (fileName.length() < 3) return false; // already finished
@@ -374,7 +432,7 @@ public class MIDSequence extends OPL3Sequence {
 
         RandomAccessInputStreamImpl inputStream = null;
         try {
-            //final URL patchFileURL = new URL(fileURL.getProtocol(), fileURL.getHost(), fileURL.getPort(), patchFileName);
+//            final URL patchFileURL = new URL(fileURL.getProtocol(), fileURL.getHost(), fileURL.getPort(), patchFileName);
             URL patchFileURL = (new URI(fileURL.getProtocol(), fileURL.getUserInfo(), fileURL.getHost(), fileURL.getPort(), patchFileName, fileURL.getQuery(), fileURL.getRef())).toURL();
             if (!Helpers.urlExists(patchFileURL)) return false;
             inputStream = new RandomAccessInputStreamImpl(patchFileURL);
@@ -417,37 +475,37 @@ public class MIDSequence extends OPL3Sequence {
         return true;
     }
 
-    private void sierra_next_section() {
+    private void sierraNextSection() {
         for (int i = 0; i < 16; i++)
             track[i].on = false;
 
-        pos = sierra_pos;
+        pos = sierraPos;
         int i = 0;
         int j = 0;
         while (i != 0xff) {
-            getnext(1);
+            getNext(1);
             int curtrack = j;
             j++;
             if (curtrack >= 16) break;
             track[curtrack].on = true;
-            track[curtrack].spos = getnext(1);
-            track[curtrack].spos += (getnext(1) << 8) + 4; // 4 best usually +3? not 0,1,2 or 5
+            track[curtrack].spos = getNext(1);
+            track[curtrack].spos += (getNext(1) << 8) + 4; // 4 best usually +3? not 0,1,2 or 5
             track[curtrack].tend = flen; // 0xFC will kill it
             track[curtrack].iwait = 0;
             track[curtrack].pv = 0;
 
-            getnext(2);
-            i = (int) getnext(1);
+            getNext(2);
+            i = (int) getNext(1);
         }
-        getnext(2);
+        getNext(2);
         deltas = 0x20;
-        sierra_pos = pos;
+        sierraPos = pos;
         fwait = 0;
         firstRound = true;
     }
 
     @Override
-    protected void readOPL3Sequence(RandomAccessInputStreamImpl inputStream) throws IOException {
+    protected void readOPL3Sequence(RandomAccessInputStream inputStream) throws IOException {
         if (inputStream == null || inputStream.available() <= 0) return;
 
         long lengthOfStream = inputStream.getLength();
@@ -471,7 +529,7 @@ public class MIDSequence extends OPL3Sequence {
                     type = FILE_CMF;
                 break;
             case 0x84:
-                if (magicBytes[1] == 0 && load_sierra_ins(url))
+                if (magicBytes[1] == 0 && loadSierraIns(url))
                     if (magicBytes[2] == 0xF0)
                         type = FILE_ADVSIERRA;
                     else
@@ -491,104 +549,104 @@ logger.log(Level.DEBUG, "type: " + getTypeName());
         inputStream.read(data, 0, (int) flen);
     }
 
-    private void midi_write_adlib(EmuOPL opl, int r, int v) {
+    private void midiWriteAdlib(EmuOPL opl, int r, int v) {
 logger.log(Level.TRACE, "write: %04x, %02x".formatted(r, v));
         opl.writeOPL2(r, v);
-        adlib_data[r] = v;
+        adlibData[r] = v;
     }
 
-    private void midi_fm_instrument(EmuOPL opl, int voice, int[] inst) {
+    private void midiFmInstrument(EmuOPL opl, int voice, int[] inst) {
         // just got to make sure this happens.. 'cause who knows when it'll be reset otherwise.
-        if ((adlib_style & SIERRA_STYLE) != 0) midi_write_adlib(opl, 0xbd, 0);
+        if ((adlibStyle & SIERRA_STYLE) != 0) midiWriteAdlib(opl, 0xbd, 0);
 
-        midi_write_adlib(opl, 0x20 + adlib_opadd[voice], inst[0]);
-        midi_write_adlib(opl, 0x23 + adlib_opadd[voice], inst[1]);
+        midiWriteAdlib(opl, 0x20 + adlibOpadd[voice], inst[0]);
+        midiWriteAdlib(opl, 0x23 + adlibOpadd[voice], inst[1]);
 
-        if ((adlib_style & LUCAS_STYLE) != 0) {
-            midi_write_adlib(opl, 0x43 + adlib_opadd[voice], 0x3f);
+        if ((adlibStyle & LUCAS_STYLE) != 0) {
+            midiWriteAdlib(opl, 0x43 + adlibOpadd[voice], 0x3f);
             if ((inst[10] & 1) == 0)
-                midi_write_adlib(opl, 0x40 + adlib_opadd[voice], inst[2]);
+                midiWriteAdlib(opl, 0x40 + adlibOpadd[voice], inst[2]);
             else
-                midi_write_adlib(opl, 0x40 + adlib_opadd[voice], 0x3F);
+                midiWriteAdlib(opl, 0x40 + adlibOpadd[voice], 0x3F);
 
-        } else if ((adlib_style & SIERRA_STYLE) != 0 || (adlib_style & CMF_STYLE) != 0) {
-            midi_write_adlib(opl, 0x40 + adlib_opadd[voice], inst[2]);
-            midi_write_adlib(opl, 0x43 + adlib_opadd[voice], inst[3]);
+        } else if ((adlibStyle & SIERRA_STYLE) != 0 || (adlibStyle & CMF_STYLE) != 0) {
+            midiWriteAdlib(opl, 0x40 + adlibOpadd[voice], inst[2]);
+            midiWriteAdlib(opl, 0x43 + adlibOpadd[voice], inst[3]);
 
         } else {
-            midi_write_adlib(opl, 0x40 + adlib_opadd[voice], inst[2]);
+            midiWriteAdlib(opl, 0x40 + adlibOpadd[voice], inst[2]);
             if ((inst[10] & 1) == 0)
-                midi_write_adlib(opl, 0x43 + adlib_opadd[voice], inst[3]);
+                midiWriteAdlib(opl, 0x43 + adlibOpadd[voice], inst[3]);
             else
-                midi_write_adlib(opl, 0x43 + adlib_opadd[voice], 0);
+                midiWriteAdlib(opl, 0x43 + adlibOpadd[voice], 0);
         }
 
-        midi_write_adlib(opl, 0x60 + adlib_opadd[voice], inst[4]);
-        midi_write_adlib(opl, 0x63 + adlib_opadd[voice], inst[5]);
-        midi_write_adlib(opl, 0x80 + adlib_opadd[voice], inst[6]);
-        midi_write_adlib(opl, 0x83 + adlib_opadd[voice], inst[7]);
-        midi_write_adlib(opl, 0xE0 + adlib_opadd[voice], inst[8]);
-        midi_write_adlib(opl, 0xE3 + adlib_opadd[voice], inst[9]);
-        midi_write_adlib(opl, 0xC0 + voice, inst[10]);
+        midiWriteAdlib(opl, 0x60 + adlibOpadd[voice], inst[4]);
+        midiWriteAdlib(opl, 0x63 + adlibOpadd[voice], inst[5]);
+        midiWriteAdlib(opl, 0x80 + adlibOpadd[voice], inst[6]);
+        midiWriteAdlib(opl, 0x83 + adlibOpadd[voice], inst[7]);
+        midiWriteAdlib(opl, 0xE0 + adlibOpadd[voice], inst[8]);
+        midiWriteAdlib(opl, 0xE3 + adlibOpadd[voice], inst[9]);
+        midiWriteAdlib(opl, 0xC0 + voice, inst[10]);
     }
 
-    private void midi_fm_percussion(EmuOPL opl, int ch, int[] inst) {
+    private void midiFmPercussion(EmuOPL opl, int ch, int[] inst) {
         if (ch < 12) return; // should never happen!
-        int opadd = map_chan[ch - 12];
+        int opadd = mapChan[ch - 12];
 
-        midi_write_adlib(opl, 0x20 + opadd, inst[0]);
-        midi_write_adlib(opl, 0x40 + opadd, inst[2]);
-        midi_write_adlib(opl, 0x60 + opadd, inst[4]);
-        midi_write_adlib(opl, 0x80 + opadd, inst[6]);
-        midi_write_adlib(opl, 0xE0 + opadd, inst[8]);
+        midiWriteAdlib(opl, 0x20 + opadd, inst[0]);
+        midiWriteAdlib(opl, 0x40 + opadd, inst[2]);
+        midiWriteAdlib(opl, 0x60 + opadd, inst[4]);
+        midiWriteAdlib(opl, 0x80 + opadd, inst[6]);
+        midiWriteAdlib(opl, 0xE0 + opadd, inst[8]);
         if (opadd < 0x13) // only output this for the modulator, not the carrier, as it affects the entire channel
-            midi_write_adlib(opl, 0xc0 + percussion_map[ch - 11], inst[10]);
+            midiWriteAdlib(opl, 0xc0 + percussionMap[ch - 11], inst[10]);
     }
 
-    private void midi_fm_volume(EmuOPL opl, int voice, int volume) {
-        if ((adlib_style & SIERRA_STYLE) == 0) { // sierra likes it loud!
+    private void midiFmVolume(EmuOPL opl, int voice, int volume) {
+        if ((adlibStyle & SIERRA_STYLE) == 0) { // sierra likes it loud!
             int vol = volume >> 2;
 
-            if ((adlib_style & LUCAS_STYLE) != 0) {
-                if ((adlib_data[0xc0 + voice] & 1) == 1)
-                    midi_write_adlib(opl, 0x40 + adlib_opadd[voice], (63 - vol) | (adlib_data[0x40 + adlib_opadd[voice]] & 0xC0));
-                midi_write_adlib(opl, 0x43 + adlib_opadd[voice], (63 - vol) | (adlib_data[0x43 + adlib_opadd[voice]] & 0xC0));
+            if ((adlibStyle & LUCAS_STYLE) != 0) {
+                if ((adlibData[0xc0 + voice] & 1) == 1)
+                    midiWriteAdlib(opl, 0x40 + adlibOpadd[voice], (63 - vol) | (adlibData[0x40 + adlibOpadd[voice]] & 0xC0));
+                midiWriteAdlib(opl, 0x43 + adlibOpadd[voice], (63 - vol) | (adlibData[0x43 + adlibOpadd[voice]] & 0xC0));
             } else {
-                if ((adlib_data[0xc0 + voice] & 1) == 1)
-                    midi_write_adlib(opl, 0x40 + adlib_opadd[voice], (63 - vol) | (adlib_data[0x40 + adlib_opadd[voice]] & 0xC0));
-                midi_write_adlib(opl, 0x43 + adlib_opadd[voice], (63 - vol) | (adlib_data[0x43 + adlib_opadd[voice]] & 0xC0));
+                if ((adlibData[0xc0 + voice] & 1) == 1)
+                    midiWriteAdlib(opl, 0x40 + adlibOpadd[voice], (63 - vol) | (adlibData[0x40 + adlibOpadd[voice]] & 0xC0));
+                midiWriteAdlib(opl, 0x43 + adlibOpadd[voice], (63 - vol) | (adlibData[0x43 + adlibOpadd[voice]] & 0xC0));
             }
         }
     }
 
-    private void midi_fm_playnote(EmuOPL opl, int voice, int note, int volume) {
+    private void midiFmPlaynote(EmuOPL opl, int voice, int note, int volume) {
         int n = (note < 0) ? 12 - (note % 12) : note;
         int freq = fnums[n % 12];
         int oct = n / 12;
 
-        midi_fm_volume(opl, voice, volume);
-        midi_write_adlib(opl, 0xA0 + voice, freq & 0xff);
+        midiFmVolume(opl, voice, volume);
+        midiWriteAdlib(opl, 0xA0 + voice, freq & 0xff);
 
-        int c = ((freq & 0x300) >> 8) + ((oct & 7) << 2) + ((adlib_mode == ADLIB_MELODIC || voice < 6) ? (1 << 5) : 0);
-        midi_write_adlib(opl, 0xB0 + voice, c);
+        int c = ((freq & 0x300) >> 8) + ((oct & 7) << 2) + ((adlibMode == ADLIB_MELODIC || voice < 6) ? (1 << 5) : 0);
+        midiWriteAdlib(opl, 0xB0 + voice, c);
     }
 
-    private void midi_fm_endnote(EmuOPL opl, int voice) {
+    private void midiFmEndnote(EmuOPL opl, int voice) {
 //        midi_fm_volume(opl, voice, 0);
 //        midi_write_adlib(opl, 0xb0 + voice, 0);
 
-        midi_write_adlib(opl, 0xB0 + voice, adlib_data[0xB0 + voice] & (255 - 32));
+        midiWriteAdlib(opl, 0xB0 + voice, adlibData[0xB0 + voice] & (255 - 32));
     }
 
-    private void midi_fm_reset(EmuOPL opl) {
+    private void midiFmReset(EmuOPL opl) {
         // reset OPL
         resetOPL(opl);
 
         for (int j = 0xc0; j <= 0xc8; j++)
-            midi_write_adlib(opl, j, 0xf0);
+            midiWriteAdlib(opl, j, 0xf0);
 
-        midi_write_adlib(opl, 0x01, 0x20);
-        midi_write_adlib(opl, 0xBD, 0xC0);
+        midiWriteAdlib(opl, 0x01, 0x20);
+        midiWriteAdlib(opl, 0xBD, 0xC0);
     }
 
     @Override
@@ -599,9 +657,9 @@ logger.log(Level.TRACE, "write: %04x, %02x".formatted(r, v));
                 if (track[curtrack].on) {
                     pos = track[curtrack].pos;
                     if (type != FILE_SIERRA && type != FILE_ADVSIERRA)
-                        track[curtrack].iwait += getval();
+                        track[curtrack].iwait += getVal();
                     else
-                        track[curtrack].iwait += getnext(1);
+                        track[curtrack].iwait += getNext(1);
                     track[curtrack].pos = pos;
                 }
             firstRound = false;
@@ -614,7 +672,7 @@ logger.log(Level.TRACE, "write: %04x, %02x".formatted(r, v));
             for (int curtrack = 0; curtrack < 16; curtrack++) {
                 if (track[curtrack].on && track[curtrack].iwait == 0 && track[curtrack].pos < track[curtrack].tend) {
                     pos = track[curtrack].pos;
-                    int v = (int) getnext(1);
+                    int v = (int) getNext(1);
 
                     // This is to do implied MIDI events.
                     if (v < 0x80) {
@@ -627,27 +685,27 @@ logger.log(Level.TRACE, "write: %04x, %02x".formatted(r, v));
 logger.log(Level.TRACE, "[%2X]".formatted(v));
                     switch (v & 0xf0) {
                         case 0x80: // note off
-                            int note = (int) getnext(1);
-                            int vel = (int) getnext(1);
+                            int note = (int) getNext(1);
+                            int vel = (int) getNext(1);
                             for (int i = 0; i < 9; i++)
                                 if (chp[i][0] == c && chp[i][1] == note) {
-                                    midi_fm_endnote(opl, i);
+                                    midiFmEndnote(opl, i);
                                     chp[i][0] = -1;
                                 }
                             break;
                         case 0x90: // note on
 //                            firstRound = 0;
-                            note = (int) getnext(1);
-                            vel = (int) getnext(1);
+                            note = (int) getNext(1);
+                            vel = (int) getNext(1);
 
-                            int numchan = (adlib_mode == ADLIB_RYTHM) ? 6 : 9;
+                            int numchan = (adlibMode == ADLIB_RYTHM) ? 6 : 9;
 
                             if (ch[c].on) {
                                 for (int i = 0; i < 18; i++)
                                     chp[i][2]++;
 
                                 int on = -1;
-                                if (c < 11 || adlib_mode == ADLIB_MELODIC) {
+                                if (c < 11 || adlibMode == ADLIB_MELODIC) {
                                     int j = 0;
                                     int onl = 0;
                                     for (int i = 0; i < numchan; i++)
@@ -666,57 +724,57 @@ logger.log(Level.TRACE, "[%2X]".formatted(v));
                                             }
                                     }
 
-                                    if (j == 0) midi_fm_endnote(opl, on);
+                                    if (j == 0) midiFmEndnote(opl, on);
                                 } else
-                                    on = percussion_map[c - 11];
+                                    on = percussionMap[c - 11];
 
                                 if (vel != 0 && ch[c].inum >= 0 && ch[c].inum < 128) {
                                     // 11 == bass drum, handled like a normal instrument, on == channel 6 thanks to
-                                    // percussion_map[] above
-                                    if (adlib_mode == ADLIB_MELODIC || c < 12)
-                                        midi_fm_instrument(opl, on, ch[c].ins);
+                                    // percussionMap[] above
+                                    if (adlibMode == ADLIB_MELODIC || c < 12)
+                                        midiFmInstrument(opl, on, ch[c].ins);
                                     else
-                                        midi_fm_percussion(opl, c, ch[c].ins);
+                                        midiFmPercussion(opl, c, ch[c].ins);
 
                                     int nv;
-                                    if ((adlib_style & MIDI_STYLE) != 0) {
+                                    if ((adlibStyle & MIDI_STYLE) != 0) {
                                         nv = ((ch[c].vol * vel) / 128);
-                                        if ((adlib_style & LUCAS_STYLE) != 0) nv *= 2;
+                                        if ((adlibStyle & LUCAS_STYLE) != 0) nv *= 2;
                                         if (nv > 127) nv = 127;
                                         nv = my_midi_fm_vol_table[nv];
-                                        if ((adlib_style & LUCAS_STYLE) != 0) nv = (int) (Math.sqrt(nv) * 11);
-                                    } else if ((adlib_style & CMF_STYLE) != 0) {
+                                        if ((adlibStyle & LUCAS_STYLE) != 0) nv = (int) (Math.sqrt(nv) * 11);
+                                    } else if ((adlibStyle & CMF_STYLE) != 0) {
                                         // CMF doesn't support note velocity (even though some files have them!)
                                         nv = 127;
                                     } else {
                                         nv = vel;
                                     }
 
-                                    midi_fm_playnote(opl, on, note + ch[c].nshift, nv * 2); // sets freq in rhythm mode
+                                    midiFmPlaynote(opl, on, note + ch[c].nshift, nv * 2); // sets freq in rhythm mode
                                     chp[on][0] = c;
                                     chp[on][1] = note;
                                     chp[on][2] = 0;
 
-                                    if (adlib_mode == ADLIB_RYTHM && c >= 11) {
+                                    if (adlibMode == ADLIB_RYTHM && c >= 11) {
                                         // Still need to turn off the perc instrument before playing it again,
                                         // as not all songs send a noteoff.
-                                        midi_write_adlib(opl, 0xbd, adlib_data[0xbd] & ~(0x10 >> (c - 11)));
+                                        midiWriteAdlib(opl, 0xbd, adlibData[0xbd] & ~(0x10 >> (c - 11)));
                                         // Play the perc instrument
-                                        midi_write_adlib(opl, 0xbd, adlib_data[0xbd] | (0x10 >> (c - 11)));
+                                        midiWriteAdlib(opl, 0xbd, adlibData[0xbd] | (0x10 >> (c - 11)));
                                     }
 
                                 } else {
                                     if (vel == 0) { // same code as end note
-                                        if (adlib_mode == ADLIB_RYTHM && c >= 11) {
+                                        if (adlibMode == ADLIB_RYTHM && c >= 11) {
                                             // Turn off the percussion instrument
-                                            midi_write_adlib(opl, 0xbd, adlib_data[0xbd] & ~(0x10 >> (c - 11)));
-                                            // midi_fm_endnote(percussion_map[c]);
-                                            chp[percussion_map[c - 11]][0] = -1;
+                                            midiWriteAdlib(opl, 0xbd, adlibData[0xbd] & ~(0x10 >> (c - 11)));
+                                            // midi_fm_endnote(percussionMap[c]);
+                                            chp[percussionMap[c - 11]][0] = -1;
                                         } else {
                                             for (int i = 0; i < 9; i++) {
                                                 if (chp[i][0] == c && chp[i][1] == note) {
                                                     // midi_fm_volume(i,0); // really end the note
-                                                    midi_fm_endnote(opl, i);
+                                                    midiFmEndnote(opl, i);
                                                     chp[i][0] = -1;
                                                 }
                                             }
@@ -731,16 +789,16 @@ logger.log(Level.TRACE, "note on[%d]: %d".formatted(c, vel));
                             }
                             break;
                         case 0xa0: // key after touch
-                            note = (int) getnext(1);
-                            vel = (int) getnext(1);
+                            note = (int) getNext(1);
+                            vel = (int) getNext(1);
 //                            // this might all be good
 //                            for (int i = 0; i < 9; i++)
 //                                if (chp[i][0] == c & chp[i][1] == note)
 //                                    midi_fm_playnote(opl, i, note + cnote[c], my_midi_fm_vol_table[(cvols[c] * vel) / 128] * 2);
                             break;
                         case 0xb0: // control change .. pitch bend?
-                            int ctrl = (int) getnext(1);
-                            vel = (int) getnext(1);
+                            int ctrl = (int) getNext(1);
+                            vel = (int) getNext(1);
 
 logger.log(Level.DEBUG, "control change: %d, %02x, %02x".formatted(c, ctrl, vel));
                             switch (ctrl) {
@@ -748,7 +806,7 @@ logger.log(Level.DEBUG, "control change: %d, %02x, %02x".formatted(c, ctrl, vel)
                                     ch[c].vol = vel;
                                     break;
                                 case 0x63:
-                                    if ((adlib_style & CMF_STYLE) != 0) {
+                                    if ((adlibStyle & CMF_STYLE) != 0) {
                                         // Custom extension to allow CMF files to switch the
                                         // AM+VIB depth on and off (officially this is on,
                                         // and there's no way to switch it off.) Controller
@@ -757,79 +815,79 @@ logger.log(Level.DEBUG, "control change: %d, %02x, %02x".formatted(c, ctrl, vel)
                                         // 1 == VIB on
                                         // 2 == AM on
                                         // 3 == AM+VIB on
-                                        midi_write_adlib(opl, 0xbd, (adlib_data[0xbd] & ~0xC0) | (vel << 6));
+                                        midiWriteAdlib(opl, 0xbd, (adlibData[0xbd] & ~0xC0) | (vel << 6));
                                     }
                                     break;
                                 case 0x67:
-                                    if ((adlib_style & CMF_STYLE) != 0) {
-                                        adlib_mode = vel;
-                                        if (adlib_mode == ADLIB_RYTHM)
-                                            midi_write_adlib(opl, 0xbd, adlib_data[0xbd] | (1 << 5));
+                                    if ((adlibStyle & CMF_STYLE) != 0) {
+                                        adlibMode = vel;
+                                        if (adlibMode == ADLIB_RYTHM)
+                                            midiWriteAdlib(opl, 0xbd, adlibData[0xbd] | (1 << 5));
                                         else
-                                            midi_write_adlib(opl, 0xbd, adlib_data[0xbd] & ~(1 << 5));
+                                            midiWriteAdlib(opl, 0xbd, adlibData[0xbd] & ~(1 << 5));
                                     }
                                     break;
                             }
                             break;
                         case 0xc0: // patch change
-                            int x = (int) getnext(1);
+                            int x = (int) getNext(1);
                             ch[c].inum = x & 0x7f;
                             for (int j = 0; j < 11; j++)
                                 ch[c].ins[j] = myinsbank[ch[c].inum][j];
 logger.log(Level.DEBUG, "program change[%d]: %d".formatted(c, ch[c].inum));
                             break;
                         case 0xd0: // channel touch
-                            /* int x = (int) */ getnext(1);
+                            /* int x = (int) */ getNext(1);
                             break;
                         case 0xe0: // pitch wheel
-                            /* x = (int) */ getnext(1);
-                            /* x = (int) */ getnext(1);
+                            /* x = (int) */ getNext(1);
+                            /* x = (int) */ getNext(1);
                             break;
                         case 0xf0:
                             switch (v) {
                                 case 0xf0:
                                 case 0xf7: /* sysex */
-                                    long l = getval();
+                                    long l = getVal();
                                     boolean readAdd = false;
-                                    if (datalook(pos + l) == 0xf7) readAdd = true;
+                                    if (dataLook(pos + l) == 0xf7) readAdd = true;
 
-                                    if (datalook(pos) == 0x7d && datalook(pos + 1) == 0x10 && datalook(pos + 2) < 16) {
-                                        adlib_style = LUCAS_STYLE | MIDI_STYLE;
-                                        getnext(1);
-                                        getnext(1);
-                                        int channel = (int) getnext(1) & 0x0f;
-                                        getnext(1);
+                                    if (dataLook(pos) == 0x7d && dataLook(pos + 1) == 0x10 && dataLook(pos + 2) < 16) {
+                                        adlibStyle = LUCAS_STYLE | MIDI_STYLE;
+                                        getNext(1);
+                                        getNext(1);
+                                        int channel = (int) getNext(1) & 0x0f;
+                                        getNext(1);
 
                                         // getnext(22); //temp
-                                        ch[channel].ins[0] = (int) ((getnext(1L) << 4) + getnext(1L));
-                                        ch[channel].ins[2] = (int) (0xffL - ((getnext(1L) << 4) + getnext(1L) & 0x3fL));
-                                        ch[channel].ins[4] = (int) (0xffL - ((getnext(1L) << 4) + getnext(1L)));
-                                        ch[channel].ins[6] = (int) (0xffL - ((getnext(1L) << 4) + getnext(1L)));
-                                        ch[channel].ins[8] = (int) ((getnext(1L) << 4) + getnext(1L));
-                                        ch[channel].ins[1] = (int) ((getnext(1L) << 4) + getnext(1L));
-                                        ch[channel].ins[3] = (int) (0xffL - ((getnext(1L) << 4) + getnext(1L) & 0x3fL));
-                                        ch[channel].ins[5] = (int) (0xffL - ((getnext(1L) << 4) + getnext(1L)));
-                                        ch[channel].ins[7] = (int) (0xffL - ((getnext(1L) << 4) + getnext(1L)));
-                                        ch[channel].ins[9] = (int) ((getnext(1L) << 4) + getnext(1L));
-                                        ch[channel].ins[10] = (int) (getnext(1) << 4 + getnext(1));
+                                        ch[channel].ins[0] = (int) ((getNext(1L) << 4) + getNext(1L));
+                                        ch[channel].ins[2] = (int) (0xffL - ((getNext(1L) << 4) + getNext(1L) & 0x3fL));
+                                        ch[channel].ins[4] = (int) (0xffL - ((getNext(1L) << 4) + getNext(1L)));
+                                        ch[channel].ins[6] = (int) (0xffL - ((getNext(1L) << 4) + getNext(1L)));
+                                        ch[channel].ins[8] = (int) ((getNext(1L) << 4) + getNext(1L));
+                                        ch[channel].ins[1] = (int) ((getNext(1L) << 4) + getNext(1L));
+                                        ch[channel].ins[3] = (int) (0xffL - ((getNext(1L) << 4) + getNext(1L) & 0x3fL));
+                                        ch[channel].ins[5] = (int) (0xffL - ((getNext(1L) << 4) + getNext(1L)));
+                                        ch[channel].ins[7] = (int) (0xffL - ((getNext(1L) << 4) + getNext(1L)));
+                                        ch[channel].ins[9] = (int) ((getNext(1L) << 4) + getNext(1L));
+                                        ch[channel].ins[10] = (int) (getNext(1) << 4 + getNext(1));
 logger.log(Level.DEBUG, "INS: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x".formatted(ch[channel].ins[0], ch[channel].ins[1], ch[channel].ins[2], ch[channel].ins[3], ch[channel].ins[4], ch[channel].ins[5], ch[channel].ins[6], ch[channel].ins[7], ch[channel].ins[8], ch[channel].ins[9], ch[channel].ins[10]));
 
                                         // if ((i&1)==1) ch[channel].ins[10]=1;
 
-                                        getnext(l - 26);
+                                        getNext(l - 26);
                                     } else {
-                                        for (int y = 0; y < l; y++) getnext(1);
+                                        for (int y = 0; y < l; y++) getNext(1);
                                     }
 
-                                    if (readAdd) getnext(1);
+                                    if (readAdd) getNext(1);
                                     break;
                                 case 0xf1:
                                     break;
                                 case 0xf2:
-                                    getnext(2);
+                                    getNext(2);
                                     break;
                                 case 0xf3:
-                                    getnext(1);
+                                    getNext(1);
                                     break;
                                 case 0xf4:
                                     break;
@@ -849,12 +907,12 @@ logger.log(Level.DEBUG, "INS: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x 
                                 case 0xfd:
                                     break;
                                 case 0xff:
-                                    v = (int) getnext(1);
-                                    l = getval();
+                                    v = (int) getNext(1);
+                                    l = getVal();
                                     if (v == 0x51) {
-                                        msqtr = getnext(l); // set tempo
+                                        msqtr = getNext(l); // set tempo
                                     } else {
-                                        for (int y = 0; y < l; y++) getnext(1);
+                                        for (int y = 0; y < l; y++) getNext(1);
                                     }
                                     break;
                             }
@@ -868,9 +926,9 @@ logger.log(Level.TRACE, "pos: %d, end: %d".formatted(pos, track[curtrack].tend))
                     if (pos < track[curtrack].tend) {
                         long w;
                         if (type != FILE_SIERRA && type != FILE_ADVSIERRA)
-                            w = getval();
+                            w = getVal();
                         else
-                            w = getnext(1);
+                            w = getNext(1);
                         track[curtrack].iwait = w;
 
 //                        if (w != 0) {
@@ -906,7 +964,7 @@ logger.log(Level.TRACE, "pos: %d, end: %d".formatted(pos, track[curtrack].tend))
             fwait = 50; // 1/50th of a second
 
 //        if (!running && type == FILE_ADVSIERRA)
-//            if (datalook(sierra_pos - 2) != 0xff) {
+//            if (datalook(sierraPos - 2) != 0xff) {
 //                sierra_next_section(p);
 //                fwait = 50;
 //                running = true;
@@ -923,18 +981,18 @@ logger.log(Level.TRACE, "pos: %d, end: %d".formatted(pos, track[curtrack].tend))
     /**
      * Sierra games have subsongs - we will support that later
      *
-     * @param opl
-     * @param subsong
+     * @param opl opl emulator
+     * @param subsong sub song
      * @since 04.08.2020
      */
     public void initialize(EmuOPL opl, int subsong) {
         pos = 0;
         tins = 0;
-        adlib_style = MIDI_STYLE | CMF_STYLE;
-        adlib_mode = ADLIB_MELODIC;
+        adlibStyle = MIDI_STYLE | CMF_STYLE;
+        adlibMode = ADLIB_MELODIC;
         for (int x = 0; x < 128; x++) {
             for (int y = 0; y < 14; y++)
-                myinsbank[x][y] = midi_fm_instruments[x][y];
+                myinsbank[x][y] = midiFmInstruments[x][y];
 
             myinsbank[x][14] = 0;
             myinsbank[x][15] = 0;
@@ -973,53 +1031,53 @@ logger.log(Level.TRACE, "pos: %d, end: %d".formatted(pos, track[curtrack].tend))
 
         // specific to file-type init
         pos = 0;
-        int i = (int) getnext(1);
+        int i = (int) getNext(1);
         switch (type) {
             case FILE_LUCAS:
-                getnext(24); // skip junk and get to the midi.
-                adlib_style = LUCAS_STYLE | MIDI_STYLE;
+                getNext(24); // skip junk and get to the midi.
+                adlibStyle = LUCAS_STYLE | MIDI_STYLE;
                 // note: no break, we go right into midi headers...
             case FILE_MIDI:
                 if (type != FILE_LUCAS) tins = 128;
-                getnext(11); /* skip header */
-                deltas = (int) getnext(2);
+                getNext(11); /* skip header */
+                deltas = (int) getNext(2);
 logger.log(Level.DEBUG, "deltas: %d".formatted(deltas));
-                getnext(4);
+                getNext(4);
 
                 track[0].on = true;
-                track[0].tend = getnext(4);
+                track[0].tend = getNext(4);
 logger.log(Level.DEBUG, "tracklen: %d".formatted(track[0].tend));
                 track[0].spos = pos;
                 break;
             case FILE_CMF:
-                getnext(3); // ctmf
-                getnexti(2); // version
-                int n = (int) getnexti(2); // instrument offset
-                int m = (int) getnexti(2); // music offset
-                deltas = (int) getnexti(2); // ticks/qtr note
-                i = (int) getnexti(2); // stuff in cmf is click ticks per second..
+                getNext(3); // ctmf
+                getNextI(2); // version
+                int n = (int) getNextI(2); // instrument offset
+                int m = (int) getNextI(2); // music offset
+                deltas = (int) getNextI(2); // ticks/qtr note
+                i = (int) getNextI(2); // stuff in cmf is click ticks per second..
                 if (i != 0) msqtr = 1000000L / i * deltas;
 
-                i = (int) getnexti(2);
+                i = (int) getNextI(2);
                 if (i > 0 && i < flen) title = Helpers.retrieveAsString(data, i, (int) (flen - i));
 
-                i = (int) getnexti(2);
+                i = (int) getNextI(2);
                 if (i > 0 && i < flen) author = Helpers.retrieveAsString(data, i, (int) (flen - i));
 
-                i = (int) getnexti(2);
+                i = (int) getNextI(2);
                 if (i > 0 && i < flen) remarks = Helpers.retrieveAsString(data, i, (int) (flen - i));
 
-                getnext(16); // channel in use table ..
-                i = (int) getnexti(2); // num instr
+                getNext(16); // channel in use table ..
+                i = (int) getNextI(2); // num instr
                 if (i > 128) i = 128; // to ward of bad numbers...
-                getnexti(2); // basic tempo
+                getNextI(2); // basic tempo
 
                 pos = n; // jump to instruments
                 tins = i;
 logger.log(Level.TRACE, "ioff: 0x%04x, moff: 0x%04x, deltas: %d, msqtr: %d, numi: %d".formatted(n, m, deltas, msqtr, tins));
                 for (int j = 0; j < i; j++) {
                     for (int l = 0; l < 16; l++) {
-                        myinsbank[j][l] = (int) getnext(1);
+                        myinsbank[j][l] = (int) getNext(1);
                     }
 logger.log(Level.DEBUG, "%d: %s".formatted(j, Arrays.toString(myinsbank[j])));
                 }
@@ -1027,7 +1085,7 @@ logger.log(Level.DEBUG, "%d: %s".formatted(j, Arrays.toString(myinsbank[j])));
                 for (int x = 0; x < 16; x++)
                     ch[x].nshift = -13;
 
-                adlib_style = CMF_STYLE;
+                adlibStyle = CMF_STYLE;
 
                 track[0].on = true;
                 track[0].tend = flen; // music until the end of the file
@@ -1036,7 +1094,7 @@ logger.log(Level.DEBUG, "%d: %s".formatted(j, Arrays.toString(myinsbank[j])));
             case FILE_OLDLUCAS:
                 msqtr = 250000;
                 pos = 9;
-                deltas = (int) getnext(1);
+                deltas = (int) getNext(1);
 
                 i = 8;
                 pos = 0x19; // jump to instruments
@@ -1044,7 +1102,7 @@ logger.log(Level.DEBUG, "%d: %s".formatted(j, Arrays.toString(myinsbank[j])));
                 int[] ins = new int[16];
                 for (int j = 0; j < i; j++) {
                     for (int l = 0; l < 16; l++)
-                        ins[l] = (int) getnext(1);
+                        ins[l] = (int) getNext(1);
 
                     myinsbank[j][10] = ins[2];
                     myinsbank[j][0] = ins[3];
@@ -1068,7 +1126,7 @@ logger.log(Level.DEBUG, "%d: %s".formatted(j, Arrays.toString(myinsbank[j])));
                     }
                 }
 
-                adlib_style = LUCAS_STYLE | MIDI_STYLE;
+                adlibStyle = LUCAS_STYLE | MIDI_STYLE;
 
                 track[0].on = true;
                 track[0].tend = flen; // music until the end of the file
@@ -1078,31 +1136,31 @@ logger.log(Level.DEBUG, "%d: %s".formatted(j, Arrays.toString(myinsbank[j])));
                 copyInsBanks();
                 tins = stins;
                 deltas = 0x20;
-                getnext(11); // worthless empty space and "stuff" :)
+                getNext(11); // worthless empty space and "stuff" :)
 
-                long o_sierra_pos = sierra_pos = pos;
-                sierra_next_section();
-                while (datalook(sierra_pos - 2) != 0xff && pos < flen) {
-                    sierra_next_section();
+                long o_sierra_pos = sierraPos = pos;
+                sierraNextSection();
+                while (dataLook(sierraPos - 2) != 0xff && pos < flen) {
+                    sierraNextSection();
                     subsongs++;
                 }
 
                 if (subsong < 0 || subsong >= subsongs) subsong = 0;
 
-                sierra_pos = o_sierra_pos;
-                sierra_next_section();
+                sierraPos = o_sierra_pos;
+                sierraNextSection();
                 i = 0;
                 while (i != subsong) {
-                    sierra_next_section();
+                    sierraNextSection();
                     i++;
                 }
 
-                adlib_style = SIERRA_STYLE | MIDI_STYLE; // advanced sierra tunes use volume
+                adlibStyle = SIERRA_STYLE | MIDI_STYLE; // advanced sierra tunes use volume
                 break;
             case FILE_SIERRA:
                 copyInsBanks();
                 tins = stins;
-                getnext(2);
+                getNext(2);
                 deltas = 0x20;
 
                 track[0].on = true;
@@ -1110,14 +1168,14 @@ logger.log(Level.DEBUG, "%d: %s".formatted(j, Arrays.toString(myinsbank[j])));
 
                 for (int x = 0; x < 16; x++) {
                     ch[x].nshift = -13;
-                    ch[x].on = (int) getnext(1) != 0;
-                    ch[x].inum = (int) getnext(1) & 0x7f;
+                    ch[x].on = (int) getNext(1) != 0;
+                    ch[x].inum = (int) getNext(1) & 0x7f;
                     for (int y = 0; y < 11; y++)
                         ch[x].ins[y] = myinsbank[ch[x].inum][y];
                 }
 
                 track[0].spos = pos;
-                adlib_style = SIERRA_STYLE | MIDI_STYLE;
+                adlibStyle = SIERRA_STYLE | MIDI_STYLE;
                 break;
         }
 
@@ -1130,7 +1188,7 @@ logger.log(Level.DEBUG, "%d: %s".formatted(j, Arrays.toString(myinsbank[j])));
         }
 
         firstRound = true;
-        midi_fm_reset(opl);
+        midiFmReset(opl);
     }
 
     @Override

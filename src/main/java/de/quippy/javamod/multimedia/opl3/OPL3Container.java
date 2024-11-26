@@ -23,17 +23,20 @@
 package de.quippy.javamod.multimedia.opl3;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Properties;
 import javax.swing.JPanel;
 
 import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
+import de.quippy.javamod.multimedia.SpiMultimediaContainer;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.Version;
 import de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence;
 import de.quippy.javamod.system.Helpers;
@@ -45,7 +48,7 @@ import static java.lang.System.getLogger;
  * @author Daniel Becker
  * @since 03.08.2020
  */
-public class OPL3Container extends MultimediaContainer {
+public class OPL3Container extends MultimediaContainer implements SpiMultimediaContainer {
 
     private static final Logger logger = getLogger(OPL3Container.class.getName());
 
@@ -95,6 +98,27 @@ public class OPL3Container extends MultimediaContainer {
         } catch (IOException ex) {
             logger.log(Level.ERROR, "Loading of sequence failed", ex);
         }
+    }
+
+    @Override
+    public boolean isSupported(InputStream stream) {
+        try {
+            OPL3Sequence sequence = OPL3Sequence.getOPL3SequenceInstanceFor(stream);
+logger.log(Level.DEBUG, "opl3: " + sequence.getClass().getName());
+            return true;
+        } catch (NoSuchElementException e) {
+logger.log(Level.TRACE, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * for javax.sound.spi
+     * @since 3.9.7
+     */
+    @Override
+    public void setInputStream(InputStream stream) throws IOException {
+        opl3Sequence = OPL3Sequence.createOPL3Sequence(stream, getSoundBankURL());
     }
 
     @Override

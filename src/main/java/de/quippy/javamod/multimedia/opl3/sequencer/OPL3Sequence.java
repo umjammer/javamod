@@ -24,9 +24,14 @@ package de.quippy.javamod.multimedia.opl3.sequencer;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.util.ServiceLoader;
+import java.util.ServiceLoader.Provider;
 
+import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.io.RandomAccessInputStreamImpl;
+import de.quippy.javamod.io.SpiModfileInputStream;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.OplType;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.Version;
@@ -43,20 +48,19 @@ public abstract class OPL3Sequence {
      * Constructor for OPL3Sequence
      */
     public OPL3Sequence() {
-        super();
     }
 
     /**
-     * @param fileName
-     * @return
+     * @param fileName opl file name
+     * @return suitable sequencer
      */
     public static OPL3Sequence createOPL3Sequence(String fileName, String bnkFileName) throws IOException {
         return createOPL3Sequence(new File(fileName), new File(bnkFileName));
     }
 
     /**
-     * @param file
-     * @return
+     * @param file opl file
+     * @return suitable sequencer
      */
     public static OPL3Sequence createOPL3Sequence(File file, File bnkFile) throws IOException {
         if (file == null || bnkFile == null) return null;
@@ -64,17 +68,15 @@ public abstract class OPL3Sequence {
     }
 
     /**
-     * @param url
-     * @return
+     * @param url opl url
+     * @return suitable sequencer
+     * @throws IOException unsupported opl3
      */
     public static OPL3Sequence createOPL3Sequence(URL url, URL bnkURL) throws IOException {
         OPL3Sequence newSequence = getOPL3SequenceInstanceFor(url);
         if (newSequence != null) {
-            if (newSequence instanceof ROLSequence) {
-                if (bnkURL == null) throw new IOException("No bank file specified!");
-                ((ROLSequence) newSequence).setBNKFile(bnkURL);
-            }
-            RandomAccessInputStreamImpl inputStream = null;
+            newSequence.initExtra(bnkURL);
+            RandomAccessInputStream inputStream = null;
             try {
                 inputStream = new RandomAccessInputStreamImpl(url);
                 newSequence.setURL(url);
@@ -90,26 +92,64 @@ public abstract class OPL3Sequence {
     }
 
     /**
+     * for javax.sound.spi
+     * @param stream opl stream
+     * @return suitable sequencer
+     * @throws IOException unsupported opl3
+     * @since 3.9.7
+     */
+    public static OPL3Sequence createOPL3Sequence(InputStream stream, URL bnkURL) throws IOException {
+        OPL3Sequence newSequence = getOPL3SequenceInstanceFor(stream);
+        if (newSequence != null) {
+            newSequence.initExtra(bnkURL);
+            RandomAccessInputStream inputStream = null;
+            try {
+                inputStream = new SpiModfileInputStream(stream);
+                newSequence.readOPL3Sequence(inputStream);
+            } finally {
+                if (inputStream != null) try {
+                    inputStream.close();
+                } catch (Exception ex) { /* logger.log(Level.ERROR, "IGNORED", ex); */ }
+            }
+        } else
+            throw new IOException("Unsupported OPL3 Sequence");
+        return newSequence;
+    }
+
+    /** most sequence doesn't need this, so not abstract but blank */
+    protected void initExtra(URL bnkURL) throws IOException {
+    }
+
+    /**
      * This central method will know of all available sequence-types - hardcoded
      * We do not use a factory like we did with the mods. Highly flexible,
      * but sometimes a pain in the ass...
      *
-     * @param url
-     * @return
+     * @param url opl sequence url
+     * @return suitable sequencer, nullable
      * @since 03.08.2020
      */
     private static OPL3Sequence getOPL3SequenceInstanceFor(URL url) {
         String extension = Helpers.getExtensionFromURL(url).toUpperCase();
-        return switch (extension) {
-            case "DRO" -> new DROSequence();
-            case "LAA", "CMF", "SCI" -> new MIDSequence();
-            case "ROL" -> new ROLSequence();
-            default -> null;
-        };
+        return sequences.stream().map(Provider::get).filter(s -> s.isSupportedExtension(extension)).findFirst().orElse(null);
     }
 
     /**
-     * @param opl
+     * Gets suitable sequence by an extension
+     * @throws java.util.NoSuchElementException no suitable sequence found
+     */
+    public static OPL3Sequence getOPL3SequenceInstanceFor(InputStream stream) {
+        return sequences.stream().map(Provider::get).filter(s -> s.isSupported(stream)).findFirst().orElseThrow();
+    }
+
+    /** Gets suitable sequence by a stream */
+    protected abstract boolean isSupportedExtension(String extension);
+
+    /** must implement mark/reset inside this method */
+    protected abstract boolean isSupported(InputStream stream);
+
+    /**
+     * @param opl set opl emulator
      * @since 03.08.2020
      */
     protected static void resetOPL(EmuOPL opl) {
@@ -117,7 +157,7 @@ public abstract class OPL3Sequence {
     }
 
     /**
-     * @return
+     * @return length in [msec]
      * @since 03.08.2020
      */
     public long getLengthInMilliseconds() {
@@ -130,57 +170,57 @@ public abstract class OPL3Sequence {
     }
 
     /**
-     * @param inputStream
-     * @throws IOException
+     * @param inputStream opl sequence input stream
+     * @throws IOException when an error occurs
      * @since 03.08.2020
      */
-    protected abstract void readOPL3Sequence(RandomAccessInputStreamImpl inputStream) throws IOException;
+    protected abstract void readOPL3Sequence(RandomAccessInputStream inputStream) throws IOException;
 
     /**
-     * @param url
+     * @param url opl sequence url
      * @since 03.08.2020
      */
     public abstract void setURL(URL url);
 
     /**
-     * @param opl
-     * @return
+     * @param opl opl emulator
+     * @return success or not
      * @since 03.08.2020
      */
     public abstract boolean updateToOPL(EmuOPL opl);
 
     /**
-     * @param opl
+     * @param opl opl emulator
      * @since 03.08.2020
      */
     public abstract void initialize(EmuOPL opl);
 
     /**
-     * @return
+     * @return refresh
      * @since 03.08.2020
      */
     public abstract double getRefresh();
 
     /**
-     * @return
+     * @return song name
      * @since 03.08.2020
      */
     public abstract String getSongName();
 
     /**
-     * @return
+     * @return author
      * @since 03.08.2020
      */
     public abstract String getAuthor();
 
     /**
-     * @return
+     * @return description
      * @since 03.08.2020
      */
     public abstract String getDescription();
 
     /**
-     * @return
+     * @return type name
      * @since 03.08.2020
      */
     public abstract String getTypeName();
@@ -188,8 +228,15 @@ public abstract class OPL3Sequence {
     /**
      * Return the needed oplType: OPL2, DUAL_OPL2 or OPL3
      *
-     * @return
+     * @return opl type
      * @since 16.08.2020
      */
     public abstract OplType getOPLType();
+
+    /** spi for opl3 sequence */
+    private static final ServiceLoader<OPL3Sequence> sequences;
+
+    static {
+        sequences = ServiceLoader.load(OPL3Sequence.class);
+    }
 }

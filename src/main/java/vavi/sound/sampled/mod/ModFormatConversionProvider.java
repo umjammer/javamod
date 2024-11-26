@@ -93,7 +93,7 @@ public class ModFormatConversionProvider extends FormatConversionProvider {
                     return sourceStream;
                 } else if (sourceFormat.getEncoding() instanceof ModEncoding && targetFormat.getEncoding().equals(PCM_SIGNED)) {
                     try {
-                        return new Mod2PcmAudioInputStream(sourceStream, targetFormat, NOT_SPECIFIED, targetFormat.properties());
+                        return new Mod2PcmAudioInputStream(sourceFormat, targetFormat, NOT_SPECIFIED, targetFormat.properties());
                     } catch (IOException e) {
                         throw new IllegalStateException(e);
                     }
@@ -121,7 +121,7 @@ public class ModFormatConversionProvider extends FormatConversionProvider {
                 } else if (sourceFormat.getEncoding() instanceof ModEncoding &&
                         targetFormat.getEncoding().equals(PCM_SIGNED)) {
                     try {
-                        return new Mod2PcmAudioInputStream(sourceStream, targetFormat, NOT_SPECIFIED, targetFormat.properties());
+                        return new Mod2PcmAudioInputStream(sourceFormat, targetFormat, NOT_SPECIFIED, targetFormat.properties());
                     } catch (IOException e) {
                         throw new IllegalStateException(e);
                     }
