@@ -25,6 +25,7 @@ package de.quippy.javamod.multimedia.sid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -32,12 +33,14 @@ import java.util.Map;
 import java.util.Properties;
 import javax.swing.JPanel;
 
+import de.quippy.javamod.io.SpiModfileInputStream;
 import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerEvent;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import de.quippy.javamod.multimedia.SpiMultimediaContainer;
 import libsidplay.sidtune.SidTune;
+import libsidplay.sidtune.SidTuneError;
 import libsidplay.sidtune.SidTuneInfo;
 
 import static java.lang.System.getLogger;
@@ -102,7 +105,21 @@ public class SIDContainer extends MultimediaContainer implements SpiMultimediaCo
 
     @Override
     public boolean isSupported(InputStream stream) {
-        return false;
+        try {
+            stream.mark(SpiModfileInputStream.MAX_BUFFER_SIZE);
+            SidTune sidTune = SidTune.load("spi.stream", stream);
+logger.log(Level.DEBUG, "sidTune: " + sidTune);
+            return true;
+        } catch (IOException | SidTuneError e) {
+logger.log(Level.DEBUG, e.getMessage(), e);
+            return false;
+        } finally {
+            try {
+                stream.reset();
+            } catch (IOException e) {
+logger.log(Level.TRACE, e);
+            }
+        }
     }
 
     /**
@@ -111,7 +128,12 @@ public class SIDContainer extends MultimediaContainer implements SpiMultimediaCo
      */
     @Override
     public void setInputStream(InputStream stream) throws IOException {
-        throw new UnsupportedOperationException("not implemented yet");
+        try {
+            sidTune = SidTune.load("spi.stream", stream); // TODO name
+        } catch (SidTuneError e) {
+logger.log(Level.DEBUG, e.getMessage(), e);
+            throw new IOException(e);
+        }
     }
 
     @Override

@@ -85,7 +85,7 @@ public class ModAudioFileReader extends AudioFileReader {
      *                                       valid audio file data recognized by the system.
      * @throws IOException                   if an I/O exception occurs.
      */
-    protected static AudioFileFormat getAudioFileFormat(InputStream bitStream, int mediaLength) throws UnsupportedAudioFileException, IOException {
+    protected AudioFileFormat getAudioFileFormat(InputStream bitStream, int mediaLength) throws UnsupportedAudioFileException, IOException {
 logger.log(DEBUG, "enter: available: " + bitStream.available() + ", " + bitStream);
         if (!bitStream.markSupported()) {
             throw new IllegalArgumentException("input stream not supported mark");
@@ -96,22 +96,24 @@ logger.log(DEBUG, "enter: available: " + bitStream.available() + ", " + bitStrea
         int channels;
         try {
             mixer = SpiMultimediaContainer.factory(bitStream);
+logger.log(DEBUG, "mixer: " + mixer);
 
             samplingRate = mixer.getCurrentSampleRate();
             int channelCount = mixer.getChannelCount();
 logger.log(TRACE, "samplingRate: " + samplingRate + ", channels: " + channelCount);
             channels = channelCount == 0 ? 2 : channelCount;
-            encoding = ModEncoding.MOD; // TODO ModEncoding.valueOf(mod.getClass().getSimpleName().replace("Mod", ""));
+            encoding = ModEncoding.valueOf(mixer.getClass().getSimpleName().replace("Mixer", ""));
 
         } catch (IllegalArgumentException | NoSuchElementException e) {
 logger.log(DEBUG, "error exit: available: " + bitStream.available() + ", " + bitStream);
 logger.log(TRACE, e.getMessage(), e);
             throw (UnsupportedAudioFileException) new UnsupportedAudioFileException().initCause(e);
         }
-        Type type = ModFileFormatType.MOD; // TODO
+        Type type = ModFileFormatType.valueOf(mixer.getClass().getSimpleName().replace("Mixer", ""));
 logger.log(TRACE, "type: " + type);
         Map<String, Object> props = new HashMap<>();
         props.put("mod", mixer);
+        props.put("uri", uri);
         AudioFormat format = new AudioFormat(encoding, samplingRate, NOT_SPECIFIED, channels, NOT_SPECIFIED, NOT_SPECIFIED, false, props);
         return new AudioFileFormat(type, format, NOT_SPECIFIED);
     }
@@ -156,7 +158,7 @@ logger.log(TRACE, "type: " + type);
      *                                       valid audio file data recognized by the system.
      * @throws IOException                   if an I/O exception occurs.
      */
-    protected static AudioInputStream getAudioInputStream(InputStream inputStream, int mediaLength) throws UnsupportedAudioFileException, IOException {
+    protected AudioInputStream getAudioInputStream(InputStream inputStream, int mediaLength) throws UnsupportedAudioFileException, IOException {
         AudioFileFormat audioFileFormat = getAudioFileFormat(inputStream, mediaLength);
         return new AudioInputStream(inputStream, audioFileFormat.getFormat(), audioFileFormat.getFrameLength());
     }
