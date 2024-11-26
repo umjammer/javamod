@@ -135,7 +135,7 @@ public class ModMixer extends BasicMixer {
      */
     public void setDoWideStereoMix(boolean doWideStereoMix) {
         this.doWideStereoMix = doWideStereoMix;
-//		if (doWideStereoMix) modDSP.initWideStereo(sampleRate);
+//        if (doWideStereoMix) modDSP.initWideStereo(sampleRate);
         if (doWideStereoMix) modDSP.initSurround(sampleRate);
     }
 
@@ -169,7 +169,7 @@ public class ModMixer extends BasicMixer {
     }
 
     /**
-     * @param msBufferSize
+     * @param msBufferSize buffer size
      */
     public void setBufferSize(int msBufferSize) {
         int oldMsBufferSize = this.msBufferSize;
@@ -492,7 +492,6 @@ public class ModMixer extends BasicMixer {
                     // let's reset the amount of samples written if we did a loop...
                     if (allSamplesWritten != -1 && currentSamplesWritten > allSamplesWritten)
                         currentSamplesWritten -= allSamplesWritten;
-
                 }
 
                 if (stopPositionIsReached()) setIsStopping();
@@ -504,17 +503,13 @@ public class ModMixer extends BasicMixer {
                 if (isPausing()) {
                     setIsPaused();
                     while (isPaused()) {
-                        try {
-                            Thread.sleep(10L);
-                        } catch (InterruptedException ex) { /* noop */ }
+                        try { Thread.sleep(10L); } catch (InterruptedException ignore) {}
                     }
                 }
                 if (isInSeeking()) {
                     setIsSeeking();
                     while (isInSeeking()) {
-                        try {
-                            Thread.sleep(10L);
-                        } catch (InterruptedException ex) { /* noop */ }
+                        try { Thread.sleep(10L); } catch (InterruptedException ignore) {}
                     }
                 }
             }

@@ -17,7 +17,6 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 
 import de.quippy.javamod.mixer.Mixer;
-import de.quippy.javamod.multimedia.mod.ModContainer;
 import vavi.io.OutputEngine;
 import vavi.io.OutputEngineInputStream;
 
@@ -37,17 +36,12 @@ class Mod2PcmAudioInputStream extends AudioInputStream {
     /**
      * Constructor.
      *
-     * @param sourceStream the underlying input stream.
+     * @param sourceFormat the source format of this stream's audio data.
      * @param format the target format of this stream's audio data.
      * @param length the length in sample frames of the data in this stream.
      */
-    public Mod2PcmAudioInputStream(AudioInputStream sourceStream, AudioFormat format, long length) throws IOException {
-        this(sourceStream, format, length, format.properties());
-    }
-
-    /** */
-    public Mod2PcmAudioInputStream(AudioInputStream sourceStream, AudioFormat format, long length, Map<String, Object> props) throws IOException {
-        super(new OutputEngineInputStream(new ModOutputEngine(sourceStream, props)), format, length);
+    public Mod2PcmAudioInputStream(AudioFormat sourceFormat, AudioFormat format, long length, Map<String, Object> props) throws IOException {
+        super(new OutputEngineInputStream(new ModOutputEngine((Mixer) sourceFormat.getProperty("mod"), props)), format, length);
     }
 
     /** */
@@ -57,19 +51,16 @@ class Mod2PcmAudioInputStream extends AudioInputStream {
         private OutputStream out;
 
         /** deque */
-        final ModSoundOutputStream msod;
+        final ModSoundOutputStream queue;
 
         /** TODO consider output engine's raison d'être */
         final ExecutorService es = Executors.newSingleThreadExecutor();
 
         /** */
-        public ModOutputEngine(AudioInputStream inputStream, Map<String, Object> props) throws IOException {
-            ModContainer container = new ModContainer();
-            container.setInputStream(inputStream);
-            Mixer mixer = container.createNewMixer();
-logger.log(Level.DEBUG, mixer.getClass().getName());
-            msod = new ModSoundOutputStream();
-            mixer.setSoundOutputStream(msod);
+        public ModOutputEngine(Mixer mixer, Map<String, Object> props) throws IOException {
+logger.log(Level.DEBUG,"mod: " + mixer.getClass().getName());
+            queue = new ModSoundOutputStream();
+            mixer.setSoundOutputStream(queue);
             es.submit(mixer::startPlayback); // TODO *engine exists for not to use thread
         }
 
@@ -80,7 +71,7 @@ logger.log(Level.DEBUG, mixer.getClass().getName());
             } else {
                 this.out = out;
 
-                while (!msod.hasStarted()) { // wait until the deque fills up
+                while (!queue.hasStarted()) { // wait until the deque fills up
                     Thread.yield();
                 }
             }
@@ -92,8 +83,8 @@ logger.log(Level.DEBUG, mixer.getClass().getName());
                 throw new IOException("Not yet initialized");
             } else {
                 try {
-                    if (!msod.hasFinished()) {
-                        out.write(msod.readSampleData());
+                    if (!queue.hasFinished()) {
+                        out.write(queue.readSampleData());
                     } else {
                         out.close();
                     }

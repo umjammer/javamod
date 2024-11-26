@@ -23,7 +23,6 @@ import javax.sound.sampled.LineEvent;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import davaguine.jmac.spi.APEEncoding;
 import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
@@ -75,7 +74,7 @@ Debug.println("volume: " + volume);
     String mod = "src/test/resources/test.mod";
 
     @Test
-    @Disabled("for creating proto type")
+    @Disabled("for creating prototype")
     @DisplayName("output to stream")
     void testP0() throws Exception {
         MultimediaContainerManager.setIsHeadlessMode(true);
@@ -86,7 +85,7 @@ Debug.println("volume: " + volume);
     }
 
     @Test
-    @Disabled("for creating proto type")
+    @Disabled("for creating prototype")
     @DisplayName("container direct")
     void testP1() throws Exception {
         ModContainer container = new ModContainer();
@@ -101,6 +100,7 @@ Debug.println("volume: " + volume);
     void test0() throws Exception {
 
         Path path = Paths.get(mod);
+Debug.println("path: " + path);
         AudioInputStream sourceAis = new ModAudioFileReader().getAudioInputStream(new BufferedInputStream(Files.newInputStream(path), MAX_BUFFER_SIZE));
 
         AudioFormat inAudioFormat = sourceAis.getFormat();
@@ -142,6 +142,7 @@ Debug.println("OUT: " + outAudioFormat);
     void test1() throws Exception {
 
         Path path = Paths.get(mod);
+Debug.println("path: " + path);
         AudioInputStream sourceAis = AudioSystem.getAudioInputStream(new BufferedInputStream(Files.newInputStream(path), MAX_BUFFER_SIZE));
 
         AudioFormat inAudioFormat = sourceAis.getFormat();

@@ -22,6 +22,8 @@
 
 package de.quippy.javamod.multimedia.sid;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.net.URL;
 import java.nio.file.Path;
@@ -34,6 +36,7 @@ import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerEvent;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
+import de.quippy.javamod.multimedia.SpiMultimediaContainer;
 import libsidplay.sidtune.SidTune;
 import libsidplay.sidtune.SidTuneInfo;
 
@@ -44,7 +47,7 @@ import static java.lang.System.getLogger;
  * @author Daniel Becker
  * @since 04.10.2009
  */
-public class SIDContainer extends MultimediaContainer {
+public class SIDContainer extends MultimediaContainer implements SpiMultimediaContainer {
 
     private static final Logger logger = getLogger(SIDContainer.class.getName());
 
@@ -95,6 +98,20 @@ public class SIDContainer extends MultimediaContainer {
         sidTune = loadSidTune(sidFileUrl);
         if (!MultimediaContainerManager.isHeadlessMode())
             ((SIDInfoPanel) getInfoPanel()).fillInfoPanelWith(getFileURL(), sidTune);
+    }
+
+    @Override
+    public boolean isSupported(InputStream stream) {
+        return false;
+    }
+
+    /**
+     * for javax.sound.spi
+     * @since 3.9.7
+     */
+    @Override
+    public void setInputStream(InputStream stream) throws IOException {
+        throw new UnsupportedOperationException("not implemented yet");
     }
 
     @Override

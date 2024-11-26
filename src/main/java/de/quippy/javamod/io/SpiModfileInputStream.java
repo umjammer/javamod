@@ -57,7 +57,7 @@ public class SpiModfileInputStream implements RandomAccessInputStream {
     }
 
     @Override
-    public void mark(int readlimit) {
+    public void mark(int readLimit) {
         throw new UnsupportedOperationException();
     }
 

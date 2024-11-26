@@ -15,6 +15,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFileFormat.Type;
 import javax.sound.sampled.AudioFormat;
@@ -23,8 +26,8 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.sound.sampled.spi.AudioFileReader;
 
-import de.quippy.javamod.multimedia.mod.loader.Module;
-import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
+import de.quippy.javamod.mixer.Mixer;
+import de.quippy.javamod.multimedia.SpiMultimediaContainer;
 
 import static de.quippy.javamod.io.SpiModfileInputStream.MAX_BUFFER_SIZE;
 import static java.lang.System.Logger.Level.DEBUG;
@@ -87,20 +90,29 @@ logger.log(DEBUG, "enter: available: " + bitStream.available() + ", " + bitStrea
         if (!bitStream.markSupported()) {
             throw new IllegalArgumentException("input stream not supported mark");
         }
+        Mixer mixer;
         Encoding encoding;
-        float samplingRate = 48000; // TODO
+        float samplingRate;
+        int channels;
         try {
-            Module mod = ModuleFactory.getModuleFromStream(bitStream);
-logger.log(DEBUG, "mod: " + mod.getClass().getName());
+            mixer = SpiMultimediaContainer.factory(bitStream);
+
+            samplingRate = mixer.getCurrentSampleRate();
+            int channelCount = mixer.getChannelCount();
+logger.log(TRACE, "samplingRate: " + samplingRate + ", channels: " + channelCount);
+            channels = channelCount == 0 ? 2 : channelCount;
             encoding = ModEncoding.MOD; // TODO ModEncoding.valueOf(mod.getClass().getSimpleName().replace("Mod", ""));
 
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NoSuchElementException e) {
 logger.log(DEBUG, "error exit: available: " + bitStream.available() + ", " + bitStream);
 logger.log(TRACE, e.getMessage(), e);
             throw (UnsupportedAudioFileException) new UnsupportedAudioFileException().initCause(e);
         }
         Type type = ModFileFormatType.MOD; // TODO
-        AudioFormat format = new AudioFormat(encoding, samplingRate, NOT_SPECIFIED, 2, NOT_SPECIFIED, NOT_SPECIFIED, false);
+logger.log(TRACE, "type: " + type);
+        Map<String, Object> props = new HashMap<>();
+        props.put("mod", mixer);
+        AudioFormat format = new AudioFormat(encoding, samplingRate, NOT_SPECIFIED, channels, NOT_SPECIFIED, NOT_SPECIFIED, false, props);
         return new AudioFileFormat(type, format, NOT_SPECIFIED);
     }
 

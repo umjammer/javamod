@@ -86,8 +86,8 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
     /**
      * Constructor for RandomAccessInputStreamImpl
      *
-     * @param file
-     * @throws FileNotFoundException
+     * @param file file to access
+     * @throws FileNotFoundException when the file not found
      */
     public RandomAccessInputStreamImpl(File file) throws IOException {
         if (!file.exists()) {
@@ -99,8 +99,8 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
     /**
      * Constructor for RandomAccessInputStreamImpl
      *
-     * @param fileName
-     * @throws FileNotFoundException
+     * @param fileName file name to access
+     * @throws FileNotFoundException when the file not found
      */
     public RandomAccessInputStreamImpl(String fileName) throws IOException {
         this(new File(fileName));
@@ -151,7 +151,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
     /**
      * Constructor for RandomAccessInputStreamImpl from a direct byte array
      *
-     * @param fromByteArray
+     * @param fromByteArray source data
      * @throws IOException when an io error occurs
      */
     public RandomAccessInputStreamImpl(byte[] fromByteArray) throws IOException {
@@ -163,8 +163,8 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
     }
 
     /**
-     * @param fromUrl
-     * @return
+     * @param fromUrl source zip url
+     * @return unpacked temporary file
      * @throws IOException when an io error occurs
      * @since 04.01.2011
      */
@@ -174,8 +174,8 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
     }
 
     /**
-     * @param input
-     * @return
+     * @param input source
+     * @return copied temporary file
      * @throws IOException when an io error occurs
      * @since 02.01.2011
      */
@@ -191,8 +191,8 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
     }
 
     /**
-     * @param inputStream
-     * @param out
+     * @param inputStream source
+     * @param out destination
      * @throws IOException when an io error occurs
      * @since 02.01.2008
      */
@@ -208,7 +208,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
      * Will return the local file this RandomAccessFile works on
      * or null using local fullFileCache and no file
      *
-     * @return
+     * @return file to access
      * @since 09.01.2011
      */
     @Override
@@ -217,7 +217,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
     }
 
     /**
-     * @param theFile
+     * @param theFile file to access
      * @throws IOException when an io error occurs
      * @since 18.01.2022
      */
@@ -231,7 +231,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
     }
 
     /**
-     * @return
+     * @return end buffer pointer or -1 source file is not set
      * @throws IOException when an io error occurs
      * @since 18.01.2022
      */
@@ -247,10 +247,10 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
     }
 
     /**
-     * @param b
-     * @param off
-     * @param len
-     * @return
+     * @param b buffer
+     * @param off buffer offset
+     * @param len read length
+     * @return read count
      * @throws IOException when an io error occurs
      * @since 18.01.2022
      */
@@ -275,7 +275,7 @@ public class RandomAccessInputStreamImpl extends InputStream implements RandomAc
     }
 
     /**
-     * @return
+     * @return byte read
      * @throws IOException when an io error occurs
      * @since 18.01.2022
      */
