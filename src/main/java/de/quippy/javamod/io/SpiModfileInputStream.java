@@ -100,6 +100,7 @@ public class SpiModfileInputStream implements RandomAccessInputStream {
     @Override
     public void seek(long pos) throws IOException {
         stream.reset();
+        stream.mark(MAX_BUFFER_SIZE);
         int l = 0;
         while (l < pos) {
             long r = skip(pos);
