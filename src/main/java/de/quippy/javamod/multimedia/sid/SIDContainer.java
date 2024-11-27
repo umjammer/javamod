@@ -111,7 +111,7 @@ public class SIDContainer extends MultimediaContainer implements SpiMultimediaCo
 logger.log(Level.DEBUG, "sidTune: " + sidTune);
             return true;
         } catch (IOException | SidTuneError e) {
-logger.log(Level.DEBUG, e.getMessage(), e);
+logger.log(Level.TRACE, e.getMessage(), e);
             return false;
         } finally {
             try {
