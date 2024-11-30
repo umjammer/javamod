@@ -47,6 +47,7 @@ import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.OplType;
 import de.quippy.javamod.system.Helpers;
+import vavi.sound.SoundUtil;
 
 import static java.lang.System.getLogger;
 
@@ -325,6 +326,7 @@ public class MIDSequence extends OPL3Sequence {
 
             byte[] magic = new byte[6];
             dis.readFully(magic);
+//Debug.println(StringUtil.getDump(magic));
 
             int type = 0;
             switch (magic[0] & 0xff) {
@@ -341,11 +343,16 @@ public class MIDSequence extends OPL3Sequence {
                         type = FILE_CMF;
                     break;
                 case 0x84:
-                    if (magic[1] == 0 && loadSierraIns(url))
+//try {
+                    if (magic[1] == 0 && loadSierraIns(toURL(SoundUtil.getSource(stream))))
                         if ((magic[2] & 0xff) == 0xF0)
                             type = FILE_ADVSIERRA;
                         else
                             type = FILE_SIERRA;
+//} catch(Exception e) {
+// logger.log(Level.ERROR, e.getMessage(), e);
+// throw e;
+//}
                     break;
                 default:
                     long size = ((long) magic[0] & 0xff) | (((long) magic[1] & 0xff) << 8) | (((long) magic[3] & 0xff) << 24) | (((long) magic[2] & 0xff) << 16);
@@ -361,7 +368,7 @@ logger.log(Level.WARNING, e.getMessage(), e);
             try {
                 dis.reset();
             } catch (IOException e) {
- logger.log(Level.DEBUG, e.toString());
+ logger.log(Level.TRACE, e.toString());
             }
         }
     }
@@ -423,6 +430,7 @@ logger.log(Level.WARNING, e.getMessage(), e);
      * @since 04.08.2020
      */
     private boolean loadSierraIns(URL fileURL) {
+logger.log(Level.TRACE, "url: " + fileURL);
         // get patch.003 URL with 3 char prefix of fileURL
         String fileName = Helpers.getFileNameFromURL(fileURL);
         if (fileName.length() < 3) return false; // already finished
@@ -437,6 +445,7 @@ logger.log(Level.WARNING, e.getMessage(), e);
             if (!Helpers.urlExists(patchFileURL)) return false;
             inputStream = new RandomAccessInputStreamImpl(patchFileURL);
             if (inputStream.available() == 0) return false;
+logger.log(Level.DEBUG, "patch: " + patchFileURL);
 
             stins = 0;
             int[] ins = new int[28];
@@ -465,6 +474,7 @@ logger.log(Level.WARNING, e.getMessage(), e);
             // java 8 - creates a new array set
             //smyinsbank = Arrays.stream(myinsbank).map(int[]::clone).toArray(int[][]::new);
         } catch (Throwable ex) {
+logger.log(Level.TRACE, ex.getMessage(), ex);
             return false; // something went wrong, so we return false
         } finally {
             if (inputStream != null) try {
@@ -800,7 +810,7 @@ logger.log(Level.TRACE, "note on[%d]: %d".formatted(c, vel));
                             int ctrl = (int) getNext(1);
                             vel = (int) getNext(1);
 
-logger.log(Level.DEBUG, "control change: %d, %02x, %02x".formatted(c, ctrl, vel));
+logger.log(Level.TRACE, "control change: %d, %02x, %02x".formatted(c, ctrl, vel));
                             switch (ctrl) {
                                 case 0x07:
                                     ch[c].vol = vel;
@@ -834,7 +844,7 @@ logger.log(Level.DEBUG, "control change: %d, %02x, %02x".formatted(c, ctrl, vel)
                             ch[c].inum = x & 0x7f;
                             for (int j = 0; j < 11; j++)
                                 ch[c].ins[j] = myinsbank[ch[c].inum][j];
-logger.log(Level.DEBUG, "program change[%d]: %d".formatted(c, ch[c].inum));
+logger.log(Level.TRACE, "program change[%d]: %d".formatted(c, ch[c].inum));
                             break;
                         case 0xd0: // channel touch
                             /* int x = (int) */ getNext(1);

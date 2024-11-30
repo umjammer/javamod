@@ -5,7 +5,7 @@
 
   <groupId>net.sourceforge.javamod</groupId>
   <artifactId>JavaMod</artifactId>
-  <version>3.9.8</version>
+  <version>3.9.9</version>
 
   <build>
     <plugins>
@@ -23,6 +23,8 @@
         <version>3.2.5</version>
         <configuration>
           <argLine>
+            --add-opens=java.base/java.io=ALL-UNNAMED
+            --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
             -Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties
           </argLine>
           <trimStackTrace>false</trimStackTrace>
@@ -59,6 +61,11 @@
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
       <version>1.1.14</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-sound</artifactId>
+      <version>1.0.20</version>
     </dependency>
     <dependency>
       <groupId>com.github.umjammer</groupId>

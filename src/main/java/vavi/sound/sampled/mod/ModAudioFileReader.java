@@ -11,8 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.System.Logger;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -48,12 +46,9 @@ public class ModAudioFileReader extends AudioFileReader {
 
     private static final Logger logger = getLogger(ModAudioFileReader.class.getName());
 
-    private URI uri;
-
     @Override
     public AudioFileFormat getAudioFileFormat(File file) throws UnsupportedAudioFileException, IOException {
         try (InputStream inputStream = new BufferedInputStream(Files.newInputStream(file.toPath()), MAX_BUFFER_SIZE)) {
-            uri = file.toURI();
             return getAudioFileFormat(inputStream, (int) file.length());
         }
     }
@@ -61,11 +56,7 @@ public class ModAudioFileReader extends AudioFileReader {
     @Override
     public AudioFileFormat getAudioFileFormat(URL url) throws UnsupportedAudioFileException, IOException {
         try (InputStream inputStream = new BufferedInputStream(url.openStream(), MAX_BUFFER_SIZE)) {
-            try {
-                uri = url.toURI();
-            } catch (URISyntaxException ignore) {
-            }
-            return getAudioFileFormat(inputStream);
+            return getAudioFileFormat(inputStream, NOT_SPECIFIED);
         }
     }
 
@@ -85,7 +76,7 @@ public class ModAudioFileReader extends AudioFileReader {
      *                                       valid audio file data recognized by the system.
      * @throws IOException                   if an I/O exception occurs.
      */
-    protected AudioFileFormat getAudioFileFormat(InputStream bitStream, int mediaLength) throws UnsupportedAudioFileException, IOException {
+    protected static AudioFileFormat getAudioFileFormat(InputStream bitStream, int mediaLength) throws UnsupportedAudioFileException, IOException {
 logger.log(DEBUG, "enter: available: " + bitStream.available() + ", " + bitStream);
         if (!bitStream.markSupported()) {
             throw new IllegalArgumentException("input stream not supported mark");
@@ -113,7 +104,6 @@ logger.log(TRACE, e.getMessage(), e);
 logger.log(TRACE, "type: " + type);
         Map<String, Object> props = new HashMap<>();
         props.put("mod", mixer);
-        props.put("uri", uri);
         AudioFormat format = new AudioFormat(encoding, samplingRate, NOT_SPECIFIED, channels, NOT_SPECIFIED, NOT_SPECIFIED, false, props);
         return new AudioFileFormat(type, format, NOT_SPECIFIED);
     }
@@ -133,7 +123,7 @@ logger.log(TRACE, "type: " + type);
     public AudioInputStream getAudioInputStream(URL url) throws UnsupportedAudioFileException, IOException {
         InputStream inputStream = new BufferedInputStream(url.openStream(), MAX_BUFFER_SIZE);
         try {
-            return getAudioInputStream(inputStream);
+            return getAudioInputStream(inputStream, NOT_SPECIFIED);
         } catch (UnsupportedAudioFileException | IOException e) {
             inputStream.close();
             throw e;
@@ -158,7 +148,7 @@ logger.log(TRACE, "type: " + type);
      *                                       valid audio file data recognized by the system.
      * @throws IOException                   if an I/O exception occurs.
      */
-    protected AudioInputStream getAudioInputStream(InputStream inputStream, int mediaLength) throws UnsupportedAudioFileException, IOException {
+    protected static AudioInputStream getAudioInputStream(InputStream inputStream, int mediaLength) throws UnsupportedAudioFileException, IOException {
         AudioFileFormat audioFileFormat = getAudioFileFormat(inputStream, mediaLength);
         return new AudioInputStream(inputStream, audioFileFormat.getFormat(), audioFileFormat.getFrameLength());
     }

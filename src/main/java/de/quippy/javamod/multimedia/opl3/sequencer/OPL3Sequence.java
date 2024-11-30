@@ -25,7 +25,9 @@ package de.quippy.javamod.multimedia.opl3.sequencer;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ServiceLoader;
 import java.util.ServiceLoader.Provider;
 
@@ -36,6 +38,7 @@ import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.OplType;
 import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.Version;
 import de.quippy.javamod.system.Helpers;
+import vavi.sound.SoundUtil;
 
 
 /**
@@ -91,6 +94,10 @@ public abstract class OPL3Sequence {
         return newSequence;
     }
 
+    protected static URL toURL(URI uri) throws IOException {
+        return Path.of(uri.getPath()).toAbsolutePath().toUri().toURL();
+    }
+
     /**
      * for javax.sound.spi
      * @param stream opl stream
@@ -105,6 +112,7 @@ public abstract class OPL3Sequence {
             RandomAccessInputStream inputStream = null;
             try {
                 inputStream = new SpiModfileInputStream(stream);
+                newSequence.setURL(toURL(SoundUtil.getSource(stream)));
                 newSequence.readOPL3Sequence(inputStream);
             } finally {
                 if (inputStream != null) try {
