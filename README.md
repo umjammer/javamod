@@ -2,6 +2,7 @@
 [![Java CI](https://github.com/umjammer/javamod/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/javamod/actions/workflows/maven.yml)
 [![CodeQL](https://github.com/umjammer/javamod/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/umjammer/javamod/actions/workflows/codeql-analysis.yml)
 ![Java](https://img.shields.io/badge/Java-17-b07219)
+[![Parent](https://img.shields.io/badge/Parent-vavi--sound--sandbox-pink)](https://github.com/umjammer/vavi-sound-sandbox)
 
 # JavaMod
 
@@ -11,12 +12,12 @@ Java MOD Player
 - made libraries outsourced as much as possible
 - javax.sound.spi compliant
 
-| player | subtype                                                                     | status |       spi       | library                                              | comment                      |
-|--------|-----------------------------------------------------------------------------|:------:|:---------------:|------------------------------------------------------|------------------------------|
-| mod    | STK, NST, MOD, WOW, XM, FAR, MTM, STM, STS, STX, S3M, IT, MPTM, PowerPacker |   ✅    |        ✅        | this                                                 |                              |
-| opl    | ROL, LAA, CMF, DRO, SCI                                                     |   ✅    |        ✅        | this                                                 | [opl3 class is duplicated]() |
-| sid    | SID                                                                         |   ✅    |        ✅        | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)   |                              |
-| vgm    | VGM, GBC, NSF, SPC                                                          |   ✅    | ✅<sup>[1]</sup> | [libgme](https://github.com/umjammer/vavi-sound-emu) | gbc,spc are not tested       |
+| player | subtype                                                                     | status |       spi       | library                                              | comment                                                                    |
+|--------|-----------------------------------------------------------------------------|:------:|:---------------:|------------------------------------------------------|----------------------------------------------------------------------------|
+| mod    | STK, NST, MOD, WOW, XM, FAR, MTM, STM, STS, STX, S3M, IT, MPTM, PowerPacker |   ✅    |        ✅        | this                                                 |                                                                            |
+| opl    | ROL, LAA, CMF, DRO, SCI                                                     |   ✅    |        ✅        | this                                                 | [opl3 class is duplicated](https://github.com/umjammer/vavi-sound-sandbox) | gbc,spc are not tested       |
+| sid    | SID                                                                         |   ✅    |        ✅        | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)   |                                                                            |
+| vgm    | VGM, GBC, NSF, SPC                                                          |   ✅    | ✅<sup>[1]</sup> | [libgme](https://github.com/umjammer/vavi-sound-emu) | gbc,spc are not tested                                                     |
 
 <sub>[1] implemented in [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu)</sub>
 
