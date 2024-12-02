@@ -186,7 +186,7 @@ logger.log(Level.DEBUG, "opl: " + opl.getClass().getName());
                         wideRBuffer[writePointer++] = sampler;
                         if (writePointer >= maxWideStereo) writePointer = 0;
 
-                        sampler += (wideLBuffer[readPointer] >> 1);
+                        sampler += (int) (wideLBuffer[readPointer] >> 1);
                         samplel += (int) (wideRBuffer[readPointer++] >> 1);
                         if (readPointer >= maxWideStereo) readPointer = 0;
                     }
