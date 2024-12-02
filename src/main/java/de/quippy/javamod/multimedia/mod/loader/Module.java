@@ -578,7 +578,7 @@ public abstract class Module {
                         delta = 0;
                         for (int s = 0; s < current.length; s++) {
                             int sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
-                            current.sampleR[s] = ModConstants.promoteSigned16BitToSigned32Bit(delta += sample);
+                            current.sampleR[s] = ModConstants.promoteSigned16BitToSigned32Bit(delta += (short) sample);
                         }
                     }
                 } else {
