@@ -56,6 +56,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -545,24 +546,24 @@ public class Helpers {
      * @return
      * @since 14.02.2012
      */
-    public static URL createURLfromFile(File file) {
-        if (!file.exists()) {
+    public static URL createURLfromFile(Path file) {
+        if (!Files.exists(file)) {
             try {
-                String path = file.getPath();
+                String path = file.toRealPath().toString();
                 StringBuilder b = new StringBuilder((File.separatorChar != '/') ? path.replace(File.separatorChar, '/') : path);
-                if (file.isDirectory() && b.charAt(b.length() - 1) != '/') b.append('/');
+                if (Files.isDirectory(file) && b.charAt(b.length() - 1) != '/') b.append('/');
                 if (b.length() > 2 && b.charAt(0) == '/' && b.charAt(1) == '/') b.insert(0, "//");
                 if (b.charAt(0) != '/') b.insert(0, "/");
                 URI uri = new URI("file", null, b.toString(), null);
                 return uri.toURL();
             } catch (URISyntaxException e) {
                 // cannot happen...
-            } catch (MalformedURLException ex) {
+            } catch (IOException ex) {
                 // should not happen ;)
             }
         }
         try {
-            return file.toURI().toURL();
+            return file.toUri().toURL();
         } catch (MalformedURLException ex) {
         }
         return null;
@@ -579,7 +580,7 @@ public class Helpers {
             URI uri = new URI(urlLine);
             return uri.toURL();
         } catch (Exception ex) {
-            return createURLfromFile(new File(urlLine));
+            return createURLfromFile(Path.of(urlLine));
         }
     }
 

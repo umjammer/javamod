@@ -76,7 +76,7 @@ public class CueSheet {
     }
 
     public CueSheet(File file) {
-        this(Helpers.createURLfromFile(file));
+        this(Helpers.createURLfromFile(file.toPath()));
     }
 
     /**

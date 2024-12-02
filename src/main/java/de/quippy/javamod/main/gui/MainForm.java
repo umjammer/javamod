@@ -2167,7 +2167,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
                     String modFileName = f.getAbsolutePath();
                     int i = modFileName.lastIndexOf(File.separatorChar);
                     searchPath = modFileName.substring(0, i);
-                    loadMultimediaOrPlayListFile(Helpers.createURLfromFile(f));
+                    loadMultimediaOrPlayListFile(Helpers.createURLfromFile(f.toPath()));
                 } else if (f.isDirectory()) {
                     searchPath = f.getAbsolutePath();
                 }
