@@ -572,13 +572,13 @@ public abstract class Module {
                     short delta = 0;
                     for (int s = 0; s < current.length; s++) {
                         int sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
-                        current.sampleL[s] = ModConstants.promoteSigned16BitToSigned32Bit(delta += sample);
+                        current.sampleL[s] = ModConstants.promoteSigned16BitToSigned32Bit(delta += (short) sample);
                     }
                     if (isStereo) {
                         delta = 0;
                         for (int s = 0; s < current.length; s++) {
                             int sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
-                            current.sampleR[s] = ModConstants.promoteSigned16BitToSigned32Bit(delta += sample);
+                            current.sampleR[s] = ModConstants.promoteSigned16BitToSigned32Bit(delta += (short) sample);
                         }
                     }
                 } else {

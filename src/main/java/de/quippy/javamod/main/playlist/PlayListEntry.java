@@ -61,7 +61,7 @@ public class PlayListEntry {
      * Constructor for PlayListEntry
      */
     public PlayListEntry(File file, PlayList savedInPlaylist) {
-        this(Helpers.createURLfromFile(file), savedInPlaylist);
+        this(Helpers.createURLfromFile(file.toPath()), savedInPlaylist);
     }
 
     /**

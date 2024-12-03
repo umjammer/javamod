@@ -549,7 +549,7 @@ public class PlayList {
                 ps.println((writePLSFile) ? "[playlist]" : "#EXTM3U");
             } else {
                 cueSheet = new CueSheet();
-                cueSheet.setCueSheedFileName(Helpers.createURLfromFile(f));
+                cueSheet.setCueSheedFileName(Helpers.createURLfromFile(f.toPath()));
             }
 
             for (int i = 0; i < size(); i++) {
@@ -637,7 +637,7 @@ public class PlayList {
     private static URL[] generateURLListFromFiles(File[] files) {
         List<URL> urls = new ArrayList<>(files.length);
         for (File file : files) {
-            URL url = Helpers.createURLfromFile(file);
+            URL url = Helpers.createURLfromFile(file.toPath());
             if (url != null) urls.add(url);
         }
         return urls.toArray(URL[]::new);
@@ -972,7 +972,7 @@ public class PlayList {
      * @since 03.12.2006
      */
     public static PlayList createFromFile(File f, boolean shuffle, boolean repeat) throws IOException {
-        return createFromFile(Helpers.createURLfromFile(f), shuffle, repeat);
+        return createFromFile(Helpers.createURLfromFile(f.toPath()), shuffle, repeat);
     }
 
     /**
