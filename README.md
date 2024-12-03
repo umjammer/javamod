@@ -55,7 +55,7 @@ Java MOD Player
 * extract graphic equalizer ui
 * extract led scroll ui
 * ~~java sound spi sid, opl~~
-* ~~i made input stream wrapper, so methods for input stream are no more needed?~~ ... troublesome
+* ~~i made input stream wrapper, so methods for input stream (mainly for type detection) are no more needed?~~ ... troublesome
 * rename to vavi-sound-mod
 
 ---

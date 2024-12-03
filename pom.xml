@@ -150,7 +150,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / vavi -->
       <artifactId>vavi-sound-emu</artifactId>
-      <version>0.0.6</version>
+      <version>0.0.7</version>
     </dependency>
 
     <dependency>
