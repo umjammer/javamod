@@ -20,9 +20,9 @@
  *----------------------------------------------------------------------
  */
 
-package de.quippy.javamod.multimedia.opl3.emu;
+package de.quippy.javamod.multimedia.opl.emu;
 
-import de.quippy.opl3.OPL3;
+import de.quippy.opl.OPL3;
 
 
 /**

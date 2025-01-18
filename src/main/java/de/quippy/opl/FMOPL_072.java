@@ -41,52 +41,57 @@
  * The Y8950 code was documented out, we do not need it here.
  */
 
-package de.quippy.opl3;
+package de.quippy.opl;
 
 
 /**
+ * software implementation of FM sound generator types OPL and OPL2
+ *
  * @author Daniel Becker
+ * @author Burczynski (bujar at mame dot net)
+ * @author Tatsuyuki Satoh, MultiArcadeMachineEmulator development
  * @since 11.08.2020
  */
 public class FMOPL_072 {
 
 //    private static final int BUILD_YM3812 = 1;
 //    private static final int BUILD_YM3526 = 1;
-//    private static final int BUILD_Y8950 = 0;
+//    private static final int BUILD_Y8950 = 1;
 
-    interface OPL_IRQHANDLER {
+    public interface OplIrqHandler {
 
         void invoke(int irq);
     }
 
-    interface OPL_TIMERHANDLER {
+    public interface OplTimerHandler {
 
         void invoke(int timer, double period);
     }
 
-    interface OPL_UPDATEHANDLER {
+    public interface OplUpdateHandler {
 
         void invoke(int min_interval_us);
     }
 
 //#if BUILD_Y8950
-//
-//    interface STATUS_CHANGE_HANDLER {
-//
-//        public void STATUS_SET(final int status_bits);
-//
-//        public void STATUS_RESET(final int status_bits);
-//    }
-//
-//    interface OPL_PORTHANDLER_R {
-//
-//        public byte invoke();
-//    }
-//
-//    interface OPL_PORTHANDLER_W {
-//
-//        public void invoke(int data);
-//    }
+
+    public interface StatusChangeHandler {
+
+        void setStatus(int status_bits);
+
+        void resetStatus(int status_bits);
+    }
+
+    public interface OplPortHandlerR {
+
+        byte invoke();
+    }
+
+    public interface OplPortHandlerW {
+
+        void invoke(int data);
+    }
+
 //#endif
 
     // output final shift
@@ -225,530 +230,563 @@ public class FMOPL_072 {
     };
 
 //#if BUILD_Y8950
-//  /** AT: rearranged and tightened structure */
-//	private static class YM_DELTAT {
-//		private static final int YM_DELTAT_SHIFT    = 16;
+
+    /** AT: rearranged and tightened structure */
+    private static class YmDeltaT {
+
+        private static final int YM_DELTAT_SHIFT = 16;
+
+        private static final int YM_DELTAT_DELTA_MAX = 24576;
+        private static final int YM_DELTAT_DELTA_MIN = 127;
+        private static final int YM_DELTAT_DELTA_DEF = 127;
+
+        private static final int YM_DELTAT_DECODE_RANGE = 32768;
+        private static final int YM_DELTAT_DECODE_MIN = -(YM_DELTAT_DECODE_RANGE);
+        private static final int YM_DELTAT_DECODE_MAX = (YM_DELTAT_DECODE_RANGE) - 1;
+
+        private static final int EMULATION_MODE_NORMAL = 0;
+        private static final int EMULATION_MODE_YM2610 = 1;
+
+        /** Forecast to next Forecast (rate = *8) */
+        private static final int[] ym_deltat_decode_tableB1 = {
+                // 1/8 , 3/8 , 5/8 , 7/8 , 9/8 , 11/8 , 13/8 , 15/8
+                1, 3, 5, 7, 9, 11, 13, 15,
+                -1, -3, -5, -7, -9, -11, -13, -15,
+        };
+        /** delta to next delta (rate= *64) */
+        private static final int[] ym_deltat_decode_tableB2 = {
+                // 0.9 , 0.9 , 0.9 , 0.9 , 1.2 , 1.6 , 2.0 , 2.4
+                57, 57, 57, 57, 77, 102, 128, 153,
+                57, 57, 57, 57, 77, 102, 128, 153
+        };
+        /** 0-DRAM x1, 1-ROM, 2-DRAM x8, 3-ROM (3 is bad setting - not allowed by the manual) */
+        private static final int[] dramRightShift = {3, 0, 0, 0};
+
+        /** pointer of output pointers */
+        private int[] output_pointer;
+        /** pan : &output_pointer[pan] */
+        private int output_pointer_pan;
+        private double freqBase;
+        private int memory_size = 0x4000;
+        private int output_range;
+        /** current address */
+        private int now_addr;
+        /** correct step */
+        private int now_step;
+        /** step */
+        private int step;
+        /** start address */
+        private int start;
+        /** limit address */
+        private int limit;
+        /** end address */
+        private int end;
+        /** delta scale */
+        private int delta;
+        /** current volume */
+        private int volume;
+        /** shift Measurement value */
+        private int acc;
+        /** next Forecast */
+        private int adpcmD;
+        /** current value */
+        private int adpcmL;
+        /** leveling value */
+        private int prev_acc;
+        /** current rom data */
+        private int now_data;
+        /** current data from reg 08 */
+        private int CPU_data;
+        /** port status */
+        private int portState;
+        /** control reg: SAMPLE, DA/AD, RAM TYPE (x8bit / x1bit), ROM/RAM */
+        private int control2;
+        /**
+         * address bits shift-left:
+         * * 8 for YM2610,
+         * * 5 for Y8950 and YM2608
+         */
+        private int portShift;
+        /**
+         * address bits shift-right:
+         * * 0 for ROM and x8bit DRAMs,
+         * * 3 for x1 DRAMs
+         */
+        private int dramPortShift;
+
+        private int memRead;
+        /**
+         * needed for reading/writing external memory
+         * <p>
+         * handlers and parameters for the status flags support
+         */
+        private StatusChangeHandler statusChangeHandler;
+
+        // note that different chips have these flags on different
+        // bits of the status register
+        /** 1 on End Of Sample (record/playback/cycle time of AD/DA converting has passed) */
+        private int status_change_EOS_bit;
+        /** 1 after recording 2 datas (2x4bits) or after reading/writing 1 data */
+        private int status_change_BRDY_bit;
+        /** 1 if silence lasts for more than 290 milliseconds on ADPCM recording */
+        private int status_change_ZERO_bit;
+
+        // neither Y8950 nor YM2608 can generate IRQ when PCMBSY bit changes, so instead of above,
+        // the statusflag gets ORed with PCM_BSY (below) (on each read of statusflag of Y8950 and YM2608)
+        /** 1 when ADPCM is playing; Y8950/YM2608 only */
+        private int PCM_BSY;
+
+        /** adpcm registers */
+        private final int[] reg = new int[16];
+        /** which chip we're emulating */
+        private int emulation_mode;
+
+        // ROM Emulation
+        private final byte[] rom = new byte[memory_size];
+
+        private int read_byte(final int offset) {
+            return ((int) rom[offset]) & 0xff;
+        }
+
+        private void write_byte(final int offset, final int value) {
+            rom[offset] = (byte) (value & 0xff);
+        }
+
+        private int ADPCM_Read() {
+            int v = 0;
+
+            // external memory read
+            if ((portState & 0xe0) == 0x20) {
+                // two dummy reads
+                if (memRead != 0) {
+                    now_addr = start << 1;
+                    memRead--;
+                    return 0;
+                }
+
+                if (now_addr != (end << 1)) {
+                    v = read_byte(now_addr >> 1);
+                    now_addr += 2; // two nibbles at a time
+
+                    // reset BRDY bit in status register, which means we are reading the memory now
+                    if (statusChangeHandler != null && status_change_BRDY_bit != 0)
+                        (statusChangeHandler).resetStatus(status_change_BRDY_bit);
+
+                    // setup a timer that will callback us in 10 master clock cycles for Y8950
+                    // in the callback set the BRDY flag to 1 , which means we have another data ready.
+                    // For now, we don't really do this; we simply reset and set the flag in zero time, so that the IRQ will work.
+                    // set BRDY bit in status register
+                    if (statusChangeHandler != null && status_change_BRDY_bit != 0)
+                        (statusChangeHandler).setStatus(status_change_BRDY_bit);
+                } else {
+                    // set EOS bit in status register
+                    if (statusChangeHandler != null && status_change_EOS_bit != 0)
+                        (statusChangeHandler).setStatus(status_change_EOS_bit);
+                }
+            }
+
+            return v;
+        }
+
+        private void ADPCM_Write(int r, int v) {
+            if (r >= 0x10) return;
+            reg[r] = v; // stock data
+
+            switch (r) {
+                case 0x00:
+		/*
+		START:
+		    Accessing *external* memory is started when START bit (D7) is set to "1", so
+		    you must set all conditions needed for recording/playback before starting.
+		    If you access *CPU-managed* memory, recording/playback starts after
+		    read/write of ADPCM data register $08.
+
+		REC:
+		    0 = ADPCM synthesis (playback)
+		    1 = ADPCM analysis (record)
+
+		MEMDATA:
+		    0 = processor (*CPU-managed*) memory (means: using register $08)
+		    1 = external memory (using start/end/limit registers to access memory: RAM or ROM)
+
+
+		SPOFF:
+		    controls output pin that should disable the speaker while ADPCM analysis
+
+		RESET and REPEAT only work with external memory.
+
+
+		some examples:
+		value:   START, REC, MEMDAT, REPEAT, SPOFF, x,x,RESET   meaning:
+		  C8     1      1    0       0       1      0 0 0       Analysis (recording) from AUDIO to CPU (to reg $08), sample rate in PRESCALER register
+		  E8     1      1    1       0       1      0 0 0       Analysis (recording) from AUDIO to EXT.MEMORY,       sample rate in PRESCALER register
+		  80     1      0    0       0       0      0 0 0       Synthesis (playing) from CPU (from reg $08) to AUDIO,sample rate in DELTA-N register
+		  a0     1      0    1       0       0      0 0 0       Synthesis (playing) from EXT.MEMORY to AUDIO,        sample rate in DELTA-N register
+
+		  60     0      1    1       0       0      0 0 0       External memory write via ADPCM data register $08
+		  20     0      0    1       0       0      0 0 0       External memory read via ADPCM data register $08
+
+		*/
+                    // handle emulation mode
+                    if (emulation_mode == EMULATION_MODE_YM2610) {
+                        v |= 0x20;      // YM2610 always uses external memory and doesn't even have memory flag bit.
+                        v &= ~0x40;     // YM2610 has no rec bit
+                    }
+
+                    portState = v & (0x80 | 0x40 | 0x20 | 0x10 | 0x01); // start, rec, memory mode, repeat flag copy, reset(bit0)
+
+                    if ((portState & 0x80) != 0) { // START,REC,MEMDATA,REPEAT,SPOFF,--,--,RESET
+                        // set PCM BUSY bit
+                        PCM_BSY = 1;
+
+                        // start ADPCM
+                        now_step = 0;
+                        acc = 0;
+                        prev_acc = 0;
+                        adpcmL = 0;
+                        adpcmD = YM_DELTAT_DELTA_DEF;
+                        now_data = 0;
+
+                    }
+
+                    if ((portState & 0x20) != 0) { // do we access external memory?
+                        now_addr = start << 1;
+                        memRead = 2; // two dummy reads needed before accesing external memory via register $08
+                    } else { // we access CPU memory (ADPCM data register $08) so we only reset now_addr here
+                        now_addr = 0;
+                    }
+
+                    if ((portState & 0x01) != 0) {
+                        portState = 0x00;
+
+                        // clear PCM BUSY bit (in status register)
+                        PCM_BSY = 0;
+
+                        // set BRDY flag
+                        if (statusChangeHandler != null && status_change_BRDY_bit != 0)
+                            (statusChangeHandler).setStatus(status_change_BRDY_bit);
+                    }
+                    break;
+
+                case 0x01:  // L,R,-,-,SAMPLE,DA/AD,RAMTYPE,ROM
+                    // handle emulation mode
+                    if (emulation_mode == EMULATION_MODE_YM2610) {
+                        v |= 0x01; // YM2610 always uses ROM as an external memory and doesn't have ROM/RAM memory flag bit.
+                    }
+
+                    output_pointer_pan = (v >> 6) & 0x03;
+                    if ((control2 & 3) != (v & 3)) {
+                        // 0-DRAM x1, 1-ROM, 2-DRAM x8, 3-ROM (3 is bad setting - not allowed by the manual)
+                        if (dramPortShift != dramRightShift[v & 3]) {
+                            dramPortShift = dramRightShift[v & 3];
+
+                            // final shift value depends on chip type and memory type selected:
+                            //      8 for YM2610 (ROM only),
+                            //      5 for ROM for Y8950 and YM2608,
+                            //      5 for x8bit DRAMs for Y8950 and YM2608,
+                            //      2 for x1bit DRAMs for Y8950 and YM2608.
+
+                            // refresh addresses
+                            start = (reg[0x3] * 0x0100 | reg[0x2]) << (portShift - dramPortShift);
+                            end = (reg[0x5] * 0x0100 | reg[0x4]) << (portShift - dramPortShift);
+                            end += (1 << (portShift - dramPortShift)) - 1;
+                            limit = (reg[0xd] * 0x0100 | reg[0xc]) << (portShift - dramPortShift);
+                        }
+                    }
+                    control2 = v;
+                    break;
+
+                case 0x02:  // Start Address L
+                case 0x03:  // Start Address H
+                    start = (reg[0x3] * 0x0100 | reg[0x2]) << (portShift - dramPortShift);
+                    break;
+
+                case 0x04:  // Stop Address L
+                case 0x05:  // Stop Address H
+                    end = (reg[0x5] * 0x0100 | reg[0x4]) << (portShift - dramPortShift);
+                    end += (1 << (portShift - dramPortShift)) - 1;
+                    break;
+
+                case 0x06:  // Prescale L (ADPCM and Record frq)
+                case 0x07:  // Prescale H
+                    break;
+
+                case 0x08:  // ADPCM data
+		/*
+		some examples:
+		value:   START, REC, MEMDAT, REPEAT, SPOFF, x,x,RESET   meaning:
+		  C8     1      1    0       0       1      0 0 0       Analysis (recording) from AUDIO to CPU (to reg $08), sample rate in PRESCALER register
+		  E8     1      1    1       0       1      0 0 0       Analysis (recording) from AUDIO to EXT.MEMORY,       sample rate in PRESCALER register
+		  80     1      0    0       0       0      0 0 0       Synthesis (playing) from CPU (from reg $08) to AUDIO,sample rate in DELTA-N register
+		  A0     1      0    1       0       0      0 0 0       Synthesis (playing) from EXT.MEMORY to AUDIO,        sample rate in DELTA-N register
+
+		  60     0      1    1       0       0      0 0 0       External memory write via ADPCM data register $08
+		  20     0      0    1       0       0      0 0 0       External memory read via ADPCM data register $08
+
+		*/
+
+                    // external memory write
+                    if ((portState & 0xe0) == 0x60) {
+                        if (memRead != 0) {
+                            now_addr = start << 1;
+                            memRead = 0;
+                        }
+
+                        if (now_addr != (end << 1)) {
+                            write_byte(now_addr >> 1, v);
+                            now_addr += 2; // two nibbles at a time
+
+                            // reset BRDY bit in status register, which means we are processing the write
+                            if (statusChangeHandler != null && status_change_BRDY_bit != 0)
+                                (statusChangeHandler).resetStatus(status_change_BRDY_bit);
+
+                            // setup a timer that will callback us in 10 master clock cycles for Y8950
+                            // in the callback set the BRDY flag to 1 , which means we have written the data.
+                            // For now, we don't really do this; we simply reset and set the flag in zero time, so that the IRQ will work.
+                            // set BRDY bit in status register
+                            if (statusChangeHandler != null && status_change_BRDY_bit != 0)
+                                (statusChangeHandler).setStatus(status_change_BRDY_bit);
+
+                        } else {
+                            // set EOS bit in status register
+                            if (statusChangeHandler != null && status_change_EOS_bit != 0)
+                                (statusChangeHandler).setStatus(status_change_EOS_bit);
+                        }
+
+                        return;
+                    }
+
+                    // ADPCM synthesis from CPU
+                    if ((portState & 0xe0) == 0x80) {
+                        CPU_data = v;
+
+                        // Reset BRDY bit in status register, which means we are full of data
+                        if (statusChangeHandler != null && status_change_BRDY_bit != 0)
+                            (statusChangeHandler).resetStatus(status_change_BRDY_bit);
+                        return;
+                    }
+
+                    break;
+
+                case 0x09:  // DELTA-N L (ADPCM Playback Prescaler)
+                case 0x0a:  // DELTA-N H
+                    delta = (reg[0xa] * 0x0100 | reg[0x9]);
+                    step = (int) ((double) (delta /* *(1 << (YM_DELTAT_SHIFT - 16)) */) * freqBase);
+                    break;
+
+                case 0x0b: { // Output level control (volume, linear)
+                    final int oldvol = volume;
+                    volume = (v & 0xff) * (output_range / 256) / YM_DELTAT_DECODE_RANGE;
+                    //                              v     *     ((1<<16)>>8)        >>  15;
+                    //                      thus:   v     *     (1<<8)              >>  15;
+                    //                      thus: output_range must be (1 << (15+8)) at least
+                    //                              v     *     ((1<<23)>>8)        >>  15;
+                    //                              v     *     (1<<15)             >>  15;
+
+                    if (oldvol != 0) {
+                        adpcmL = (int) ((double) adpcmL / (double) oldvol * (double) volume);
+                    }
+                }
+                break;
+
+                case 0x0c:  // Limit Address L
+                case 0x0d:  // Limit Address H
+                    limit = (reg[0xd] * 0x0100 | reg[0xc]) << (portShift - dramPortShift);
+                    break;
+            }
+        }
+
+        private void ADPCM_Reset(int panIdx, int mode) {
+            now_addr = 0;
+            now_step = 0;
+            step = 0;
+            start = 0;
+            end = 0;
+            limit = ~0; // this way YM2610 and Y8950 (both of which don't have limit address reg) will still work
+            volume = 0;
+            output_pointer_pan = panIdx;
+            acc = 0;
+            prev_acc = 0;
+            adpcmD = 127;
+            adpcmL = 0;
+            emulation_mode = mode;
+            portState = (emulation_mode == EMULATION_MODE_YM2610) ? 0x20 : 0;
+            control2 = (emulation_mode == EMULATION_MODE_YM2610) ? 0x01 : 0; // default setting depends on the emulation mode. MSX demo called "facdemo_4" doesn't setup control2 register at all and still works
+            dramPortShift = dramRightShift[control2 & 3];
+
+            // The flag mask register disables the BRDY after the reset, however
+            // as soon as the mask is enabled the flag needs to be set.
+
+            // set BRDY bit in status register
+            if (statusChangeHandler != null && status_change_BRDY_bit != 0)
+                (statusChangeHandler).setStatus(status_change_BRDY_bit);
+        }
+
+//		private void postload(int[] regs) {
+//			// to keep adpcmL
+//			volume = 0;
+//			// update
+//			for (int r = 1; r < 16; r++)
+//				ADPCM_Write(r, regs[r]);
+//			reg[0] = regs[0];
 //
-//		private static final int YM_DELTAT_DELTA_MAX = 24576;
-//		private static final int YM_DELTAT_DELTA_MIN = 127;
-//		private static final int YM_DELTAT_DELTA_DEF = 127;
-//
-//		private static final int YM_DELTAT_DECODE_RANGE = 32768;
-//		private static final int YM_DELTAT_DECODE_MIN = -(YM_DELTAT_DECODE_RANGE);
-//		private static final int YM_DELTAT_DECODE_MAX = (YM_DELTAT_DECODE_RANGE)-1;
-//
-//		private static final int EMULATION_MODE_NORMAL = 0;
-//		private static final int EMULATION_MODE_YM2610 = 1;
-//
-//		/** Forecast to next Forecast (rate = *8) */
-//		private static final int[] ym_deltat_decode_tableB1 = {
-//		    // 1/8 , 3/8 , 5/8 , 7/8 , 9/8 , 11/8 , 13/8 , 15/8
-//			1,   3,   5,   7,   9,  11,  13,  15,
-//			-1,  -3,  -5,  -7,  -9, -11, -13, -15,
-//		};
-//		/** delta to next delta (rate= *64) */
-//		private static final int[] ym_deltat_decode_tableB2 = {
-//		    // 0.9 , 0.9 , 0.9 , 0.9 , 1.2 , 1.6 , 2.0 , 2.4
-//			57,  57,  57,  57, 77, 102, 128, 153,
-//			57,  57,  57,  57, 77, 102, 128, 153
-//		};
-//		/** 0-DRAM x1, 1-ROM, 2-DRAM x8, 3-ROM (3 is bad setting - not allowed by the manual) */
-//		private static final int[] dram_rightshift = {3, 0, 0, 0};
-//
-//      /** pointer of output pointers */
-//		private int[] output_pointer;
-//      /** pan : &output_pointer[pan] */
-//		private int output_pointer_pan;
-//		private double freqBase;
-//		private int memory_size = 0x4000;
-//		private int output_range;
-//      /** current address */
-//		private int now_addr;
-//      /** correct step */
-//		private int now_step;
-//      /** step */
-//		private int step;
-//		private int start; /** start address */
-//		private int limit; /** limit address */
-//		private int end; /** end address */
-//		private int delta; /** delta scale */
-//		private int volume; /** current volume */
-//		private int acc; /** shift Measurement value */
-//		private int adpcmd; /** next Forecast */
-//		private int adpcml; /** current value */
-//		private int prev_acc; /** leveling value */
-//		private int now_data; /** current rom data */
-//		private int CPU_data; /** current data from reg 08 */
-//		private int portstate; /** port status */
-//		private int control2; /** control reg: SAMPLE, DA/AD, RAM TYPE (x8bit / x1bit), ROM/RAM */
-//		private int portshift; /* address bits shift-left:
-//		                        ** 8 for YM2610,
-//		                        ** 5 for Y8950 and YM2608 */
-//
-//		private int DRAMportshift; /* address bits shift-right:
-//		                        ** 0 for ROM and x8bit DRAMs,
-//		                        ** 3 for x1 DRAMs */
-//
-//		private int memread; /** needed for reading/writing external memory
-//
-//		/** handlers and parameters for the status flags support */
-//		private STATUS_CHANGE_HANDLER status_change_handler;
-//
-//		// note that different chips have these flags on different
-//		// bits of the status register
-//		private int status_change_EOS_bit; /** 1 on End Of Sample (record/playback/cycle time of AD/DA converting has passed) */
-//		private int status_change_BRDY_bit; /** 1 after recording 2 datas (2x4bits) or after reading/writing 1 data */
-////      private int status_change_ZERO_bit; /** 1 if silence lasts for more than 290 milliseconds on ADPCM recording */
-//
-//		// neither Y8950 nor YM2608 can generate IRQ when PCMBSY bit changes, so instead of above,
-//		// the statusflag gets ORed with PCM_BSY (below) (on each read of statusflag of Y8950 and YM2608)
-//		private int PCM_BSY; /** 1 when ADPCM is playing; Y8950/YM2608 only */
-//
-//		private int[] reg = new int[16]; /** adpcm registers */
-//		private int emulation_mode; /** which chip we're emulating */
-//
-//		// ROM Emulation
-//		private final byte[] ROM = new byte[memory_size];
-//		private int read_byte(final int offset) {
-//			return ((int) ROM[offset]) & 0xff;
+//			// current rom data
+//			now_data = read_byte(now_addr >> 1);
 //		}
-//		private void write_byte(final int offset, final int value) {
-//			ROM[offset] = (byte)(value&0xff);
-//		}
-//
-//		private int ADPCM_Read() {
-//			int v = 0;
-//
-//			// external memory read
-//			if ((portstate & 0xe0) == 0x20) {
-//				// two dummy reads
-//				if (memread!=0) {
-//					now_addr = start << 1;
-//					memread--;
-//					return 0;
-//				}
-//
-//				if (now_addr != (end << 1)) {
-//					v = read_byte(now_addr >> 1);
-//					now_addr += 2; // two nibbles at a time
-//
-//					// reset BRDY bit in status register, which means we are reading the memory now
-//					if (status_change_handler!=null && status_change_BRDY_bit!=0)
-//						(status_change_handler).STATUS_RESET(status_change_BRDY_bit);
-//
-//					// setup a timer that will callback us in 10 master clock cycles for Y8950
-//					// in the callback set the BRDY flag to 1 , which means we have another data ready.
-//					// For now, we don't really do this; we simply reset and set the flag in zero time, so that the IRQ will work.
-//					// set BRDY bit in status register
-//					if (status_change_handler!=null && status_change_BRDY_bit!=0)
-//						(status_change_handler).STATUS_SET(status_change_BRDY_bit);
-//				} else {
-//					// set EOS bit in status register
-//					if (status_change_handler!=null && status_change_EOS_bit!=0)
-//						(status_change_handler).STATUS_SET(status_change_EOS_bit);
-//				}
-//			}
-//
-//			return v;
-//		}
-//		private void ADPCM_Write(int r, int v) {
-//			if (r >= 0x10) return;
-//			reg[r] = v; // stock data
-//
-//			switch (r) {
-//			case 0x00:
-//		/*
-//		START:
-//		    Accessing *external* memory is started when START bit (D7) is set to "1", so
-//		    you must set all conditions needed for recording/playback before starting.
-//		    If you access *CPU-managed* memory, recording/playback starts after
-//		    read/write of ADPCM data register $08.
-//
-//		REC:
-//		    0 = ADPCM synthesis (playback)
-//		    1 = ADPCM analysis (record)
-//
-//		MEMDATA:
-//		    0 = processor (*CPU-managed*) memory (means: using register $08)
-//		    1 = external memory (using start/end/limit registers to access memory: RAM or ROM)
-//
-//
-//		SPOFF:
-//		    controls output pin that should disable the speaker while ADPCM analysis
-//
-//		RESET and REPEAT only work with external memory.
-//
-//
-//		some examples:
-//		value:   START, REC, MEMDAT, REPEAT, SPOFF, x,x,RESET   meaning:
-//		  C8     1      1    0       0       1      0 0 0       Analysis (recording) from AUDIO to CPU (to reg $08), sample rate in PRESCALER register
-//		  E8     1      1    1       0       1      0 0 0       Analysis (recording) from AUDIO to EXT.MEMORY,       sample rate in PRESCALER register
-//		  80     1      0    0       0       0      0 0 0       Synthesis (playing) from CPU (from reg $08) to AUDIO,sample rate in DELTA-N register
-//		  a0     1      0    1       0       0      0 0 0       Synthesis (playing) from EXT.MEMORY to AUDIO,        sample rate in DELTA-N register
-//
-//		  60     0      1    1       0       0      0 0 0       External memory write via ADPCM data register $08
-//		  20     0      0    1       0       0      0 0 0       External memory read via ADPCM data register $08
-//
-//		*/
-//				// handle emulation mode
-//				if (emulation_mode == EMULATION_MODE_YM2610) {
-//					v |= 0x20;      // YM2610 always uses external memory and doesn't even have memory flag bit.
-//					v &= ~0x40;     // YM2610 has no rec bit
-//				}
-//
-//				portstate = v & (0x80 | 0x40 | 0x20 | 0x10 | 0x01); // start, rec, memory mode, repeat flag copy, reset(bit0)
-//
-//				if ((portstate & 0x80) != 0) { // START,REC,MEMDATA,REPEAT,SPOFF,--,--,RESET
-//					// set PCM BUSY bit
-//					PCM_BSY = 1;
-//
-//					// start ADPCM
-//					now_step = 0;
-//					acc      = 0;
-//					prev_acc = 0;
-//					adpcml   = 0;
-//					adpcmd   = YM_DELTAT_DELTA_DEF;
-//					now_data = 0;
-//
-//				}
-//
-//				if ((portstate & 0x20)!=0) { // do we access external memory?
-//					now_addr = start << 1;
-//					memread = 2; // two dummy reads needed before accesing external memory via register $08
-//				} else { // we access CPU memory (ADPCM data register $08) so we only reset now_addr here
-//					now_addr = 0;
-//				}
-//
-//				if ((portstate & 0x01)!=0) {
-//					portstate = 0x00;
-//
-//					// clear PCM BUSY bit (in status register)
-//					PCM_BSY = 0;
-//
-//					// set BRDY flag
-//					if (status_change_handler!=null && status_change_BRDY_bit!=0)
-//						(status_change_handler).STATUS_SET(status_change_BRDY_bit);
-//				}
-//				break;
-//
-//			case 0x01:  // L,R,-,-,SAMPLE,DA/AD,RAMTYPE,ROM
-//				// handle emulation mode
-//				if (emulation_mode == EMULATION_MODE_YM2610) {
-//					v |= 0x01; // YM2610 always uses ROM as an external memory and doesn't have ROM/RAM memory flag bit.
-//				}
-//
-//				output_pointer_pan = (v >> 6) & 0x03;
-//				if ((control2 & 3) != (v & 3)) {
-//					// 0-DRAM x1, 1-ROM, 2-DRAM x8, 3-ROM (3 is bad setting - not allowed by the manual)
-//					if (DRAMportshift != dram_rightshift[v & 3]) {
-//						DRAMportshift = dram_rightshift[v & 3];
-//
-//						// final shift value depends on chip type and memory type selected:
-//						//      8 for YM2610 (ROM only),
-//						//      5 for ROM for Y8950 and YM2608,
-//						//      5 for x8bit DRAMs for Y8950 and YM2608,
-//						//      2 for x1bit DRAMs for Y8950 and YM2608.
-//
-//						// refresh addresses
-//						start  = (reg[0x3] * 0x0100 | reg[0x2]) << (portshift - DRAMportshift);
-//						end    = (reg[0x5] * 0x0100 | reg[0x4]) << (portshift - DRAMportshift);
-//						end   += (1 << (portshift - DRAMportshift)) - 1;
-//						limit  = (reg[0xd]*0x0100 | reg[0xc]) << (portshift - DRAMportshift);
-//					}
-//				}
-//				control2 = v;
-//				break;
-//
-//			case 0x02:  // Start Address L
-//			case 0x03:  // Start Address H
-//				start = (reg[0x3] * 0x0100 | reg[0x2]) << (portshift - DRAMportshift);
-//				break;
-//
-//			case 0x04:  // Stop Address L
-//			case 0x05:  // Stop Address H
-//				end    = (reg[0x5]*0x0100 | reg[0x4]) << (portshift - DRAMportshift);
-//				end   += (1 << (portshift - DRAMportshift)) - 1;
-//				break;
-//
-//			case 0x06:  // Prescale L (ADPCM and Record frq)
-//			case 0x07:  // Prescale H
-//				break;
-//
-//			case 0x08:  // ADPCM data
-//		/*
-//		some examples:
-//		value:   START, REC, MEMDAT, REPEAT, SPOFF, x,x,RESET   meaning:
-//		  C8     1      1    0       0       1      0 0 0       Analysis (recording) from AUDIO to CPU (to reg $08), sample rate in PRESCALER register
-//		  E8     1      1    1       0       1      0 0 0       Analysis (recording) from AUDIO to EXT.MEMORY,       sample rate in PRESCALER register
-//		  80     1      0    0       0       0      0 0 0       Synthesis (playing) from CPU (from reg $08) to AUDIO,sample rate in DELTA-N register
-//		  A0     1      0    1       0       0      0 0 0       Synthesis (playing) from EXT.MEMORY to AUDIO,        sample rate in DELTA-N register
-//
-//		  60     0      1    1       0       0      0 0 0       External memory write via ADPCM data register $08
-//		  20     0      0    1       0       0      0 0 0       External memory read via ADPCM data register $08
-//
-//		*/
-//
-//				// external memory write
-//				if ((portstate & 0xe0) == 0x60) {
-//					if (memread!=0) {
-//						now_addr = start << 1;
-//						memread = 0;
-//					}
-//
-//					if (now_addr != (end << 1)) {
-//						write_byte(now_addr >> 1, v);
-//						now_addr += 2; // two nibbles at a time
-//
-//						// reset BRDY bit in status register, which means we are processing the write
-//						if (status_change_handler!=null && status_change_BRDY_bit!=0)
-//							(status_change_handler).STATUS_RESET(status_change_BRDY_bit);
-//
-//						// setup a timer that will callback us in 10 master clock cycles for Y8950
-//						// in the callback set the BRDY flag to 1 , which means we have written the data.
-//						// For now, we don't really do this; we simply reset and set the flag in zero time, so that the IRQ will work.
-//						// set BRDY bit in status register
-//						if (status_change_handler!=null && status_change_BRDY_bit!=0)
-//							(status_change_handler).STATUS_SET(status_change_BRDY_bit);
-//
-//					} else {
-//						// set EOS bit in status register
-//						if (status_change_handler!=null && status_change_EOS_bit!=0)
-//							(status_change_handler).STATUS_SET(status_change_EOS_bit);
-//					}
-//
-//					return;
-//				}
-//
-//				// ADPCM synthesis from CPU
-//				if ((portstate & 0xe0) == 0x80) {
-//					CPU_data = v;
-//
-//					// Reset BRDY bit in status register, which means we are full of data
-//					if (status_change_handler!=null && status_change_BRDY_bit!=0)
-//						(status_change_handler).STATUS_RESET(status_change_BRDY_bit);
-//					return;
-//				}
-//
-//				break;
-//
-//			case 0x09:  // DELTA-N L (ADPCM Playback Prescaler)
-//			case 0x0a:  // DELTA-N H
-//				delta  = (reg[0xa] * 0x0100 | reg[0x9]);
-//				step     = (int) ((double)(delta /* *(1 << (YM_DELTAT_SHIFT - 16)) */) * freqBase);
-//				break;
-//
-//			case 0x0b: { // Output level control (volume, linear)
-//					final int oldvol = volume;
-//					volume = (v & 0xff) * (output_range / 256) / YM_DELTAT_DECODE_RANGE;
-//		//                              v     *     ((1<<16)>>8)        >>  15;
-//		//                      thus:   v     *     (1<<8)              >>  15;
-//		//                      thus: output_range must be (1 << (15+8)) at least
-//		//                              v     *     ((1<<23)>>8)        >>  15;
-//		//                              v     *     (1<<15)             >>  15;
-//
-//					if (oldvol != 0) {
-//						adpcml = (int)((double)adpcml / (double)oldvol * (double)volume);
-//					}
-//				}
-//				break;
-//
-//			case 0x0c:  // Limit Address L
-//			case 0x0d:  // Limit Address H
-//				limit  = (reg[0xd] * 0x0100 | reg[0xc]) << (portshift - DRAMportshift);
-//				break;
-//			}
-//		}
-//
-//		private void ADPCM_Reset(int panidx, int mode) {
-//			now_addr  = 0;
-//			now_step  = 0;
-//			step      = 0;
-//			start     = 0;
-//			end       = 0;
-//			limit     = ~0; // this way YM2610 and Y8950 (both of which don't have limit address reg) will still work
-//			volume    = 0;
-//			output_pointer_pan = panidx;
-//			acc       = 0;
-//			prev_acc  = 0;
-//			adpcmd    = 127;
-//			adpcml    = 0;
-//			emulation_mode = mode;
-//			portstate = (emulation_mode == EMULATION_MODE_YM2610) ? 0x20 : 0;
-//			control2  = (emulation_mode == EMULATION_MODE_YM2610) ? 0x01 : 0; // default setting depends on the emulation mode. MSX demo called "facdemo_4" doesn't setup control2 register at all and still works
-//			DRAMportshift = dram_rightshift[control2 & 3];
-//
-//			// The flag mask register disables the BRDY after the reset, however
-//			// as soon as the mask is enabled the flag needs to be set.
-//
-//			// set BRDY bit in status register
-//			if (status_change_handler!=null && status_change_BRDY_bit != 0)
-//				(status_change_handler).STATUS_SET(status_change_BRDY_bit);
-//		}
-//
-////		private void postload(int[] regs) {
-////			// to keep adpcml
-////			volume = 0;
-////			// update
-////			for (int r = 1; r < 16; r++)
-////				ADPCM_Write(r, regs[r]);
-////			reg[0] = regs[0];
-////
-////			// current rom data
-////			now_data = read_byte(now_addr >> 1);
-////		}
-//
-//		private void ADPCM_CALC() {
-//		/*
-//		some examples:
-//		value:   START, REC, MEMDAT, REPEAT, SPOFF, x,x,RESET   meaning:
-//		  80     1      0    0       0       0      0 0 0       Synthesis (playing) from CPU (from reg $08) to AUDIO,sample rate in DELTA-N register
-//		  a0     1      0    1       0       0      0 0 0       Synthesis (playing) from EXT.MEMORY to AUDIO,        sample rate in DELTA-N register
-//		  C8     1      1    0       0       1      0 0 0       Analysis (recording) from AUDIO to CPU (to reg $08), sample rate in PRESCALER register
-//		  E8     1      1    1       0       1      0 0 0       Analysis (recording) from AUDIO to EXT.MEMORY,       sample rate in PRESCALER register
-//
-//		  60     0      1    1       0       0      0 0 0       External memory write via ADPCM data register $08
-//		  20     0      0    1       0       0      0 0 0       External memory read via ADPCM data register $08
-//
-//		*/
-//
-//			if ((portstate & 0xe0) == 0xa0) {
-//				YM_DELTAT_synthesis_from_external_memory(this);
-//			} else if ((portstate & 0xe0) == 0x80) {
-//				// ADPCM synthesis from CPU-managed memory (from reg $08)
-//				YM_DELTAT_synthesis_from_CPU_memory(this); // change output based on data in ADPCM data reg ($08)
-//			}
-//			// TODO ADPCM analysis
-//			//if ((portstate & 0xe0) == 0xc0)
-//			//if ((portstate & 0xe0) == 0xe0)
-//		}
-//
-//		private static int YM_DELTAT_Limit(final int val, final int max, final int min) {
-//			if (val > max) return max;
-//			else if (val < min) return min;
-//			return val;
-//		}
-//
-//		private static void YM_DELTAT_synthesis_from_external_memory(YM_DELTAT DELTAT) {
-//			int step;
-//			int data;
-//
-//			DELTAT.now_step += DELTAT.step;
-//			if (DELTAT.now_step >= (1 << YM_DELTAT_SHIFT)) {
-//				step = DELTAT.now_step >> YM_DELTAT_SHIFT;
-//				DELTAT.now_step &= (1 << YM_DELTAT_SHIFT) - 1;
-//				do {
-//					if (DELTAT.now_addr == (DELTAT.limit << 1))
-//						DELTAT.now_addr = 0;
-//
-//					if (DELTAT.now_addr == (DELTAT.end << 1)) { // 12-06-2001 JB: corrected comparison. Was > instead of ==
-//						if ((DELTAT.portstate & 0x10) != 0) {
-//							// repeat start
-//							DELTAT.now_addr = DELTAT.start << 1;
-//							DELTAT.acc      = 0;
-//							DELTAT.adpcmd   = YM_DELTAT_DELTA_DEF;
-//							DELTAT.prev_acc = 0;
-//						} else {
-//							// set EOS bit in status register
-//							if (DELTAT.status_change_handler != null && DELTAT.status_change_EOS_bit != 0)
-//								(DELTAT.status_change_handler).STATUS_SET(DELTAT.status_change_EOS_bit);
-//
-//							// clear PCM BUSY bit (reflected in status register)
-//							DELTAT.PCM_BSY = 0;
-//
-//							DELTAT.portstate = 0;
-//							DELTAT.adpcml = 0;
-//							DELTAT.prev_acc = 0;
-//							return;
-//						}
-//					}
-//
-//					if( (DELTAT.now_addr&1)!=0 ) data = DELTAT.now_data & 0x0f;
-//					else {
-//						DELTAT.now_data = DELTAT.read_byte(DELTAT.now_addr >> 1);
-//						data = DELTAT.now_data >> 4;
-//					}
-//
-//					DELTAT.now_addr++;
-//					// 12-06-2001 JB:
-//					// YM2610 address register is 24 bits wide.
-//					// The "+1" is there because we use 1 bit more for nibble calculations.
-//					// WARNING:
-//					// Side effect: we should take the size of the mapped ROM into account
-//					DELTAT.now_addr &= ((1 << (24 + 1)) - 1);
-//
-//					// store accumulator value
-//					DELTAT.prev_acc = DELTAT.acc;
-//
-//					// Forecast to next Forecast
-//					DELTAT.acc += (ym_deltat_decode_tableB1[data] * DELTAT.adpcmd / 8);
-//					YM_DELTAT_Limit(DELTAT.acc,YM_DELTAT_DECODE_MAX, YM_DELTAT_DECODE_MIN);
-//
-//					// delta to next delta
-//					DELTAT.adpcmd = (DELTAT.adpcmd * ym_deltat_decode_tableB2[data] ) / 64;
-//					YM_DELTAT_Limit(DELTAT.adpcmd,YM_DELTAT_DELTA_MAX, YM_DELTAT_DELTA_MIN);
-//
-//					// ElSemi: Fix interpolator.
-//					//DELTAT.prev_acc = prev_acc + ((DELTAT.acc - prev_acc) / 2 );
-//
-//				} while((--step) > 0);
-//			}
-//
-//			// ElSemi: Fix interpolator.
-//			DELTAT.adpcml = DELTAT.prev_acc * (int) ((1 << YM_DELTAT_SHIFT) - DELTAT.now_step);
-//			DELTAT.adpcml += (DELTAT.acc * (int) DELTAT.now_step);
-//			DELTAT.adpcml = (DELTAT.adpcml >> YM_DELTAT_SHIFT) * (int) DELTAT.volume;
-//
-//			// output for work of output channels (outd[OPNxxxx])
-//			DELTAT.output_pointer[DELTAT.output_pointer_pan] += DELTAT.adpcml;
-//		}
-//
-//		private static void YM_DELTAT_synthesis_from_CPU_memory(YM_DELTAT DELTAT) {
-//			int step;
-//			int data;
-//
-//			DELTAT.now_step += DELTAT.step;
-//			if (DELTAT.now_step >= (1 << YM_DELTAT_SHIFT)) {
-//				step = DELTAT.now_step >> YM_DELTAT_SHIFT;
-//				DELTAT.now_step &= (1 << YM_DELTAT_SHIFT) - 1;
-//				do{
-//					if ((DELTAT.now_addr & 1) != 0) {
-//						data = DELTAT.now_data & 0x0f;
-//
-//						DELTAT.now_data = DELTAT.CPU_data;
-//
-//						// after we used CPU_data, we set BRDY bit in status register,
-//						// which means we are ready to accept another byte of data
-//						if (DELTAT.status_change_handler != null && DELTAT.status_change_BRDY_bit != 0)
-//							(DELTAT.status_change_handler).STATUS_SET(DELTAT.status_change_BRDY_bit);
-//					} else {
-//						data = DELTAT.now_data >> 4;
-//					}
-//
-//					DELTAT.now_addr++;
-//
-//					// store accumulator value
-//					DELTAT.prev_acc = DELTAT.acc;
-//
-//					// Forecast to next Forecast
-//					DELTAT.acc += (ym_deltat_decode_tableB1[data] * DELTAT.adpcmd / 8);
-//					YM_DELTAT_Limit(DELTAT.acc,YM_DELTAT_DECODE_MAX, YM_DELTAT_DECODE_MIN);
-//
-//					// delta to next delta
-//					DELTAT.adpcmd = (DELTAT.adpcmd * ym_deltat_decode_tableB2[data] ) / 64;
-//					YM_DELTAT_Limit(DELTAT.adpcmd,YM_DELTAT_DELTA_MAX, YM_DELTAT_DELTA_MIN);
-//
-//				} while((--step) > 0);
-//			}
-//
-//			// ElSemi: Fix interpolator.
-//			DELTAT.adpcml = DELTAT.prev_acc * (int) ((1 << YM_DELTAT_SHIFT) - DELTAT.now_step);
-//			DELTAT.adpcml += (DELTAT.acc * (int) DELTAT.now_step);
-//			DELTAT.adpcml = (DELTAT.adpcml >> YM_DELTAT_SHIFT) * (int) DELTAT.volume;
-//
-//			// output for work of output channels (outd[OPNxxxx])
-//			DELTAT.output_pointer[DELTAT.output_pointer_pan] += DELTAT.adpcml;
-//		}
-//	}
+
+        private void ADPCM_CALC() {
+		/*
+		some examples:
+		value:   START, REC, MEMDAT, REPEAT, SPOFF, x,x,RESET   meaning:
+		  80     1      0    0       0       0      0 0 0       Synthesis (playing) from CPU (from reg $08) to AUDIO,sample rate in DELTA-N register
+		  a0     1      0    1       0       0      0 0 0       Synthesis (playing) from EXT.MEMORY to AUDIO,        sample rate in DELTA-N register
+		  C8     1      1    0       0       1      0 0 0       Analysis (recording) from AUDIO to CPU (to reg $08), sample rate in PRESCALER register
+		  E8     1      1    1       0       1      0 0 0       Analysis (recording) from AUDIO to EXT.MEMORY,       sample rate in PRESCALER register
+
+		  60     0      1    1       0       0      0 0 0       External memory write via ADPCM data register $08
+		  20     0      0    1       0       0      0 0 0       External memory read via ADPCM data register $08
+
+		*/
+
+            if ((portState & 0xe0) == 0xa0) {
+                YM_DELTAT_synthesis_from_external_memory(this);
+            } else if ((portState & 0xe0) == 0x80) {
+                // ADPCM synthesis from CPU-managed memory (from reg $08)
+                YM_DELTAT_synthesis_from_CPU_memory(this); // change output based on data in ADPCM data reg ($08)
+            }
+            // TODO ADPCM analysis
+            //if ((portState & 0xe0) == 0xc0)
+            //if ((portState & 0xe0) == 0xe0)
+        }
+
+        private static int limitYmDeltaT(int val, int max, int min) {
+            if (val > max) return max;
+            else if (val < min) return min;
+            return val;
+        }
+
+        private static void YM_DELTAT_synthesis_from_external_memory(YmDeltaT deltaT) {
+            int step;
+            int data;
+
+            deltaT.now_step += deltaT.step;
+            if (deltaT.now_step >= (1 << YM_DELTAT_SHIFT)) {
+                step = deltaT.now_step >> YM_DELTAT_SHIFT;
+                deltaT.now_step &= (1 << YM_DELTAT_SHIFT) - 1;
+                do {
+                    if (deltaT.now_addr == (deltaT.limit << 1))
+                        deltaT.now_addr = 0;
+
+                    if (deltaT.now_addr == (deltaT.end << 1)) { // 12-06-2001 JB: corrected comparison. Was > instead of ==
+                        if ((deltaT.portState & 0x10) != 0) {
+                            // repeat start
+                            deltaT.now_addr = deltaT.start << 1;
+                            deltaT.acc = 0;
+                            deltaT.adpcmD = YM_DELTAT_DELTA_DEF;
+                            deltaT.prev_acc = 0;
+                        } else {
+                            // set EOS bit in status register
+                            if (deltaT.statusChangeHandler != null && deltaT.status_change_EOS_bit != 0)
+                                (deltaT.statusChangeHandler).setStatus(deltaT.status_change_EOS_bit);
+
+                            // clear PCM BUSY bit (reflected in status register)
+                            deltaT.PCM_BSY = 0;
+
+                            deltaT.portState = 0;
+                            deltaT.adpcmL = 0;
+                            deltaT.prev_acc = 0;
+                            return;
+                        }
+                    }
+
+                    if ((deltaT.now_addr & 1) != 0) data = deltaT.now_data & 0x0f;
+                    else {
+                        deltaT.now_data = deltaT.read_byte(deltaT.now_addr >> 1);
+                        data = deltaT.now_data >> 4;
+                    }
+
+                    deltaT.now_addr++;
+                    // 12-06-2001 JB:
+                    // YM2610 address register is 24 bits wide.
+                    // The "+1" is there because we use 1 bit more for nibble calculations.
+                    // WARNING:
+                    // Side effect: we should take the size of the mapped ROM into account
+                    deltaT.now_addr &= ((1 << (24 + 1)) - 1);
+
+                    // store accumulator value
+                    deltaT.prev_acc = deltaT.acc;
+
+                    // Forecast to next Forecast
+                    deltaT.acc += (ym_deltat_decode_tableB1[data] * deltaT.adpcmD / 8);
+                    limitYmDeltaT(deltaT.acc, YM_DELTAT_DECODE_MAX, YM_DELTAT_DECODE_MIN);
+
+                    // delta to next delta
+                    deltaT.adpcmD = (deltaT.adpcmD * ym_deltat_decode_tableB2[data]) / 64;
+                    limitYmDeltaT(deltaT.adpcmD, YM_DELTAT_DELTA_MAX, YM_DELTAT_DELTA_MIN);
+
+                    // ElSemi: Fix interpolator.
+                    //deltaT.prev_acc = prev_acc + ((deltaT.acc - prev_acc) / 2 );
+
+                } while ((--step) > 0);
+            }
+
+            // ElSemi: Fix interpolator.
+            deltaT.adpcmL = deltaT.prev_acc * (int) ((1 << YM_DELTAT_SHIFT) - deltaT.now_step);
+            deltaT.adpcmL += (deltaT.acc * (int) deltaT.now_step);
+            deltaT.adpcmL = (deltaT.adpcmL >> YM_DELTAT_SHIFT) * (int) deltaT.volume;
+
+            // output for work of output channels (outd[OPNxxxx])
+            deltaT.output_pointer[deltaT.output_pointer_pan] += deltaT.adpcmL;
+        }
+
+        private static void YM_DELTAT_synthesis_from_CPU_memory(YmDeltaT DELTAT) {
+            int step;
+            int data;
+
+            DELTAT.now_step += DELTAT.step;
+            if (DELTAT.now_step >= (1 << YM_DELTAT_SHIFT)) {
+                step = DELTAT.now_step >> YM_DELTAT_SHIFT;
+                DELTAT.now_step &= (1 << YM_DELTAT_SHIFT) - 1;
+                do {
+                    if ((DELTAT.now_addr & 1) != 0) {
+                        data = DELTAT.now_data & 0x0f;
+
+                        DELTAT.now_data = DELTAT.CPU_data;
+
+                        // after we used CPU_data, we set BRDY bit in status register,
+                        // which means we are ready to accept another byte of data
+                        if (DELTAT.statusChangeHandler != null && DELTAT.status_change_BRDY_bit != 0)
+                            (DELTAT.statusChangeHandler).setStatus(DELTAT.status_change_BRDY_bit);
+                    } else {
+                        data = DELTAT.now_data >> 4;
+                    }
+
+                    DELTAT.now_addr++;
+
+                    // store accumulator value
+                    DELTAT.prev_acc = DELTAT.acc;
+
+                    // Forecast to next Forecast
+                    DELTAT.acc += (ym_deltat_decode_tableB1[data] * DELTAT.adpcmD / 8);
+                    limitYmDeltaT(DELTAT.acc, YM_DELTAT_DECODE_MAX, YM_DELTAT_DECODE_MIN);
+
+                    // delta to next delta
+                    DELTAT.adpcmD = (DELTAT.adpcmD * ym_deltat_decode_tableB2[data]) / 64;
+                    limitYmDeltaT(DELTAT.adpcmD, YM_DELTAT_DELTA_MAX, YM_DELTAT_DELTA_MIN);
+
+                } while ((--step) > 0);
+            }
+
+            // ElSemi: Fix interpolator.
+            DELTAT.adpcmL = DELTAT.prev_acc * (int) ((1 << YM_DELTAT_SHIFT) - DELTAT.now_step);
+            DELTAT.adpcmL += (DELTAT.acc * (int) DELTAT.now_step);
+            DELTAT.adpcmL = (DELTAT.adpcmL >> YM_DELTAT_SHIFT) * (int) DELTAT.volume;
+
+            // output for work of output channels (outd[OPNxxxx])
+            DELTAT.output_pointer[DELTAT.output_pointer_pan] += DELTAT.adpcmL;
+        }
+    }
+
 //#endif
 
     private static class Slot {
@@ -894,7 +932,7 @@ public class FMOPL_072 {
     /** OPL state */
     public static class FM_OPL
 //#if BUILD_Y8950
-//			implements STATUS_CHANGE_HANDLER
+			implements StatusChangeHandler
 //#endif
     {
 
@@ -1164,25 +1202,25 @@ public class FMOPL_072 {
         private final int[] st = new int[2];
 
 //#if BUILD_Y8950
-//		/** Delta-T ADPCM unit (Y8950) */
-//		private YM_DELTAT deltat;
-//
-//		/** Keyboard and I/O ports interface */
-//		private int   portDirection;
-//		//private int   portLatch;
-//		OPL_PORTHANDLER_R porthandler_r;
-//		OPL_PORTHANDLER_W porthandler_w;
-//		OPL_PORTHANDLER_R keyboardhandler_r;
-//		OPL_PORTHANDLER_W keyboardhandler_w;
+        /** Delta-T ADPCM unit (Y8950) */
+        private YmDeltaT deltaT;
+
+        /** Keyboard and I/O ports interface */
+        private int portDirection;
+        //private int   portLatch;
+        OplPortHandlerR porthandler_r;
+        OplPortHandlerW porthandler_w;
+        OplPortHandlerR keyboardhandler_r;
+        OplPortHandlerW keyboardhandler_w;
 //#endif
 
         // external event callback handlers
         /** TIMER handler */
-        OPL_TIMERHANDLER timer_handler;
+        OplTimerHandler timer_handler;
         /** IRQ handler */
-        OPL_IRQHANDLER irqHandler;
+        OplIrqHandler irqHandler;
         /** stream update handler */
-        OPL_UPDATEHANDLER updateHandler;
+        OplUpdateHandler updateHandler;
 
         /** chip type */
         private int type;
@@ -1208,11 +1246,12 @@ public class FMOPL_072 {
         private final int[] phase_modulation = new int[1];
         private final int[] output = new int[1];
 //#if BUILD_Y8950
-//        /** for Y8950 DELTA-T, chip is mono, that 4 here is just for safety */
-//	      private int[] output_deltat = new int[4];
+        /** for Y8950 DELTA-T, chip is mono, that 4 here is just for safety */
+        private int[] output_deltat = new int[4];
 //#endif
 
         /** status set and IRQ handling */
+        @Override
         public void setStatus(int flag) {
             // set status flag
             status |= flag;
@@ -1226,6 +1265,7 @@ public class FMOPL_072 {
         }
 
         /** status reset and IRQ handling */
+        @Override
         public void resetStatus(int flag) {
             // reset status flag
             status &= ~flag;
@@ -1739,7 +1779,7 @@ public class FMOPL_072 {
                             break;
                         case 0x04:  // IRQ clear / mask and Timer enable
                             if ((v & 0x80) != 0) {   // IRQ flag clear
-                                resetStatus(0x7f - 0x08); // don't reset BFRDY flag or we will have to call deltat module to set the flag
+                                resetStatus(0x7f - 0x08); // don't reset BFRDY flag or we will have to call deltaT module to set the flag
                             } else {   // set IRQ mask ,timer enable
                                 int st1 = v & 1;
                                 int st2 = (v >> 1) & 1;
@@ -1763,56 +1803,56 @@ public class FMOPL_072 {
                             }
                             break;
 //#if BUILD_Y8950
-//				case 0x06:      // Key Board OUT
-//					if ((type & OPL_TYPE_KEYBOARD) != 0) {
-//						if (keyboardhandler_w != null)
-//							keyboardhandler_w.invoke(v);
-//					}
-//					break;
-//				case 0x07:  // DELTA-T control 1 : START,REC,MEMDATA,REPT,SPOFF,x,x,RST
-//					if ((type & OPL_TYPE_ADPCM) != 0)
-//						deltat.ADPCM_Write(r - 0x07,v);
-//					break;
+                        case 0x06:      // Key Board OUT
+                            if ((type & OPL_TYPE_KEYBOARD) != 0) {
+                                if (keyboardhandler_w != null)
+                                    keyboardhandler_w.invoke(v);
+                            }
+                            break;
+                        case 0x07:  // DELTA-T control 1 : START,REC,MEMDATA,REPT,SPOFF,x,x,RST
+                            if ((type & OPL_TYPE_ADPCM) != 0)
+                                deltaT.ADPCM_Write(r - 0x07, v);
+                            break;
 //#endif
                         case 0x08:  // MODE,DELTA-T control 2 : CSM,NOTESEL,x,x,smpl,da/ad,64k,rom
                             mode = v;
 //#if BUILD_Y8950
-//					if ((type&OPL_TYPE_ADPCM) != 0)
-//						deltat.ADPCM_Write(r - 0x07, v & 0x0f); // mask 4 LSBs in register 08 for DELTA-T unit
+                            if ((type & OPL_TYPE_ADPCM) != 0)
+                                deltaT.ADPCM_Write(r - 0x07, v & 0x0f); // mask 4 LSBs in register 08 for DELTA-T unit
 //#endif
                             break;
 
 //#if BUILD_Y8950
-//				case 0x09:      // START ADD
-//				case 0x0a:
-//				case 0x0b:      // STOP ADD
-//				case 0x0c:
-//				case 0x0d:      // PRESCALE
-//				case 0x0e:
-//				case 0x0f:      // ADPCM data write
-//				case 0x10:      // DELTA-N
-//				case 0x11:      // DELTA-N
-//				case 0x12:      // ADPCM volume
-//					if((type&OPL_TYPE_ADPCM)!=0)
-//						deltat.ADPCM_Write(r-0x07,v);
-//					break;
-//
-//				case 0x15:      // DAC data high 8 bits (F7,F6...F2)
-//				case 0x16:      // DAC data low 2 bits (F1, F0 in bits 7,6)
-//				case 0x17:      // DAC data shift (S2,S1,S0 in bits 2,1,0)
-//					break;
-//
-//				case 0x18:      // I/O CTRL (Direction)
-//					if((type&OPL_TYPE_IO)!=0)
-//						portDirection = v&0x0f;
-//					break;
-//				case 0x19:      // I/O DATA
-//					if((type&OPL_TYPE_IO)!=0) {
-//						//portLatch = v;
-//						if(porthandler_w!=null)
-//							porthandler_w.invoke(v&portDirection);
-//					}
-//					break;
+                        case 0x09:      // START ADD
+                        case 0x0a:
+                        case 0x0b:      // STOP ADD
+                        case 0x0c:
+                        case 0x0d:      // PRESCALE
+                        case 0x0e:
+                        case 0x0f:      // ADPCM data write
+                        case 0x10:      // DELTA-N
+                        case 0x11:      // DELTA-N
+                        case 0x12:      // ADPCM volume
+                            if ((type & OPL_TYPE_ADPCM) != 0)
+                                deltaT.ADPCM_Write(r - 0x07, v);
+                            break;
+
+                        case 0x15:      // DAC data high 8 bits (F7,F6...F2)
+                        case 0x16:      // DAC data low 2 bits (F1, F0 in bits 7,6)
+                        case 0x17:      // DAC data shift (S2,S1,S0 in bits 2,1,0)
+                            break;
+
+                        case 0x18:      // I/O CTRL (Direction)
+                            if ((type & OPL_TYPE_IO) != 0)
+                                portDirection = v & 0x0f;
+                            break;
+                        case 0x19:      // I/O DATA
+                            if ((type & OPL_TYPE_IO) != 0) {
+                                //portLatch = v;
+                                if (porthandler_w != null)
+                                    porthandler_w.invoke(v & portDirection);
+                            }
+                            break;
 //#endif
                         default:
                             break;
@@ -1972,13 +2012,13 @@ public class FMOPL_072 {
                 }
             }
 //#if BUILD_Y8950
-//			if((type&OPL_TYPE_ADPCM)!=0) {
-//				deltat.freqBase = freqBase;
-//				deltat.output_pointer = output_deltat;
-//				deltat.portshift = 5;
-//				deltat.output_range = 1<<23;
-//				deltat.ADPCM_Reset(0,YM_DELTAT.EMULATION_MODE_NORMAL);
-//			}
+            if ((type & OPL_TYPE_ADPCM) != 0) {
+                deltaT.freqBase = freqBase;
+                deltaT.output_pointer = output_deltat;
+                deltaT.portShift = 5;
+                deltaT.output_range = 1 << 23;
+                deltaT.ADPCM_Reset(0, YmDeltaT.EMULATION_MODE_NORMAL);
+            }
 //#endif
         }
 
@@ -2017,11 +2057,11 @@ public class FMOPL_072 {
                 }
             }
 //#if BUILD_Y8950
-//			if ((type & OPL_TYPE_ADPCM) != 0 && (deltat != null)) {
-//				// We really should call the postload function for the YM_DELTAT, but it's hard without registers
-//				// (see the way the YM2610 does it)
-////				deltat.postload(REGS);
-//			}
+            if ((type & OPL_TYPE_ADPCM) != 0 && (deltaT != null)) {
+                // We really should call the postload function for the YM_DELTAT, but it's hard without registers
+                // (see the way the YM2610 does it)
+//                deltaT.postload(REGS);
+            }
 //#endif
         }
 
@@ -2104,9 +2144,9 @@ public class FMOPL_072 {
                 // status port
 
 //#if BUILD_Y8950
-//				if ((type & OPL_TYPE_ADPCM) != 0) { // Y8950
-//					return (status & (statusMask | 0x80)) | (deltat.PCM_BSY & 1);
-//				}
+                if ((type & OPL_TYPE_ADPCM) != 0) { // Y8950
+                    return (status & (statusMask | 0x80)) | (deltaT.PCM_BSY & 1);
+                }
 //#endif
 
                 // OPL and OPL2
@@ -2114,34 +2154,34 @@ public class FMOPL_072 {
             }
 
 //#if BUILD_Y8950
-//			// data port
-//			switch (address) {
-//				case 0x05: // KeyBoard IN
-//					if ((type & OPL_TYPE_KEYBOARD) != 0) {
-//						if (keyboardhandler_r != null) return keyboardhandler_r.invoke();
-//					}
-//					return 0;
-//
-//				case 0x0f: // ADPCM-DATA
-//					if ((type & OPL_TYPE_ADPCM) != 0) {
-//						int val;
-//
-//						val = deltat.ADPCM_Read();
-//						return val;
-//					}
-//					return 0;
-//
-//				case 0x19: // I/O DATA
-//					if ((type & OPL_TYPE_IO) != 0) {
-//						if (porthandler_r != null) return porthandler_r.invoke();
-//					}
-//					return 0;
-//				case 0x1a: // PCM-DATA
-//					if ((type & OPL_TYPE_ADPCM) != 0) {
-//						return 0x80; // 2's complement PCM data - result from A/D conversion
-//					}
-//					return 0;
-//			}
+            // data port
+            switch (address) {
+                case 0x05: // KeyBoard IN
+                    if ((type & OPL_TYPE_KEYBOARD) != 0) {
+                        if (keyboardhandler_r != null) return keyboardhandler_r.invoke();
+                    }
+                    return 0;
+
+                case 0x0f: // ADPCM-DATA
+                    if ((type & OPL_TYPE_ADPCM) != 0) {
+                        int val;
+
+                        val = deltaT.ADPCM_Read();
+                        return val;
+                    }
+                    return 0;
+
+                case 0x19: // I/O DATA
+                    if ((type & OPL_TYPE_IO) != 0) {
+                        if (porthandler_r != null) return porthandler_r.invoke();
+                    }
+                    return 0;
+                case 0x1a: // PCM-DATA
+                    if ((type & OPL_TYPE_ADPCM) != 0) {
+                        return 0x80; // 2's complement PCM data - result from A/D conversion
+                    }
+                    return 0;
+            }
 //#endif
 
             return 0xff;
@@ -2182,7 +2222,7 @@ public class FMOPL_072 {
                     opl.channels[i].slots[j] = new Slot();
             }
 //#if BUILD_Y8950
-//            opl.deltat = new YM_DELTAT();
+            opl.deltaT = new YmDeltaT();
 //#endif
 
             opl.type = type;
@@ -2225,15 +2265,15 @@ public class FMOPL_072 {
 
         // Optional handlers
 
-        void setTimerHandler(OPL_TIMERHANDLER handler) {
+        void setTimerHandler(OplTimerHandler handler) {
             timer_handler = handler;
         }
 
-        void setIRQHandler(OPL_IRQHANDLER handler) {
+        void setIRQHandler(OplIrqHandler handler) {
             irqHandler = handler;
         }
 
-        void setUpdateHandler(OPL_UPDATEHANDLER handler) {
+        void setUpdateHandler(OplUpdateHandler handler) {
             updateHandler = handler;
         }
     }
@@ -2329,94 +2369,96 @@ public class FMOPL_072 {
         chip.clockChanged(clock, rate);
     }
 
-    public static void setTimerHandler(FM_OPL chip, FMOPL_072.OPL_TIMERHANDLER timer_handler) {
+    public static void setTimerHandler(FM_OPL chip, OplTimerHandler timer_handler) {
         chip.setTimerHandler(timer_handler);
     }
 
-    public static void setIrqHandler(FM_OPL chip, FMOPL_072.OPL_IRQHANDLER IRQHandler) {
+    public static void setIrqHandler(FM_OPL chip, OplIrqHandler IRQHandler) {
         chip.setIRQHandler(IRQHandler);
     }
 
-    public static void set_update_handler(FM_OPL chip, FMOPL_072.OPL_UPDATEHANDLER UpdateHandler) {
+    public static void set_update_handler(FM_OPL chip, OplUpdateHandler UpdateHandler) {
         chip.setUpdateHandler(UpdateHandler);
     }
 
 //#if BUILD_Y8950
-//	//
-//	// YM8950 local section
-//	//
-//
-//	public static FM_OPL y8950_init(int clock, int rate) {
-//		// emulator create
-//		FM_OPL chip = FM_OPL.Create(clock, rate, OPL_TYPE_Y8950);
-//		if (chip!=null) {
-//			chip.deltat.status_change_handler = chip;
-//			chip.deltat.status_change_EOS_bit = 0x10;  // status flag: set bit4 on End Of Sample
-//			chip.deltat.status_change_BRDY_bit = 0x08; // status flag: set bit3 on BRDY (End Of: ADPCM analysis/synthesis, memory reading/writing)
-//
-////			Y8950.deltat.write_time = 10.0 / clock; // a single byte write takes 10 cycles of main clock
-////			Y8950.deltat.read_time  = 8.0 / clock; // a single byte read takes 8 cycles of main clock
-//			// reset
-//			chip.postload();
-//			reset_chip(chip);
-//		}
-//
-//		return chip;
-//	}
-//
-//	/**
-//	 * Generate samples for one of the Y8950's
-//	 *
-//	 * @param which the virtual Y8950 number
-//	 * @param buffer the output buffer pointer
-//	 * @param length the number of samples that should be generated
-//	 */
-//	public static void y8950_update_one(FM_OPL chip, int[] buffer, int length) {
-//		final YM_DELTAT DELTAT = chip.deltat;
-//		final boolean rhythm  = (chip.rhythm&0x20)!=0;
-//
-//		for(int i=0; i < length ; i++ ) {
-//			chip.output[0] = 0;
-//			chip.output_deltat[0] = 0;
-//
-//			chip.advance_lfo();
-//
-//			// deltaT ADPCM
-//			if ((DELTAT.portstate & 0x80) != 0)
-//				DELTAT.ADPCM_CALC();
-//
-//			// FM part
-//			chip.CALC_CH(chip.channels[0]);
-//			chip.CALC_CH(chip.channels[1]);
-//			chip.CALC_CH(chip.channels[2]);
-//			chip.CALC_CH(chip.channels[3]);
-//			chip.CALC_CH(chip.channels[4]);
-//			chip.CALC_CH(chip.channels[5]);
-//
-//			if (!rhythm) {
-//				chip.CALC_CH(chip.channels[6]);
-//				chip.CALC_CH(chip.channels[7]);
-//				chip.CALC_CH(chip.channels[8]);
-//			} else { // Rhythm part
-//				chip.CALC_RH();
-//			}
-//
-//			// limit check
-//			// store to sound buffer
-//			buffer[i] = limit( (chip.output[0] + (chip.output_deltat[0]>>11)) >> FINAL_SH , MAXOUT, MINOUT );
-//
-//			chip.advance();
-//		}
-//	}
-//
-//	public void y8950_set_port_handler(FM_OPL chip, OPL_PORTHANDLER_W PortHandler_w, OPL_PORTHANDLER_R PortHandler_r) {
-//		chip.porthandler_w = PortHandler_w;
-//		chip.porthandler_r = PortHandler_r;
-//	}
-//
-//	public void y8950_set_keyboard_handler(FM_OPL chip, OPL_PORTHANDLER_W KeyboardHandler_w, OPL_PORTHANDLER_R KeyboardHandler_r) {
-//		chip.keyboardhandler_w = KeyboardHandler_w;
-//		chip.keyboardhandler_r = KeyboardHandler_r;
-//	}
+
+    //
+    // YM8950 local section
+    //
+
+    public static FM_OPL y8950_init(int clock, int rate) {
+        // emulator create
+        FM_OPL chip = FM_OPL.create(clock, rate, OPL_TYPE_Y8950);
+        if (chip != null) {
+            chip.deltaT.statusChangeHandler = chip;
+            chip.deltaT.status_change_EOS_bit = 0x10;  // status flag: set bit4 on End Of Sample
+            chip.deltaT.status_change_BRDY_bit = 0x08; // status flag: set bit3 on BRDY (End Of: ADPCM analysis/synthesis, memory reading/writing)
+
+//			Y8950.deltaT.write_time = 10.0 / clock; // a single byte write takes 10 cycles of main clock
+//			Y8950.deltaT.read_time  = 8.0 / clock; // a single byte read takes 8 cycles of main clock
+            // reset
+            chip.postLoad();
+            resetChip(chip);
+        }
+
+        return chip;
+    }
+
+    /**
+     * Generate samples for one of the Y8950's
+     *
+     * @param chip  the virtual Y8950 number
+     * @param buffer the output buffer pointer
+     * @param length the number of samples that should be generated
+     */
+    public static void y8950_update_one(FM_OPL chip, int[] buffer, int length) {
+        YmDeltaT deltaT = chip.deltaT;
+        boolean rhythm = (chip.rhythm & 0x20) != 0;
+
+        for (int i = 0; i < length; i++) {
+            chip.output[0] = 0;
+            chip.output_deltat[0] = 0;
+
+            chip.advance_lfo();
+
+            // deltaT ADPCM
+            if ((deltaT.portState & 0x80) != 0)
+                deltaT.ADPCM_CALC();
+
+            // FM part
+            chip.calcCh(chip.channels[0]);
+            chip.calcCh(chip.channels[1]);
+            chip.calcCh(chip.channels[2]);
+            chip.calcCh(chip.channels[3]);
+            chip.calcCh(chip.channels[4]);
+            chip.calcCh(chip.channels[5]);
+
+            if (!rhythm) {
+                chip.calcCh(chip.channels[6]);
+                chip.calcCh(chip.channels[7]);
+                chip.calcCh(chip.channels[8]);
+            } else { // Rhythm part
+                chip.CALC_RH();
+            }
+
+            // limit check
+            // store to sound buffer
+            buffer[i] = limit((chip.output[0] + (chip.output_deltat[0] >> 11)) >> FINAL_SH, MAXOUT, MINOUT);
+
+            chip.advance();
+        }
+    }
+
+    public void y8950_set_port_handler(FM_OPL chip, OplPortHandlerW PortHandler_w, OplPortHandlerR PortHandler_r) {
+        chip.porthandler_w = PortHandler_w;
+        chip.porthandler_r = PortHandler_r;
+    }
+
+    public void y8950_set_keyboard_handler(FM_OPL chip, OplPortHandlerW KeyboardHandler_w, OplPortHandlerR KeyboardHandler_r) {
+        chip.keyboardhandler_w = KeyboardHandler_w;
+        chip.keyboardhandler_r = KeyboardHandler_r;
+    }
+
 //#endif
 }

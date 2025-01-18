@@ -20,7 +20,7 @@
  *----------------------------------------------------------------------
  */
 
-package de.quippy.javamod.multimedia.opl3.sequencer;
+package de.quippy.javamod.multimedia.opl.sequencer;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,9 +34,9 @@ import java.util.ServiceLoader.Provider;
 import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.io.RandomAccessInputStreamImpl;
 import de.quippy.javamod.io.SpiModfileInputStream;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.OplType;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.Version;
+import de.quippy.javamod.multimedia.opl.emu.EmuOPL;
+import de.quippy.javamod.multimedia.opl.emu.EmuOPL.OplType;
+import de.quippy.javamod.multimedia.opl.emu.EmuOPL.Version;
 import de.quippy.javamod.system.Helpers;
 import vavi.sound.SoundUtil;
 
@@ -73,7 +73,7 @@ public abstract class OPL3Sequence {
     /**
      * @param url opl url
      * @return suitable sequencer
-     * @throws IOException unsupported opl3
+     * @throws IOException unsupported opl
      */
     public static OPL3Sequence createOPL3Sequence(URL url, URL bnkURL) throws IOException {
         OPL3Sequence newSequence = getOPL3SequenceInstanceFor(url);
@@ -102,7 +102,7 @@ public abstract class OPL3Sequence {
      * for javax.sound.spi
      * @param stream opl stream
      * @return suitable sequencer
-     * @throws IOException unsupported opl3
+     * @throws IOException unsupported opl
      * @since 3.9.7
      */
     public static OPL3Sequence createOPL3Sequence(InputStream stream, URL bnkURL) throws IOException {
@@ -241,7 +241,7 @@ public abstract class OPL3Sequence {
      */
     public abstract OplType getOPLType();
 
-    /** spi for opl3 sequence */
+    /** spi for opl sequence */
     private static final ServiceLoader<OPL3Sequence> sequences;
 
     static {

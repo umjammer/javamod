@@ -20,7 +20,7 @@
  *----------------------------------------------------------------------
  */
 
-package de.quippy.javamod.multimedia.opl3;
+package de.quippy.javamod.multimedia.opl;
 
 import java.awt.GridBagLayout;
 import java.awt.LayoutManager;
@@ -39,8 +39,8 @@ import javax.swing.filechooser.FileFilter;
 
 import de.quippy.javamod.main.gui.tools.FileChooserFilter;
 import de.quippy.javamod.main.gui.tools.FileChooserResult;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.Version;
+import de.quippy.javamod.multimedia.opl.emu.EmuOPL;
+import de.quippy.javamod.multimedia.opl.emu.EmuOPL.Version;
 import de.quippy.javamod.system.Helpers;
 
 
