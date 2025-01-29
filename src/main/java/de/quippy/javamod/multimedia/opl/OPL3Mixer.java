@@ -82,7 +82,7 @@ public class OPL3Mixer extends BasicMixer {
 
     protected void initialize() {
         opl = EmuOPL.createInstance(OPLVersion, sampleRate, opl3Sequence.getOPLType());
-logger.log(Level.DEBUG, "opl: " + opl.getClass().getName());
+logger.log(Level.DEBUG, "opl: " + opl.getClass().getName() + ", " + OPLVersion);
 
         bufferSize = (int) ((MS_BUFFER_SIZE * ANZ_CHANNELS * sampleRate + 500) / 1000);
         while ((bufferSize % 4) != 0) bufferSize++;

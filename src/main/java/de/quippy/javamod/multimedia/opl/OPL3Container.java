@@ -75,7 +75,7 @@ public class OPL3Container extends MultimediaContainer implements SpiMultimediaC
     }
 
     private Version getOPLVersion() {
-        return Enum.valueOf(Version.class, (currentProps != null) ? currentProps.getProperty(PROPERTY_OPL3PLAYER_OPLVERSION, DEFAULT_OPLVERSION) : DEFAULT_OPLVERSION);
+        return Enum.valueOf(Version.class, (currentProps != null) ? currentProps.getProperty(PROPERTY_OPL3PLAYER_OPLVERSION, System.getProperty(PROPERTY_OPL3PLAYER_OPLVERSION, DEFAULT_OPLVERSION)) : DEFAULT_OPLVERSION);
     }
 
     public OPL3Mixer getCurrentMixer() {

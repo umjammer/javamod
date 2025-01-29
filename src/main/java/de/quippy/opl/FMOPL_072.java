@@ -38,7 +38,7 @@
  * around this - not nice but effective and fast.
  * Function-Pointers not existent in Java - need interfaces instead. But we
  * do not use callbacks here anyways.
- * The Y8950 code was documented out, we do not need it here.
+ * <del>The Y8950 code was documented out, we do not need it here.</del>
  */
 
 package de.quippy.opl;
@@ -50,6 +50,7 @@ package de.quippy.opl;
  * @author Daniel Becker
  * @author Burczynski (bujar at mame dot net)
  * @author Tatsuyuki Satoh, MultiArcadeMachineEmulator development
+ * @version 0.72
  * @since 11.08.2020
  */
 public class FMOPL_072 {
@@ -58,17 +59,17 @@ public class FMOPL_072 {
 //    private static final int BUILD_YM3526 = 1;
 //    private static final int BUILD_Y8950 = 1;
 
-    public interface OplIrqHandler {
+    public interface IrqHandler {
 
         void invoke(int irq);
     }
 
-    public interface OplTimerHandler {
+    public interface TimerHandler {
 
         void invoke(int timer, double period);
     }
 
-    public interface OplUpdateHandler {
+    public interface UpdateHandler {
 
         void invoke(int min_interval_us);
     }
@@ -82,12 +83,12 @@ public class FMOPL_072 {
         void resetStatus(int status_bits);
     }
 
-    public interface OplPortHandlerR {
+    public interface PortHandlerR {
 
         byte invoke();
     }
 
-    public interface OplPortHandlerW {
+    public interface PortHandlerW {
 
         void invoke(int data);
     }
@@ -799,7 +800,7 @@ public class FMOPL_072 {
         private int rr;
         /** key scale rate */
         private int KSR;
-        /** keyscale level */
+        /** keyScale level */
         private int ksl;
         /** key scale rate: kcode>>>KSR */
         private int ksr;
@@ -1208,19 +1209,19 @@ public class FMOPL_072 {
         /** Keyboard and I/O ports interface */
         private int portDirection;
         //private int   portLatch;
-        OplPortHandlerR porthandler_r;
-        OplPortHandlerW porthandler_w;
-        OplPortHandlerR keyboardhandler_r;
-        OplPortHandlerW keyboardhandler_w;
+        PortHandlerR porthandler_r;
+        PortHandlerW porthandler_w;
+        PortHandlerR keyboardhandler_r;
+        PortHandlerW keyboardhandler_w;
 //#endif
 
         // external event callback handlers
         /** TIMER handler */
-        OplTimerHandler timer_handler;
+        TimerHandler timer_handler;
         /** IRQ handler */
-        OplIrqHandler irqHandler;
+        IrqHandler irqHandler;
         /** stream update handler */
-        OplUpdateHandler updateHandler;
+        UpdateHandler updateHandler;
 
         /** chip type */
         private int type;
@@ -2265,15 +2266,15 @@ public class FMOPL_072 {
 
         // Optional handlers
 
-        void setTimerHandler(OplTimerHandler handler) {
+        void setTimerHandler(TimerHandler handler) {
             timer_handler = handler;
         }
 
-        void setIRQHandler(OplIrqHandler handler) {
+        void setIRQHandler(IrqHandler handler) {
             irqHandler = handler;
         }
 
-        void setUpdateHandler(OplUpdateHandler handler) {
+        void setUpdateHandler(UpdateHandler handler) {
             updateHandler = handler;
         }
     }
@@ -2369,15 +2370,15 @@ public class FMOPL_072 {
         chip.clockChanged(clock, rate);
     }
 
-    public static void setTimerHandler(FM_OPL chip, OplTimerHandler timer_handler) {
+    public static void setTimerHandler(FM_OPL chip, TimerHandler timer_handler) {
         chip.setTimerHandler(timer_handler);
     }
 
-    public static void setIrqHandler(FM_OPL chip, OplIrqHandler IRQHandler) {
+    public static void setIrqHandler(FM_OPL chip, IrqHandler IRQHandler) {
         chip.setIRQHandler(IRQHandler);
     }
 
-    public static void set_update_handler(FM_OPL chip, OplUpdateHandler UpdateHandler) {
+    public static void set_update_handler(FM_OPL chip, UpdateHandler UpdateHandler) {
         chip.setUpdateHandler(UpdateHandler);
     }
 
@@ -2450,12 +2451,12 @@ public class FMOPL_072 {
         }
     }
 
-    public void y8950_set_port_handler(FM_OPL chip, OplPortHandlerW PortHandler_w, OplPortHandlerR PortHandler_r) {
+    public void y8950_set_port_handler(FM_OPL chip, PortHandlerW PortHandler_w, PortHandlerR PortHandler_r) {
         chip.porthandler_w = PortHandler_w;
         chip.porthandler_r = PortHandler_r;
     }
 
-    public void y8950_set_keyboard_handler(FM_OPL chip, OplPortHandlerW KeyboardHandler_w, OplPortHandlerR KeyboardHandler_r) {
+    public void y8950_set_keyboard_handler(FM_OPL chip, PortHandlerW KeyboardHandler_w, PortHandlerR KeyboardHandler_r) {
         chip.keyboardhandler_w = KeyboardHandler_w;
         chip.keyboardhandler_r = KeyboardHandler_r;
     }

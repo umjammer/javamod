@@ -55,7 +55,12 @@
 package de.quippy.opl;
 
 
-// this is the same implementation in vavi-sound-sampled opl
+/**
+ * this is the same implementation in vavi-sound-sampled opl
+ *
+ * @author Robson Cozendey
+ * @version 1.0.6
+ */
 public final class OPL3 {
 
     final int[] registers = new int[0x200];

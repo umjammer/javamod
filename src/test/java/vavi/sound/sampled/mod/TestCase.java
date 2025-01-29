@@ -61,7 +61,10 @@ class TestCase {
         if (localPropertiesExists()) {
             PropsEntity.Util.bind(this);
         }
-Debug.println("volume: " + volume);
+
+        System.setProperty("javamod.player.opl.oplversion", opl);
+
+Debug.println("volume: " + volume + ", opl: " + System.getProperty("javamod.player.opl.oplversion"));
     }
 
     static boolean onIde = System.getProperty("vavi.test", "").equals("ide");
@@ -72,6 +75,9 @@ Debug.println("volume: " + volume);
 
     @Property
     String mod = "src/test/resources/test.mod";
+
+    @Property
+    String opl = "";
 
     @Test
     @Disabled("for creating prototype")
