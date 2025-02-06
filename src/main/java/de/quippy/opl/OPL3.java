@@ -435,7 +435,7 @@ abstract class Channel {
 
     final double[] feedback;
 
-    int fnuml, fnumh, kon, block, cha, chb, chc, chd, fb, cnt;
+    int fNumL, fNumH, kon, block, cha, chb, chc, chd, fb, cnt;
 
     // Factor to convert between normalized amplitude to normalized
     // radians. The amplitude maximum is equivalent to 8*Pi radians.
@@ -444,7 +444,7 @@ abstract class Channel {
     Channel(OPL3 opl3, int baseAddress) {
         this.opl3 = opl3;
         channelBaseAddress = baseAddress;
-        fnuml = fnumh = kon = block = cha = chb = chc = chd = fb = cnt = 0;
+        fNumL = fNumH = kon = block = cha = chb = chc = chd = fb = cnt = 0;
         feedback = new double[2];
         feedback[0] = feedback[1] = 0;
     }
@@ -452,10 +452,10 @@ abstract class Channel {
     void update_2_KON1_BLOCK3_FNUMH2() {
         int _2_kon1_block3_fnumh2 = opl3.registers[channelBaseAddress + ChannelData._2_KON1_BLOCK3_FNUMH2_Offset];
 
-        // Frequency Number (hi-register) and Block. These two registers, together with fnuml,
+        // Frequency Number (hi-register) and Block. These two registers, together with fNumL,
         // sets the Channel´s base frequency;
         block = (_2_kon1_block3_fnumh2 & 0x1C) >> 2;
-        fnumh = _2_kon1_block3_fnumh2 & 0x03;
+        fNumH = _2_kon1_block3_fnumh2 & 0x03;
         updateOperators();
 
         // Key On. If changed, calls Channel.keyOn() / keyOff().
@@ -470,9 +470,9 @@ abstract class Channel {
     }
 
     void update_FNUML8() {
-        int fnuml8 = opl3.registers[channelBaseAddress + ChannelData.FNUML8_Offset];
+        int fNumL8 = opl3.registers[channelBaseAddress + ChannelData.FNUML8_Offset];
         // Frequency Number, low register.
-        fnuml = fnuml8 & 0xff;
+        fNumL = fNumL8 & 0xff;
         updateOperators();
     }
 
@@ -573,8 +573,8 @@ class Channel2op extends Channel {
     @Override
     protected void updateOperators() {
         // Key Scale Number, used in EnvelopeGenerator.setActualRates().
-        int keyScaleNumber = block * 2 + ((fnumh >> opl3.nts) & 0x01);
-        int f_number = (fnumh << 8) | fnuml;
+        int keyScaleNumber = block * 2 + ((fNumH >> opl3.nts) & 0x01);
+        int f_number = (fNumH << 8) | fNumL;
         op1.updateOperator(keyScaleNumber, f_number, block);
         op2.updateOperator(keyScaleNumber, f_number, block);
     }
@@ -582,7 +582,7 @@ class Channel2op extends Channel {
     @Override
     public String toString() {
 
-        int f_number = (fnumh << 8) + fnuml;
+        int f_number = (fNumH << 8) + fNumL;
 
         String str = "channelBaseAddress: %d\n".formatted(channelBaseAddress) +
                 "f_number: %d, block: %d\n".formatted(f_number, block) +
@@ -695,8 +695,8 @@ class Channel4op extends Channel {
     @Override
     protected void updateOperators() {
         // Key Scale Number, used in EnvelopeGenerator.setActualRates().
-        int keyScaleNumber = block * 2 + ((fnumh >> opl3.nts) & 0x01);
-        int f_number = (fnumh << 8) | fnuml;
+        int keyScaleNumber = block * 2 + ((fNumH >> opl3.nts) & 0x01);
+        int f_number = (fNumH << 8) | fNumL;
         op1.updateOperator(keyScaleNumber, f_number, block);
         op2.updateOperator(keyScaleNumber, f_number, block);
         op3.updateOperator(keyScaleNumber, f_number, block);
@@ -706,7 +706,7 @@ class Channel4op extends Channel {
     @Override
     public String toString() {
 
-        int f_number = (fnumh << 8) + fnuml;
+        int f_number = (fNumH << 8) + fNumL;
 
         String str = "channelBaseAddress: %d\n".formatted(channelBaseAddress) +
                 "f_number: %d, block: %d\n".formatted(f_number, block) +

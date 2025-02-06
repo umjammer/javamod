@@ -47,9 +47,9 @@ package de.quippy.opl;
 /**
  * software implementation of FM sound generator types OPL and OPL2
  *
- * @author Daniel Becker
- * @author Burczynski (bujar at mame dot net)
+ * @author Jarek Burczynski (bujar at mame dot net)
  * @author Tatsuyuki Satoh, MultiArcadeMachineEmulator development
+ * @author Daniel Becker (java port)
  * @version 0.72
  * @since 11.08.2020
  */
@@ -147,8 +147,11 @@ public class FMOPL_072 {
 
     // Generic interface section
 
+    /** OPL */
     public static final int OPL_TYPE_YM3526 = 0;
+    /** OPL2 */
     public static final int OPL_TYPE_YM3812 = (OPL_TYPE_WAVESEL);
+    /** OPL2 + ADPCM */
     public static final int OPL_TYPE_Y8950 = (OPL_TYPE_ADPCM | OPL_TYPE_KEYBOARD | OPL_TYPE_IO);
 
     private static final int RATE_STEPS = 8;
@@ -1173,7 +1176,7 @@ public class FMOPL_072 {
         /** Rhythm mode */
         private int rhythm;
 
-        /** fnumber->increment counter */
+        /** fNumber->increment counter */
         private final int[] fn_tab = new int[1024];
 
         // LFO
@@ -1209,10 +1212,10 @@ public class FMOPL_072 {
         /** Keyboard and I/O ports interface */
         private int portDirection;
         //private int   portLatch;
-        PortHandlerR porthandler_r;
-        PortHandlerW porthandler_w;
-        PortHandlerR keyboardhandler_r;
-        PortHandlerW keyboardhandler_w;
+        PortHandlerR portHandler_r;
+        PortHandlerW portHandler_w;
+        PortHandlerR keyboardHandler_r;
+        PortHandlerW keyboardHandler_w;
 //#endif
 
         // external event callback handlers
@@ -1231,7 +1234,7 @@ public class FMOPL_072 {
         private int status;
         /** status mask */
         private int statusMask;
-        /** Reg.08 : CSM,notesel,etc. */
+        /** Reg.08 : CSM,noteSel,etc. */
         private int mode;
 
         /** master clock  (Hz) */
@@ -1806,8 +1809,8 @@ public class FMOPL_072 {
 //#if BUILD_Y8950
                         case 0x06:      // Key Board OUT
                             if ((type & OPL_TYPE_KEYBOARD) != 0) {
-                                if (keyboardhandler_w != null)
-                                    keyboardhandler_w.invoke(v);
+                                if (keyboardHandler_w != null)
+                                    keyboardHandler_w.invoke(v);
                             }
                             break;
                         case 0x07:  // DELTA-T control 1 : START,REC,MEMDATA,REPT,SPOFF,x,x,RST
@@ -1850,8 +1853,8 @@ public class FMOPL_072 {
                         case 0x19:      // I/O DATA
                             if ((type & OPL_TYPE_IO) != 0) {
                                 //portLatch = v;
-                                if (porthandler_w != null)
-                                    porthandler_w.invoke(v & portDirection);
+                                if (portHandler_w != null)
+                                    portHandler_w.invoke(v & portDirection);
                             }
                             break;
 //#endif
@@ -2159,7 +2162,7 @@ public class FMOPL_072 {
             switch (address) {
                 case 0x05: // KeyBoard IN
                     if ((type & OPL_TYPE_KEYBOARD) != 0) {
-                        if (keyboardhandler_r != null) return keyboardhandler_r.invoke();
+                        if (keyboardHandler_r != null) return keyboardHandler_r.invoke();
                     }
                     return 0;
 
@@ -2174,7 +2177,7 @@ public class FMOPL_072 {
 
                 case 0x19: // I/O DATA
                     if ((type & OPL_TYPE_IO) != 0) {
-                        if (porthandler_r != null) return porthandler_r.invoke();
+                        if (portHandler_r != null) return portHandler_r.invoke();
                     }
                     return 0;
                 case 0x1a: // PCM-DATA
@@ -2296,7 +2299,11 @@ public class FMOPL_072 {
     // YM3812 local section
     //
 
-    /** creates emulator */
+    /**
+     * creates emulator
+     *
+     * @param type one of {@link #OPL_TYPE_YM3526}, {@link #OPL_TYPE_YM3812}, {@link #OPL_TYPE_Y8950}
+     */
     public static FM_OPL init(int type, int clock, int rate) {
         FM_OPL chip = FM_OPL.create(clock, rate, type);
         if (chip != null) {
@@ -2452,13 +2459,13 @@ public class FMOPL_072 {
     }
 
     public void y8950_set_port_handler(FM_OPL chip, PortHandlerW PortHandler_w, PortHandlerR PortHandler_r) {
-        chip.porthandler_w = PortHandler_w;
-        chip.porthandler_r = PortHandler_r;
+        chip.portHandler_w = PortHandler_w;
+        chip.portHandler_r = PortHandler_r;
     }
 
     public void y8950_set_keyboard_handler(FM_OPL chip, PortHandlerW KeyboardHandler_w, PortHandlerR KeyboardHandler_r) {
-        chip.keyboardhandler_w = KeyboardHandler_w;
-        chip.keyboardhandler_r = KeyboardHandler_r;
+        chip.keyboardHandler_w = KeyboardHandler_w;
+        chip.keyboardHandler_r = KeyboardHandler_r;
     }
 
 //#endif

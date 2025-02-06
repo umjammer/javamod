@@ -164,6 +164,7 @@ Debug.println("OUT: " + outAudioFormat);
         assertTrue(AudioSystem.isConversionSupported(outAudioFormat, inAudioFormat));
 
         AudioInputStream pcmAis = AudioSystem.getAudioInputStream(outAudioFormat, sourceAis);
+Debug.println(pcmAis.getClass().getName());
         DataLine.Info info = new DataLine.Info(SourceDataLine.class, pcmAis.getFormat());
         SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
         line.open(pcmAis.getFormat());
