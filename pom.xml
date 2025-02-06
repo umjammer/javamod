@@ -148,9 +148,9 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / vavi -->
-      <artifactId>vavi-sound-emu</artifactId>
-      <version>0.0.7</version>
+      <groupId>com.github.umjammer</groupId> <!-- uk.co.omgdrv / com.github.umjammer -->
+      <artifactId>simplevgm</artifactId>
+      <version>1.5.5</version>
     </dependency>
 
     <dependency>

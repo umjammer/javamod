@@ -12,14 +12,23 @@ Java MOD Player
 - made libraries outsourced as much as possible
 - javax.sound.spi compliant
 
-| player | subtype                                                                     | status |       spi       | library                                              | comment                                                                    |
-|--------|-----------------------------------------------------------------------------|:------:|:---------------:|------------------------------------------------------|----------------------------------------------------------------------------|
-| mod    | STK, NST, MOD, WOW, XM, FAR, MTM, STM, STS, STX, S3M, IT, MPTM, PowerPacker |   ✅    |        ✅        | this                                                 |                                                                            |
-| opl    | ROL, LAA, CMF, DRO, SCI                                                     |   ✅    |        ✅        | this                                                 | [opl3 class is duplicated](https://github.com/umjammer/vavi-sound-sandbox) | gbc,spc are not tested       |
-| sid    | SID                                                                         |   ✅    |        ✅        | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)   |                                                                            |
-| vgm    | VGM, GBC, NSF, SPC                                                          |   ✅    | ✅<sup>[1]</sup> | [libgme](https://github.com/umjammer/vavi-sound-emu) | gbc,spc are not tested                                                     |
+| player | subtype                                                                     | status |       spi       | library                                                      | comment                                                                    |
+|--------|-----------------------------------------------------------------------------|:------:|:---------------:|--------------------------------------------------------------|----------------------------------------------------------------------------|
+| mod    | STK, NST, MOD, WOW, XM, FAR, MTM, STM, STS, STX, S3M, IT, MPTM, PowerPacker |   ✅    |        ✅        | this                                                         |                                                                            |
+| opl    | ROL, LAA, CMF, DRO, SCI                                                     |   ✅    |        ✅        | this                                                         | [opl3 class is duplicated](https://github.com/umjammer/vavi-sound-sandbox) | gbc,spc are not tested       |
+| sid    | SID                                                                         |   ✅    |        ✅        | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)           |                                                                            |
+| vgm    | VGM, GBC, NSF, SPC                                                          |   ✅    | ✅<sup>[1]</sup> | [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu) |                                                                            |
 
 <sub>[1] implemented in [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu)</sub>
+
+### opl chips
+
+| name   | common name              | status | comment            |
+|--------|--------------------------|:------:|--------------------|
+| Y8950  | MSX-AUDIO (OPL2 + ADPCM) |  n/a   | oldmame:burczynski |
+| YM3526 | OPL                      |   ✅️   | oldmame:burczynski |
+| YM3812 | OPL2                     |   ✅️   | oldmame:burczynski |
+| YmF262 | OPL3                     |   ✅️   | cozendey           |
 
 ## Install
 
