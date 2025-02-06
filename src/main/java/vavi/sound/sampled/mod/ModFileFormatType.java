@@ -36,7 +36,7 @@ public class ModFileFormatType extends AudioFileFormat.Type {
     public static final ModFileFormatType SID = new ModFileFormatType("SID", "sid");
 
     /*
-     * Specifies an opl3 audio file.
+     * Specifies an opl audio file.
      */
     public static final ModFileFormatType OPL3 = new ModFileFormatType("OPL3", "rol,laa,cmf,dro,sci");
 

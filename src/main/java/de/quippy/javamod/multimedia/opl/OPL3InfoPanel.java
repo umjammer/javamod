@@ -20,7 +20,7 @@
  *----------------------------------------------------------------------
  */
 
-package de.quippy.javamod.multimedia.opl3;
+package de.quippy.javamod.multimedia.opl;
 
 import java.awt.LayoutManager;
 import java.io.Serial;
@@ -30,7 +30,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-import de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence;
+import de.quippy.javamod.multimedia.opl.sequencer.OPL3Sequence;
 import de.quippy.javamod.system.Helpers;
 
 

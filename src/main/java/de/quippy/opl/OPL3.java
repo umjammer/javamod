@@ -46,14 +46,21 @@
  *
  * Modified 2020 by Daniel Becker for use in JavaMod
  * - enabled reuse by removing statics - subclasses receive "their" own OPL3
- * - moved to "de.quippy.opl3" package inside the project
+ * - moved to "de.quippy.opl" package inside the project
  * - added switch statement "case off" in getEnvelope
  * - HigHats, Cymbals, Snare and Bass Drum were to silent. Fixed
  *   with some hack! This needs introspection!
  */
 
-package de.quippy.opl3;
+package de.quippy.opl;
 
+
+/**
+ * this is the same implementation in vavi-sound-sampled opl
+ *
+ * @author Robson Cozendey
+ * @version 1.0.6
+ */
 public final class OPL3 {
 
     final int[] registers = new int[0x200];
@@ -76,14 +83,14 @@ public final class OPL3 {
     Operator tomTomOperatorInNonRhythmMode;
     Operator topCymbalOperatorInNonRhythmMode;
 
-    int nts, dam, dvb, ryt, bd, sd, tom, tc, hh, _new, connectionsel;
+    int nts, dam, dvb, ryt, bd, sd, tom, tc, hh, _new, connectionSel;
     int vibratoIndex, tremoloIndex;
 
     private final double[] outputBuffer;
     private final double[] channelOutput;
 
     public OPL3() {
-        nts = dam = dvb = ryt = bd = sd = tom = tc = hh = _new = connectionsel = 0;
+        nts = dam = dvb = ryt = bd = sd = tom = tc = hh = _new = connectionSel = 0;
         vibratoIndex = tremoloIndex = 0;
         channels = new Channel[2][9];
         outputBuffer = new double[4];
@@ -241,7 +248,6 @@ public final class OPL3 {
         // Channel 8:
         tomTomOperatorInNonRhythmMode = operators[0][TomTomOperator.tomTomOperatorBaseAddress];
         topCymbalOperatorInNonRhythmMode = operators[0][TopCymbalOperator.topCymbalOperatorBaseAddress];
-
     }
 
     private void initChannels2op() {
@@ -370,7 +376,7 @@ public final class OPL3 {
         // This method is called only if _new is set.
         int _2_connectionsel6 = registers[OPL3Data._2_CONNECTIONSEL6_Offset];
         // 2-op/4-op channel selection. This register is used here to configure the OPL3.channels[] array.
-        connectionsel = (_2_connectionsel6 & 0x3F);
+        connectionSel = (_2_connectionsel6 & 0x3F);
         set4opConnections();
     }
 
@@ -381,7 +387,7 @@ public final class OPL3 {
             for (int i = 0; i < 3; i++) {
                 if (_new == 1) {
                     int shift = array * 3 + i;
-                    int connectionBit = (connectionsel >> shift) & 0x01;
+                    int connectionBit = (connectionSel >> shift) & 0x01;
                     if (connectionBit == 1) {
                         channels[array][i] = channels4op[array][i];
                         channels[array][i + 3] = disabledChannel;
@@ -429,16 +435,16 @@ abstract class Channel {
 
     final double[] feedback;
 
-    int fnuml, fnumh, kon, block, cha, chb, chc, chd, fb, cnt;
+    int fNumL, fNumH, kon, block, cha, chb, chc, chd, fb, cnt;
 
     // Factor to convert between normalized amplitude to normalized
     // radians. The amplitude maximum is equivalent to 8*Pi radians.
-    final static double toPhase = 4;
+    static final double toPhase = 4;
 
     Channel(OPL3 opl3, int baseAddress) {
         this.opl3 = opl3;
         channelBaseAddress = baseAddress;
-        fnuml = fnumh = kon = block = cha = chb = chc = chd = fb = cnt = 0;
+        fNumL = fNumH = kon = block = cha = chb = chc = chd = fb = cnt = 0;
         feedback = new double[2];
         feedback[0] = feedback[1] = 0;
     }
@@ -446,10 +452,10 @@ abstract class Channel {
     void update_2_KON1_BLOCK3_FNUMH2() {
         int _2_kon1_block3_fnumh2 = opl3.registers[channelBaseAddress + ChannelData._2_KON1_BLOCK3_FNUMH2_Offset];
 
-        // Frequency Number (hi-register) and Block. These two registers, together with fnuml,
+        // Frequency Number (hi-register) and Block. These two registers, together with fNumL,
         // sets the Channel´s base frequency;
         block = (_2_kon1_block3_fnumh2 & 0x1C) >> 2;
-        fnumh = _2_kon1_block3_fnumh2 & 0x03;
+        fNumH = _2_kon1_block3_fnumh2 & 0x03;
         updateOperators();
 
         // Key On. If changed, calls Channel.keyOn() / keyOff().
@@ -464,9 +470,9 @@ abstract class Channel {
     }
 
     void update_FNUML8() {
-        int fnuml8 = opl3.registers[channelBaseAddress + ChannelData.FNUML8_Offset];
+        int fNumL8 = opl3.registers[channelBaseAddress + ChannelData.FNUML8_Offset];
         // Frequency Number, low register.
-        fnuml = fnuml8 & 0xff;
+        fNumL = fNumL8 & 0xff;
         updateOperators();
     }
 
@@ -567,8 +573,8 @@ class Channel2op extends Channel {
     @Override
     protected void updateOperators() {
         // Key Scale Number, used in EnvelopeGenerator.setActualRates().
-        int keyScaleNumber = block * 2 + ((fnumh >> opl3.nts) & 0x01);
-        int f_number = (fnumh << 8) | fnuml;
+        int keyScaleNumber = block * 2 + ((fNumH >> opl3.nts) & 0x01);
+        int f_number = (fNumH << 8) | fNumL;
         op1.updateOperator(keyScaleNumber, f_number, block);
         op2.updateOperator(keyScaleNumber, f_number, block);
     }
@@ -576,7 +582,7 @@ class Channel2op extends Channel {
     @Override
     public String toString() {
 
-        int f_number = (fnumh << 8) + fnuml;
+        int f_number = (fNumH << 8) + fNumL;
 
         String str = "channelBaseAddress: %d\n".formatted(channelBaseAddress) +
                 "f_number: %d, block: %d\n".formatted(f_number, block) +
@@ -689,8 +695,8 @@ class Channel4op extends Channel {
     @Override
     protected void updateOperators() {
         // Key Scale Number, used in EnvelopeGenerator.setActualRates().
-        int keyScaleNumber = block * 2 + ((fnumh >> opl3.nts) & 0x01);
-        int f_number = (fnumh << 8) | fnuml;
+        int keyScaleNumber = block * 2 + ((fNumH >> opl3.nts) & 0x01);
+        int f_number = (fNumH << 8) | fNumL;
         op1.updateOperator(keyScaleNumber, f_number, block);
         op2.updateOperator(keyScaleNumber, f_number, block);
         op3.updateOperator(keyScaleNumber, f_number, block);
@@ -700,7 +706,7 @@ class Channel4op extends Channel {
     @Override
     public String toString() {
 
-        int f_number = (fnumh << 8) + fnuml;
+        int f_number = (fNumH << 8) + fNumL;
 
         String str = "channelBaseAddress: %d\n".formatted(channelBaseAddress) +
                 "f_number: %d, block: %d\n".formatted(f_number, block) +
@@ -755,7 +761,7 @@ class Operator {
     int am, vib, ksr, egt, mult, ksl, tl, ar, dr, sl, rr, ws;
     int keyScaleNumber, f_number, block;
 
-    final static double noModulator = 0;
+    static final double noModulator = 0;
 
     Operator(OPL3 opl3, int baseAddress) {
         operatorBaseAddress = baseAddress;
@@ -1240,7 +1246,7 @@ abstract class RhythmChannel extends Channel2op {
 
 class HighHatSnareDrumChannel extends RhythmChannel {
 
-    final static int highHatSnareDrumChannelBaseAddress = 7;
+    static final int highHatSnareDrumChannelBaseAddress = 7;
 
     HighHatSnareDrumChannel(OPL3 opl3) {
         super(opl3, highHatSnareDrumChannelBaseAddress, opl3.highHatOperator, opl3.snareDrumOperator);
@@ -1249,7 +1255,7 @@ class HighHatSnareDrumChannel extends RhythmChannel {
 
 class TomTomTopCymbalChannel extends RhythmChannel {
 
-    final static int tomTomTopCymbalChannelBaseAddress = 8;
+    static final int tomTomTopCymbalChannelBaseAddress = 8;
 
     TomTomTopCymbalChannel(OPL3 opl3) {
         super(opl3, tomTomTopCymbalChannelBaseAddress, opl3.tomTomOperator, opl3.topCymbalOperator);
@@ -1258,9 +1264,9 @@ class TomTomTopCymbalChannel extends RhythmChannel {
 
 class TopCymbalOperator extends Operator {
 
-    final static int topCymbalOperatorBaseAddress = 0x15;
+    static final int topCymbalOperatorBaseAddress = 0x15;
     // [QUIPPY] Cymbal and high hats are far to silent. We add some "loudness" with the operator
-    final static double attenuation = 5d;
+    static final double attenuation = 5d;
 
     TopCymbalOperator(OPL3 opl3, int baseAddress) {
         super(opl3, baseAddress);
@@ -1305,7 +1311,7 @@ class TopCymbalOperator extends Operator {
 
 class HighHatOperator extends TopCymbalOperator {
 
-    final static int highHatOperatorBaseAddress = 0x11;
+    static final int highHatOperatorBaseAddress = 0x11;
 
     HighHatOperator(OPL3 opl3) {
         super(opl3, highHatOperatorBaseAddress);
@@ -1325,9 +1331,9 @@ class HighHatOperator extends TopCymbalOperator {
 
 class SnareDrumOperator extends Operator {
 
-    final static int snareDrumOperatorBaseAddress = 0x14;
+    static final int snareDrumOperatorBaseAddress = 0x14;
     // [QUIPPY] Same as with high hats and cymbals
-    final static double attenuation = 5d;
+    static final double attenuation = 5d;
 
     SnareDrumOperator(OPL3 opl3) {
         super(opl3, snareDrumOperatorBaseAddress);
@@ -1365,9 +1371,9 @@ class SnareDrumOperator extends Operator {
 
 class TomTomOperator extends Operator {
 
-    final static int tomTomOperatorBaseAddress = 0x12;
+    static final int tomTomOperatorBaseAddress = 0x12;
     // [QUIPPY] Same as with high hats and cymbals and snare
-    final static double attenuation = 5d;
+    static final double attenuation = 5d;
 
     TomTomOperator(OPL3 opl3) {
         super(opl3, tomTomOperatorBaseAddress);
@@ -1382,9 +1388,9 @@ class TomTomOperator extends Operator {
 
 class BassDrumChannel extends Channel2op {
 
-    final static int bassDrumChannelBaseAddress = 6;
-    final static int op1BaseAddress = 0x10;
-    final static int op2BaseAddress = 0x13;
+    static final int bassDrumChannelBaseAddress = 6;
+    static final int op1BaseAddress = 0x10;
+    static final int op2BaseAddress = 0x13;
 
     BassDrumChannel(OPL3 opl3) {
         super(opl3, bassDrumChannelBaseAddress, new Operator(opl3, op1BaseAddress), new Operator(opl3, op2BaseAddress));
@@ -1417,9 +1423,9 @@ class BassDrumChannel extends Channel2op {
 class OPL3Data {
 
     // OPL3-wide registers offsets:
-    final static int _1_NTS1_6_Offset = 0x08, DAM1_DVB1_RYT1_BD1_SD1_TOM1_TC1_HH1_Offset = 0xBD, _7_NEW1_Offset = 0x105, _2_CONNECTIONSEL6_Offset = 0x104;
+    static final int _1_NTS1_6_Offset = 0x08, DAM1_DVB1_RYT1_BD1_SD1_TOM1_TC1_HH1_Offset = 0xBD, _7_NEW1_Offset = 0x105, _2_CONNECTIONSEL6_Offset = 0x104;
 
-    final static double sampleRate = 49716;
+    static final double sampleRate = 49716;
 
     static {
         loadVibratoTable();
@@ -1535,11 +1541,11 @@ class OPL3Data {
 
 class ChannelData {
 
-    final static int _2_KON1_BLOCK3_FNUMH2_Offset = 0xB0, FNUML8_Offset = 0xA0, CHD1_CHC1_CHB1_CHA1_FB3_CNT1_Offset = 0xC0;
+    static final int _2_KON1_BLOCK3_FNUMH2_Offset = 0xB0, FNUML8_Offset = 0xA0, CHD1_CHC1_CHB1_CHA1_FB3_CNT1_Offset = 0xC0;
 
     // Feedback rate in fractions of 2*Pi, normalized to (0,1):
     // 0, Pi/16, Pi/8, Pi/4, Pi/2, Pi, 2*Pi, 4*Pi turns to be:
-    final static double[] feedback = {
+    static final double[] feedback = {
             0, 1 / 32d, 1 / 16d, 1 / 8d, 1 / 4d, 1 / 2d, 1, 2
     };
 }
@@ -1550,7 +1556,7 @@ class ChannelData {
 
 class OperatorData {
 
-    final static int
+    static final int
             AM1_VIB1_EGT1_KSR1_MULT4_Offset = 0x20,
             KSL2_TL6_Offset = 0x40,
             AR4_DR4_Offset = 0x60,
@@ -1561,13 +1567,13 @@ class OperatorData {
         NO_MODULATION, CARRIER, FEEDBACK
     }
 
-    final static int waveLength = 1024;
+    static final int waveLength = 1024;
 
-    final static double[] multTable = {
+    static final double[] multTable = {
             0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 12, 12, 15, 15
     };
 
-    final static double[][] ksl3dBtable = {
+    static final double[][] ksl3dBtable = {
             {0, 0, 0, 0, 0, 0, 0, 0},
             {0, 0, 0, 0, 0, -3, -6, -9},
             {0, 0, 0, 0, -3, -6, -9, -12},
@@ -1655,17 +1661,17 @@ class OperatorData {
 
 class EnvelopeGeneratorData {
 
-    final static double INFINITY = 1f / 0f;
+    static final double INFINITY = 1f / 0f;
     // This table is indexed by the value of Operator.ksr
     // and the value of ChannelRegister.keyScaleNumber.
-    final static int[][] rateOffset = {
+    static final int[][] rateOffset = {
             {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3},
             {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
     };
     // These attack periods in milliseconds were taken from the YMF278B manual.
     // The attack actual rates range from 0 to 63, with different data for 
     // 0%-100% and for 10%-90%: 
-    final static double[][] attackTimeValuesTable = {
+    static final double[][] attackTimeValuesTable = {
             {INFINITY, INFINITY}, {INFINITY, INFINITY}, {INFINITY, INFINITY}, {INFINITY, INFINITY},
             {2826.24, 1482.75}, {2252.80, 1155.07}, {1884.16, 991.23}, {1597.44, 868.35},
             {1413.12, 741.38}, {1126.40, 577.54}, {942.08, 495.62}, {798.72, 434.18},
@@ -1690,7 +1696,7 @@ class EnvelopeGeneratorData {
     // These decay and release periods in milliseconds were taken from the YMF278B manual.
     // The rate index range from 0 to 63, with different data for 
     // 0%-100% and for 10%-90%: 
-    final static double[][] decayAndReleaseTimeValuesTable = {
+    static final double[][] decayAndReleaseTimeValuesTable = {
             {INFINITY, INFINITY}, {INFINITY, INFINITY}, {INFINITY, INFINITY}, {INFINITY, INFINITY},
             {39280.64, 8212.48}, {31416.32, 6574.08}, {26173.44, 5509.12}, {22446.08, 4730.88},
             {19640.32, 4106.24}, {15708.16, 3287.04}, {13086.72, 2754.56}, {11223.04, 2365.44},

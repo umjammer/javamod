@@ -20,10 +20,10 @@
  *----------------------------------------------------------------------
  */
 
-package de.quippy.javamod.multimedia.opl3.emu;
+package de.quippy.javamod.multimedia.opl.emu;
 
-import de.quippy.opl3.FMOPL_072;
-import de.quippy.opl3.FMOPL_072.FM_OPL;
+import de.quippy.opl.FMOPL_072;
+import de.quippy.opl.FMOPL_072.FM_OPL;
 
 
 /**
@@ -70,7 +70,7 @@ public class EmuFMOPL_072 extends EmuOPL {
     }
 
     /**
-     * @see de.quippy.javamod.multimedia.opl3.emu.EmuOPL#resetOPL()
+     * @see de.quippy.javamod.multimedia.opl.emu.EmuOPL#resetOPL()
      */
     @Override
     public void resetOPL() {

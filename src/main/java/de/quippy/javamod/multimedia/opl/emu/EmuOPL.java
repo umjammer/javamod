@@ -20,7 +20,7 @@
  *----------------------------------------------------------------------
  */
 
-package de.quippy.javamod.multimedia.opl3.emu;
+package de.quippy.javamod.multimedia.opl.emu;
 
 import java.util.Arrays;
 
@@ -32,7 +32,7 @@ import java.util.Arrays;
 public abstract class EmuOPL {
 
     public enum Version {
-        FMOPL_072_YM3526("YM3526 (OPL2) V0.72  by Jarek Burczynski"),
+        FMOPL_072_YM3526("YM3526 (OPL) V0.72  by Jarek Burczynski"),
         FMOPL_072_YM3812("YM3812 (OPL2) V0.72  by Jarek Burczynski"),
         OPL3("YMF262 (OPL3) V1.0.6 by Robson Cozendey");
         public final String versionName;

@@ -20,7 +20,7 @@
  *----------------------------------------------------------------------
  */
 
-package de.quippy.javamod.multimedia.opl3;
+package de.quippy.javamod.multimedia.opl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,8 +37,8 @@ import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import de.quippy.javamod.multimedia.SpiMultimediaContainer;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.Version;
-import de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence;
+import de.quippy.javamod.multimedia.opl.emu.EmuOPL.Version;
+import de.quippy.javamod.multimedia.opl.sequencer.OPL3Sequence;
 import de.quippy.javamod.system.Helpers;
 
 import static java.lang.System.getLogger;
@@ -55,9 +55,9 @@ public class OPL3Container extends MultimediaContainer implements SpiMultimediaC
     private static final String[] OPL3FILEEXTENSION = {
             "rol", "laa", "cmf", "dro", "sci"
     };
-    public static final String PROPERTY_OPL3PLAYER_SOUNDBANK = "javamod.player.opl3.soundbankurl";
-    public static final String PROPERTY_OPL3PLAYER_OPLVERSION = "javamod.player.opl3.oplversion";
-    public static final String PROPERTY_OPL3PLAYER_VIRTUAL_STEREO = "javamod.player.opl3.virtualStereo";
+    public static final String PROPERTY_OPL3PLAYER_SOUNDBANK = "javamod.player.opl.soundbankurl";
+    public static final String PROPERTY_OPL3PLAYER_OPLVERSION = "javamod.player.opl.oplversion";
+    public static final String PROPERTY_OPL3PLAYER_VIRTUAL_STEREO = "javamod.player.opl.virtualStereo";
 
     public static final String DEFAULT_SOUNDBANKURL = Helpers.EMPTY_STING;
     public static final String DEFAULT_VIRTUAL_STEREO = "false";
@@ -75,7 +75,7 @@ public class OPL3Container extends MultimediaContainer implements SpiMultimediaC
     }
 
     private Version getOPLVersion() {
-        return Enum.valueOf(Version.class, (currentProps != null) ? currentProps.getProperty(PROPERTY_OPL3PLAYER_OPLVERSION, DEFAULT_OPLVERSION) : DEFAULT_OPLVERSION);
+        return Enum.valueOf(Version.class, (currentProps != null) ? currentProps.getProperty(PROPERTY_OPL3PLAYER_OPLVERSION, System.getProperty(PROPERTY_OPL3PLAYER_OPLVERSION, DEFAULT_OPLVERSION)) : DEFAULT_OPLVERSION);
     }
 
     public OPL3Mixer getCurrentMixer() {
@@ -104,7 +104,7 @@ public class OPL3Container extends MultimediaContainer implements SpiMultimediaC
     public boolean isSupported(InputStream stream) {
         try {
             OPL3Sequence sequence = OPL3Sequence.getOPL3SequenceInstanceFor(stream);
-logger.log(Level.DEBUG, "opl3: " + sequence.getClass().getName());
+logger.log(Level.DEBUG, "opl: " + sequence.getClass().getName());
             return true;
         } catch (NoSuchElementException e) {
 logger.log(Level.TRACE, e.getMessage(), e);

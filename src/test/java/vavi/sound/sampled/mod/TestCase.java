@@ -61,7 +61,10 @@ class TestCase {
         if (localPropertiesExists()) {
             PropsEntity.Util.bind(this);
         }
-Debug.println("volume: " + volume);
+
+        System.setProperty("javamod.player.opl.oplversion", opl);
+
+Debug.println("volume: " + volume + ", opl: " + System.getProperty("javamod.player.opl.oplversion"));
     }
 
     static boolean onIde = System.getProperty("vavi.test", "").equals("ide");
@@ -72,6 +75,9 @@ Debug.println("volume: " + volume);
 
     @Property
     String mod = "src/test/resources/test.mod";
+
+    @Property
+    String opl = "";
 
     @Test
     @Disabled("for creating prototype")
@@ -158,6 +164,7 @@ Debug.println("OUT: " + outAudioFormat);
         assertTrue(AudioSystem.isConversionSupported(outAudioFormat, inAudioFormat));
 
         AudioInputStream pcmAis = AudioSystem.getAudioInputStream(outAudioFormat, sourceAis);
+Debug.println(pcmAis.getClass().getName());
         DataLine.Info info = new DataLine.Info(SourceDataLine.class, pcmAis.getFormat());
         SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
         line.open(pcmAis.getFormat());

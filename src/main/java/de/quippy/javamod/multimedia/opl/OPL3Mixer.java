@@ -20,17 +20,17 @@
  *----------------------------------------------------------------------
  */
 
-package de.quippy.javamod.multimedia.opl3;
+package de.quippy.javamod.multimedia.opl;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import javax.sound.sampled.AudioFormat;
 
 import de.quippy.javamod.mixer.BasicMixer;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.OplType;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.Version;
-import de.quippy.javamod.multimedia.opl3.sequencer.OPL3Sequence;
+import de.quippy.javamod.multimedia.opl.emu.EmuOPL;
+import de.quippy.javamod.multimedia.opl.emu.EmuOPL.OplType;
+import de.quippy.javamod.multimedia.opl.emu.EmuOPL.Version;
+import de.quippy.javamod.multimedia.opl.sequencer.OPL3Sequence;
 
 import static java.lang.System.getLogger;
 
@@ -82,7 +82,7 @@ public class OPL3Mixer extends BasicMixer {
 
     protected void initialize() {
         opl = EmuOPL.createInstance(OPLVersion, sampleRate, opl3Sequence.getOPLType());
-logger.log(Level.DEBUG, "opl: " + opl.getClass().getName());
+logger.log(Level.DEBUG, "opl: " + opl.getClass().getName() + ", " + OPLVersion);
 
         bufferSize = (int) ((MS_BUFFER_SIZE * ANZ_CHANNELS * sampleRate + 500) / 1000);
         while ((bufferSize % 4) != 0) bufferSize++;

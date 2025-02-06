@@ -5,7 +5,7 @@
 
   <groupId>net.sourceforge.javamod</groupId>
   <artifactId>JavaMod</artifactId>
-  <version>3.9.10</version>
+  <version>3.9.11</version>
 
   <build>
     <plugins>
@@ -148,9 +148,9 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / vavi -->
-      <artifactId>vavi-sound-emu</artifactId>
-      <version>0.0.7</version>
+      <groupId>com.github.umjammer</groupId> <!-- uk.co.omgdrv / com.github.umjammer -->
+      <artifactId>simplevgm</artifactId>
+      <version>1.5.5</version>
     </dependency>
 
     <dependency>

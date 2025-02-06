@@ -26,7 +26,7 @@
  * 2020 Daniel Becker
  */
 
-package de.quippy.javamod.multimedia.opl3.sequencer;
+package de.quippy.javamod.multimedia.opl.sequencer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,8 +38,8 @@ import java.util.Arrays;
 import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import de.quippy.javamod.multimedia.mod.ModConstants;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL;
-import de.quippy.javamod.multimedia.opl3.emu.EmuOPL.OplType;
+import de.quippy.javamod.multimedia.opl.emu.EmuOPL;
+import de.quippy.javamod.multimedia.opl.emu.EmuOPL.OplType;
 import de.quippy.javamod.system.Helpers;
 import vavi.io.LittleEndianDataInputStream;
 
