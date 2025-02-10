@@ -62,7 +62,7 @@ public class YmF262Provider implements MdFmProvider {
 //logger.log(Level.TRACE, "write: " + addr + ", " + data);
         switch (addr) {
             case 0, 2 -> { this.address = data; }
-            case 1, 3 -> { ymf262.write((addr & 2) << 7, address, data); }
+            case 1, 3 -> { ymf262.write((addr & 2) >> 1, address, data); }
         }
     }
 }
