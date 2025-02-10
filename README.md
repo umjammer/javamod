@@ -23,12 +23,12 @@ Java MOD Player
 
 ### opl chips
 
-| name   | common name              | status | comment            |
-|--------|--------------------------|:------:|--------------------|
-| Y8950  | MSX-AUDIO (OPL2 + ADPCM) |  n/a   | oldmame:burczynski |
-| YM3526 | OPL                      |   ✅️   | oldmame:burczynski |
-| YM3812 | OPL2                     |   ✅️   | oldmame:burczynski |
-| YmF262 | OPL3                     |   ✅️   | cozendey           |
+| name   | common name                | status | comment            |
+|--------|----------------------------|:------:|--------------------|
+| Y8950  | MSX-AUDIO (OPL2 + ADPCM-B) |  n/a   | oldmame:burczynski |
+| YM3526 | OPL                        |   ✅️   | oldmame:burczynski |
+| YM3812 | OPL2                       |   ✅️   | oldmame:burczynski |
+| YmF262 | OPL3                       |   ✅️   | cozendey           |
 
 ## Install
 
