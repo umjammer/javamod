@@ -410,9 +410,17 @@ logger.log(Level.WARNING, e.getMessage(), e);
     }
 
     private void copyInsBanks() {
-        for (int x = 0; x < 128; x++)
+        for (int x = 0; x < 128; x++) {
             for (int y = 0; y < 16; y++)
                 smyinsbank[x][y] = myinsbank[x][y];
+logger.log(Level.DEBUG, "smyinsbank[%d]@%x".formatted(x, Arrays.stream(smyinsbank[x]).sum()) + "[" + String.join(", ", Arrays.stream(smyinsbank[x]).mapToObj(Integer::toHexString).toList()) + "]");
+        }
+    }
+
+    private void copySInsBanks() {
+        for (int x = 0; x < 128; x++)
+            for (int y = 0; y < 16; y++)
+                myinsbank[x][y] = smyinsbank[x][y];
     }
 
     /**
@@ -560,7 +568,6 @@ logger.log(Level.DEBUG, "type: " + getTypeName());
     }
 
     private void midiWriteAdlib(EmuOPL opl, int r, int v) {
-logger.log(Level.TRACE, "write: %04x, %02x".formatted(r, v));
         opl.writeOPL2(r, v);
         adlibData[r] = v;
     }
@@ -880,7 +887,7 @@ logger.log(Level.TRACE, "program change[%d]: %d".formatted(c, ch[c].inum));
                                         ch[channel].ins[7] = (int) (0xffL - ((getNext(1L) << 4) + getNext(1L)));
                                         ch[channel].ins[9] = (int) ((getNext(1L) << 4) + getNext(1L));
                                         ch[channel].ins[10] = (int) (getNext(1) << 4 + getNext(1));
-logger.log(Level.DEBUG, "INS: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x".formatted(ch[channel].ins[0], ch[channel].ins[1], ch[channel].ins[2], ch[channel].ins[3], ch[channel].ins[4], ch[channel].ins[5], ch[channel].ins[6], ch[channel].ins[7], ch[channel].ins[8], ch[channel].ins[9], ch[channel].ins[10]));
+logger.log(Level.DEBUG, "INS[%d]: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x".formatted(channel, ch[channel].ins[0], ch[channel].ins[1], ch[channel].ins[2], ch[channel].ins[3], ch[channel].ins[4], ch[channel].ins[5], ch[channel].ins[6], ch[channel].ins[7], ch[channel].ins[8], ch[channel].ins[9], ch[channel].ins[10]));
 
                                         // if ((i&1)==1) ch[channel].ins[10]=1;
 
@@ -1042,6 +1049,7 @@ logger.log(Level.TRACE, "pos: %d, end: %d".formatted(pos, track[curtrack].tend))
         // specific to file-type init
         pos = 0;
         int i = (int) getNext(1);
+logger.log(Level.DEBUG, "type: %s".formatted(type));
         switch (type) {
             case FILE_LUCAS:
                 getNext(24); // skip junk and get to the midi.
@@ -1143,7 +1151,7 @@ logger.log(Level.DEBUG, "%d: %s".formatted(j, Arrays.toString(myinsbank[j])));
                 track[0].spos = 0x98; // jump to midi music
                 break;
             case FILE_ADVSIERRA:
-                copyInsBanks();
+                copySInsBanks();
                 tins = stins;
                 deltas = 0x20;
                 getNext(11); // worthless empty space and "stuff" :)
@@ -1168,7 +1176,7 @@ logger.log(Level.DEBUG, "%d: %s".formatted(j, Arrays.toString(myinsbank[j])));
                 adlibStyle = SIERRA_STYLE | MIDI_STYLE; // advanced sierra tunes use volume
                 break;
             case FILE_SIERRA:
-                copyInsBanks();
+                copySInsBanks();
                 tins = stins;
                 getNext(2);
                 deltas = 0x20;
@@ -1180,6 +1188,7 @@ logger.log(Level.DEBUG, "%d: %s".formatted(j, Arrays.toString(myinsbank[j])));
                     ch[x].nshift = -13;
                     ch[x].on = (int) getNext(1) != 0;
                     ch[x].inum = (int) getNext(1) & 0x7f;
+logger.log(Level.DEBUG, "myinsbank[%d]inum:%d:@%x".formatted(x, ch[x].inum, Arrays.stream(myinsbank[ch[x].inum]).sum()) + "[" + String.join(", ", Arrays.stream(myinsbank[ch[x].inum]).mapToObj(Integer::toHexString).toList()) + "]");
                     for (int y = 0; y < 11; y++)
                         ch[x].ins[y] = myinsbank[ch[x].inum][y];
                 }
