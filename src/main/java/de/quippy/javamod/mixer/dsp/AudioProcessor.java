@@ -65,7 +65,6 @@ public class AudioProcessor {
     private AudioFormat audioFormat;
     private boolean isBigEndian;
     private boolean isSigned;
-    private int sampleSizeInBits;
     private int bytesPerChannel;
     private long mask;
     private long neg_Bit;
@@ -273,13 +272,13 @@ public class AudioProcessor {
 
         isBigEndian = audioFormat.isBigEndian();
         isSigned = audioFormat.getEncoding().equals(Encoding.PCM_SIGNED);
-        sampleSizeInBits = audioFormat.getSampleSizeInBits();
+        int sampleSizeInBits = audioFormat.getSampleSizeInBits();
         bytesPerChannel = sampleSizeInBits >> 3;
         mask = (1L << sampleSizeInBits) - 1;
         neg_Bit = 1L << (sampleSizeInBits - 1);
         maxSample = neg_Bit - 1;
         minSample = -neg_Bit;
-        neg_mask = 0xffFFFFFF ^ mask;
+        neg_mask = 0xffff_ffff ^ mask;
 
         sampleBufferSize = (sourceDataLine == null) ? SAMPLEBUFFERSIZE : sourceDataLine.getBufferSize();
         sampleBuffer = new float[sampleBufferSize];

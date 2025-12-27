@@ -66,7 +66,6 @@ public class ModDSP {
     // Surround Encoding: 1 delay line + low-pass filter + high-pass filter
     private int nSurroundSize;
     private int nSurroundPos;
-    private int nDolbyDepth;
 
     // Surround Biquads
     private long nDolbyHP_Y1;
@@ -299,7 +298,7 @@ public class ModDSP {
         nSurroundSize = (DEFAULT_SURROUND_MS * sampleFreq) / 1000;
         surroundBuffer = new long[nSurroundSize];
 
-        nDolbyDepth = DEFAULT_SURROUND_DEPTH;
+        int nDolbyDepth = DEFAULT_SURROUND_DEPTH;
         // because of defaults we do not need to check this
         //if (nDolbyDepth < 1) nDolbyDepth = 1; else if (nDolbyDepth > 16) nDolbyDepth = 16;
 

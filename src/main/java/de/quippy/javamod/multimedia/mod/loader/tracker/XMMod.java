@@ -51,8 +51,6 @@ public class XMMod extends ProTrackerMod {
     };
 
     private int version;
-    private int headerSize;
-    private int flag;
     private String songMessage;
     private MidiMacros midiMacros;
 
@@ -303,7 +301,7 @@ public class XMMod extends ProTrackerMod {
 
         long LSEEK = inputStream.getFilePointer();
         // Header Size
-        headerSize = inputStream.readIntelDWord();
+        int headerSize = inputStream.readIntelDWord();
 
         // lets start with some version / tracker guessing
         setModType(ModConstants.MODTYPE_XM);
@@ -339,7 +337,7 @@ public class XMMod extends ProTrackerMod {
         setNInstruments(inputStream.readIntelUnsignedWord());
 
         // a Flag
-        flag = inputStream.readIntelUnsignedWord();
+        int flag = inputStream.readIntelUnsignedWord();
         if ((flag & 0x0001) != 0) songFlags |= ModConstants.SONG_LINEARSLIDES;
         if ((flag & 0x1000) != 0) songFlags |= ModConstants.SONG_EXFILTERRANGE;
         songFlags |= ModConstants.SONG_ISSTEREO;

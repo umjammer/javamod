@@ -136,6 +136,10 @@ public class IcyInputStream extends BufferedInputStream {
      */
     protected static final byte[] STREAMTITLE_TAG = {'S', 't', 'r', 'e', 'a', 'm', 'T', 'i', 't', 'l', 'e'};
     /**
+     * the tag for amount of bytes till next meta data is presented
+     */
+    protected static final String META_DATA_INT = "icy-metaint";
+    /**
      * The charset Decoder for the crlfBuffer
      */
     protected final CharsetDecoder charsetDecoder;
@@ -156,6 +160,8 @@ public class IcyInputStream extends BufferedInputStream {
      *
      * @param in
      * @param metaIntString
+     * @param listener
+     * @param headers
      * @throws IOException
      */
     public IcyInputStream(InputStream in, String metaIntString, TagParseListener listener, Map<String, String> headers) throws IOException {
@@ -224,7 +230,7 @@ public class IcyInputStream extends BufferedInputStream {
         metaint = bytesUntilNextMetadata = -1;
         try {
             if (metaIntString == null) {
-                IcyTag metaIntTag = getTag("icy-metaint");
+                IcyTag metaIntTag = getTag(META_DATA_INT);
                 if (metaIntTag != null) {
                     nextIndex = Integer.parseInt(metaIntTag.getValue());
                 }

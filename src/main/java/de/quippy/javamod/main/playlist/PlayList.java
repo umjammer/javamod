@@ -545,7 +545,7 @@ public class PlayList {
             int cueTrackNo = 0;
 
             if (!writeCueSheet) {
-                ps = new PrintWriter(new OutputStreamWriter(new FileOutputStream(f), (writeM3U8) ? Helpers.CODING_HTTP : Helpers.CODING_M3U));
+                ps = new PrintWriter(new OutputStreamWriter(new FileOutputStream(f), (writeM3U8) ? Helpers.CODING_UTF8 : Helpers.CODING_M3U));
                 ps.println((writePLSFile) ? "[playlist]" : "#EXTM3U");
             } else {
                 cueSheet = new CueSheet();
@@ -939,7 +939,7 @@ public class PlayList {
             boolean readM3U8 = (fileName.endsWith("m3u8"));
             BufferedReader br = null;
             try {
-                br = new BufferedReader(new InputStreamReader(url.openStream(), (readM3U8) ? Helpers.CODING_HTTP : Helpers.CODING_M3U));
+                br = new BufferedReader(new InputStreamReader(url.openStream(), (readM3U8) ? Helpers.CODING_UTF8 : Helpers.CODING_M3U));
                 String line = Helpers.EMPTY_STING;
                 while (line != null && line.isEmpty()) line = br.readLine().trim();
                 if (line != null) {

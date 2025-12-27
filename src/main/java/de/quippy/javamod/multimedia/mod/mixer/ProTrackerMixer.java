@@ -31,6 +31,7 @@ import de.quippy.javamod.multimedia.mod.loader.instrument.Instrument;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement;
 import de.quippy.javamod.multimedia.mod.midi.MidiMacros;
+import de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory;
 
 
 /**
@@ -57,12 +58,10 @@ public class ProTrackerMixer extends BasicModMixer {
 
     @Override
     protected void initializeMixer(int channel, ChannelMemory aktMemo) {
-        if (isXM) {
-            if (frequencyTableType == ModConstants.XM_LINEAR_TABLE)
-                note2Period = ModConstants.FT2_linearPeriods;
-            else
-                note2Period = ModConstants.FT2_amigaPeriods;
-        }
+        if (frequencyTableType == ModConstants.XM_LINEAR_TABLE)
+            note2Period = ModConstants.FT2_linearPeriods;
+        else
+            note2Period = ModConstants.FT2_amigaPeriods;
         setPeriodBorders(aktMemo);
     }
 
@@ -73,7 +72,7 @@ public class ProTrackerMixer extends BasicModMixer {
      */
     @Override
     protected void setPeriodBorders(ChannelMemory aktMemo) {
-        if ((frequencyTableType & ModConstants.AMIGA_TABLE) != 0) {
+        if (frequencyTableType == ModConstants.AMIGA_TABLE) {
             aktMemo.portaStepUpEnd = getFineTunePeriod(aktMemo, ModConstants.getNoteIndexForPeriod(113) + 1);
             aktMemo.portaStepDownEnd = getFineTunePeriod(aktMemo, ModConstants.getNoteIndexForPeriod(856) + 1);
         } else {
@@ -89,7 +88,7 @@ public class ProTrackerMixer extends BasicModMixer {
             case ModConstants.AMIGA_TABLE:
                 int lookUpFineTune = ((aktMemo.currentFineTune < 0) ? aktMemo.currentFineTune + 16 : aktMemo.currentFineTune) * 37;
                 int proTrackerIndex = noteIndex - (3 * 12); // the note index we use has 3 more octaves than the PT period table
-                if (proTrackerIndex > 35) proTrackerIndex = 35;
+                if (proTrackerIndex > 35) proTrackerIndex = 35; else if (proTrackerIndex < 0) proTrackerIndex = 0;
                 return ModConstants.periodTable[lookUpFineTune + proTrackerIndex] << ModConstants.PERIOD_SHIFT;
 
             case ModConstants.XM_AMIGA_TABLE:
@@ -125,7 +124,7 @@ public class ProTrackerMixer extends BasicModMixer {
                 int quotient = invPeriod / (12 * 16 * 4);
                 int remainder = period % (12 * 16 * 4);
                 int newFrequency = ModConstants.lintab[remainder] >> (((14 - quotient) & 0x1F) - 2); // values are 4 times bigger in FT2
-                aktMemo.currentTuning = (int) (((long) newFrequency << ModConstants.SHIFT) / (long) sampleRate);
+                aktMemo.currentTuning = (int) (((long) newFrequency << ModConstants.SHIFT) / sampleRate);
                 return;
             default:
                 super.setNewPlayerTuningFor(aktMemo, newPeriod);
@@ -404,8 +403,11 @@ public class ProTrackerMixer extends BasicModMixer {
             case 0x00:            // Arpeggio
                 if (aktMemo.assignedEffectParam != 0) aktMemo.arpeggioParam = aktMemo.assignedEffectParam;
                 if (aktMemo.assignedNoteIndex > ModConstants.NO_NOTE) {
+                    // I consider it a bug that with arpeggios the base note is not newly calculated with finetune
+                    // but the notes 1 and 2 are. However, that is what PT2 did. I guess that was fixed.
+                    // FT2 however does not change instruments when no note is set - so there we are fine.
                     if (isMOD) {
-                        aktMemo.arpeggioNote[0] = aktMemo.currentNotePeriod;
+                        aktMemo.arpeggioNote[0] = getFineTunePeriod(aktMemo);
                         aktMemo.arpeggioNote[1] = adjustPTPeriodFromNote(aktMemo, aktMemo.arpeggioNote[0], (aktMemo.arpeggioParam >> 4));
                         aktMemo.arpeggioNote[2] = adjustPTPeriodFromNote(aktMemo, aktMemo.arpeggioNote[0], (aktMemo.arpeggioParam & 0xF));
                     } else {
@@ -546,7 +548,7 @@ public class ProTrackerMixer extends BasicModMixer {
 //                            aktMemo.currentFineTune = (effectOp << 4) - 128;
 //                            setNewPlayerTuningFor(aktMemo, getFineTunePeriod(aktMemo));
 //                        } else
-                        if (isMOD) {
+                        if (frequencyTableType == ModConstants.AMIGA_TABLE) {
                             aktMemo.currentFineTune = (effectOp > 7) ? effectOp - 16 : effectOp;
                             if (hasNewNote(element)) setNewPlayerTuningFor(aktMemo, getFineTunePeriod(aktMemo));
                         }
@@ -639,9 +641,17 @@ public class ProTrackerMixer extends BasicModMixer {
                 } else {
                     // FT2 appears to be decrementing the tick count before checking for zero,
                     // so it effectively counts down 65536 ticks with speed = 0 (song speed is a 16-bit variable in FT2)
-                    if (isXM && aktMemo.assignedEffectParam == 0)
-                        currentTick = currentTempo = 0xffFF;
-                    else if (aktMemo.assignedEffectParam != 0)
+                    // With ProTracker we need to stop the song
+                    if (aktMemo.assignedEffectParam == 0) {
+                        if (isXM)
+                            currentTick = currentTempo = 0xffff;
+                        else if (isMOD) {
+                            // we do this via the looping fade out with a fade out time of zero
+                            // to not introduce a new variable here.
+                            doLoopingGlobalFadeout = true;
+                            loopingFadeOutValue = 0;
+                        }
+                    } else
                         currentTick = currentTempo = aktMemo.assignedEffectParam;
                 }
                 break;
@@ -873,7 +883,7 @@ public class ProTrackerMixer extends BasicModMixer {
      */
     protected void preparePortaToNoteEffect(ChannelMemory aktMemo) {
         PatternElement element = aktMemo.currentElement;
-        if (isMOD) {
+        if (frequencyTableType == ModConstants.AMIGA_TABLE) {
             if (hasNewNote(element)) {
                 // The original coding in ProTracker
                 int lookUpFineTune = ((aktMemo.currentFineTune < 0) ? aktMemo.currentFineTune + 16 : aktMemo.currentFineTune) * 37;

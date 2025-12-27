@@ -93,8 +93,6 @@ public class PatternImagePanel extends JComponent implements Scrollable {
     private int patternRowLength;
     /** length of a row WITH button */
     private int fullRowLength;
-    /** the height of all rows to draw */
-    private int fullRowsHeight;
     /** rows above our play indicator */
     private int rowsAbove = -1;
     /** rows below (and with) our play indicator. rowsAbove + rowsBelow are the full amount of displayable rows */
@@ -464,7 +462,7 @@ public class PatternImagePanel extends JComponent implements Scrollable {
 
         fullRowLength = (currentPattern == null) ? 0 : patternRowLength + buttonLength;
         int rows = (currentPattern == null) ? 0 : currentPattern.getRowCount();
-        fullRowsHeight = (currentPattern == null) ? parentHeight : (rows + rowsAbove + rowsBelow) * charDim.height; // two pixels insets at bottom...
+        int fullRowsHeight = (currentPattern == null) ? parentHeight : (rows + rowsAbove + rowsBelow) * charDim.height; // two pixels insets at bottom...
 
         setSize(fullRowLength, fullRowsHeight);
         setPreferredSize(getSize());

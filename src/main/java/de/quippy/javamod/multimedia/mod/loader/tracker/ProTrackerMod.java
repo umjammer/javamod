@@ -51,15 +51,22 @@ public class ProTrackerMod extends Module {
             "stk", "nst", "mod", "wow"
     };
 
-    private boolean isAmigaLike;            // Protracker like AMIGA mods. Others are played in XM-Mode
+    /** # bytes per sample header */
+    private static final int SAMPLE_HEADER_SIZE = 30;
+    /** Protracker like AMIGA mods. Others are played in XM-Mode */
+    private boolean isAmigaLike;
     private boolean isDeltaPacked;
     private boolean isStarTrekker;
-    private boolean isNoiseTracker;            // No pattern breaks with noise tracker
+    /** No pattern breaks with noise tracker */
+    private boolean isNoiseTracker;
     private boolean isGenericMultiChannel;
     private boolean isMdKd;
-    private boolean modSpeedIsTicks;        // changes playing behavior to set always speed (ticks), never BPM
-    //	private boolean swapBytes;				// For .DTM files from Apocalypse Abyss, where the first 2108 bytes are swapped - we do not support that yet!
-    private boolean ft2Tremolos;            // Tremolo Ramp Down Waveform behavior change for some mods (FT2 style)
+    /** changes playing behavior to set always speed (ticks), never BPM */
+    private boolean modSpeedIsTicks;
+//    // For .DTM files from Apocalypse Abyss, where the first 2108 bytes are swapped - we do not support that yet! */
+//    private boolean swapBytes;
+    /** Tremolo Ramp Down Waveform behavior change for some mods (FT2 style) */
+    private boolean ft2Tremolos;
 
 //    /**
 //     * Not yet used - let's see, if we need that once...
@@ -306,7 +313,7 @@ public class ProTrackerMod extends Module {
                 }
             }
             seek -= sampleLength;
-            fullSampleLength += 30 + sampleLength;
+            fullSampleLength += SAMPLE_HEADER_SIZE + sampleLength;
         }
         inputStream.seek(reSeek);
 
@@ -323,7 +330,7 @@ public class ProTrackerMod extends Module {
      */
     private int calculatePatternCount(int fileSize, int fullSampleLength) {
         int headerLen = 150;                    // Name + SongLen + CIAA + SongArrangement
-        if (getNSamples() > 15) headerLen += 4; // Kennung
+        if (getNSamples() > 15) headerLen += 4; // plus mod ID
 
         int spaceForPattern = fileSize - headerLen - fullSampleLength;
 
@@ -352,25 +359,21 @@ public class ProTrackerMod extends Module {
         int bytesPerPattern = 64 * 4 * getNChannels();
         int patternCount = spaceForPattern / bytesPerPattern;
         int bytesLeft = spaceForPattern % bytesPerPattern;
-        setNPattern(patternCount);
 
         if (bytesLeft > 0) { // It does not fit!
             if (maxPatternNumber > patternCount) {
-                // The modfile is too short. The highest pattern is reaching into
-                // the sample data, but it has to be read!
+                // The mod file is too short. The highest pattern is reaching into the sample data.
                 bytesLeft -= bytesPerPattern;
-                setNPattern(maxPatternNumber + 1);
             } else {
                 // The modfile is too long. Sometimes this happens if composer
                 // add additional data to the modfile.
-                bytesLeft += (getNPattern() - maxPatternNumber) * bytesPerPattern;
-                setNPattern(maxPatternNumber);
+                bytesLeft += (patternCount - maxPatternNumber) * bytesPerPattern;
             }
+            setNPattern(maxPatternNumber);
+        } else
+            setNPattern(patternCount);
 
-            return bytesLeft;
-        }
-
-        return 0;
+        return bytesLeft;
     }
 
     /**
@@ -401,6 +404,9 @@ public class ProTrackerMod extends Module {
                 pe.setNoteIndex(noteIndex + 1);
             else
                 pe.setPeriod(0);
+
+            if (noteIndex < (3 * 12) || noteIndex > ((3 * 12) + 35)) // Exceeding note limits of ProTracker
+                isAmigaLike = !(isGenericMultiChannel = true); // we fix this with setting to XM AMIGA Table
         }
 
         pe.setEffect((note & 0xf00) >> 8);

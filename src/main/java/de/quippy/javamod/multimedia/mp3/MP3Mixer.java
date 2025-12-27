@@ -71,6 +71,10 @@ public class MP3Mixer extends BasicMixer {
     private AudioFormat audioFormat;
 
     private Boolean isStreaming;
+    // There is a X-Loudness tag in ICY streams - however, is that information or something to handle? No documentation found!
+//    private static final int LOUDNESS_SHIFT = 8;
+//    private static final int LOUDNESS_FACTOR = 1 << LOUDNESS_SHIFT;
+//    private int loudness = 0;
 
     /**
      * Constructor for MP3Mixer
@@ -78,14 +82,6 @@ public class MP3Mixer extends BasicMixer {
     public MP3Mixer(URL mp3FileUrl) {
         super();
         this.mp3FileUrl = mp3FileUrl;
-    }
-
-    /**
-     * @param tagParseListener
-     * @since 27.12.2008
-     */
-    public void setTagParserListener(TagParseListener tagParseListener) {
-        this.tagParseListener = tagParseListener;
     }
 
     private InputStream createHttpResource(URL mp3FileUrl) throws IOException {
@@ -155,6 +151,25 @@ public class MP3Mixer extends BasicMixer {
         }
         return isStreaming;
     }
+
+    /**
+     * @param tagParseListener
+     * @since 27.12.2008
+     */
+    public void setTagParserListener(TagParseListener tagParseListener) {
+        this.tagParseListener = tagParseListener;
+    }
+
+//    /**
+//     * @param loudness
+//     * @since 03.12.2024
+//     */
+//    public void setLoudness(final double loudness) {
+//        if (loudness > 0)
+//            this.loudness = (int) (LOUDNESS_FACTOR * 40d / (40d - loudness));
+//        else
+//            this.loudness = (int) (LOUDNESS_FACTOR * (40d + loudness) / 40d);
+//    }
 
     /**
      * @see de.quippy.javamod.mixer.Mixer#isSeekSupported()
@@ -232,7 +247,7 @@ public class MP3Mixer extends BasicMixer {
                     played_ms = 0;
                 }
 
-                float f_played_ms = (float) played_ms;
+                float f_played_ms = played_ms;
                 boolean isFirstFrame = true;
                 int sampleRate = 0;
                 while (f_played_ms < milliseconds) {
@@ -342,20 +357,21 @@ public class MP3Mixer extends BasicMixer {
                     short[] samples = output.getBuffer();
                     int origLen = output.getBufferLength();
                     // find out, if all decoded samples are to write
-                    if (samplesToWrite > 0 && (long) (origLen) > samplesToWrite)
+                    if (samplesToWrite > 0 && origLen > samplesToWrite)
                         origLen = (int) samplesToWrite;
                     samplesWritten += origLen / (long) decoder.getOutputChannels();
-                    played_ms = samplesWritten * 1000L / (long) decoder.getOutputFrequency();
+                    played_ms = samplesWritten * 1000L / decoder.getOutputFrequency();
                     int len = origLen << 1;
                     byte[] b = getOutputBuffer(len);
 
                     int idx = 0;
                     int pos = 0;
                     short s;
-                    boolean allZero = true;
+                    boolean allZero = true; // filter out complete silence blocks...
                     while (origLen-- > 0) {
                         s = samples[pos++];
                         if (allZero && s != 0) allZero = false;
+                        //if (loudness != 0) s = (s * loudness) >> LOUDNESS_SHIFT;
                         b[idx++] = (byte) (s & 0xff);
                         b[idx++] = (byte) ((s >> 8) & 0xff);
                     }

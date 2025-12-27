@@ -95,7 +95,7 @@ public class Helpers {
     }
 
     /** Version Information */
-    public static final String VERSION = "V3.9.4.1";
+    public static final String VERSION = "V3.9.5";
     public static final String PROGRAM = "Java Mod Player";
     public static final String FULLVERSION = PROGRAM + ' ' + VERSION;
     public static final String COPYRIGHT = "© by Daniel Becker since 2006";
@@ -113,9 +113,9 @@ public class Helpers {
     /** Codepages used when reading playlist files */
     public static final String CODING_M3U = "ISO-8859-1";
     /** Codepage used when reading from the web */
-    public static final String CODING_HTTP = "UTF-8";
+    public static final String CODING_UTF8 = "UTF-8";
     /** Codepage used when reading from ICY Input-Streams */
-    public static final String CODING_ICY = "ISO-8859-15";
+    public static final String CODING_ICY = "ISO-8859-1";
 
     public static final String DEFAULTFONTPATH = "/de/quippy/javamod/main/gui/resources/lucon.ttf";
     private static Font DIALOG_FONT = null;
@@ -277,6 +277,25 @@ public class Helpers {
     }
 
     /**
+     * Converts the encoding of a String.
+     *
+     * @param src          the string to convert
+     * @param srcEncoding  the source encoding - might be null
+     * @param trgtEncoding the target encoding
+     * @return a new string with target encoding or the original string if conversion failed or src is null
+     * @since 03.12.2024
+     */
+    public static final String convertStringEncoding(final String src, final String srcEncoding, final String trgtEncoding) {
+        if (src != null) {
+            try {
+                return new String((srcEncoding == null) ? src.getBytes() : src.getBytes(srcEncoding), trgtEncoding);
+            } catch (UnsupportedEncodingException ex) {
+            }
+        }
+        return src;
+    }
+
+    /**
      * Search the data byte array for the first occurrence of the byte array pattern within given boundaries.
      * Implementation of the Knuth-Morris-Pratt Pattern Matching Algorithm
      *
@@ -315,7 +334,8 @@ public class Helpers {
         return failure;
     }
 
-    //*************** UI *************
+    // UI ----
+
     public static String getHTMLColorString(Color color) {
         String htmlColor = Integer.toHexString(color.getRGB());
         if (htmlColor.length() > 6) htmlColor = htmlColor.substring(htmlColor.length() - 6);
@@ -601,7 +621,7 @@ public class Helpers {
      */
     public static String createStringFromURLString(String url) {
         try {
-            return URLDecoder.decode(url, CODING_HTTP);
+            return URLDecoder.decode(url, CODING_UTF8);
         } catch (UnsupportedEncodingException ex) {
             logger.log(Level.ERROR, "Helpers::createStringRomURLString", ex);
         }
@@ -1113,7 +1133,7 @@ public class Helpers {
         BufferedReader reader = null;
         try {
             URL version_url = createURLfromString(Helpers.VERSION_URL);
-            reader = new BufferedReader(new InputStreamReader(version_url.openStream(), Helpers.CODING_HTTP));
+            reader = new BufferedReader(new InputStreamReader(version_url.openStream(), Helpers.CODING_UTF8));
             String version = reader.readLine();
             reader.close();
             reader = null;

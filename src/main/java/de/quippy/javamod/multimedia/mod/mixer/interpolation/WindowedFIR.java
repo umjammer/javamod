@@ -104,7 +104,7 @@ public class WindowedFIR {
     private static double coef(int cnr, double ofs, double cut, int width, int type) {
         double widthM1 = width - 1;
         double widthM1Half = 0.5d * widthM1;
-        double posU = ((double) cnr) - ofs;
+        double posU = cnr - ofs;
         double idl = 2.0d * Math.PI / widthM1;
 
         double pos = posU - widthM1Half;
@@ -141,14 +141,14 @@ public class WindowedFIR {
      * @since 15.06.2006
      */
     private static void initialize() {
-        final double cllen = (double) (1L << WFIR_FRACBITS);    // number of precalculated lines for 0..1 (-1..0)
+        final double cllen = 1L << WFIR_FRACBITS;    // number of precalculated lines for 0..1 (-1..0)
         final double norm = 1.0d / (2.0d * cllen);
         final double cut = WFIR_CUTOFF;
         final double scale = WFIR_QUANTSCALE;
 
         for (int cl = 0; cl < WFIR_LUTLEN; cl++) {
             double[] coefs = new double[WFIR_WIDTH];
-            double ofs = ((double) cl - cllen) * norm;
+            double ofs = (cl - cllen) * norm;
             int idx = cl << WFIR_LOG2WIDTH;
 
             double gain = 0.0d;
