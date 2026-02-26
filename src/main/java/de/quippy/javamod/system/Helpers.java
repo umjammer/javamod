@@ -847,34 +847,35 @@ public class Helpers {
                 return fileURL;
             else {
                 // If fileName is from a Windows/DOS System, replace separator plus create an URL from the path to encode URL specific (e.g. %20 for spaces)
-                fileName = createURLfromFile(Path.of(fileName.replace('\\', '/'))).getPath();
+                fileName = createURLfromFile(Path.of(fileName.replace('\\', '/'))).toURI().getPath();
                 // and remove a possible trailing slash
                 if (fileName.charAt(0) == '/') fileName = fileName.substring(1);
 
                 // Get the path portion of the URL - and do NOT decode URL type entries (like %20 for spaces) - we need to keep them!
-                final String path = baseURL.getPath();
+                String path = baseURL.toURI().getPath();
 
                 // a windows network drive is represented by "file:////servername/path..." - which is not a valid URI and the later "normalize" will delete those
-                final boolean isWindowsNetworkDrive = path.startsWith("////");
+                boolean isWindowsNetworkDrive = path.startsWith("//");
 
                 // now get rid of playlist file name
                 int lastSlash = path.lastIndexOf('/');
                 StringBuilder relPath = new StringBuilder(path.substring(0, lastSlash + 1));
 
                 int iterations = 0;
-                URL fullURL = new URL(baseURL.getProtocol(), baseURL.getHost(), baseURL.getPort(), ((new StringBuilder(relPath)).append(fileName)).toString());
+
+                URL fullURL = new URI(baseURL.getProtocol(), null, baseURL.getHost(), baseURL.getPort(), relPath + fileName, null, null).toURL();
                 while (!urlExists(fullURL) && iterations < 256) {
                     relPath.append("../");
-                    fullURL = new URL(baseURL.getProtocol(), baseURL.getHost(), baseURL.getPort(), ((new StringBuilder(relPath)).append(fileName)).toString());
+                    fullURL = new URI(baseURL.getProtocol(), null, baseURL.getHost(), baseURL.getPort(), relPath + fileName, null, null).toURL();
                     iterations++;
                 }
                 if (iterations < 256) {
                     try {
-                        URL returnURL = fullURL.toURI().normalize().toURL();
+                        URI returnURL = fullURL.toURI().normalize();
                         if (isWindowsNetworkDrive) // normalize will delete the trailing "////" in front - so re-add those
-                            return new URL(returnURL.getProtocol(), returnURL.getHost(), returnURL.getPort(), "///" + returnURL.getFile());
+                            return new URI(returnURL.getScheme(), null, returnURL.getHost(), returnURL.getPort(), ((new StringBuilder("///")).append(returnURL.getPath())).toString(), null, null).toURL();
                         else
-                            return returnURL;
+                            return returnURL.toURL();
                     } catch (URISyntaxException x) {
                         logger.log(Level.ERROR, "[createAbsolutePathForFile]", x);
                     }
@@ -911,7 +912,8 @@ public class Helpers {
         // Try to work with URL - map "dir" to a local File
         try {
             File f = new File(dir);
-            dir = f.getCanonicalPath();
+//            dir = f.getCanonicalPath(); // On windows this maps network drives to "\\SERVERNAME" - paths, what we do not want
+            dir = f.getAbsolutePath();
         } catch (Exception ex) {
             logger.log(Level.ERROR, "Helpers::selectFileNameFor", ex);
         }
