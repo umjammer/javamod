@@ -750,7 +750,7 @@ public abstract class BasicModMixer {
                     accurateBuffer = accurateBuffer * swingFactor / (double) (ModConstants.TEMPOSWING_UNITY);
                 }
                 samplesPerTick = (int) (accurateBuffer);
-                bufferDiff += (int) (accurateBuffer - samplesPerTick);
+                bufferDiff += accurateBuffer - (double) (samplesPerTick);
                 if (bufferDiff >= 1) {
                     samplesPerTick++;
                     bufferDiff--;
