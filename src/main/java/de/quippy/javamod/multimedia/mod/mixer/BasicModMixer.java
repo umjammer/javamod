@@ -309,7 +309,9 @@ public abstract class BasicModMixer {
     protected int globalVolume, masterVolume, extraAttenuation;
     protected boolean useGlobalPreAmp, useSoftPanning;
     protected int currentTick, currentRow, currentArrangement, currentPatternIndex;
-    protected int samplesPerTick, bufferDiff;
+    protected int samplesPerTick;
+    protected double bufferDiff;
+    protected int [] defaultTempoSwing;
 
     protected int pingPongDiffIT;
 
@@ -474,6 +476,11 @@ public abstract class BasicModMixer {
         // for whatever this is good...
         if (mod.getResampling() > -1) doISP = mod.getResampling();
 
+        // again OMPT specific - the default modern tempo swing
+        defaultTempoSwing = new int [mod.getRowsPerBeat()];
+        for (int i = 0; i < defaultTempoSwing.length; i++) defaultTempoSwing[i] = ModConstants.TEMPOSWING_UNITY;
+        //normalizeSwing(defaultTempoSwing); // no need to normalize the default, that is already normalized
+
         if (isIT) pingPongDiffIT = 1;
         else pingPongDiffIT = 0;
 
@@ -580,6 +587,31 @@ public abstract class BasicModMixer {
         }
         resetJumpPositionSet();
     }
+
+//    /**
+//     * Normalize the swing array like OMPT would do
+//     * We do not need that, we only do playback!
+//     *
+//     * @param swing
+//     * @since 04.12.2025
+//     */
+//    private void normalizeSwing(final int[] swing) {
+//        long sum = 0;
+//        final int min = ModConstants.TEMPOSWING_UNITY >> 2;
+//        final int max = ModConstants.TEMPOSWING_UNITY << 2;
+//        for (int i = 0; i < swing.length; i++) {
+//            if (swing[i] < min) swing[i] = min;
+//            else if (swing[i] > max) swing[i] = max;
+//            sum += swing[i];
+//        }
+//        sum /= swing.length;
+//        int remain = ModConstants.TEMPOSWING_UNITY * swing.length;
+//        for (int i = 0; i < swing.length; i++) {
+//            swing[i] = (int) ((long) swing[i] * (long) ModConstants.TEMPOSWING_UNITY / sum);
+//            remain -= swing[i];
+//        }
+//        swing[0] += remain;
+//    }
 
     /**
      * Does only a forward seek, so starts from the beginning
@@ -712,10 +744,10 @@ public abstract class BasicModMixer {
         switch (mod.getTempoMode()) {
             case ModConstants.TEMPOMODE_MODERN:
                 double accurateBuffer = (double) sampleRate * (60.0d / ((double) currentBPM * (double) currentTempo * (double) mod.getRowsPerBeat()));
-                double[] tempoSwing = currentPattern.getTempoSwing();
+                int[] tempoSwing = (currentPattern != null && currentPattern.getTempoSwing() != null) ? currentPattern.getTempoSwing() : defaultTempoSwing;
                 if (tempoSwing != null && tempoSwing.length > 0) {
                     double swingFactor = tempoSwing[currentRow % tempoSwing.length];
-                    accurateBuffer = accurateBuffer * swingFactor / (double) ModConstants.TEMPOSWING_UNITY;
+                    accurateBuffer = accurateBuffer * swingFactor / (double) (ModConstants.TEMPOSWING_UNITY);
                 }
                 samplesPerTick = (int) (accurateBuffer);
                 bufferDiff += (int) (accurateBuffer - samplesPerTick);

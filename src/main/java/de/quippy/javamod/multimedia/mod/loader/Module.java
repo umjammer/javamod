@@ -83,7 +83,7 @@ public abstract class Module {
     protected int tempoMode;
     protected int rowsPerBeat;
     protected int rowsPerMeasure;
-    protected double[] tempoSwing;
+    protected int [] tempoSwing;
     protected int createdWithVersion;
     protected int lastSavedWithVersion;
     protected String author;
@@ -571,14 +571,14 @@ public abstract class Module {
                 if (is16Bit && (flags & ModConstants.SM_PTM8Dto16) == 0) {
                     short delta = 0;
                     for (int s = 0; s < current.length; s++) {
-                        int sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
-                        current.sampleL[s] = ModConstants.promoteSigned16BitToSigned32Bit(delta += (short) sample);
+                        current.sampleL[s] = ModConstants.promoteSigned16BitToSigned32Bit(
+                                delta += (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord());
                     }
                     if (isStereo) {
                         delta = 0;
                         for (int s = 0; s < current.length; s++) {
-                            int sample = (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord();
-                            current.sampleR[s] = ModConstants.promoteSigned16BitToSigned32Bit(delta += (short) sample);
+                            current.sampleR[s] = ModConstants.promoteSigned16BitToSigned32Bit(
+                                    delta += (isBigEndian) ? inputStream.readMotorolaWord() : inputStream.readIntelWord());
                         }
                     }
                 } else {
@@ -1100,7 +1100,7 @@ public abstract class Module {
         return rowsPerMeasure;
     }
 
-    public double[] getTempoSwing() {
+    public int[] getTempoSwing() {
         return tempoSwing;
     }
 
@@ -1377,55 +1377,55 @@ public abstract class Module {
             }
 
             switch (code) {
-                case 0x44542E2E: //"DT.." - default BPM
+                case 0x44542E2E: // "DT.." - default BPM
                     int bpm = (int) inputStream.readIntelBytes(size);
                     setBPMSpeed(bpm);
                     break;
-                case 0x52464544: //"DTFR" - default BPM - fraction - is written as MagicLE
+                case 0x52464544: // "DTFR" - default BPM - fraction - is written as MagicLE
                     /*final int bpmFrac = (int)*/
                     inputStream.readIntelBytes(size);
                     break;
-                case 0x5250422E: //"RPB." - RowsPerBeat
+                case 0x5250422E: // "RPB." - RowsPerBeat
                     rowsPerBeat = (int) inputStream.readIntelBytes(size);
                     break;
-                case 0x52504D2E: //"RPM." - RowsPerMeasure
+                case 0x52504D2E: // "RPM." - RowsPerMeasure
                     rowsPerMeasure = (int) inputStream.readIntelBytes(size);
                     break;
-                case 0x432E2E2E: //"C..." - # channels
+                case 0x432E2E2E: // "C..." - # channels
                     int channels = (int) inputStream.readIntelBytes(size);
                     if (!ignoreChannelCount) setNChannels(channels);
                     break;
-                case 0x544D2E2E: //"TM.." - Tempo mode
+                case 0x544D2E2E: // "TM.." - Tempo mode
                     tempoMode = (int) inputStream.readIntelBytes(size);
                     if (tempoMode < 0 || tempoMode > ModConstants.TEMPOMODE_MODERN)
                         tempoMode = ModConstants.TEMPOMODE_CLASSIC;
                     break;
-                case 0x4357562E: //"CWV." - created with version
+                case 0x4357562E: // "CWV." - created with version
                     createdWithVersion = (int) inputStream.readIntelBytes(size);
                     break;
                 case 0x4C535756: //"LSWV" - last saved with version
                     lastSavedWithVersion = (int) inputStream.readIntelBytes(size);
                     break;
-                case 0x5350412E: //"SPA." - SamplePreAmp
+                case 0x5350412E: // "SPA." - SamplePreAmp
                     mixingPreAmp = (int) inputStream.readIntelBytes(size);
                     break;
-                case 0x56535456: //"VSTV" - VSTiVolume
+                case 0x56535456: // "VSTV" - VSTiVolume
                     synthMixingPreAmp = (int) inputStream.readIntelBytes(size);
                     break;
-                case 0x4447562E: //"DGV." - defaultGlobalVolume
+                case 0x4447562E: // "DGV." - defaultGlobalVolume
                     baseVolume = (int) inputStream.readIntelBytes(size);
                     break;
-                case 0x52502E2E: //"RP.." - Song Restart
+                case 0x52502E2E: // "RP.." - Song Restart
                     int restartPosition = (int) inputStream.readIntelBytes(size);
                     if ((getModType() & ModConstants.MODTYPE_XM) == 0) setSongRestart(restartPosition); // Skip for XMs!
                     break;
-                case 0x504D5352: //"RSMP" - Resampling Method - written as MagicLE
+                case 0x504D5352: // "RSMP" - Resampling Method - written as MagicLE
                     resampling = (int) inputStream.readIntelBytes(size);
                     resampling--; // our "default" is -1
                     if (resampling > ModConstants.INTERPOLATION_WINDOWSFIR)
                         resampling = ModConstants.INTERPOLATION_WINDOWSFIR; // our max value;
                     break;
-                case 0x4C4F4343: //"CCOL" - Channel Colors - written as MagicLE
+                case 0x4C4F4343: // "CCOL" - Channel Colors - written as MagicLE
                     if ((size % 4) == 0) {
                         int numChannels = size >> 2;
                         Color[] chnColors = new Color[numChannels];
@@ -1441,10 +1441,10 @@ public abstract class Module {
                     } else
                         inputStream.skip(size);
                     break;
-                case 0x48545541: //"AUTH" - Author - written as MagicLE
+                case 0x48545541: // "AUTH" - Author - written as MagicLE
                     author = inputStream.readString(size);
                     break;
-                case 0x43686E53: //"ChnS" - channel settings for channels 65-127
+                case 0x43686E53: // "ChnS" - channel settings for channels 65-127
                     if ((getModType() & ModConstants.MODTYPE_XM) == 0 && size <= 64 * 2 && size % 2 == 0) { // Skip for XMs!
                         int loopLimit = 64 + size >> 1;
                         int[] newPanningValues = new int[loopLimit];
@@ -1473,7 +1473,7 @@ public abstract class Module {
                     } else
                         inputStream.skip(size);
                     break;
-                case 0x53455543: //"CUES" - Sample Cues - written as MagicLE
+                case 0x53455543: // "CUES" - Sample Cues - written as MagicLE
                     if (size > 2) {
                         int cues = (size - 2) >> 2; // should be MAX_CUES (or less)
                         int sampleIndex = inputStream.readIntelWord();
@@ -1491,17 +1491,17 @@ public abstract class Module {
                     } else
                         inputStream.skip(size);
                     break;
-                case 0x474E5753: //"SWNG" - Tempo Swing factors - written as MagicLE
+                case 0x474E5753: // "SWNG" - Tempo Swing factors - written as MagicLE
                     if (size > 2) {
                         int anzNums = inputStream.readIntelWord();
-                        tempoSwing = new double[anzNums];
+                        tempoSwing = new int[anzNums];
                         for (int i = 0; i < anzNums; i++) tempoSwing[i] = inputStream.readIntelDWord();
                     } else
                         inputStream.skip(size);
                     break;
-                case 0x504D4D2E: //"PMM." - MixLevels - this is OMPT specific to let old MPTs sound equally - we ignore that for now
-                case 0x4D53462E: //"MSF." - Playback Compatibility Flags - OMPT specific - we ignore that
-                case 0x4D494D41: //"MIMA" - MidiMapper - guess we cannot use this - especially when running on linux
+                case 0x504D4D2E: // "PMM." - MixLevels - this is OMPT specific to let old MPTs sound equally - we ignore that for now
+                case 0x4D53462E: // "MSF." - Playback Compatibility Flags - OMPT specific - we ignore that
+                case 0x4D494D41: // "MIMA" - MidiMapper - guess we cannot use this - especially when running on Linux
                 default: // if it is not implemented, skip it!
                     inputStream.skip(size);
                     break;
