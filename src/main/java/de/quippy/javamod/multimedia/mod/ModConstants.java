@@ -195,6 +195,7 @@ public class ModConstants {
     public static final int FILTER_PREAMP_BITS = 8;
     public static final long FILTER_CLIP_MAX = CLIPP32BIT_MAX << (FILTER_PREAMP_BITS + 1);
     public static final long FILTER_CLIP_MIN = CLIPP32BIT_MIN << (FILTER_PREAMP_BITS + 1);
+    public static final double TWO_PI = 2.0d * Math.PI;
 
     // Module flags
     public static final int SONG_EMBEDMIDICFG = 0x00001;
@@ -905,7 +906,8 @@ public class ModConstants {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     /**
-     * LUT for 2 * damping factor
+     * LUT for logarithmic damping factor (10^(-n/64))
+     * Used for resonant 2-pole filter (ModPlug/OpenMPT style)
      */
     public static final double[] ResonanceTable = {
             1.0000000000000000d, 0.9786446094512940d, 0.9577452540397644d, 0.9372922182083130d,
