@@ -249,12 +249,6 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
         int sampleType = inputStream.read();
         int loopType = inputStream.read();
 
-        if (current.length > 0) {
-            if (repeatStart > current.length) repeatStart = current.length - 1;
-            if (repeatStop > current.length) repeatStop = current.length;
-            if (repeatStop <= repeatStart) repeatStart = repeatStop = 0;
-        }
-
         if ((sampleType & 0x01) != 0) { // 16Bit:
             length >>= 1;
             repeatStart >>= 1;
@@ -262,6 +256,12 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
         }
 
         current.setLength(length);
+        if (current.length > 0) {
+            if (repeatStart > current.length) repeatStart = current.length - 1;
+            if (repeatStop > current.length) repeatStop = current.length;
+            if (repeatStop <= repeatStart) repeatStart = repeatStop = 0;
+        }
+
         current.setLoopStart(repeatStart);
         current.setLoopStop(repeatStop);
         current.setLoopLength(repeatStop - repeatStart);

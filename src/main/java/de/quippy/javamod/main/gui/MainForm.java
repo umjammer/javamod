@@ -1330,7 +1330,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
                 windowsVisibleState[x] = windows.get(x).isVisible();
             // Needed for KDE - so that JavaMod disappears in task bar when moved
             // to the System Tray
-            // But has the downside, that that pattern, sample, instrument
+            // But has the downside, that the pattern, sample, instrument
             // dialog get hidden before visibility status can be saved
             //dispose();
             setVisible(false);
@@ -1352,7 +1352,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
             setVisible(true);
             setExtendedState(getExtendedState() & ~ICONIFIED); // JFrame.setState is obsolete!!
 
-            if (useSystemTray && windowsVisibleState != null) {
+            if (windowsVisibleState != null) {
                 for (int x = 0; x < windows.size(); x++)
                     windows.get(x).setVisible(windowsVisibleState[x]);
                 windowsVisibleState = null;
@@ -1379,6 +1379,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
                         }
                     }
                 });
+                toFront(); // if not iconified, at least bring to front.
                 // Add components to pop-up menu
                 PopupMenu popUp = new PopupMenu();
                 popUp.add(getAboutItem());

@@ -304,6 +304,7 @@ public class ScreamTrackerSTXMod extends ScreamTrackerOldMod {
                 // Length
                 int sampleLength = inputStream.readIntelDWord();
                 current.setLength(sampleLength);
+                current.setByteLength(current.length);
 
                 // Repeat start and stop
                 int repeatStart = inputStream.readIntelDWord();

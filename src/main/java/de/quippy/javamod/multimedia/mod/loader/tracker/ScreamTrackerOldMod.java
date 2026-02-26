@@ -275,6 +275,7 @@ public class ScreamTrackerOldMod extends Module {
 
             // Length
             current.setLength(inputStream.readIntelUnsignedWord());
+            current.setByteLength(current.length);
 
             // Repeat start and stop
             int repeatStart = inputStream.readIntelUnsignedWord();

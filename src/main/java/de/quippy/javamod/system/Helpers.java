@@ -597,8 +597,7 @@ public class Helpers {
     public static URL createURLfromString(String urlLine) {
         try {
             if (urlLine == null || urlLine.isEmpty()) return null;
-            URI uri = new URI(urlLine);
-            return uri.toURL();
+            return new URI(urlLine).toURL();
         } catch (Exception ex) {
             return createURLfromFile(Path.of(urlLine));
         }
@@ -808,7 +807,7 @@ public class Helpers {
     }
 
     /**
-     * Creates a relativized path that is relativ to the given basepath.
+     * Creates a relativized path that is relative to the given basepath.
      * For instance:
      * relToPath = C:\Path1\Path2
      * Path = C:\Path1\Path3\FILE
@@ -830,7 +829,7 @@ public class Helpers {
     }
 
     /**
-     * If the baseURL provided is not absolut this method will generate an absolute file path
+     * If the baseURL provided is not absolute this method will generate an absolute file path
      * based on the inputFileName string
      * This works only for protocol "file"!!
      *
@@ -847,31 +846,39 @@ public class Helpers {
             if (Helpers.urlExists(fileName))
                 return fileURL;
             else {
-                // If fileName is from a Windows/DOS System, replace separator
-                fileName = fileName.replace('\\', '/');
+                // If fileName is from a Windows/DOS System, replace separator plus create an URL from the path to encode URL specific (e.g. %20 for spaces)
+                fileName = createURLfromFile(Path.of(fileName.replace('\\', '/'))).getPath();
+                // and remove a possible trailing slash
+                if (fileName.charAt(0) == '/') fileName = fileName.substring(1);
 
-                // Get the path portion of the URL - and decode URL type entries (like %20 for spaces)
-                String path = Helpers.createStringFromURLString(baseURL.getPath());
+                // Get the path portion of the URL - and do NOT decode URL type entries (like %20 for spaces) - we need to keep them!
+                final String path = baseURL.getPath();
+
+                // a windows network drive is represented by "file:////servername/path..." - which is not a valid URI and the later "normalize" will delete those
+                final boolean isWindowsNetworkDrive = path.startsWith("////");
 
                 // now get rid of playlist file name
                 int lastSlash = path.lastIndexOf('/');
                 StringBuilder relPath = new StringBuilder(path.substring(0, lastSlash + 1));
-                // and remove a possible starting slash
-                if (fileName.charAt(0) == '/') fileName = fileName.substring(1);
 
                 int iterations = 0;
-                URL fullURL = Helpers.createURLfromString(relPath + fileName);
-                while (fullURL != null && !urlExists(fullURL) && iterations < 256) {
+                URL fullURL = new URL(baseURL.getProtocol(), baseURL.getHost(), baseURL.getPort(), ((new StringBuilder(relPath)).append(fileName)).toString());
+                while (!urlExists(fullURL) && iterations < 256) {
                     relPath.append("../");
-                    fullURL = Helpers.createURLfromString(relPath + fileName);
+                    fullURL = new URL(baseURL.getProtocol(), baseURL.getHost(), baseURL.getPort(), ((new StringBuilder(relPath)).append(fileName)).toString());
                     iterations++;
                 }
-                if (iterations < 256 && fullURL != null) {
+                if (iterations < 256) {
                     try {
-                        return (fullURL.toURI().normalize()).toURL();
+                        URL returnURL = fullURL.toURI().normalize().toURL();
+                        if (isWindowsNetworkDrive) // normalize will delete the trailing "////" in front - so re-add those
+                            return new URL(returnURL.getProtocol(), returnURL.getHost(), returnURL.getPort(), "///" + returnURL.getFile());
+                        else
+                            return returnURL;
                     } catch (URISyntaxException x) {
                         logger.log(Level.ERROR, "[createAbsolutePathForFile]", x);
                     }
+                    // we failed :(, so just the fullURL
                     return fullURL;
                 } else {
                     logger.log(Level.INFO, "File not found: " + inputFileName + " in relation to " + baseURL);

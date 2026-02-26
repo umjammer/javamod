@@ -30,6 +30,7 @@ import java.io.InputStream;
 import de.quippy.javamod.io.ModfileInputStream;
 import de.quippy.javamod.io.RandomAccessInputStream;
 import de.quippy.javamod.multimedia.mod.ModConstants;
+import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Envelope.EnvelopeType;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Instrument;
@@ -49,6 +50,10 @@ public class XMMod extends ProTrackerMod {
     private static final String[] MODFILEEXTENSION = {
             "xm"
     };
+
+    private static final int XM_HEADER_SIZE = 276;
+    private static final int INSTR_HEADER_SIZE = 263;
+    private static final int SAMPLE_HEADER_SIZE = 40;
 
     private int version;
     private String songMessage;
@@ -227,8 +232,13 @@ public class XMMod extends ProTrackerMod {
      */
     private void readXMSampleData(RandomAccessInputStream inputStream, InstrumentsContainer instrumentContainer, int anzSamples, int sampleOffsetIndex) throws IOException {
         for (int samIndex = 0; samIndex < anzSamples; samIndex++) {
+            // XMs can have 16bit samples with an uneven amount of bytes. Even though I have no idea why that is:
+            // as we convert to "amount of samples to read", that extra byte is not read nor skipped.
+            // Therefore, lets seek at the end of sample data.
+            long filePointer = inputStream.getFilePointer();
             Sample current = instrumentContainer.getSample(samIndex + sampleOffsetIndex);
             readSampleData(current, inputStream);
+            inputStream.seek(filePointer + current.byteLength);
         }
     }
 
@@ -300,13 +310,14 @@ public class XMMod extends ProTrackerMod {
         version = inputStream.readIntelUnsignedWord();
 
         long LSEEK = inputStream.getFilePointer();
+
         // Header Size
         int headerSize = inputStream.readIntelDWord();
 
         // lets start with some version / tracker guessing
         setModType(ModConstants.MODTYPE_XM);
         setTrackerName(trackerName.trim());
-        if (trackerName.startsWith("FastTracker v2.00") && headerSize == 276) {
+        if (trackerName.startsWith("FastTracker v2.00") && headerSize == XM_HEADER_SIZE) {
             int highVersion = (version >> 8) & 0xff;
             setTrackerName("FastTracker II V" + ModConstants.getAsHex(highVersion, (highVersion > 0x0f) ? 2 : 1) + "." + ModConstants.getAsHex(version & 0xff, 2));
             if (!trackerName.endsWith("   "))
@@ -367,6 +378,7 @@ public class XMMod extends ProTrackerMod {
         int sampleOffsetIndex = 0;
         // Read the instrument data
         for (int ins = 0; ins < getNInstruments(); ins++) {
+            int sampleHeaderSize = 0;
             int vibratoType = 0;
             int vibratoSweep = 0;
             int vibratoDepth = 0;
@@ -387,8 +399,11 @@ public class XMMod extends ProTrackerMod {
             currentIns.setRandomPanningVariation(-1);
 
             int instrumentHeaderSize = inputStream.readIntelDWord();
+            if (instrumentHeaderSize <= 0 || instrumentHeaderSize > INSTR_HEADER_SIZE)
+                instrumentHeaderSize = INSTR_HEADER_SIZE;
+
             currentIns.setName(inputStream.readString(22));
-            /*final int insType = */
+            /* int insType = */
             inputStream.read();
             int anzSamples = inputStream.readIntelWord();
 
@@ -403,8 +418,9 @@ public class XMMod extends ProTrackerMod {
                 }
             } else {
                 setNSamples(getNSamples() + anzSamples);
-                /*final int sampleHeaderSize = */
-                inputStream.readIntelDWord();
+                sampleHeaderSize = inputStream.readIntelDWord();
+                if (sampleHeaderSize <= 0 || sampleHeaderSize > SAMPLE_HEADER_SIZE)
+                    sampleHeaderSize = SAMPLE_HEADER_SIZE;
 
                 for (int i = 0; i < 96; i++) {
                     sampleIndex[i] = inputStream.read() + sampleOffsetIndex + 1;
@@ -460,97 +476,105 @@ public class XMMod extends ProTrackerMod {
                 // Reserved TODO: read Midi Data instead
                 inputStream.skip(2);
             }
-            inputStream.seek(LSEEK + instrumentHeaderSize);
+            inputStream.seek(LSEEK += instrumentHeaderSize);
 
-            instrumentContainer.reallocSampleSpace(getNSamples());
-            for (int samIndex = 0; samIndex < anzSamples; samIndex++) {
-                Sample current = new Sample();
+            if (anzSamples > 0) { // lets skip this, if nothing is to do!
 
-                current.setVibratoType(vibratoType);
-                current.setVibratoSweep(vibratoSweep);
-                current.setVibratoDepth(vibratoDepth);
-                current.setVibratoRate(vibratoRate);
+                instrumentContainer.reallocSampleSpace(getNSamples());
+                for (int samIndex = 0; samIndex < anzSamples; samIndex++) {
+                    Sample current = new Sample();
 
-                // Length
-                current.setLength(inputStream.readIntelDWord());
+                    current.setVibratoType(vibratoType);
+                    current.setVibratoSweep(vibratoSweep);
+                    current.setVibratoDepth(vibratoDepth);
+                    current.setVibratoRate(vibratoRate);
 
-                // Repeat start and stop
-                int repeatStart = inputStream.readIntelDWord();
-                int repeatLength = inputStream.readIntelDWord();
-                int repeatStop = repeatStart + repeatLength;
+                    // Length
+                    current.setLength(inputStream.readIntelDWord());
+                    current.setByteLength(current.length);
 
-                // volume 64 is maximum
-                int vol = inputStream.read() & 0x7F;
-                current.setVolume((vol > 64) ? 64 : vol);
-                current.setGlobalVolume(ModConstants.MAXSAMPLEVOLUME);
+                    // Repeat start and stop
+                    int repeatStart = inputStream.readIntelDWord();
+                    int repeatLength = inputStream.readIntelDWord();
+                    int repeatStop = repeatStart + repeatLength;
 
-                // finetune Value>0x7F means negative
-                int fine = inputStream.read();
-                fine = (fine > 0x7F) ? fine - 0x100 : fine;
-                current.setFineTune(fine);
+                    // volume 64 is maximum
+                    int vol = inputStream.read() & 0x7F;
+                    current.setVolume((vol > 64) ? 64 : vol);
+                    current.setGlobalVolume(ModConstants.MAXSAMPLEVOLUME);
 
-                current.setFlags(inputStream.read());
-                int loopType = 0;
-                if ((current.flags & 0x03) != 0) loopType |= ModConstants.LOOP_ON;
-                if ((current.flags & 0x02) != 0) loopType |= ModConstants.LOOP_IS_PINGPONG;
-                current.setLoopType(loopType);
+                    // finetune Value>0x7F means negative
+                    int fine = inputStream.read();
+                    fine = (fine > 0x7F) ? fine - 0x100 : fine;
+                    current.setFineTune(fine);
 
-                int sampleLoadingFlags = 0;
-                if ((current.flags & 0x10) != 0) {
-                    sampleLoadingFlags |= ModConstants.SM_16BIT;
-                    current.length >>= 1;
-                    repeatStart >>= 1;
-                    repeatStop >>= 1;
+                    current.setFlags(inputStream.read());
+                    int loopType = 0;
+                    if ((current.flags & 0x03) != 0) loopType |= ModConstants.LOOP_ON;
+                    if ((current.flags & 0x02) != 0) loopType |= ModConstants.LOOP_IS_PINGPONG;
+                    current.setLoopType(loopType);
+
+                    int sampleLoadingFlags = 0;
+                    if ((current.flags & 0x10) != 0) {
+                        sampleLoadingFlags |= ModConstants.SM_16BIT;
+                        current.length >>= 1;
+                        repeatStart >>= 1;
+                        repeatStop >>= 1;
+                    }
+                    if ((current.flags & 0x20) != 0) {
+                        sampleLoadingFlags |= ModConstants.SM_STEREO; // this is new, not standard. Support is easy, so why not!
+                        current.length >>= 1;
+                        repeatStart >>= 1;
+                        repeatStop >>= 1;
+                    }
+                    current.setStereo((sampleLoadingFlags & ModConstants.SM_STEREO) != 0);
+
+                    current.setLoopStart(repeatStart);
+                    current.setLoopStop(repeatStop);
+                    current.setLoopLength(repeatStop - repeatStart);
+
+                    // Defaults for non-existent SustainLoop
+                    current.setSustainLoopStart(0);
+                    current.setSustainLoopStop(0);
+                    current.setSustainLoopLength(0);
+
+                    // Panning 0..255
+                    current.setPanning(true);
+                    current.setDefaultPanning(inputStream.read());
+
+                    // Transpose -128..127
+                    int transpose = inputStream.read();
+                    current.setTranspose((transpose > 0x7F) ? transpose - 0x100 : transpose);
+
+                    current.setBaseFrequency(getPeriod2Hz(current, getFrequencyTable()));
+
+                    // Reserved
+                    current.XM_reserved = inputStream.read();
+
+                    // Interpreting the loaded flags
+                    if (current.XM_reserved == 0xAD && (current.flags & (0x10 | 0x20)) == 0) { // ModPlug ADPCM compression
+                        sampleLoadingFlags |= ModConstants.SM_ADPCM;
+                        setTrackerName(getTrackerName() + " (ADPCM packed)");
+                    } else
+                        sampleLoadingFlags |= ModConstants.SM_PCMD; // XM save in deltas
+
+                    current.setSampleType(sampleLoadingFlags);
+
+                    // Samplename
+                    current.setName(inputStream.readString(22));
+
+                    instrumentContainer.setSample(samIndex + sampleOffsetIndex, current);
+
+                    // now let's seek to end of sample header - although we should already be there.
+                    inputStream.seek(LSEEK += sampleHeaderSize);
                 }
-                if ((current.flags & 0x20) != 0) {
-                    sampleLoadingFlags |= ModConstants.SM_STEREO; // this is new, not standard. Support is easy, so why not!
-                    current.length >>= 1;
-                    repeatStart >>= 1;
-                    repeatStop >>= 1;
-                }
-                current.setStereo((sampleLoadingFlags & ModConstants.SM_STEREO) != 0);
 
-                current.setLoopStart(repeatStart);
-                current.setLoopStop(repeatStop);
-                current.setLoopLength(repeatStop - repeatStart);
+                if (version >= 0x0104)
+                    readXMSampleData(inputStream, instrumentContainer, anzSamples, sampleOffsetIndex);
 
-                // Defaults for non-existent SustainLoop
-                current.setSustainLoopStart(0);
-                current.setSustainLoopStop(0);
-                current.setSustainLoopLength(0);
-
-                // Panning 0..255
-                current.setPanning(true);
-                current.setDefaultPanning(inputStream.read());
-
-                // Transpose -128..127
-                int transpose = inputStream.read();
-                current.setTranspose((transpose > 0x7F) ? transpose - 0x100 : transpose);
-
-                current.setBaseFrequency(getPeriod2Hz(current, getFrequencyTable()));
-
-                // Reserved
-                current.XM_reserved = inputStream.read();
-
-                // Interpreting the loaded flags
-                if (current.XM_reserved == 0xAD && (current.flags & (0x10 | 0x20)) == 0) { // ModPlug ADPCM compression
-                    sampleLoadingFlags |= ModConstants.SM_ADPCM;
-                    setTrackerName(getTrackerName() + " (ADPCM packed)");
-                } else
-                    sampleLoadingFlags |= ModConstants.SM_PCMD; // XM save in deltas
-
-                current.setSampleType(sampleLoadingFlags);
-
-                // Samplename
-                current.setName(inputStream.readString(22));
-
-                instrumentContainer.setSample(samIndex + sampleOffsetIndex, current);
+                sampleOffsetIndex += anzSamples;
             }
-
-            if (version >= 0x0104) readXMSampleData(inputStream, instrumentContainer, anzSamples, sampleOffsetIndex);
             instrumentContainer.setInstrument(ins, currentIns);
-
-            sampleOffsetIndex += anzSamples;
         }
 
         if (version < 0x0104) {

@@ -632,6 +632,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
             if (panning > 256) panning = 256;
             currentSample.setDefaultPanning(panning);
             currentSample.setLength(inputStream.readIntelDWord());
+            currentSample.setByteLength(currentSample.length);
 
             int repeatStart = inputStream.readIntelDWord();
             int repeatStop = inputStream.readIntelDWord();
@@ -791,61 +792,41 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                         if (vol <= 64) {
                             volCmd = 0x01;
                             volOp = vol;
-                        } else
-                            // 128-192: Set Panning
-                            if ((vol >= 128) && (vol <= 192)) {
-                                volCmd = 0x08;
-                                volOp = vol - 128;
-                            } else
-                                // 65-74: Fine Volume Up
-                                if (vol < 75) {
-                                    volCmd = 0x05;
-                                    volOp = vol - 65;
-                                } else
-                                    // 75-84: Fine Volume Down
-                                    if (vol < 85) {
-                                        volCmd = 0x04;
-                                        volOp = vol - 75;
-                                    } else
-                                        // 85-94: Volume Slide Up
-                                        if (vol < 95) {
-                                            volCmd = 0x03;
-                                            volOp = vol - 85;
-                                        } else
-                                            // 95-104: Volume Slide Down
-                                            if (vol < 105) {
-                                                volCmd = 0x02;
-                                                volOp = vol - 95;
-                                            } else
-                                                // 105-114: Pitch Slide Down
-                                                if (vol < 115) {
-                                                    volCmd = 0x0C;
-                                                    volOp = vol - 105;
-                                                } else
-                                                    // 115-124: Pitch Slide Up
-                                                    if (vol < 125) {
-                                                        volCmd = 0x0D;
-                                                        volOp = vol - 115;
-                                                    } else
-                                                        // 193-202: Portamento To
-                                                        if ((vol >= 193) && (vol <= 202)) {
-                                                            volCmd = 0x0B;
-                                                            volOp = vol - 193;
-                                                        } else
-                                                            // 203-212: Vibrato depth
-                                                            if ((vol >= 203) && (vol <= 212)) {
-                                                                volCmd = 0x07;
-                                                                volOp = vol - 203;
-                                                                // Old versions of ModPlug saved this as "set vibrato speed" instead, so let's fix that.
-                                                                if (volOp != 0 && lastSavedWithVersion != -1 && lastSavedWithVersion <= 0x01170254)
-                                                                    volCmd = 0x06;
-                                                            } else
-                                                                // 213-222: was once Velocity (MPT)
-                                                                // 223-232: Sample Offset (MPT)
-                                                                if ((vol >= 223) && (vol <= 232)) {
-                                                                    volCmd = 0x0E;
-                                                                    volOp = vol - 223;
-                                                                }
+                        } else if ((vol >= 128) && (vol <= 192)) { // 128-192: Set Panning
+                            volCmd = 0x08;
+                            volOp = vol - 128;
+                        } else if (vol < 75) { // 65-74: Fine Volume Up
+                            volCmd = 0x05;
+                            volOp = vol - 65;
+                        } else if (vol < 85) { // 75-84: Fine Volume Down
+                            volCmd = 0x04;
+                            volOp = vol - 75;
+                        } else if (vol < 95) { // 85-94: Volume Slide Up
+                            volCmd = 0x03;
+                            volOp = vol - 85;
+                        } else if (vol < 105) { // 95-104: Volume Slide Down
+                            volCmd = 0x02;
+                            volOp = vol - 95;
+                        } else if (vol < 115) { // 105-114: Pitch Slide Down
+                            volCmd = 0x0C;
+                            volOp = vol - 105;
+                        } else if (vol < 125) { // 115-124: Pitch Slide Up
+                            volCmd = 0x0D;
+                            volOp = vol - 115;
+                        } else if ((vol >= 193) && (vol <= 202)) { // 193-202: Portamento To
+                            volCmd = 0x0B;
+                            volOp = vol - 193;
+                        } else if ((vol >= 203) && (vol <= 212)) { // 203-212: Vibrato depth
+                            volCmd = 0x07;
+                            volOp = vol - 203;
+                            // Old versions of ModPlug saved this as "set vibrato speed" instead, so let's fix that.
+                            if (volOp != 0 && lastSavedWithVersion != -1 && lastSavedWithVersion <= 0x01170254)
+                                volCmd = 0x06;
+                        } else if ((vol >= 223) && (vol <= 232)) { // 213-222: was once Velocity (MPT)
+                                                                   // 223-232: Sample Offset (MPT)
+                            volCmd = 0x0E;
+                            volOp = vol - 223;
+                        }
                         lastVolCmd[channel] = volCmd;
                         lastVolOp[channel] = volOp;
                     }

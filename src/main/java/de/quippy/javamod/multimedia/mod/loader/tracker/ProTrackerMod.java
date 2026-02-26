@@ -464,6 +464,7 @@ public class ProTrackerMod extends Module {
 
             // Length
             current.setLength(inputStream.readMotorolaUnsignedWord() << 1);
+            current.setByteLength(current.length);
 
             int fine = 0;
             if (isHMNT) // His Masters Noise - Noise Tracker (FEST) - different FineTune setting...
