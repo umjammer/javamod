@@ -6,7 +6,9 @@
 
 # JavaMod
 
-Java MOD Player
+<img alt="logo" src="src/test/resources/duke_trumpet.png" width="160" />
+
+𝄞 Java MOD Player
 
 - mavenized
 - made libraries outsourced as much as possible
@@ -25,12 +27,12 @@ Java MOD Player
 
 ### opl chips
 
-| name   | common name                | status | comment            |
-|--------|----------------------------|:------:|--------------------|
-| Y8950  | MSX-AUDIO (OPL2 + ADPCM-B) |  n/a   | oldmame:burczynski |
-| YM3526 | OPL                        |   ✅️   | oldmame:burczynski |
-| YM3812 | OPL2                       |   ✅️   | oldmame:burczynski |
-| YmF262 | OPL3                       |   ✅️   | cozendey           |
+| name     | common name                | status | comment            |
+|----------|----------------------------|:------:|--------------------|
+| Y8950    | MSX-AUDIO (OPL2 + ADPCM-B) |  n/a   | oldmame:burczynski |
+| YM3526   | OPL                        |   ✅️   | oldmame:burczynski |
+| YM3812   | OPL2                       |   ✅️   | oldmame:burczynski |
+| YMF262   | OPL3                       |   ✅️   | cozendey           |
 
 ## Install
 
@@ -54,11 +56,18 @@ Java MOD Player
   line.drain();
 ```
 
+### system property
+
+ * javamod.player.opl.oplversion ... `FMOPL_072_YM3526`, `FMOPL_072_YM3812`, `OPL3`
+
 ## References
 
 * https://github.com/quippy-git/javamod
+* https://github.com/martincameron/micromod
 * https://github.com/PotcFdk/JSIDPlay2 → [patched](https://github.com/umjammer/JSIDPlay2)
 * https://modarchive.org/ (mod download)
+* https://github.com/Walkyst/ibxm-fork
+* https://github.com/OpenMPT/openmpt
 
 ## TODO
 
@@ -68,6 +77,7 @@ Java MOD Player
 * ~~java sound spi sid, opl~~
 * ~~i made input stream wrapper, so methods for input stream (mainly for type detection) are no more needed?~~ ... troublesome
 * rename to vavi-sound-mod
+* ~~upstream made large update~~ ... wip
 
 ---
 
@@ -137,7 +147,12 @@ JavaMod incorporates modified versions of the following libraries:
   * scrambled sound (especially with PipeWire)
 * With KDE:
   * JDialogs, when set visible, will not come to front
+  * and Wayland: TrayIcon technology not implemented in JAVA. Please deactivate
+    TrayIcons with KDE or Wayland - if others (like ICEWM) have the same topic
+    is not tested
 * Tray Icon: mouse wheel (volume control) & keyboard shortcuts do not work
+  because of Java TrayIcon using xembed instead of SNI, TrayIcon events like
+  mouse clicks are not reaching the application. There is no suitable workaround
 
 ## Planned:
 * finish loading of OMPT extended instrument / song data / mixer data
@@ -151,3 +166,7 @@ JavaMod incorporates modified versions of the following libraries:
   * WavPack and MusePack support
   * MO3 support
   * read from 7z archives
+
+---
+
+<sub>image designed by @umjammer, drawn by nano banana</sub>
