@@ -58,7 +58,6 @@ public class FLACContainer extends MultimediaContainer {
     private FLACInfoPanel flacInfoPanel;
 
     private VorbisComment vorbisComment;
-    private long duration;
 
     @Override
     public boolean canExport() {
@@ -76,7 +75,7 @@ public class FLACContainer extends MultimediaContainer {
             vorbisComment = decoder.getVorbisComment();
             AudioFormat audioFormat = decoder.getStreamInfo().getAudioFormat();
             long sampleRate = (long) audioFormat.getSampleRate();
-            duration = decoder.getStreamInfo().getTotalSamples() * 1000L / sampleRate;
+            long duration = decoder.getStreamInfo().getTotalSamples() * 1000L / sampleRate;
             if (!MultimediaContainerManager.isHeadlessMode())
                 ((FLACInfoPanel) getInfoPanel()).fillInfoPanelWith(audioFormat, duration, Helpers.getFileNameFromURL(url), getSongName(), decoder.getVorbisComment());
         } catch (Exception ex) {

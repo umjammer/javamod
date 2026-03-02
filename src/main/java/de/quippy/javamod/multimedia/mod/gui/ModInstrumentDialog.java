@@ -1111,11 +1111,10 @@ public class ModInstrumentDialog extends JDialog {
         for (int i = 0; i < noteIndex.length; i++) {
             sb.append(ModConstants.getNoteNameForIndex(i + 1)).append(" | ");
             if ((noteIndex[i] & 0x80) != 0) {
-                sb.append("...").append(" | ");
-                sb.append("..").append('\n');
+                sb.append("... | ..\n");
             } else {
-                sb.append(ModConstants.getNoteNameForIndex(noteIndex[i] + 1)).append(" | ");
-                sb.append(ModConstants.getAsHex(sampleIndex[i], 2)).append('\n');
+                sb.append(ModConstants.getNoteNameForIndex(noteIndex[i]+1)).append(" | ")
+                        .append(ModConstants.getAsHex(sampleIndex[i], 2)).append('\n');
             }
         }
         return sb.toString();

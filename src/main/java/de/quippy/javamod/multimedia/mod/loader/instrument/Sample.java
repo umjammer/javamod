@@ -39,13 +39,13 @@ public class Sample {
 
     /** Name of the sample */
     public String name;
-    /** full length (already *2 --> Mod-Format) */
-    public int length;
+	public int byteLength;		// typically equal to length
+	public int length;			// full length in samples (already *2 --> Mod-Format)
     /** normalized loading flags (signed, unsigned, 8-Bit, compressed, ...) */
     public int sampleType;
-    /** Finetuning -8..+8 */
+    /** Fine tuning -8..+8 */
     public int fineTune;
-    /** Basisvolume */
+    /** Basis volume */
     public int volume;
     /** # of the loop start (already *2 --> Mod-Fomat) */
     public int loopStart;
@@ -62,7 +62,7 @@ public class Sample {
     /** true, if this is a stereo-sample */
     public boolean isStereo;
 
-    //S3M:
+    // S3M:
     /** always 1 for a sample, 1-7 AdLib (2:Melody 3:Basedrum 4:Snare 5:Tom 6:Cym 7:HiHat) */
     public int type;
     /** DOS File-Name */
@@ -122,7 +122,6 @@ public class Sample {
      * Constructor for Sample
      */
     public Sample() {
-        super();
         isStereo = false;
     }
 
@@ -302,10 +301,6 @@ public class Sample {
         return (sampleL != null && sampleL.length > 0);
     }
 
-    /**
-     * @return
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         String bf = ((name == null) ? Helpers.EMPTY_STING : name) + '(' +
@@ -615,6 +610,13 @@ public class Sample {
      */
     public void setFlags(int newFlags) {
         flags = newFlags;
+    }
+
+    /**
+     * @param byteLength the byteLength to set
+     */
+    public void setByteLength(int byteLength) {
+        this.byteLength = byteLength;
     }
 
     /**

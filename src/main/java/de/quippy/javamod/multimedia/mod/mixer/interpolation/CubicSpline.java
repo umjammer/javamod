@@ -29,48 +29,48 @@ import de.quippy.javamod.multimedia.mod.ModConstants;
  * @author Daniel Becker
  * @since 15.06.2006
  * This code is adopted from the Mod Plug Tracker by Olivier Lapicque <olivierl@jps.net>
- * ------------------------------------------------------------------------------------------------
+ * <pre>
  * cubic spline interpolation doc,
  * (derived from "digital image warping", g. wolberg)
- * <p>
+ *
  * interpolation polynomial: f(x) = A3*(x-floor(x))**3 + A2*(x-floor(x))**2 + A1*(x-floor(x)) + A0
- * <p>
+ *
  * with Y = equispaced data points (dist=1), YD = first derivates of data points and IP = floor(x)
  * the A[0..3] can be found by solving
- * A0  = Y[IP]
- * A1  = YD[IP]
- * A2  = 3*(Y[IP+1]-Y[IP])-2.0*YD[IP]-YD[IP+1]
- * A3  = -2.0 * (Y[IP+1]-Y[IP]) + YD[IP] - YD[IP+1]
- * <p>
+ *  A0  = Y[IP]
+ *  A1  = YD[IP]
+ *  A2  = 3*(Y[IP+1]-Y[IP])-2.0*YD[IP]-YD[IP+1]
+ *  A3  = -2.0 * (Y[IP+1]-Y[IP]) + YD[IP] - YD[IP+1]
+ *
  * with the first derivates as
- * YD[IP]    = 0.5 * (Y[IP+1] - Y[IP-1]);
- * YD[IP+1]  = 0.5 * (Y[IP+2] - Y[IP])
- * <p>
+ *  YD[IP]    = 0.5 * (Y[IP+1] - Y[IP-1]);
+ *  YD[IP+1]  = 0.5 * (Y[IP+2] - Y[IP])
+ *
  * the coefs becomes
- * A0  = Y[IP]
- * A1  = YD[IP]
- * =  0.5 * (Y[IP+1] - Y[IP-1]);
- * A2  =  3.0 * (Y[IP+1]-Y[IP])-2.0*YD[IP]-YD[IP+1]
- * =  3.0 * (Y[IP+1] - Y[IP]) - 0.5 * 2.0 * (Y[IP+1] - Y[IP-1]) - 0.5 * (Y[IP+2] - Y[IP])
- * =  3.0 * Y[IP+1] - 3.0 * Y[IP] - Y[IP+1] + Y[IP-1] - 0.5 * Y[IP+2] + 0.5 * Y[IP]
- * = -0.5 * Y[IP+2] + 2.0 * Y[IP+1] - 2.5 * Y[IP] + Y[IP-1]
- * = Y[IP-1] + 2 * Y[IP+1] - 0.5 * (5.0 * Y[IP] + Y[IP+2])
- * A3  = -2.0 * (Y[IP+1]-Y[IP]) + YD[IP] + YD[IP+1]
- * = -2.0 * Y[IP+1] + 2.0 * Y[IP] + 0.5 * (Y[IP+1] - Y[IP-1]) + 0.5 * (Y[IP+2] - Y[IP])
- * = -2.0 * Y[IP+1] + 2.0 * Y[IP] + 0.5 * Y[IP+1] - 0.5 * Y[IP-1] + 0.5 * Y[IP+2] - 0.5 * Y[IP]
- * =  0.5 * Y[IP+2] - 1.5 * Y[IP+1] + 1.5 * Y[IP] - 0.5 * Y[IP-1]
- * =  0.5 * (3.0 * (Y[IP] - Y[IP+1]) - Y[IP-1] + YP[IP+2])
- * <p>
+ *  A0  = Y[IP]
+ *  A1  = YD[IP]
+ *      =  0.5 * (Y[IP+1] - Y[IP-1]);
+ *  A2  =  3.0 * (Y[IP+1]-Y[IP])-2.0*YD[IP]-YD[IP+1]
+ *      =  3.0 * (Y[IP+1] - Y[IP]) - 0.5 * 2.0 * (Y[IP+1] - Y[IP-1]) - 0.5 * (Y[IP+2] - Y[IP])
+ *      =  3.0 * Y[IP+1] - 3.0 * Y[IP] - Y[IP+1] + Y[IP-1] - 0.5 * Y[IP+2] + 0.5 * Y[IP]
+ *      = -0.5 * Y[IP+2] + 2.0 * Y[IP+1] - 2.5 * Y[IP] + Y[IP-1]
+ *      = Y[IP-1] + 2 * Y[IP+1] - 0.5 * (5.0 * Y[IP] + Y[IP+2])
+ *  A3  = -2.0 * (Y[IP+1]-Y[IP]) + YD[IP] + YD[IP+1]
+ *      = -2.0 * Y[IP+1] + 2.0 * Y[IP] + 0.5 * (Y[IP+1] - Y[IP-1]) + 0.5 * (Y[IP+2] - Y[IP])
+ *      = -2.0 * Y[IP+1] + 2.0 * Y[IP] + 0.5 * Y[IP+1] - 0.5 * Y[IP-1] + 0.5 * Y[IP+2] - 0.5 * Y[IP]
+ *      =  0.5 * Y[IP+2] - 1.5 * Y[IP+1] + 1.5 * Y[IP] - 0.5 * Y[IP-1]
+ *      =  0.5 * (3.0 * (Y[IP] - Y[IP+1]) - Y[IP-1] + YP[IP+2])
+ *
  * then interpolated data value is (horner rule)
- * out = (((A3*x)+A2)*x+A1)*x+A0
- * <p>
+ *  out = (((A3*x)+A2)*x+A1)*x+A0
+ *
  * this gives parts of data points Y[IP-1] to Y[IP+2] of
- * part       x**3    x**2    x**1    x**0
- * Y[IP-1]    -0.5     1      -0.5    0
- * Y[IP]       1.5    -2.5     0      1
- * Y[IP+1]    -1.5     2       0.5    0
- * Y[IP+2]     0.5    -0.5     0      0
- * --------------------------------------------------------------------------------------------------
+ *  part       x**3    x**2    x**1    x**0
+ *  Y[IP-1]    -0.5     1      -0.5    0
+ *  Y[IP]       1.5    -2.5     0      1
+ *  Y[IP+1]    -1.5     2       0.5    0
+ *  Y[IP+2]     0.5    -0.5     0      0
+ * </pre>
  */
 public class CubicSpline {
 
@@ -103,11 +103,11 @@ public class CubicSpline {
      * @since 15.06.2006
      */
     private static void initialize() {
-        final double len = 1.0d / (double) SPLINE_LUTLEN;
+        final double len = 1.0d / SPLINE_LUTLEN;
         final double scale = SPLINE_QUANTSCALE;
 
         for (int i = 0; i < SPLINE_LUTLEN; i++) {
-            double x = ((double) i) * len;
+            double x = i * len;
             int idx = i << 2;
             double cm1 = Math.floor(0.5 + scale * (-0.5 * x * x * x + 1.0 * x * x - 0.5 * x));
             double c0 = Math.floor(0.5 + scale * (1.5 * x * x * x - 2.5 * x * x + 1.0));

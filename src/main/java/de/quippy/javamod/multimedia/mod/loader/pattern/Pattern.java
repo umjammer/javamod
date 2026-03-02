@@ -37,7 +37,7 @@ public class Pattern {
     protected PatternRow[] patternRows;
 
     protected String patternName;
-    protected final double[] tempoSwing = null;
+    protected final int[] tempoSwing = null;
     protected final int rowsPerBeat = -1;
     protected final int rowsPerMeasure = -1;
 
@@ -56,10 +56,6 @@ public class Pattern {
         for (int i = 0; i < rows; i++) patternRows[i] = new PatternRow(parentMod, this, channels);
     }
 
-    /**
-     * @return
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         return toString(true);
@@ -181,7 +177,7 @@ public class Pattern {
         return rowsPerMeasure;
     }
 
-    public double[] getTempoSwing() {
+    public int[] getTempoSwing() {
         if (tempoSwing == null) return parentMod.getTempoSwing();
         return tempoSwing;
     }

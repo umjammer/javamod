@@ -33,6 +33,7 @@ import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JPanel;
 
 import de.quippy.javamod.io.FileOrPackedInputStream;
@@ -61,9 +62,24 @@ public class WavContainer extends MultimediaContainer {
      */
     static {
         AudioFileFormat.Type[] types = AudioSystem.getAudioFileTypes();
-        wavefile_Extensions = new String[types.length];
+        wavefile_Extensions = new String[types.length + 1];
         for (int i = 0; i < types.length; i++)
             wavefile_Extensions[i] = types[i].getExtension();
+        wavefile_Extensions[types.length] = "img"; // we will interpret IMG files as CloneCD IMG files from an audio CD cue sheets
+    }
+
+    /**
+     * @param waveFileUrl
+     * @return
+     * @throws IOException
+     * @throws UnsupportedAudioFileException
+     * @since 06.12.2024
+     */
+    public static AudioInputStream getAudioInputStream(final URL waveFileUrl) throws IOException, UnsupportedAudioFileException {
+        if (waveFileUrl.getFile().toLowerCase().endsWith(".img"))
+            return new AudioInputStream(new FileOrPackedInputStream(waveFileUrl), new AudioFormat(44100, 16, 2, true, false), AudioSystem.NOT_SPECIFIED);
+        else
+            return AudioSystem.getAudioInputStream(new FileOrPackedInputStream(waveFileUrl));
     }
 
     @Override

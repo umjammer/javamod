@@ -38,6 +38,18 @@ import de.quippy.javamod.system.Helpers;
  */
 public class MidiMacros {
 
+    public enum ParameteredMacroTypes {
+        SFxUnused, SFxCutoff, SFxReso, SFxFltMode, SFxDryWet, SFxCC,
+        SFxPlugParam, SFxChannelAT, SFxPolyAT, SFxPitch, SFxProgChange,
+        SFxCustom,
+    }
+
+    public enum FixedMacroTypes {
+        ZxxUnused, ZxxReso4Bit, ZxxReso7Bit, ZxxCutoff, ZxxFltMode,
+        ZxxResoFltMode, ZxxChannelAT, ZxxPolyAT, ZxxPitch, ZxxProgChange,
+        ZxxCustom
+    }
+
     public static final int MIDIOUT_START = 0;
     public static final int MIDIOUT_STOP = 1;
     public static final int MIDIOUT_TICK = 2;
@@ -57,18 +69,6 @@ public class MidiMacros {
     private final String[] midiGlobal;
     private final String[] midiSFXExt;
     private final String[] midiZXXExt;
-
-    enum ParameteredMacroTypes {
-        SFxUnused, SFxCutoff, SFxReso, SFxFltMode, SFxDryWet, SFxCC,
-        SFxPlugParam, SFxChannelAT, SFxPolyAT, SFxPitch, SFxProgChange,
-        SFxCustom,
-    }
-
-    enum FixedMacroTypes {
-        ZxxUnused, ZxxReso4Bit, ZxxReso7Bit, ZxxCutoff, ZxxFltMode,
-        ZxxResoFltMode, ZxxChannelAT, ZxxPolyAT, ZxxPitch, ZxxProgChange,
-        ZxxCustom
-    }
 
     /**
      * Constructor for MidiMacros

@@ -30,11 +30,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiDevice.Info;
+import javax.sound.midi.MidiEvent;
+import javax.sound.midi.MidiMessage;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Sequence;
+import javax.sound.midi.Track;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.TargetDataLine;
@@ -156,21 +161,67 @@ public class MidiContainer extends MultimediaContainer {
     }
 
     /**
+     * Some midi files have "EndOfTrack" messages that are far beyond the
+     * last valid midi message - which results in long silence.
+     * We try to correct that by simply setting a new "TrackEnd" at the
+     * highest tick count of the last event before an EndOfTrack message
+     * plus the amount of ticks for a whole frame.
+     * All existing EndOfTrack messages are deleted.
+     *
+     * @param currentSequence
+     * @since 28.11.2025
+     */
+    private static Sequence setCorrectEndingMessage(Sequence currentSequence) {
+        try {
+            long highestTick = 0;
+            for (Track track : currentSequence.getTracks()) {
+                int lastIndex = track.size() - 1;
+                if (lastIndex < 0) continue;
+
+                MidiEvent lastTrackEvent = track.get(lastIndex);
+                if (lastTrackEvent == null) continue;
+
+                MidiMessage midiMessage = lastTrackEvent.getMessage();
+                // if MetaMessage.ImmutableEndOfTrack would not be a private static class,
+                // this check would be much easier!
+                if (midiMessage != null && midiMessage instanceof MetaMessage) {
+                    byte[] message = midiMessage.getMessage();
+                    if (message != null && message.length > 2 && message[0] == -1 && message[1] == 0x2F) {
+                        track.remove(lastTrackEvent);
+                        if (lastIndex > 0) lastTrackEvent = track.get(lastIndex - 1);
+                    }
+                }
+                final long lastTick = lastTrackEvent.getTick();
+                if (lastTick > highestTick) highestTick = lastTick;
+            }
+            highestTick += currentSequence.getResolution();
+            final MidiMessage endOfTrack = new MetaMessage(0x2F, null, 0);
+            for (Track track : currentSequence.getTracks()) {
+                track.add(new MidiEvent(endOfTrack, highestTick));
+            }
+        } catch (InvalidMidiDataException ex) {
+            // Ignore
+        }
+        return currentSequence;
+    }
+
+    /**
      * @param midiFileUrl
      * @return
      * @since 12.02.2011
      */
     private static Sequence getSequenceFromURL(URL midiFileUrl) {
+        Sequence result;
         try {
             String fileName = midiFileUrl.getPath();
             String extension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
             if (extension.equals("rmi"))
-                return RMIFile.open(midiFileUrl);
+                result = RMIFile.open(midiFileUrl);
             else {
                 FileOrPackedInputStream input = null;
                 try {
                     input = new FileOrPackedInputStream(midiFileUrl);
-                    return MidiSystem.getSequence(input);
+                    result = MidiSystem.getSequence(input);
                 } finally {
                     if (input != null) try {
                         input.close();
@@ -180,6 +231,7 @@ public class MidiContainer extends MultimediaContainer {
         } catch (Throwable ex) {
             throw new RuntimeException(ex);
         }
+        return setCorrectEndingMessage(result);
     }
 
     private boolean getCapture() {

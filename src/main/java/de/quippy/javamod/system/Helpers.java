@@ -95,7 +95,7 @@ public class Helpers {
     }
 
     /** Version Information */
-    public static final String VERSION = "V3.9.4.1";
+    public static final String VERSION = "V3.9.5";
     public static final String PROGRAM = "Java Mod Player";
     public static final String FULLVERSION = PROGRAM + ' ' + VERSION;
     public static final String COPYRIGHT = "© by Daniel Becker since 2006";
@@ -113,9 +113,9 @@ public class Helpers {
     /** Codepages used when reading playlist files */
     public static final String CODING_M3U = "ISO-8859-1";
     /** Codepage used when reading from the web */
-    public static final String CODING_HTTP = "UTF-8";
+    public static final String CODING_UTF8 = "UTF-8";
     /** Codepage used when reading from ICY Input-Streams */
-    public static final String CODING_ICY = "ISO-8859-15";
+    public static final String CODING_ICY = "ISO-8859-1";
 
     public static final String DEFAULTFONTPATH = "/de/quippy/javamod/main/gui/resources/lucon.ttf";
     private static Font DIALOG_FONT = null;
@@ -277,6 +277,25 @@ public class Helpers {
     }
 
     /**
+     * Converts the encoding of a String.
+     *
+     * @param src          the string to convert
+     * @param srcEncoding  the source encoding - might be null
+     * @param trgtEncoding the target encoding
+     * @return a new string with target encoding or the original string if conversion failed or src is null
+     * @since 03.12.2024
+     */
+    public static final String convertStringEncoding(final String src, final String srcEncoding, final String trgtEncoding) {
+        if (src != null) {
+            try {
+                return new String((srcEncoding == null) ? src.getBytes() : src.getBytes(srcEncoding), trgtEncoding);
+            } catch (UnsupportedEncodingException ex) {
+            }
+        }
+        return src;
+    }
+
+    /**
      * Search the data byte array for the first occurrence of the byte array pattern within given boundaries.
      * Implementation of the Knuth-Morris-Pratt Pattern Matching Algorithm
      *
@@ -315,7 +334,8 @@ public class Helpers {
         return failure;
     }
 
-    //*************** UI *************
+    // UI ----
+
     public static String getHTMLColorString(Color color) {
         String htmlColor = Integer.toHexString(color.getRGB());
         if (htmlColor.length() > 6) htmlColor = htmlColor.substring(htmlColor.length() - 6);
@@ -542,43 +562,64 @@ public class Helpers {
     }
 
     /**
+     * Will try to create an URL based on the given File. This File does not
+     * need to exist.
+     * That is why with "nio.Path" we encounter severe problems when working
+     * with relative files. Path.for("") will add the home dir - which we
+     * do not want. Path.getRealPath will throw an Exception if the file does
+     * not exist. So we stay on File for now!
      * @param file
      * @return
      * @since 14.02.2012
      */
     public static URL createURLfromFile(Path file) {
-        if (!Files.exists(file)) {
-            try {
-                String path = file.toRealPath().toString();
-                StringBuilder b = new StringBuilder((File.separatorChar != '/') ? path.replace(File.separatorChar, '/') : path);
-                if (Files.isDirectory(file) && b.charAt(b.length() - 1) != '/') b.append('/');
-                if (b.length() > 2 && b.charAt(0) == '/' && b.charAt(1) == '/') b.insert(0, "//");
-                if (b.charAt(0) != '/') b.insert(0, "/");
-                URI uri = new URI("file", null, b.toString(), null);
-                return uri.toURL();
-            } catch (URISyntaxException e) {
-                // cannot happen...
-            } catch (IOException ex) {
-                // should not happen ;)
-            }
-        }
+//        if (!file.exists()) {
+//            final URL url = createURLfromFileString(file.getPath());
+//            if (url != null) return url;
+//        }
+        // fall through - so let's try this...
         try {
             return file.toUri().toURL();
-        } catch (MalformedURLException ex) {
+        } catch (final MalformedURLException ex) {
         }
         return null;
     }
 
     /**
+     * We assume that the fileString parameter represents a local file location
+     * However, it is not said, that this fileString is existing. This is
+     * relevant for creating an absolute path for relative files.
+     * @since 03.12.2025 - was extracted from above
+     * @param fileString
+     * @return
+     */
+    public static URL createURLfromFileString(final String fileString) {
+        try {
+            final StringBuilder b = new StringBuilder(fileString.replace('\\', '/'));
+            if (b.length() > 2 && b.charAt(0) == '/' && b.charAt(1) == '/') b.insert(0, "//");
+            if (b.charAt(0) != '/') b.insert(0, "/");
+            final URI uri = new URI("file", null, b.toString(), null);
+            return uri.toURL();
+        } catch (final URISyntaxException e) {
+            // cannot happen...
+        } catch (final MalformedURLException ex) {
+            // should not happen ;)
+        }
+        return null;
+    }
+
+    /**
+     * We assume that the fileString parameter represents a local file location
+     * However, it is not said, that this fileString is existing. This is
+     * relevant for creating an absolute path for relative files.
+     * @since 03.12.2025 - was extracted from above
      * @param urlLine
-     * @return a URL in correct form
-     * @since 01.05.2011
+     * @return
      */
     public static URL createURLfromString(String urlLine) {
         try {
             if (urlLine == null || urlLine.isEmpty()) return null;
-            URI uri = new URI(urlLine);
-            return uri.toURL();
+            return new URI(urlLine).toURL();
         } catch (Exception ex) {
             return createURLfromFile(Path.of(urlLine));
         }
@@ -601,7 +642,7 @@ public class Helpers {
      */
     public static String createStringFromURLString(String url) {
         try {
-            return URLDecoder.decode(url, CODING_HTTP);
+            return URLDecoder.decode(url, CODING_UTF8);
         } catch (UnsupportedEncodingException ex) {
             logger.log(Level.ERROR, "Helpers::createStringRomURLString", ex);
         }
@@ -788,7 +829,7 @@ public class Helpers {
     }
 
     /**
-     * Creates a relativized path that is relativ to the given basepath.
+     * Creates a relativized path that is relative to the given basepath.
      * For instance:
      * relToPath = C:\Path1\Path2
      * Path = C:\Path1\Path3\FILE
@@ -810,7 +851,7 @@ public class Helpers {
     }
 
     /**
-     * If the baseURL provided is not absolut this method will generate an absolute file path
+     * If the baseURL provided is not absolute this method will generate an absolute file path
      * based on the inputFileName string
      * This works only for protocol "file"!!
      *
@@ -820,38 +861,49 @@ public class Helpers {
      * @since 23.03.2011
      */
     public static URL createAbsolutePathForFile(URL baseURL, String inputFileName) {
-        String fileName = inputFileName;
+        // If fileName is from a Windows/DOS System, replace separator plus create an URL from the path to encode URL specific (e.g. %20 for spaces)
         URL fileURL = createURLfromString(inputFileName);
+        // if this URL is not a type "file" URL, we cannot do anything and return that URL
         if (!isFile(fileURL)) return fileURL;
         try {
-            if (Helpers.urlExists(fileName))
+            // if the URL is already pointing at our file, we are finished
+            if (Helpers.urlExists(fileURL))
                 return fileURL;
             else {
-                // If fileName is from a Windows/DOS System, replace separator
-                fileName = fileName.replace('\\', '/');
+                // get the path portion of the URL - this might lead to the same value of inputFileName (mostly it should)
+                String fileName = fileURL.toURI().getPath();
+                // and remove a possible trailing slash
+                if (fileName.charAt(0) == '/') fileName = fileName.substring(1);
 
-                // Get the path portion of the URL - and decode URL type entries (like %20 for spaces)
-                String path = Helpers.createStringFromURLString(baseURL.getPath());
+                // Get the path portion of the URL - and do NOT decode URL type entries (like %20 for spaces) - we need to keep them!
+                String path = baseURL.toURI().getPath();
+
+                // a windows network drive is represented by "file:////servername/path..." - which is not a valid URI and the later "normalize" will delete those
+                boolean isWindowsNetworkDrive = path.startsWith("//");
 
                 // now get rid of playlist file name
                 int lastSlash = path.lastIndexOf('/');
                 StringBuilder relPath = new StringBuilder(path.substring(0, lastSlash + 1));
-                // and remove a possible starting slash
-                if (fileName.charAt(0) == '/') fileName = fileName.substring(1);
 
                 int iterations = 0;
-                URL fullURL = Helpers.createURLfromString(relPath + fileName);
-                while (fullURL != null && !urlExists(fullURL) && iterations < 256) {
+
+                URL fullURL = new URI(baseURL.getProtocol(), null, baseURL.getHost(), baseURL.getPort(), relPath + fileName, null, null).toURL();
+                while (!urlExists(fullURL) && iterations < 256) {
                     relPath.append("../");
-                    fullURL = Helpers.createURLfromString(relPath + fileName);
+                    fullURL = new URI(baseURL.getProtocol(), null, baseURL.getHost(), baseURL.getPort(), relPath + fileName, null, null).toURL();
                     iterations++;
                 }
-                if (iterations < 256 && fullURL != null) {
+                if (iterations < 256) {
                     try {
-                        return (fullURL.toURI().normalize()).toURL();
+                        URI returnURL = fullURL.toURI().normalize();
+                        if (isWindowsNetworkDrive) // normalize will delete the trailing "////" in front - so re-add those
+                            return new URI(returnURL.getScheme(), null, returnURL.getHost(), returnURL.getPort(), ((new StringBuilder("///")).append(returnURL.getPath())).toString(), null, null).toURL();
+                        else
+                            return returnURL.toURL();
                     } catch (URISyntaxException x) {
                         logger.log(Level.ERROR, "[createAbsolutePathForFile]", x);
                     }
+                    // we failed :(, so just the fullURL
                     return fullURL;
                 } else {
                     logger.log(Level.INFO, "File not found: " + inputFileName + " in relation to " + baseURL);
@@ -884,7 +936,8 @@ public class Helpers {
         // Try to work with URL - map "dir" to a local File
         try {
             File f = new File(dir);
-            dir = f.getCanonicalPath();
+//            dir = f.getCanonicalPath(); // On windows this maps network drives to "\\SERVERNAME" - paths, what we do not want
+            dir = f.getAbsolutePath();
         } catch (Exception ex) {
             logger.log(Level.ERROR, "Helpers::selectFileNameFor", ex);
         }
@@ -1113,7 +1166,7 @@ public class Helpers {
         BufferedReader reader = null;
         try {
             URL version_url = createURLfromString(Helpers.VERSION_URL);
-            reader = new BufferedReader(new InputStreamReader(version_url.openStream(), Helpers.CODING_HTTP));
+            reader = new BufferedReader(new InputStreamReader(version_url.openStream(), Helpers.CODING_UTF8));
             String version = reader.readLine();
             reader.close();
             reader = null;

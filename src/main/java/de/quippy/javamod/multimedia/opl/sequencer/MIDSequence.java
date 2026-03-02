@@ -94,7 +94,6 @@ public class MIDSequence extends OPL3Sequence {
     private long flen = 0;
     private long pos = 0;
     private long sierraPos = 0;
-    private int subsongs = 0;
     private final int[] adlibData;
     private int adlibStyle = 0;
     private int adlibMode = 0;
@@ -1035,7 +1034,7 @@ logger.log(Level.TRACE, "pos: %d, end: %d".formatted(pos, track[curtrack].tend))
         fwait = 123; // gotta be a small thing.. sorta like nothing
         iwait = 0;
 
-        subsongs = 1;
+        int subsongs = 1;
 
         for (int x = 0; x < 16; x++) {
             track[x].tend = 0;

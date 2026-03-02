@@ -186,62 +186,66 @@ public class XmasDecorationPanel extends MeterPanelBase {
             syncToFPScounter &= SYNC2FPS_MASK;
             if (bulbs != null && bulbs.length != 0 && useIndex != null && useIndex.length != 0 && dontDraw == 0) {
                 inDraw = true;
-                int x = 0;
-                for (int index = 0; index < useIndex.length; index++) {
-                    int bulbIndex = useIndex[index];
-                    if (bulbIndex != 0) { // 0 is the hanger
-                        boolean isLit = (bulbIndex % 2) == 0;
-                        if (bulbIndex > 0) {
-                            switch (flickerType) {
-                                case FLICKERTYPE_ALL_OFF:
-                                    useIndex[index] = (isLit) ? --bulbIndex : bulbIndex;
-                                    break;
-                                case FLICKERTYPE_ALL_ON:
-                                    useIndex[index] = (isLit) ? bulbIndex : ++bulbIndex;
-                                    break;
-                                case FLICKERTYPE_ALTERNATE:
-                                case FLICKERTYPE_ALL_FLASH: //same as 2, but initially all bulbs are off - so all alternate between on/off
-                                    useIndex[index] = (isLit) ? --bulbIndex : ++bulbIndex;
-                                    break;
-                                case FLICKERTYPE_CHASE:
-                                    if (isLit) {
-                                        useIndex[index] = --bulbIndex;
-                                        x += drawBulbAt(g, x, bulbIndex);
-                                        index++;
-                                        if (index >= useIndex.length) x = index = 0;
-                                        if (withSpace) {
-                                            x += bulbs[useIndex[index]].getIconWidth();
+                try {
+                    int x = 0;
+                    for (int index = 0; index < useIndex.length; index++) {
+                        int bulbIndex = useIndex[index];
+                        if (bulbIndex != 0) { // 0 is the hanger
+                            boolean isLit = (bulbIndex % 2) == 0;
+                            if (bulbIndex > 0) {
+                                switch (flickerType) {
+                                    case FLICKERTYPE_ALL_OFF:
+                                        useIndex[index] = (isLit) ? --bulbIndex : bulbIndex;
+                                        break;
+                                    case FLICKERTYPE_ALL_ON:
+                                        useIndex[index] = (isLit) ? bulbIndex : ++bulbIndex;
+                                        break;
+                                    case FLICKERTYPE_ALTERNATE:
+                                    case FLICKERTYPE_ALL_FLASH: //same as 2, but initially all bulbs are off - so all alternate between on/off
+                                        useIndex[index] = (isLit) ? --bulbIndex : ++bulbIndex;
+                                        break;
+                                    case FLICKERTYPE_CHASE:
+                                        if (isLit) {
+                                            useIndex[index] = --bulbIndex;
+                                            x += drawBulbAt(g, x, bulbIndex);
                                             index++;
-                                            if (index >= useIndex.length) {
-                                                index = 0;
-                                                x += bulbs[useIndex[index++]].getIconWidth();
+                                            if (index >= useIndex.length) x = index = 0;
+                                            if (withSpace) {
+                                                x += bulbs[useIndex[index]].getIconWidth();
+                                                index++;
+                                                if (index >= useIndex.length) {
+                                                    index = 0;
+                                                    x += bulbs[useIndex[index++]].getIconWidth();
+                                                }
+                                            }
+                                            bulbIndex = useIndex[index];
+                                            if ((bulbIndex % 2) != 0) useIndex[index] = ++bulbIndex;
+                                            if ((!withSpace && index == 0) || (withSpace && index == 1)) {
+                                                drawBulbAt(g, x, bulbIndex);
+                                                index = useIndex.length;
                                             }
                                         }
-                                        bulbIndex = useIndex[index];
-                                        if ((bulbIndex % 2) != 0) useIndex[index] = ++bulbIndex;
-                                        if ((!withSpace && index == 0) || (withSpace && index == 1)) {
-                                            drawBulbAt(g, x, bulbIndex);
-                                            index = useIndex.length;
-                                        }
-                                    }
-                                    break; //??
-                                case FLICKERTYPE_RANDOM:
-                                    if (rand.nextBoolean())
-                                        useIndex[index] = (isLit) ? --bulbIndex : ++bulbIndex;
-                                    break;
-                                case FLICKERTYPE_SOME:
-                                    if (rand.nextInt(100) < 10)
-                                        useIndex[index] = (isLit) ? --bulbIndex : ++bulbIndex;
-                                    break;
-                                case FLICKERTYPE_SOME_FLICKER:
-                                    if (!isLit && rand.nextInt(100) < 10) bulbIndex++;
-                                    break;
-                                default:
-                                    break;
+                                        break; //??
+                                    case FLICKERTYPE_RANDOM:
+                                        if (rand.nextBoolean())
+                                            useIndex[index] = (isLit) ? --bulbIndex : ++bulbIndex;
+                                        break;
+                                    case FLICKERTYPE_SOME:
+                                        if (rand.nextInt(100) < 10)
+                                            useIndex[index] = (isLit) ? --bulbIndex : ++bulbIndex;
+                                        break;
+                                    case FLICKERTYPE_SOME_FLICKER:
+                                        if (!isLit && rand.nextInt(100) < 10) bulbIndex++;
+                                        break;
+                                    default:
+                                        break;
+                                }
                             }
                         }
+                        x += drawBulbAt(g, x, bulbIndex);
                     }
-                    x += drawBulbAt(g, x, bulbIndex);
+                } finally {
+                    inDraw=false;
                 }
             }
         }

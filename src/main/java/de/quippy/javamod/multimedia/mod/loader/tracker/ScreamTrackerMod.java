@@ -456,6 +456,8 @@ public class ScreamTrackerMod extends Module {
                 // Length
                 int sampleLength = inputStream.readIntelDWord();
                 current.setLength(sampleLength);
+                current.setByteLength(current.length);
+
                 if (sampleLength > 0) anySamples = true;
 
                 // Repeat start and stop

@@ -84,7 +84,7 @@ Debug.println("event: " + thread);
             if (thread.getCurrentMixer().hasFinished()) {
                 cdl.countDown();
             }
-        }); // TODO extract player from thread
+        });
         playerThread.start();
 
         if (!onIde) later(time, cdl::countDown);

@@ -107,7 +107,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
                 int s3mNote = ModConstants.FreqS3MTable[noteIndex % 12];
                 int s3mOctave = noteIndex / 12;
                 // If I do not do it like this, it is too precise - and limits do not work
-                return (int) ((long) ModConstants.BASEFREQUENCY * ((long) s3mNote << 5) / ((long) aktMemo.currentFinetuneFrequency << s3mOctave)) << (ModConstants.PERIOD_SHIFT - 2);
+                return (int) (ModConstants.BASEFREQUENCY * ((long) s3mNote << 5) / ((long) aktMemo.currentFinetuneFrequency << s3mOctave)) << (ModConstants.PERIOD_SHIFT - 2);
 
             case ModConstants.IT_LINEAR_TABLE:
                 return (ModConstants.FreqS3MTable[noteIndex % 12] << 7) >> (noteIndex / 12);
@@ -133,7 +133,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
 
         switch (frequencyTableType) {
             case ModConstants.IT_LINEAR_TABLE:
-                long itTuning = (((((long) ModConstants.BASEPERIOD) << ModConstants.PERIOD_SHIFT) * (long) aktMemo.currentFinetuneFrequency) << ModConstants.SHIFT) / (long) sampleRate;
+                long itTuning = (((((long) ModConstants.BASEPERIOD) << ModConstants.PERIOD_SHIFT) * aktMemo.currentFinetuneFrequency) << ModConstants.SHIFT) / sampleRate;
                 aktMemo.currentTuning = (int) (itTuning / (long) newPeriod);
                 return;
             case ModConstants.STM_S3M_TABLE:
@@ -1349,13 +1349,13 @@ public class ScreamTrackerMixer extends BasicModMixer {
 
             // Formula: ((period * table[index / 4]) - period) + ((period * fineTable[index % 4]) - period)
             if (periodAdd < 0) {
-                periodAdd = (int) (((period * ((long) ModConstants.LinearSlideUpTable[slideIndex >> 2])) >> ModConstants.HALFTONE_SHIFT) - period);
+                periodAdd = (int) (((period * (ModConstants.LinearSlideUpTable[slideIndex >> 2])) >> ModConstants.HALFTONE_SHIFT) - period);
                 if ((slideIndex & 0x03) != 0)
-                    periodAdd += (int) (((period * ((long) ModConstants.FineLinearSlideUpTable[slideIndex & 0x3])) >> ModConstants.HALFTONE_SHIFT) - period);
+                    periodAdd += (int) (((period * (ModConstants.FineLinearSlideUpTable[slideIndex & 0x3])) >> ModConstants.HALFTONE_SHIFT) - period);
             } else {
-                periodAdd = (int) (((period * ((long) ModConstants.LinearSlideDownTable[slideIndex >> 2])) >> ModConstants.HALFTONE_SHIFT) - period);
+                periodAdd = (int) (((period * (ModConstants.LinearSlideDownTable[slideIndex >> 2])) >> ModConstants.HALFTONE_SHIFT) - period);
                 if ((slideIndex & 0x03) != 0)
-                    periodAdd += (int) (((period * ((long) ModConstants.FineLinearSlideDownTable[slideIndex & 0x3])) >> ModConstants.HALFTONE_SHIFT) - period);
+                    periodAdd += (int) (((period * (ModConstants.FineLinearSlideDownTable[slideIndex & 0x3])) >> ModConstants.HALFTONE_SHIFT) - period);
             }
             setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod - periodAdd);
         } else
@@ -1519,7 +1519,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
                 nextNotePeriod = aktMemo.currentNotePeriod;
             else {
                 long factor = ModConstants.halfToneTab[(aktMemo.arpeggioIndex == 1) ? (aktMemo.arpeggioParam >> 4) : (aktMemo.arpeggioParam & 0xF)];
-                nextNotePeriod = (int) ((((long) aktMemo.currentNotePeriod) * factor) >> ModConstants.HALFTONE_SHIFT);
+                nextNotePeriod = (int) (((aktMemo.currentNotePeriod) * factor) >> ModConstants.HALFTONE_SHIFT);
             }
         } else {
             nextNotePeriod = aktMemo.arpeggioNote[aktMemo.arpeggioIndex];

@@ -54,7 +54,7 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
             "mp1", "mp2", "mp3"
     };
 
-    //	private JPanel mp3ConfigPanel;
+//	  private JPanel mp3ConfigPanel;
     private MP3Mixer currentMixer;
     private MP3InfoPanel mp3InfoPanel;
     private MP3StreamInfoPanel mp3StreamInfoPanel;
@@ -244,6 +244,12 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
                 if (currentSongName != null && !currentSongName.isEmpty())
                     fireMultimediaContainerEvent(new MultimediaContainerEvent(this, MultimediaContainerEvent.SONG_NAME_CHANGED, currentSongName.trim()));
             }
+
+//            if (tag.getName().equalsIgnoreCase(MP3StreamInfoPanel.LOUDNESS)) {
+//                final String loudness = tag.getValue();
+//                if (currentMixer != null && loudness != null)
+//                    currentMixer.setLoudness(Double.parseDouble(loudness));
+//            }
         }
     }
 

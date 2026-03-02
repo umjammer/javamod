@@ -41,8 +41,6 @@ public class XpkSqsh {
             8, 7, 6, 2, 3, 4, 5, 0,
     };
 
-    private final byte[] buffer;
-
     private static class BitData {
 
         private final byte[] p;
@@ -73,6 +71,8 @@ public class XpkSqsh {
         }
     }
 
+    private final byte[] buffer;
+
     /**
      * Constructor for XpkSqsh
      */
@@ -100,9 +100,7 @@ public class XpkSqsh {
         byte[] xpkSqshId = new byte[12];
         input.read(xpkSqshId, 0, 12);
         input.seek(pos);
-        if (xpkSqshId[0] != 'X' || xpkSqshId[1] != 'P' || xpkSqshId[2] != 'K' || xpkSqshId[3] != 'F') return false;
-        if (xpkSqshId[8] != 'S' || xpkSqshId[9] != 'Q' || xpkSqshId[10] != 'S' || xpkSqshId[11] != 'H') return false;
-        return true;
+        return testData(xpkSqshId);
     }
 
     private byte[] readAndUnpack(RandomAccessInputStream source) throws IOException {

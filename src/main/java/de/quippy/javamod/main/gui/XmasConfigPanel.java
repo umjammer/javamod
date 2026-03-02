@@ -60,7 +60,7 @@ public class XmasConfigPanel extends JPanel {
     public XmasConfigPanel(int myDesiredFPS) {
         super();
         loadBulbs();
-        screenFPS = myDesiredFPS;
+        screenFPS = (myDesiredFPS > 60) ? 60 : myDesiredFPS; // Screens with 144MHz refresh rate is far too much here - so limit to 60FPS maximum refresh rate
         screens = getScreens();
         initialize();
     }

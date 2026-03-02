@@ -54,6 +54,7 @@ public class MP3StreamInfoPanel extends JPanel {
     public static final String META_DATA_INT = "icy-metaint";
     public static final String BANDWIDTH = "icy-br";
     public static final String URL = "icy-url";
+    public static final String LOUDNESS = "x-loudness";
 
     private JLabel mp3Info_L_ServerType = null;
     private JTextField mp3Info_ServerType = null;
@@ -71,6 +72,8 @@ public class MP3StreamInfoPanel extends JPanel {
     private JTextField mp3Info_BandWidth = null;
     private JLabel mp3Info_L_URL = null;
     private JTextField mp3Info_URL = null;
+    private JLabel mp3Info_L_LOUDNESS = null;
+    private JTextField mp3Info_LOUDNESS = null;
     private JLabel mp3Info_L_ShortDescription = null;
     private JTextField mp3Info_ShortDescription = null;
 
@@ -151,9 +154,11 @@ public class MP3StreamInfoPanel extends JPanel {
         this.add(getMP3Info_MetaDataInt(), Helpers.getGridBagConstraint(1, 6, 1, 0, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
         this.add(getMP3Info_L_BandWidth(), Helpers.getGridBagConstraint(0, 7, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.EAST, 0.0, 0.0));
         this.add(getMP3Info_BandWidth(), Helpers.getGridBagConstraint(1, 7, 1, 0, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
-        this.add(getMP3Info_L_ShortDescription(), Helpers.getGridBagConstraint(0, 8, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.EAST, 0.0, 0.0));
-        this.add(getMP3Info_ShortDescription(), Helpers.getGridBagConstraint(1, 8, 1, 0, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
-        this.add(new JPanel(), Helpers.getGridBagConstraint(0, 9, 1, 0, java.awt.GridBagConstraints.BOTH, java.awt.GridBagConstraints.EAST, 1.0, 1.0));
+        this.add(getMP3Info_L_Loudness(), Helpers.getGridBagConstraint(0, 8, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.EAST, 0.0, 0.0));
+        this.add(getMP3Info_Loudness(), Helpers.getGridBagConstraint(1, 8, 1, 0, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
+        this.add(getMP3Info_L_ShortDescription(), Helpers.getGridBagConstraint(0, 9, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.EAST, 0.0, 0.0));
+        this.add(getMP3Info_ShortDescription(), Helpers.getGridBagConstraint(1, 9, 1, 0, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
+        this.add(new JPanel(), Helpers.getGridBagConstraint(0, 10, 1, 0, java.awt.GridBagConstraints.BOTH, java.awt.GridBagConstraints.EAST, 1.0, 1.0));
 
         this.fields = new HashMap<>();
         fields.put(SONGNAME, getMP3Info_ShortDescription());
@@ -166,6 +171,7 @@ public class MP3StreamInfoPanel extends JPanel {
         fields.put(META_DATA_INT, getMP3Info_MetaDataInt());
         fields.put(BANDWIDTH, getMP3Info_BandWidth());
         fields.put(URL, getMP3Info_URL());
+        fields.put(LOUDNESS, getMP3Info_Loudness());
     }
 
     private javax.swing.JLabel getMP3Info_L_ServerType() {
@@ -268,6 +274,26 @@ public class MP3StreamInfoPanel extends JPanel {
         return mp3Info_URL;
     }
 
+    private javax.swing.JLabel getMP3Info_L_Loudness() {
+        if (mp3Info_L_LOUDNESS == null) {
+            mp3Info_L_LOUDNESS = new javax.swing.JLabel();
+            mp3Info_L_LOUDNESS.setName("mp3Info_L_LOUDNESS");
+            mp3Info_L_LOUDNESS.setText("Loudness");
+            mp3Info_L_LOUDNESS.setFont(Helpers.getDialogFont());
+        }
+        return mp3Info_L_LOUDNESS;
+    }
+
+    private javax.swing.JTextField getMP3Info_Loudness() {
+        if (mp3Info_LOUDNESS == null) {
+            mp3Info_LOUDNESS = new javax.swing.JTextField();
+            mp3Info_LOUDNESS.setName("mp3Info_LOUDNESS");
+            mp3Info_LOUDNESS.setFont(Helpers.getDialogFont());
+            mp3Info_LOUDNESS.setEditable(false);
+        }
+        return mp3Info_LOUDNESS;
+    }
+
     private javax.swing.JLabel getMP3Info_L_ContentType() {
         if (mp3Info_L_ContentType == null) {
             mp3Info_L_ContentType = new javax.swing.JLabel();
@@ -355,7 +381,7 @@ public class MP3StreamInfoPanel extends JPanel {
 
     public void fillInfoPanelWith(IcyTag icyTag) {
         if (icyTag == null) return;
-        JTextField field = fields.get(icyTag.getName().toLowerCase());
+        JTextField field = fields.get(icyTag.getName());
         if (field != null) {
             String value = icyTag.getValue();
             if (value != null) field.setText(value.trim());
