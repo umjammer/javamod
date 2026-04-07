@@ -1,7 +1,7 @@
 [![Release](https://jitpack.io/v/umjammer/javamod.svg)](https://jitpack.io/#umjammer/javamod)
 [![Java CI](https://github.com/umjammer/javamod/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/javamod/actions/workflows/maven.yml)
 [![CodeQL](https://github.com/umjammer/javamod/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/umjammer/javamod/actions/workflows/codeql-analysis.yml)
-![Java](https://img.shields.io/badge/Java-17-b07219)
+![Java](https://img.shields.io/badge/Java-25-b07219)
 [![Parent](https://img.shields.io/badge/Parent-vavi--sound--sandbox-pink)](https://github.com/umjammer/vavi-sound-sandbox)
 
 # JavaMod
@@ -21,7 +21,7 @@
 | opl    | ROL, LAA, CMF, DRO, SCI                                                     |   ✅    |           ✅           | this                                                         | [opl3 class is duplicated](https://github.com/umjammer/vavi-sound-sandbox) | gbc,spc are not tested       |
 | opl    | HSC, SNG, D00, ADL, RAD                                                     |   🚫   |                       |                                                              |
 | sid    | SID                                                                         |   ✅    |           ✅           | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)           | RSID?                                                                      |
-| vgm    | VGM, GBC, NSF, SPC                                                          |   ✅    | ✅&nbsp;<sup>[1]</sup> | [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu) |                                                                            |
+| vgm    | VGM, GBC, NSF, SPC, KSS                                                     |   ✅    | ✅&nbsp;<sup>[1]</sup> | [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu) |                                                                            |
 
 <sub>[1] implemented in [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu)</sub>
 
@@ -58,7 +58,7 @@
 
 ### system property
 
- * javamod.player.opl.oplversion ... `FMOPL_072_YM3526`, `FMOPL_072_YM3812`, `OPL3`
+ * `javamod.player.opl.oplversion` ... `FMOPL_072_YM3526`, `FMOPL_072_YM3812`, `OPL3`
 
 ## References
 
