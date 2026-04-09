@@ -50,7 +50,7 @@ public class FileOrPackedInputStream extends InputStream {
     /**
      * Constructor for FileOrPackedInputStream
      */
-    public FileOrPackedInputStream(File file) throws IOException, FileNotFoundException {
+    public FileOrPackedInputStream(File file) throws IOException {
         super();
         if (!file.exists()) {
             try {
@@ -65,14 +65,14 @@ public class FileOrPackedInputStream extends InputStream {
     /**
      * Constructor for FileOrPackedInputStream
      */
-    public FileOrPackedInputStream(String fileName) throws IOException, FileNotFoundException {
+    public FileOrPackedInputStream(String fileName) throws IOException {
         this(new File(fileName));
     }
 
     /**
      * Constructor for FileOrPackedInputStream
      */
-    public FileOrPackedInputStream(URL fromUrl) throws IOException, FileNotFoundException {
+    public FileOrPackedInputStream(URL fromUrl) throws IOException {
         super();
         try {
             stream = fromUrl.openStream();

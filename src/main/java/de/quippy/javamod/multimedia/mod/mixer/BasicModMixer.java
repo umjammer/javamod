@@ -23,6 +23,7 @@
 package de.quippy.javamod.multimedia.mod.mixer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -500,7 +501,7 @@ public abstract class BasicModMixer {
         bufferDiff = 0;
         // again OMPT specific - the default modern tempo swing
         defaultTempoSwing = new int [mod.getRowsPerBeat()];
-        for (int i = 0; i < defaultTempoSwing.length; i++) defaultTempoSwing[i] = ModConstants.TEMPOSWING_UNITY;
+        Arrays.fill(defaultTempoSwing, ModConstants.TEMPOSWING_UNITY);
         //normalizeSwing(defaultTempoSwing); // no need to normalize the default, that is already normalized
         calculateSamplesPerTick();
         leftOverSamplesPerTick = 0;

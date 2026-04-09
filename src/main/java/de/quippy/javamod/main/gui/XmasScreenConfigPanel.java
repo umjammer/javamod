@@ -126,14 +126,11 @@ public class XmasScreenConfigPanel extends JPanel {
             alwaysOnTopCheckBox.setText("always on top");
             alwaysOnTopCheckBox.setFont(Helpers.getDialogFont());
             alwaysOnTopCheckBox.setSelected(isWithSpaceEnabled());
-            alwaysOnTopCheckBox.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(final ItemEvent e) {
-                    if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
-                        final boolean isOnTop = getAlwaysOnTopBox().isSelected();
-                        getTransparentJWindow().setAlwaysOnTop(isOnTop);
-                        if (isOnTop) getTransparentJWindow().toFront();
-                    }
+            alwaysOnTopCheckBox.addItemListener(e -> {
+                if (e.getStateChange() == ItemEvent.SELECTED || e.getStateChange() == ItemEvent.DESELECTED) {
+                    final boolean isOnTop = getAlwaysOnTopBox().isSelected();
+                    getTransparentJWindow().setAlwaysOnTop(isOnTop);
+                    if (isOnTop) getTransparentJWindow().toFront();
                 }
             });
         }
@@ -271,7 +268,7 @@ public class XmasScreenConfigPanel extends JPanel {
         return getAlwaysOnTopBox().isSelected();
     }
 
-    private void setAlwaysOnTopEnabled(final boolean alwaysOnTopEnabled) {
+    private void setAlwaysOnTopEnabled(boolean alwaysOnTopEnabled) {
         getAlwaysOnTopBox().setSelected(alwaysOnTopEnabled);
     }
 

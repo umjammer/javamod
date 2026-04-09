@@ -589,7 +589,7 @@ public class ProTrackerMod extends Module {
         if (!isAmigaLike && wasAmigaLike) {
             setModType((isAmigaLike || isGenericMultiChannel) ? ModConstants.MODTYPE_MOD : ModConstants.MODTYPE_XM);
             for (int i = 0; i < getNSamples(); i++) {
-                final Sample current = instrumentContainer.getSample(i);
+                Sample current = instrumentContainer.getSample(i);
                 current.setFineTune(current.fineTune << 4); // if not amiga like, we use XM_AMIGA_TABLE - finetune is -128-+127 then
             }
         }

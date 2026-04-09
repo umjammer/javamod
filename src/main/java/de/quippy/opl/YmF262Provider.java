@@ -61,8 +61,8 @@ public class YmF262Provider implements MdFmProvider {
     public void writePort(int addr, int data) {
 //logger.log(Level.TRACE, "write: " + addr + ", " + data);
         switch (addr) {
-            case 0, 2 -> { this.address = data; }
-            case 1, 3 -> { ymf262.write((addr & 2) >> 1, address, data); }
+            case 0, 2 -> this.address = data;
+            case 1, 3 -> ymf262.write((addr & 2) >> 1, address, data);
         }
     }
 }

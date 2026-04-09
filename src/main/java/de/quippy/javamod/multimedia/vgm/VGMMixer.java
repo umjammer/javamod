@@ -135,7 +135,7 @@ logger.log(Level.TRACE, "write: " + len + ", " + player.isPlaying());
 
         try {
 logger.log(Level.TRACE, "sampleRate: " + sampleRate);
-            setAudioFormat(new AudioFormat(this.sampleRate, 16, 2, true, true));
+            setAudioFormat(new AudioFormat(sampleRate, 16, 2, true, true));
             openAudioDevice();
             if (!isInitialized()) return;
 

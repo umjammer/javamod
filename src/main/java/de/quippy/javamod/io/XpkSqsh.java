@@ -132,7 +132,7 @@ public class XpkSqsh {
         return null;
     }
 
-    private boolean unpack(RandomAccessInputStream source, byte[] dst, int srcPos) throws IOException {
+    private static boolean unpack(RandomAccessInputStream source, byte[] dst, int srcPos) throws IOException {
         int dstPos = 0;
         source.seek(srcPos);
         while (dstPos < dst.length) {

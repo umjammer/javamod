@@ -56,7 +56,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
-import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -285,7 +285,7 @@ public class Helpers {
      * @return a new string with target encoding or the original string if conversion failed or src is null
      * @since 03.12.2024
      */
-    public static final String convertStringEncoding(final String src, final String srcEncoding, final String trgtEncoding) {
+    public static String convertStringEncoding(String src, String srcEncoding, String trgtEncoding) {
         if (src != null) {
             try {
                 return new String((srcEncoding == null) ? src.getBytes() : src.getBytes(srcEncoding), trgtEncoding);
@@ -580,7 +580,7 @@ public class Helpers {
         // fall through - so let's try this...
         try {
             return file.toUri().toURL();
-        } catch (final MalformedURLException ex) {
+        } catch (MalformedURLException ex) {
         }
         return null;
     }
@@ -593,16 +593,16 @@ public class Helpers {
      * @param fileString
      * @return
      */
-    public static URL createURLfromFileString(final String fileString) {
+    public static URL createURLfromFileString(String fileString) {
         try {
-            final StringBuilder b = new StringBuilder(fileString.replace('\\', '/'));
+            StringBuilder b = new StringBuilder(fileString.replace('\\', '/'));
             if (b.length() > 2 && b.charAt(0) == '/' && b.charAt(1) == '/') b.insert(0, "//");
             if (b.charAt(0) != '/') b.insert(0, "/");
-            final URI uri = new URI("file", null, b.toString(), null);
+            URI uri = new URI("file", null, b.toString(), null);
             return uri.toURL();
-        } catch (final URISyntaxException e) {
+        } catch (URISyntaxException e) {
             // cannot happen...
-        } catch (final MalformedURLException ex) {
+        } catch (MalformedURLException ex) {
             // should not happen ;)
         }
         return null;
@@ -641,12 +641,7 @@ public class Helpers {
      * @since 22.07.2015
      */
     public static String createStringFromURLString(String url) {
-        try {
-            return URLDecoder.decode(url, CODING_UTF8);
-        } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.ERROR, "Helpers::createStringRomURLString", ex);
-        }
-        return url;
+        return URLDecoder.decode(url, StandardCharsets.UTF_8);
     }
 
     /**
@@ -897,7 +892,7 @@ public class Helpers {
                     try {
                         URI returnURL = fullURL.toURI().normalize();
                         if (isWindowsNetworkDrive) // normalize will delete the trailing "////" in front - so re-add those
-                            return new URI(returnURL.getScheme(), null, returnURL.getHost(), returnURL.getPort(), ((new StringBuilder("///")).append(returnURL.getPath())).toString(), null, null).toURL();
+                            return new URI(returnURL.getScheme(), null, returnURL.getHost(), returnURL.getPort(), "///" + returnURL.getPath(), null, null).toURL();
                         else
                             return returnURL.toURL();
                     } catch (URISyntaxException x) {
@@ -1166,7 +1161,7 @@ public class Helpers {
         BufferedReader reader = null;
         try {
             URL version_url = createURLfromString(Helpers.VERSION_URL);
-            reader = new BufferedReader(new InputStreamReader(version_url.openStream(), Helpers.CODING_UTF8));
+            reader = new BufferedReader(new InputStreamReader(version_url.openStream(), StandardCharsets.UTF_8));
             String version = reader.readLine();
             reader.close();
             reader = null;
