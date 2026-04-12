@@ -60,6 +60,13 @@
 
  * `javamod.player.opl.oplversion` ... `FMOPL_072_YM3526`, `FMOPL_072_YM3812`, `OPL3`
 
+### jvm options
+
+```
+--add-opens=java.base/java.io=ALL-UNNAMED
+--add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+```
+
 ## References
 
 * https://github.com/quippy-git/javamod

@@ -271,7 +271,7 @@ public class FMOPL_072 {
         /** pan : &output_pointer[pan] */
         private int output_pointer_pan;
         private double freqBase;
-        private int memory_size = 0x4000;
+        private final int memory_size = 0x4000;
         private int output_range;
         /** current address */
         private int now_addr;
@@ -348,11 +348,11 @@ public class FMOPL_072 {
         // ROM Emulation
         private final byte[] rom = new byte[memory_size];
 
-        private int read_byte(final int offset) {
+        private int read_byte(int offset) {
             return ((int) rom[offset]) & 0xff;
         }
 
-        private void write_byte(final int offset, final int value) {
+        private void write_byte(int offset, int value) {
             rom[offset] = (byte) (value & 0xff);
         }
 
@@ -579,7 +579,7 @@ public class FMOPL_072 {
                     break;
 
                 case 0x0b: { // Output level control (volume, linear)
-                    final int oldvol = volume;
+                    int oldvol = volume;
                     volume = (v & 0xff) * (output_range / 256) / YM_DELTAT_DECODE_RANGE;
                     //                              v     *     ((1<<16)>>8)        >>  15;
                     //                      thus:   v     *     (1<<8)              >>  15;
@@ -735,9 +735,9 @@ public class FMOPL_072 {
             }
 
             // ElSemi: Fix interpolator.
-            deltaT.adpcmL = deltaT.prev_acc * (int) ((1 << YM_DELTAT_SHIFT) - deltaT.now_step);
-            deltaT.adpcmL += (deltaT.acc * (int) deltaT.now_step);
-            deltaT.adpcmL = (deltaT.adpcmL >> YM_DELTAT_SHIFT) * (int) deltaT.volume;
+            deltaT.adpcmL = deltaT.prev_acc * ((1 << YM_DELTAT_SHIFT) - deltaT.now_step);
+            deltaT.adpcmL += (deltaT.acc * deltaT.now_step);
+            deltaT.adpcmL = (deltaT.adpcmL >> YM_DELTAT_SHIFT) * deltaT.volume;
 
             // output for work of output channels (outd[OPNxxxx])
             deltaT.output_pointer[deltaT.output_pointer_pan] += deltaT.adpcmL;
@@ -782,9 +782,9 @@ public class FMOPL_072 {
             }
 
             // ElSemi: Fix interpolator.
-            DELTAT.adpcmL = DELTAT.prev_acc * (int) ((1 << YM_DELTAT_SHIFT) - DELTAT.now_step);
-            DELTAT.adpcmL += (DELTAT.acc * (int) DELTAT.now_step);
-            DELTAT.adpcmL = (DELTAT.adpcmL >> YM_DELTAT_SHIFT) * (int) DELTAT.volume;
+            DELTAT.adpcmL = DELTAT.prev_acc * ((1 << YM_DELTAT_SHIFT) - DELTAT.now_step);
+            DELTAT.adpcmL += (DELTAT.acc * DELTAT.now_step);
+            DELTAT.adpcmL = (DELTAT.adpcmL >> YM_DELTAT_SHIFT) * DELTAT.volume;
 
             // output for work of output channels (outd[OPNxxxx])
             DELTAT.output_pointer[DELTAT.output_pointer_pan] += DELTAT.adpcmL;
@@ -1251,7 +1251,7 @@ public class FMOPL_072 {
         private final int[] output = new int[1];
 //#if BUILD_Y8950
         /** for Y8950 DELTA-T, chip is mono, that 4 here is just for safety */
-        private int[] output_deltat = new int[4];
+        private final int[] output_deltat = new int[4];
 //#endif
 
         /** status set and IRQ handling */

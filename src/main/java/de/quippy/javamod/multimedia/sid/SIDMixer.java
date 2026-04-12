@@ -267,7 +267,7 @@ logger.log(Level.DEBUG, "sid sampleRate: " + sampleRate);
 logger.log(Level.TRACE, "write: " + len + ", " + sidPlayer.stateProperty().get());
                     writeSampleDataToLine(b, off, len);
                 } catch (Exception e) {
-logger.log(Level.TRACE, "stream closed?: " + sidPlayer.stateProperty().get() + ", " + e.toString());
+logger.log(Level.TRACE, "stream closed?: " + sidPlayer.stateProperty().get() + ", " + e);
                 }
             }
         };

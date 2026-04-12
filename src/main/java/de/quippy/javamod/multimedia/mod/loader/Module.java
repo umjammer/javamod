@@ -1125,6 +1125,15 @@ public abstract class Module {
     }
 
     /**
+     * Default return value - only needed for Protracker Mods
+     * @since 23.03.2026
+     * @return false
+     */
+    public boolean isAmigaLike() {
+        return false;
+    }
+
+    /**
      * @return short info string
      * @since 29.03.2010
      */

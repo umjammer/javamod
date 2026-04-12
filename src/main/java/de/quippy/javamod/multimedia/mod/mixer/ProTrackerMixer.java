@@ -31,7 +31,6 @@ import de.quippy.javamod.multimedia.mod.loader.instrument.Instrument;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement;
 import de.quippy.javamod.multimedia.mod.midi.MidiMacros;
-import de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory;
 
 
 /**
@@ -294,6 +293,7 @@ public class ProTrackerMixer extends BasicModMixer {
 
             // With an illegal note delay (longer than currentTempo) the period is set if no new note is present
             if (currentTempo == currentTick && aktMemo.noteDelayCount >= currentTempo) {
+                if (!mod.isAmigaLike()) return; // ignore illegal note delays with multichannel mods
                 aktMemo.noteDelayCount = -1;
                 if (hasNoNote(aktMemo.currentElement)) { // only if there is no note present
                     // simply set the period
@@ -316,10 +316,11 @@ public class ProTrackerMixer extends BasicModMixer {
                     // or finished.
                     // Otherwise, it will be set after loop
                     // Of course not, if note delay effect
-                    if ((hasNoNote(element) && !isNoteDelayEffect) && // Inplace: no note - plus not with note delay
+                    if (mod.isAmigaLike() && // No inplace instrument swap for Multichannel Protrackers
+                            ((hasNoNote(element) && !isNoteDelayEffect) && // Inplace: no note - plus not with note delay
                             ((aktMemo.currentSample == null || !aktMemo.currentSample.hasSampleData()) || // previous is empty
                                     (element.getEffect() == 0x0E && (element.getEffectOp() & 0xF0) == 0x90)) || // 0xE9x Re-Trigger command.
-                            (!isNoteDelayEffect && aktMemo.currentSample != aktMemo.assignedSample && aktMemo.instrumentFinished)) { // inplace of finished instrument, even with note
+                                    (!isNoteDelayEffect && aktMemo.currentSample != aktMemo.assignedSample && aktMemo.instrumentFinished))) { // inplace of finished instrument, even with note
                         // Now activate new Instrument...
                         aktMemo.currentSample = aktMemo.assignedSample;
                         resetInstrumentPointers(aktMemo, true);
@@ -629,7 +630,7 @@ public class ProTrackerMixer extends BasicModMixer {
                 break;
             case 0x0F:            // SET SPEED / BPM
                 if (aktMemo.assignedEffectParam >= 0x20 && !mod.getModSpeedIsTicks()) { // set BPM
-                    if (isMOD) {
+                    if (isMOD && mod.isAmigaLike()) {
                         // We do it the next round in either doTickEffects or doRowEffects (with speed 1)
                         modSpeedSet = aktMemo.assignedEffectParam;
                         if (modSpeedSet > 0xff) modSpeedSet = 0xff;

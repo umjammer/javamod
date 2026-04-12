@@ -68,14 +68,13 @@ public class ProTrackerMod extends Module {
     /** Tremolo Ramp Down Waveform behavior change for some mods (FT2 style) */
     private boolean ft2Tremolos;
 
-//    /**
-//     * Not yet used - let's see, if we need that once...
-//     *
-//     * @return the isAmigaLike
-//     */
-//    public boolean isAmigaLike() {
-//        return isAmigaLike;
-//    }
+    /**
+     * @return the isAmigaLike
+     */
+    @Override
+    public boolean isAmigaLike() {
+        return isAmigaLike;
+    }
 
     @Override
     public String[] getFileExtensionList() {
@@ -406,7 +405,7 @@ public class ProTrackerMod extends Module {
                 pe.setPeriod(0);
 
             if (noteIndex < (3 * 12) || noteIndex > ((3 * 12) + 35)) // Exceeding note limits of ProTracker
-                isAmigaLike = !(isGenericMultiChannel = true); // we fix this with setting to XM AMIGA Table
+                isAmigaLike = isGenericMultiChannel = false; // we fix this with setting to XM playback
         }
 
         pe.setEffect((note & 0xf00) >> 8);
@@ -562,6 +561,7 @@ public class ProTrackerMod extends Module {
 
         PatternContainer patternContainer = new PatternContainer(this, getNPattern(), 64, getNChannels());
         setPatternContainer(patternContainer);
+        boolean wasAmigaLike = isAmigaLike; // we need to know, if isAmigaLike changes during loading of patterns
         for (int pattNum = 0; pattNum < getNPattern(); pattNum++) {
             if (isFLT8) { // StarTrekker 8 channel is slightly different to read
                 for (int row = 0; row < 64; row++) {
@@ -585,6 +585,15 @@ public class ProTrackerMod extends Module {
                 }
             }
         }
+        // If we encountered periods too big for ProTracker, we changed to !isAmigaLike - we then must re-evaluate:
+        if (!isAmigaLike && wasAmigaLike) {
+            setModType((isAmigaLike || isGenericMultiChannel) ? ModConstants.MODTYPE_MOD : ModConstants.MODTYPE_XM);
+            for (int i = 0; i < getNSamples(); i++) {
+                Sample current = instrumentContainer.getSample(i);
+                current.setFineTune(current.fineTune << 4); // if not amiga like, we use XM_AMIGA_TABLE - finetune is -128-+127 then
+            }
+        }
+
         // Sample data: If the mod file was too short, we need to recalculate:
         if (bytesLeft < 0) {
             setTrackerName(getTrackerName() + " (too short for " + (-bytesLeft) + " bytes)");

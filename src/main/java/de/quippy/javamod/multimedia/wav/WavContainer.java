@@ -75,7 +75,7 @@ public class WavContainer extends MultimediaContainer {
      * @throws UnsupportedAudioFileException
      * @since 06.12.2024
      */
-    public static AudioInputStream getAudioInputStream(final URL waveFileUrl) throws IOException, UnsupportedAudioFileException {
+    public static AudioInputStream getAudioInputStream(URL waveFileUrl) throws IOException, UnsupportedAudioFileException {
         if (waveFileUrl.getFile().toLowerCase().endsWith(".img"))
             return new AudioInputStream(new FileOrPackedInputStream(waveFileUrl), new AudioFormat(44100, 16, 2, true, false), AudioSystem.NOT_SPECIFIED);
         else

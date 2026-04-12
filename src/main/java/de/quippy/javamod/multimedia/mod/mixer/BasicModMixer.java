@@ -23,6 +23,7 @@
 package de.quippy.javamod.multimedia.mod.mixer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -500,7 +501,7 @@ public abstract class BasicModMixer {
         bufferDiff = 0;
         // again OMPT specific - the default modern tempo swing
         defaultTempoSwing = new int [mod.getRowsPerBeat()];
-        for (int i = 0; i < defaultTempoSwing.length; i++) defaultTempoSwing[i] = ModConstants.TEMPOSWING_UNITY;
+        Arrays.fill(defaultTempoSwing, ModConstants.TEMPOSWING_UNITY);
         //normalizeSwing(defaultTempoSwing); // no need to normalize the default, that is already normalized
         calculateSamplesPerTick();
         leftOverSamplesPerTick = 0;
@@ -2059,7 +2060,7 @@ public abstract class BasicModMixer {
         // on each occurrence.
         // That however leads to speed changes on second Tick, not on first Tick. But if current
         // speed is 1, the BPM change is automatically a row later.
-        if (isMOD && modSpeedSet > 0) {
+        if (isMOD && modSpeedSet > 0 && mod.isAmigaLike()) { // However, if we are a multichannel mod, don't
             currentBPM = modSpeedSet;
             modSpeedSet = 0;
             calculateSamplesPerTick();
@@ -2121,7 +2122,8 @@ public abstract class BasicModMixer {
         // if not ProTracker, recalculate samplesPerTick here.
         // do this every(!) Tick with tempoMode "Modern" or on Tick zero for all others
         // currentPattern is null, if end was reached
-        if (!isMOD && currentPattern != null && (mod.getTempoMode() == ModConstants.TEMPOMODE_MODERN || currentTick == currentTempo))
+        // However, if we are a multichannel mod, don't (
+        if (!(isMOD && mod.isAmigaLike()) && currentPattern != null && (mod.getTempoMode() == ModConstants.TEMPOMODE_MODERN || currentTick == currentTempo))
             calculateSamplesPerTick();
 
         return (currentPatternIndex == -1 && currentTick <= 0);
@@ -2135,7 +2137,7 @@ public abstract class BasicModMixer {
      * @param aktMemo memory
      * @since 18.06.2006
      */
-    protected void fitIntoLoops(ChannelMemory aktMemo) {
+    protected void fitIntoLoops(BasicModMixer.ChannelMemory aktMemo) {
         Sample sample = aktMemo.currentSample;
         if (sample.length <= 0) return;
 

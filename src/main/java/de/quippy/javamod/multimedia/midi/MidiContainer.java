@@ -191,11 +191,11 @@ public class MidiContainer extends MultimediaContainer {
                         if (lastIndex > 0) lastTrackEvent = track.get(lastIndex - 1);
                     }
                 }
-                final long lastTick = lastTrackEvent.getTick();
+                long lastTick = lastTrackEvent.getTick();
                 if (lastTick > highestTick) highestTick = lastTick;
             }
             highestTick += currentSequence.getResolution();
-            final MidiMessage endOfTrack = new MetaMessage(0x2F, null, 0);
+            MidiMessage endOfTrack = new MetaMessage(0x2F, null, 0);
             for (Track track : currentSequence.getTracks()) {
                 track.add(new MidiEvent(endOfTrack, highestTick));
             }

@@ -5,7 +5,7 @@
 
   <groupId>net.sourceforge.javamod</groupId>
   <artifactId>JavaMod</artifactId>
-  <version>3.9.15</version>
+  <version>3.9.16</version>
 
   <build>
     <plugins>
@@ -75,7 +75,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / vavi -->
       <artifactId>vavi-sound-flac</artifactId>
-      <version>0.0.7</version>
+      <version>0.0.8</version>
     </dependency>
     <dependency>
       <groupId>org.jcraft</groupId>
@@ -168,7 +168,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- uk.co.omgdrv / com.github.umjammer -->
       <artifactId>simplevgm</artifactId>
-      <version>1.5.8</version>
+      <version>1.5.9</version>
     </dependency>
 
     <dependency>
