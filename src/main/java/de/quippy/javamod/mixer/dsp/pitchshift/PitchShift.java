@@ -269,7 +269,7 @@ public class PitchShift implements DSPEffect {
         for (int k = 0; k < fftFrameSize2; k++) {
             float real = gFFTworksp[k << 1];
             float imag = gFFTworksp[(k << 1) + 1];
-            float magn = 2f * (float) FastMath.sqrt(real * real + imag * imag);
+            float magn = 2f * FastMath.fastSqrt(real * real + imag * imag);
             float phase = (float) FastMath.atan2(imag, real);
             float tmp = phase - gLastPhase[c][k];
             gLastPhase[c][k] = phase;
