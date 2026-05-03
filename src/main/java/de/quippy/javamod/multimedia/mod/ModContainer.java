@@ -62,6 +62,7 @@ public class ModContainer extends MultimediaContainer implements SpiMultimediaCo
     public static final String PROPERTY_PLAYER_FREQUENCY = "javamod.player.frequency";
     public static final String PROPERTY_PLAYER_MSBUFFERSIZE = "javamod.player.msbuffersize";
     public static final String PROPERTY_PLAYER_ISP = "javamod.player.ISP";
+    public static final String PROPERTY_PLAYER_AMIGAEMULATION = "javamod.player.PAULA";
     public static final String PROPERTY_PLAYER_WIDESTEREOMIX = "javamod.player.widestereomix";
     public static final String PROPERTY_PLAYER_NOISEREDUCTION = "javamod.player.noisereduction";
     public static final String PROPERTY_PLAYER_MEGABASS = "javamod.player.megabass";
@@ -95,6 +96,7 @@ public class ModContainer extends MultimediaContainer implements SpiMultimediaCo
     public static final String DEFAULT_NOLOOPS = "1";
     public static final String DEFAULT_MAXNNACHANNELS = "200";
     public static final String DEFAULT_INTERPOLATION_INDEX = "4"; // Integer.toString(ModConstants.INTERPOLATION_WINDOWSFIR);
+    public static final String DEFAULT_AMIGAEMULATION_INDEX = "0"; // NONE
     public static final String DEFAULT_DITHERFILTER = "4";
     public static final String DEFAULT_DITHERTYPE = "2";
     public static final String DEFAULT_DITHERBYPASS = "false";
@@ -109,6 +111,9 @@ public class ModContainer extends MultimediaContainer implements SpiMultimediaCo
     };
     protected static final String[] INTERPOLATION = {
             "None", "Linear", "Cubic", "Kaiser", "Windowed FIR"
+    };
+    protected static final String[] AMIGA_EMULATION = {
+            "None", "Amiga 500", "Amiga 1200"
     };
     protected static final String[] BUFFERSIZE = {
             "10", "15", "20", "25", DEFAULT_MSBUFFERSIZE, "40", "50", "75", "100", "150", "175", "200", "250", "500", "750"
@@ -190,7 +195,7 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
             if (theMixer == null || !theMixer.getMod().getFileName().equals(theMod.getFileName())) {
                 int loopValue = Integer.parseInt((currentProps != null) ? currentProps.getProperty(PROPERTY_PLAYER_NOLOOPS, DEFAULT_NOLOOPS) : DEFAULT_NOLOOPS);
                 if (loopValue == ModConstants.PLAYER_LOOP_DEACTIVATED) loopValue = ModConstants.PLAYER_LOOP_IGNORE;
-                theMixer = new ModMixer(theMod, 8, 1, 22050, 0, false, false, false, false, loopValue, 0, 500, 0, 0, true);
+                theMixer = new ModMixer(theMod, 8, 1, 22050, 0, 0, false, false, false, false, loopValue, 0, 500, 0, 0, true);
             }
             duration = theMixer.getLengthInMilliseconds();
         } catch (Throwable ex) {
@@ -210,7 +215,7 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
      * @since 13.10.2007
      */
     @Override
-    public JPanel getInfoPanel() {
+    public ModInfoPanel getInfoPanel() {
         if (modInfoPanel == null) {
             modInfoPanel = new ModInfoPanel();
             modInfoPanel.setParentContainer(this);
@@ -219,7 +224,7 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
     }
 
     @Override
-    public JPanel getConfigPanel() {
+    public ModConfigPanel getConfigPanel() {
         if (modConfigPanel == null) {
             modConfigPanel = new ModConfigPanel();
             modConfigPanel.setParentContainer(this);
@@ -248,6 +253,7 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
         currentProps.setProperty(PROPERTY_PLAYER_BITSPERSAMPLE, newProps.getProperty(PROPERTY_PLAYER_BITSPERSAMPLE, DEFAULT_BITSPERSAMPLE));
         currentProps.setProperty(PROPERTY_PLAYER_STEREO, newProps.getProperty(PROPERTY_PLAYER_STEREO, DEFAULT_CHANNEL));
         currentProps.setProperty(PROPERTY_PLAYER_ISP, newProps.getProperty(PROPERTY_PLAYER_ISP, DEFAULT_INTERPOLATION_INDEX));
+        currentProps.setProperty(PROPERTY_PLAYER_AMIGAEMULATION, newProps.getProperty(PROPERTY_PLAYER_AMIGAEMULATION, DEFAULT_AMIGAEMULATION_INDEX));
         currentProps.setProperty(PROPERTY_PLAYER_WIDESTEREOMIX, newProps.getProperty(PROPERTY_PLAYER_WIDESTEREOMIX, DEFAULT_WIDESTEREOMIX));
         currentProps.setProperty(PROPERTY_PLAYER_NOISEREDUCTION, newProps.getProperty(PROPERTY_PLAYER_NOISEREDUCTION, DEFAULT_NOISEREDUCTION));
         currentProps.setProperty(PROPERTY_PLAYER_MEGABASS, newProps.getProperty(PROPERTY_PLAYER_MEGABASS, DEFAULT_MEGABASS));
@@ -259,11 +265,11 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
         currentProps.setProperty(PROPERTY_PLAYER_DITHERBYPASS, newProps.getProperty(PROPERTY_PLAYER_DITHERBYPASS, DEFAULT_DITHERBYPASS));
 
         if (!MultimediaContainerManager.isHeadlessMode()) {
-            ModConfigPanel configPanel = (ModConfigPanel) getConfigPanel();
+            ModConfigPanel configPanel = getConfigPanel();
             configPanel.configurationChanged(newProps);
 
             // Info Dialog sizes and locations
-            ModInfoPanel infoPanel = (ModInfoPanel) getInfoPanel();
+            ModInfoPanel infoPanel = getInfoPanel();
             infoPanel.setPatternDialogLocation(Helpers.getPointFromString(newProps.getProperty(PROPERTY_PATTERN_POS, "-1x-1")));
             infoPanel.setPatternDialogSize(Helpers.getDimensionFromString(newProps.getProperty(PROPERTY_PATTERN_SIZE, "640x480")));
             infoPanel.setPatternDialogVisible(Boolean.parseBoolean(newProps.getProperty(PROPERTY_PATTERN_VISABLE, "false")));
@@ -285,22 +291,22 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
     public void configurationSave(Properties props) {
         if (currentProps == null) currentProps = new Properties();
         if (!MultimediaContainerManager.isHeadlessMode()) {
-            ModConfigPanel configPanel = (ModConfigPanel) getConfigPanel();
+            ModConfigPanel configPanel = getConfigPanel();
             configPanel.configurationSave(currentProps);
 
             // Info Dialog sizes and locations
-            ModPatternDialog patternDialog = ((ModInfoPanel) getInfoPanel()).getModPatternDialog();
+            ModPatternDialog patternDialog = getInfoPanel().getModPatternDialog();
             props.setProperty(PROPERTY_PATTERN_POS, Helpers.getStringFromPoint(patternDialog.getLocation()));
             props.setProperty(PROPERTY_PATTERN_SIZE, Helpers.getStringFromDimension(patternDialog.getSize()));
-            props.setProperty(PROPERTY_PATTERN_VISABLE, Boolean.toString(((ModInfoPanel) getInfoPanel()).getModPatternDialogsVisible()));
-            ModSampleDialog sampleDialog = ((ModInfoPanel) getInfoPanel()).getModSampleDialog();
+            props.setProperty(PROPERTY_PATTERN_VISABLE, Boolean.toString(getInfoPanel().getModPatternDialogsVisible()));
+            ModSampleDialog sampleDialog = getInfoPanel().getModSampleDialog();
             props.setProperty(PROPERTY_SAMPLE_POS, Helpers.getStringFromPoint(sampleDialog.getLocation()));
             props.setProperty(PROPERTY_SAMPLE_SIZE, Helpers.getStringFromDimension(sampleDialog.getSize()));
-            props.setProperty(PROPERTY_SAMPLE_VISABLE, Boolean.toString(((ModInfoPanel) getInfoPanel()).getModSampleDialogsVisible()));
-            ModInstrumentDialog instrumentDialog = ((ModInfoPanel) getInfoPanel()).getModInstrumentDialog();
+            props.setProperty(PROPERTY_SAMPLE_VISABLE, Boolean.toString(getInfoPanel().getModSampleDialogsVisible()));
+            ModInstrumentDialog instrumentDialog = getInfoPanel().getModInstrumentDialog();
             props.setProperty(PROPERTY_INSTRUMENT_POS, Helpers.getStringFromPoint(instrumentDialog.getLocation()));
             props.setProperty(PROPERTY_INSTRUMENT_SIZE, Helpers.getStringFromDimension(instrumentDialog.getSize()));
-            props.setProperty(PROPERTY_INSTRUMENT_VISABLE, Boolean.toString(((ModInfoPanel) getInfoPanel()).getModInstrumentDialogsVisible()));
+            props.setProperty(PROPERTY_INSTRUMENT_VISABLE, Boolean.toString(getInfoPanel().getModInstrumentDialogsVisible()));
         }
 
         if (props != null) {
@@ -309,6 +315,7 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
             props.setProperty(PROPERTY_PLAYER_BITSPERSAMPLE, currentProps.getProperty(PROPERTY_PLAYER_BITSPERSAMPLE, DEFAULT_BITSPERSAMPLE));
             props.setProperty(PROPERTY_PLAYER_STEREO, currentProps.getProperty(PROPERTY_PLAYER_STEREO, DEFAULT_CHANNEL));
             props.setProperty(PROPERTY_PLAYER_ISP, currentProps.getProperty(PROPERTY_PLAYER_ISP, DEFAULT_INTERPOLATION_INDEX));
+            props.setProperty(PROPERTY_PLAYER_AMIGAEMULATION, currentProps.getProperty(PROPERTY_PLAYER_AMIGAEMULATION, DEFAULT_AMIGAEMULATION_INDEX));
             props.setProperty(PROPERTY_PLAYER_WIDESTEREOMIX, currentProps.getProperty(PROPERTY_PLAYER_WIDESTEREOMIX, DEFAULT_WIDESTEREOMIX));
             props.setProperty(PROPERTY_PLAYER_NOISEREDUCTION, currentProps.getProperty(PROPERTY_PLAYER_NOISEREDUCTION, DEFAULT_NOISEREDUCTION));
             props.setProperty(PROPERTY_PLAYER_MEGABASS, currentProps.getProperty(PROPERTY_PLAYER_MEGABASS, DEFAULT_MEGABASS));
@@ -336,6 +343,7 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
         int bitsPerSample = Integer.parseInt(currentProps.getProperty(PROPERTY_PLAYER_BITSPERSAMPLE, DEFAULT_BITSPERSAMPLE));
         int channels = Integer.parseInt(currentProps.getProperty(PROPERTY_PLAYER_STEREO, DEFAULT_CHANNEL));
         int isp = Integer.parseInt(currentProps.getProperty(PROPERTY_PLAYER_ISP, DEFAULT_INTERPOLATION_INDEX));
+        int amigaEmulation = Integer.parseInt(currentProps.getProperty(PROPERTY_PLAYER_AMIGAEMULATION, DEFAULT_AMIGAEMULATION_INDEX));
         boolean wideStereoMix = Boolean.parseBoolean(currentProps.getProperty(PROPERTY_PLAYER_WIDESTEREOMIX, DEFAULT_WIDESTEREOMIX));
         boolean noiseReduction = Boolean.parseBoolean(currentProps.getProperty(PROPERTY_PLAYER_NOISEREDUCTION, DEFAULT_NOISEREDUCTION));
         boolean megaBass = Boolean.parseBoolean(currentProps.getProperty(PROPERTY_PLAYER_MEGABASS, DEFAULT_MEGABASS));
@@ -346,7 +354,8 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
         int ditherFilter = Integer.parseInt(currentProps.getProperty(PROPERTY_PLAYER_DITHERFILTER, DEFAULT_DITHERFILTER));
         int ditherType = Integer.parseInt(currentProps.getProperty(PROPERTY_PLAYER_DITHERTYPE, DEFAULT_DITHERTYPE));
         boolean ditherByPass = Boolean.parseBoolean(currentProps.getProperty(PROPERTY_PLAYER_DITHERBYPASS, DEFAULT_DITHERBYPASS));
-        return new ModMixer(currentMod, bitsPerSample, channels, frequency, isp, wideStereoMix, noiseReduction, megaBass, dcRemoval, loopValue, maxNNAChannels, msBufferSize, ditherFilter, ditherType, ditherByPass);
+
+        return new ModMixer(currentMod, bitsPerSample, channels, frequency, isp, amigaEmulation, wideStereoMix, noiseReduction, megaBass, dcRemoval, loopValue, maxNNAChannels, msBufferSize, ditherFilter, ditherType, ditherByPass);
     }
 
     /**
@@ -366,6 +375,16 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
         wireListeners();
 
         return currentMixer;
+    }
+
+    @Override
+    public void playBackStarted() {
+        if (modConfigPanel != null) modConfigPanel.showFilterUsed(currentMod.supportsAmigaFilter());
+    }
+
+    @Override
+    public void playBackStopped() {
+        if (modConfigPanel != null) modConfigPanel.clearFilterUsed(currentMod.supportsAmigaFilter());
     }
 
     /**

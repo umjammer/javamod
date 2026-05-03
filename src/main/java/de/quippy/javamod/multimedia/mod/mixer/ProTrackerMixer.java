@@ -51,8 +51,8 @@ public class ProTrackerMixer extends BasicModMixer {
     /**
      * Constructor for ProTrackerMixer
      */
-    public ProTrackerMixer(Module mod, int sampleRate, int doISP, int doNoLoops, int maxNNAChannels) {
-        super(mod, sampleRate, doISP, doNoLoops, maxNNAChannels);
+    public ProTrackerMixer(Module mod, int sampleRate, int doISP, int doAmigaEmulation, int doNoLoops, int maxNNAChannels) {
+        super(mod, sampleRate, doISP, doAmigaEmulation, doNoLoops, maxNNAChannels);
     }
 
     @Override
@@ -72,12 +72,25 @@ public class ProTrackerMixer extends BasicModMixer {
     @Override
     protected void setPeriodBorders(ChannelMemory aktMemo) {
         if (frequencyTableType == ModConstants.AMIGA_TABLE) {
-            aktMemo.portaStepUpEnd = getFineTunePeriod(aktMemo, ModConstants.getNoteIndexForPeriod(113) + 1);
-            aktMemo.portaStepDownEnd = getFineTunePeriod(aktMemo, ModConstants.getNoteIndexForPeriod(856) + 1);
+            aktMemo.portaStepUpEnd = getFineTunePeriod(aktMemo, ModConstants.getNoteIndexForPeriod(ModConstants.PAL_PAULA_MIN_PERIOD) + 1);
+            aktMemo.portaStepDownEnd = getFineTunePeriod(aktMemo, ModConstants.getNoteIndexForPeriod(ModConstants.PAL_PAULA_MAX_PERIOD) + 1);
         } else {
             aktMemo.portaStepUpEnd = getFineTunePeriod(aktMemo, 119); // 118 + 1
             aktMemo.portaStepDownEnd = getFineTunePeriod(aktMemo, 1); // 0 + 1
         }
+    }
+
+    /**
+     * For faster tuning calculations, this is pre-calculated
+     */
+    @Override
+    protected void calculateGlobalTuning() {
+        if (frequencyTableType == ModConstants.AMIGA_TABLE)
+            this.globalTuning = (int) (ModConstants.PAULA_PAL_CLK / (long) sampleRate);
+        else
+            // FastTrackers way for Amiga Table - basically same as (8363L * 1712L), except that 1712 is 428<<2.
+            // We will stick to our precision and use <<4
+            this.globalTuning = (int) ((((((long) ModConstants.BASEPERIOD) << ModConstants.PERIOD_SHIFT) * (ModConstants.BASEFREQUENCY)) << ModConstants.SHIFT) / (sampleRate));
     }
 
     @Override
@@ -104,28 +117,37 @@ public class ProTrackerMixer extends BasicModMixer {
     protected void setNewPlayerTuningFor(ChannelMemory aktMemo, int newPeriod) {
         aktMemo.currentNotePeriodSet = newPeriod;
 
-        if (newPeriod <= 0) {
-            aktMemo.currentTuning = 0;
-            return;
-        }
-
         switch (frequencyTableType) {
-            case ModConstants.XM_AMIGA_TABLE:
             case ModConstants.AMIGA_TABLE:
-                int clampedPeriod = (newPeriod > aktMemo.portaStepDownEnd) ? aktMemo.portaStepDownEnd : (newPeriod < aktMemo.portaStepUpEnd) ? aktMemo.portaStepUpEnd : newPeriod;
-                aktMemo.currentTuning = globalTuning / (aktMemo.currentNotePeriodSet = clampedPeriod);
+                int clampedPeriod = aktMemo.currentNotePeriodSet = (newPeriod > aktMemo.portaStepDownEnd) ? aktMemo.portaStepDownEnd : (newPeriod < aktMemo.portaStepUpEnd) ? aktMemo.portaStepUpEnd : newPeriod;
+                if (clampedPeriod == 0) clampedPeriod = 65536; // On Amiga: period 0 = period 65536 (1+65535)
+                else if (clampedPeriod < ModConstants.PAL_PAULA_MIN_PERIOD) clampedPeriod = ModConstants.PAL_PAULA_MIN_PERIOD; // close to what happens on real Amiga
+                aktMemo.currentTuning = globalTuning / clampedPeriod;
                 return;
+
+            case ModConstants.XM_AMIGA_TABLE:
             case ModConstants.XM_LINEAR_TABLE:
-                // We have a different LUT table as original FT2 - to avoid the doubles used there
-                // So we need some adoption to the algorithm used in FT2 but stay as close as possible to the coding there:
                 int period = (newPeriod >> (ModConstants.PERIOD_SHIFT - 2)) & 0xffFF;
-                int invPeriod = ((12 * 192 * 4) + 767 - period) & 0xffFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
-                int quotient = invPeriod / (12 * 16 * 4);
-                int remainder = period % (12 * 16 * 4);
-                int newFrequency = ModConstants.lintab[remainder] >> (((14 - quotient) & 0x1F) - 2); // values are 4 times bigger in FT2
-                aktMemo.currentTuning = (int) (((long) newFrequency << ModConstants.SHIFT) / sampleRate);
+                if (period == 0) {
+                    aktMemo.currentTuning = 0;
+                    return;
+                }
+
+                if (frequencyTableType == ModConstants.XM_AMIGA_TABLE) {
+                    aktMemo.currentTuning = (globalTuning / period) >> 2;
+                } else {
+                    // We have a different LUT table as original FT2 - to avoid the doubles used there
+                    // So we need some adoption to the algorithm used in FT2 but stay as close as possible to the coding there:
+                    final int invPeriod = ((12 * 192 * 4) + 767 - period) & 0xFFFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
+                    final int quotient = invPeriod / (12 * 16 * 4);
+                    final int remainder = period % (12 * 16 * 4);
+                    final int newFrequency = ModConstants.lintab[remainder] >> (((14 - quotient) & 0x1F) - 2); // values are 4 times bigger in FT2
+                    aktMemo.currentTuning = (int) (((long) newFrequency << ModConstants.SHIFT) / sampleRate);
+                }
                 return;
+
             default:
+                // if we end up here, something went terribly wrong!
                 super.setNewPlayerTuningFor(aktMemo, newPeriod);
         }
     }
@@ -244,8 +266,8 @@ public class ProTrackerMixer extends BasicModMixer {
      */
     private void triggerPTPeriod(ChannelMemory aktMemo) {
         aktMemo.currentSample = aktMemo.assignedSample;
-        resetInstrumentPointers(aktMemo, true);
         setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod = getFineTunePeriod(aktMemo));
+        resetInstrumentPointers(aktMemo, true);
     }
 
     /**
@@ -517,13 +539,18 @@ public class ProTrackerMixer extends BasicModMixer {
             case 0x0E:
                 int effectOp = aktMemo.assignedEffectParam & 0x0F;
                 switch (aktMemo.assignedEffectParam >> 4) {
-                    case 0x0:    // Set filter (MODs and XMs!) - simulate with IT resonance filter
+                    case 0x0:	// Set filter (MODs and XMs!)
                         // 0: on, 1: off (yes, really!)
-                        aktMemo.cutOff = ((effectOp & 0x01) == 0) ? 0x50 : 0x7F; // an educated guess on the value, that sounds reasonable...
-                        // other standard values for the simulation...
-                        aktMemo.filterMode = ModConstants.FLTMODE_LOWPASS;
-                        aktMemo.resonance = 0x00;
-                        setupChannelFilter(aktMemo, !aktMemo.filterOn, 256);
+                        if (paulaFilter != null)
+                            paulaFilter.setLEDFilter((effectOp & 0x01) == 0);
+                        else {
+                            // Simulate with IT resonance filter
+                            aktMemo.cutOff = ((effectOp & 0x01) == 0) ? 0x30 : 0x7F; // an educated guess on the value, that sounds reasonable...
+                            // other standard values for the simulation...
+                            aktMemo.filterMode = ModConstants.FLTMODE_LOWPASS;
+                            aktMemo.resonance = 0x00;
+                            setupChannelFilter(aktMemo, !aktMemo.filterOn, 256);
+                        }
                         break;
                     case 0x1:    // Fine Porta Up
                         if (isMOD && effectOp == 0)
@@ -661,7 +688,7 @@ public class ProTrackerMixer extends BasicModMixer {
                 if (globalVolume > ModConstants.MAXGLOBALVOLUME) globalVolume = ModConstants.MAXGLOBALVOLUME;
                 break;
             case 0x11:            // Global volume slide
-                doGlobalVolumeSlideEffect(aktMemo); //ONLY TICK ZERO!
+                //doGlobalVolumeSlideEffect(aktMemo); //ONLY TICK ZERO!
                 break;
             case 0x14:            // Key off
                 aktMemo.keyOffCounter = aktMemo.assignedEffectParam;
@@ -1180,7 +1207,7 @@ public class ProTrackerMixer extends BasicModMixer {
 
     /**
      * Convenient Method for the Global VolumeSlide effect
-     * Only on Tick Zero!
+     * Not on Tick Zero!
      *
      * @param aktMemo memory
      * @since 21.06.2006
@@ -1590,7 +1617,7 @@ public class ProTrackerMixer extends BasicModMixer {
                 }
                 break;
             case 0x11:            // Global volume slide
-                //doGlobalVolumeSlideEffect(aktMemo); ONLY TICK ZERO!
+                doGlobalVolumeSlideEffect(aktMemo); // NOT ON TICK ZERO!
                 break;
             case 0x14:            // Key off
                 if (aktMemo.keyOffCounter > 0) {

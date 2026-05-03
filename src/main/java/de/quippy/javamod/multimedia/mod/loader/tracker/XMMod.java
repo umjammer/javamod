@@ -159,6 +159,11 @@ public class XMMod extends ProTrackerMod {
         currentElement.setEffectOp(effectOp);
     }
 
+    @Override
+    public boolean supportsAmigaFilter() {
+        return false;
+    }
+
     /**
      * To support Versions below 0104 we need a separate method to load at a
      * different place.

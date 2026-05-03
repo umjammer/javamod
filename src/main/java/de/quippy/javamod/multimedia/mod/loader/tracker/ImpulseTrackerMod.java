@@ -126,6 +126,11 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         return false;
     }
 
+    @Override
+    public boolean supportsAmigaFilter() {
+        return false;
+    }
+
     /**
      * @param env the envelope
      * @param add

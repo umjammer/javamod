@@ -58,7 +58,8 @@
 
 ### system property
 
- * `javamod.player.opl.oplversion` ... `FMOPL_072_YM3526`, `FMOPL_072_YM3812`, `OPL3`
+ * `javamod.player.opl.oplversion` ... using chip selection, one of `FMOPL_072_YM3526`, `FMOPL_072_YM3812`, `OPL3`
+ * `vavi.sound.sampled.spi.mod.sid` ... this reader enabled sid or not, default `true`
 
 ### jvm options
 
@@ -84,7 +85,8 @@
 * ~~java sound spi sid, opl~~
 * ~~i made input stream wrapper, so methods for input stream (mainly for type detection) are no more needed?~~ ... troublesome
 * rename to vavi-sound-mod
-* ~~upstream made large update~~ ... wip
+* ~~upstream made large update~~
+* system property that off opl spi
 
 ---
 

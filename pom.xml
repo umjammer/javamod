@@ -5,7 +5,7 @@
 
   <groupId>net.sourceforge.javamod</groupId>
   <artifactId>JavaMod</artifactId>
-  <version>3.9.16</version>
+  <version>3.9.17</version>
 
   <build>
     <plugins>
@@ -168,7 +168,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- uk.co.omgdrv / com.github.umjammer -->
       <artifactId>simplevgm</artifactId>
-      <version>1.5.9</version>
+      <version>1.5.10</version>
     </dependency>
 
     <dependency>

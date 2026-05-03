@@ -183,4 +183,12 @@ public class FLACContainer extends MultimediaContainer {
     @Override
     public void cleanUp() {
     }
+
+    @Override
+    public void playBackStarted() {
+    }
+
+    @Override
+    public void playBackStopped() {
+    }
 }

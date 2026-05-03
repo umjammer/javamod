@@ -74,7 +74,7 @@ public class ModMixer extends BasicMixer {
     /**
      * Constructor for ModMixer
      */
-    public ModMixer(Module mod, int sampleSizeInBits, int channels, int sampleRate, int doISP, boolean doWideStereoMix, boolean doNoiseReduction, boolean doMegaBass, boolean doDCremoval, int doNoLoops, int maxNNAChannels, int msBufferSize, int ditherFilter, int ditherType, boolean ditherByPass) {
+    public ModMixer(Module mod, int sampleSizeInBits, int channels, int sampleRate, int doISP, int doAmigaEmulation, boolean doWideStereoMix, boolean doNoiseReduction, boolean doMegaBass, boolean doDCremoval, int doNoLoops, int maxNNAChannels, int msBufferSize, int ditherFilter, int ditherType, boolean ditherByPass) {
         this.mod = mod;
         this.sampleSizeInBits = sampleSizeInBits;
         this.channels = channels;
@@ -88,7 +88,7 @@ public class ModMixer extends BasicMixer {
         this.ditherType = ditherType;
         this.ditherByPass = ditherByPass;
         this.maxNNAChannels = maxNNAChannels;
-        this.modMixer = this.mod.getModMixer(sampleRate, doISP, doNoLoops, maxNNAChannels);
+        this.modMixer = this.mod.getModMixer(sampleRate, doISP, doAmigaEmulation, doNoLoops, maxNNAChannels);
     }
 
     private void initialize() {
@@ -166,6 +166,13 @@ public class ModMixer extends BasicMixer {
      */
     public void setDoISP(int doISP) {
         modMixer.changeISP(doISP);
+    }
+
+    /**
+     * @param doAmigaEmulation The doAmigaEmulation to set.
+     */
+    public void setDoAmigaEmulation(int doAmigaEmulation) {
+        modMixer.changeAmigaEmulation(doAmigaEmulation);
     }
 
     /**
@@ -414,7 +421,7 @@ public class ModMixer extends BasicMixer {
 
         if (getSeekPosition() > 0) seek(getSeekPosition());
 
-        long[] samples = new long[2];
+        SampleFrame samples = new SampleFrame();
 
         // how many Samples can we write out? We will need that to reset the currentSamplesWritten if MOD is looped.
         long allSamplesWritten = (getLengthInMilliseconds() != -1) ? getLengthInMilliseconds() * sampleRate / 1000L : -1;
@@ -435,9 +442,9 @@ public class ModMixer extends BasicMixer {
                     int ix = 0;
                     while (ix < count) {
                         // get Sample and reset to zero - the samples are clipped
-                        samples[0] = LBuffer[ix];
+                        samples.left = LBuffer[ix];
                         LBuffer[ix] = 0;
-                        samples[1] = RBuffer[ix];
+                        samples.right = RBuffer[ix];
                         RBuffer[ix] = 0;
                         ix++;
 
@@ -456,29 +463,29 @@ public class ModMixer extends BasicMixer {
 
                         // Reduce to sample size by dithering - if necessary!
                         if (sampleSizeInBits < 32) { // our maximum - no dithering needed
-                            samples[0] = (long) ((dither.process((double) samples[0] / (double) (0x7FFF_FFFFL), 0) * (double) maximum) + 0.5d);
-                            samples[1] = (long) ((dither.process((double) samples[1] / (double) (0x7FFF_FFFFL), 1) * (double) maximum) + 0.5d);
+                            samples.left = dither.process(samples.left, 0);
+                            samples.right = dither.process(samples.right, 1);
                         }
 
                         // Clip the values to target:
-                        if (samples[0] > maximum) samples[0] = maximum;
-                        else if (samples[0] < minimum) samples[0] = minimum;
-                        if (samples[1] > maximum) samples[1] = maximum;
-                        else if (samples[1] < minimum) samples[1] = minimum;
+                        if (samples.left > maximum) samples.left = maximum;
+                        else if (samples.left < minimum) samples.left = minimum;
+                        if (samples.right > maximum) samples.right = maximum;
+                        else if (samples.right < minimum) samples.right = minimum;
 
                         // and after that put them into the output buffer
                         // to write to the sound stream
                         if (channels == 2) {
                             for (int i = 0; i < rounds; i++) {
-                                output[ox] = (byte) samples[0];
-                                output[ox + rounds] = (byte) samples[1];
+                                output[ox] = (byte) samples.left;
+                                output[ox + rounds] = (byte) samples.right;
                                 ox++;
-                                samples[0] >>= 8;
-                                samples[1] >>= 8;
+                                samples.left >>= 8;
+                                samples.right >>= 8;
                             }
                             ox += rounds; // skip saved right channel
                         } else {
-                            long sample = (samples[0] + samples[1]) >> 1;
+                            long sample = (samples.left + samples.right) >> 1;
                             for (int i = 0; i < rounds; i++) {
                                 output[ox++] = (byte) sample;
                                 sample >>= 8;

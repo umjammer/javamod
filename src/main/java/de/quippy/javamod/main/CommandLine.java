@@ -83,7 +83,8 @@ public class CommandLine extends JavaModMainBase implements PlayThreadEventListe
         System.err.println("                               anything your soundhardware supports)");
         System.err.println("-b8/16/24  : #Bits per sample");
         System.err.println("-s+/-      : Stereo/Mono");
-        System.err.println("-i0/1/2/3  : interpolation: 0:none; 1:linear; 2:cubic spline; 3:fir interpolation");
+        System.err.println("-i0/1/2/3  : interpolation: 0:none; 1:linear; 2:cubic spline; 3: kaiser; 4:fir interpolation");
+        System.err.println("-p0/1/2    : amiga / paula filter emulation: 0:none; 1:Amiga 500; 2:Amiga 1200");
         System.err.println("-tms       : ms of buffer size (30 is minimum)");
         System.err.println("-w+/-      : do/don't wide stereo mix");
         System.err.println("-n+/-      : do/don't noise reduction");
@@ -151,6 +152,9 @@ public class CommandLine extends JavaModMainBase implements PlayThreadEventListe
                         break;
                     case 'a':
                         props.setProperty(ModContainer.PROPERTY_PLAYER_MAXNNACHANNELS, Integer.toString(Integer.parseInt(op)));
+                        break;
+                    case 'p':
+                        props.setProperty(ModContainer.PROPERTY_PLAYER_AMIGAEMULATION, Integer.toString(Integer.parseInt(op.substring(0,1))));
                         break;
                     case 'e':
                         wavFileName = new File(op);

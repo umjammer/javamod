@@ -59,8 +59,8 @@ public class ScreamTrackerSTXMod extends ScreamTrackerOldMod {
     }
 
     @Override
-    public BasicModMixer getModMixer(int sampleRate, int doISP, int doNoLoops, int maxNNAChannels) {
-        return new ScreamTrackerMixer(this, sampleRate, doISP, doNoLoops, maxNNAChannels);
+    public BasicModMixer getModMixer(int sampleRate, int doISP, int doAmigaEmulation, int doNoLoops, int maxNNAChannels) {
+        return new ScreamTrackerMixer(this, sampleRate, doISP, doAmigaEmulation, doNoLoops, maxNNAChannels);
     }
 
     @Override

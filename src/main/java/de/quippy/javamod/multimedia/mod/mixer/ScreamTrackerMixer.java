@@ -31,6 +31,7 @@ import de.quippy.javamod.multimedia.mod.loader.instrument.Instrument;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement;
 import de.quippy.javamod.multimedia.mod.midi.MidiMacros;
+import de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory;
 
 
 /**
@@ -52,8 +53,8 @@ public class ScreamTrackerMixer extends BasicModMixer {
      * @param sampleRate
      * @param doISP
      */
-    public ScreamTrackerMixer(Module mod, int sampleRate, int doISP, int doNoLoops, int maxNNAChannels) {
-        super(mod, sampleRate, doISP, doNoLoops, maxNNAChannels);
+    public ScreamTrackerMixer(Module mod, int sampleRate, int doISP, int doAmigaEmulation, int doNoLoops, int maxNNAChannels) {
+        super(mod, sampleRate, doISP, doAmigaEmulation, doNoLoops, maxNNAChannels);
         isNotITCompatMode = (mod.getSongFlags() & ModConstants.SONG_ITCOMPATMODE) == 0;
         is_S3M_GUS = (mod.getSongFlags() & ModConstants.SONG_S3M_GUS) != 0;
     }
@@ -133,7 +134,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
 
         switch (frequencyTableType) {
             case ModConstants.IT_LINEAR_TABLE:
-                long itTuning = (((((long) ModConstants.BASEPERIOD) << ModConstants.PERIOD_SHIFT) * aktMemo.currentFinetuneFrequency) << ModConstants.SHIFT) / sampleRate;
+                long itTuning = ((((long) ModConstants.BASEPERIOD) << (ModConstants.PERIOD_SHIFT + ModConstants.SHIFT)) * (long) aktMemo.currentFinetuneFrequency) / (long) sampleRate;
                 aktMemo.currentTuning = (int) (itTuning / (long) newPeriod);
                 return;
             case ModConstants.STM_S3M_TABLE:
@@ -151,6 +152,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
                     aktMemo.currentTuning = globalTuning / ((newPeriod > aktMemo.portaStepDownEnd) ? aktMemo.portaStepDownEnd : (newPeriod < aktMemo.portaStepUpEnd) ? aktMemo.portaStepUpEnd : newPeriod);
                 return;
             default:
+                // if we end up here, something went terribly wrong!
                 super.setNewPlayerTuningFor(aktMemo, newPeriod);
         }
     }
@@ -191,6 +193,21 @@ public class ScreamTrackerMixer extends BasicModMixer {
         }
         if (extendedRowsUsed != null) extendedRowsUsed.set(rowsUsed);
         return val;
+    }
+
+    /**
+     * Get the period of the nearest halftone
+     *
+     * @param period
+     * @return
+     */
+    protected int getRoundedPeriod(final ChannelMemory aktMemo, final int period) {
+        for (int i = 1; i < 180; i++) {
+            final int checkPeriod = getFineTunePeriod(aktMemo, i) >> ModConstants.PERIOD_SHIFT;
+            if (checkPeriod > 0 && checkPeriod <= period)
+                return checkPeriod;
+        }
+        return 0;
     }
 
     /**

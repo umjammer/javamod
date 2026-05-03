@@ -71,21 +71,27 @@ public class VGMContainer extends MultimediaContainer {
 
     @Override
     public void configurationChanged(Properties newProps) {
-
     }
 
     @Override
     public void configurationSave(Properties props) {
-
     }
 
     @Override
     public void cleanUp() {
-
     }
 
     @Override
     public Mixer createNewMixer() {
         return new VGMMixer(name);
+    }
+
+
+    @Override
+    public void playBackStarted() {
+    }
+
+    @Override
+    public void playBackStopped() {
     }
 }

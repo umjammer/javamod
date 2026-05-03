@@ -351,10 +351,8 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         getScrollPane_ArrangementData().getHorizontalScrollBar().setUnitIncrement(firstButton.getWidth());
         getScrollPane_ArrangementData().getVerticalScrollBar().setUnitIncrement(firstButton.getHeight()); // BTW: we shall never see you!!
 
-//		EventQueue.invokeLater(new Runnable()
-//		{
-//			public void run()
-//			{				
+//		EventQueue.invokeLater(new Runnable() {
+//			public void run() {
         getScrollPane_ArrangementData().getHorizontalScrollBar().setValue(0);
         getScrollPane_ArrangementData().getVerticalScrollBar().setValue(0);
         getScrollPane_ArrangementData().repaint();
@@ -1009,6 +1007,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
     private void setActiveEditingRow(int index, PatternImagePosition position) {
         EventQueue.invokeLater(() -> {
             try {
+                if (index == -1) return;
                 if (index != currentIndex) selectArrangementButton(currentIndex = index);
                 getPatternImagePanel().setActiveEditingRow(getPrevPattern(index), patternContainer.getPattern(arrangement[index]), getNextPattern(index), position);
                 if (position != null) {

@@ -193,7 +193,7 @@ public class Helpers {
     public static final String SCROLLY_BLANKS = "     ";
 
 
-    /* SERVICE METHODS -------------------------------------------------------*/
+    // SERVICE METHODS
 
     /**
      * Loads a C-Type String. In C/C++ strings end with a NULL-byte. We search for it
@@ -1258,19 +1258,11 @@ public class Helpers {
         return copied;
     }
 
-    public static int limit(int value, int minValue, int maxValue) {
-        return (value > maxValue) ? maxValue : ((value > minValue) ? minValue : value);
-    }
-
     public static int limitMax(int value, int maxValue) {
-        return (value > maxValue) ? maxValue : value;
-    }
-
-    public static long limit(long value, long minValue, long maxValue) {
-        return (value > maxValue) ? maxValue : ((value > minValue) ? minValue : value);
+        return Math.min(value, maxValue);
     }
 
     public static long limitMax(long value, long maxValue) {
-        return (value > maxValue) ? maxValue : value;
+        return Math.min(value, maxValue);
     }
 }

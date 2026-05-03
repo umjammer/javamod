@@ -52,6 +52,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serial;
 import java.lang.System.Logger;
@@ -60,9 +61,13 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
@@ -437,7 +442,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
      * @since 01.07.2006
      */
     private void readPropertyFile() {
-        java.util.Properties props = new java.util.Properties();
+        Properties props = new Properties();
         try {
             File propertyFile = new File(propertyFilePath + File.separator + PROPERTYFILENAME);
             if (propertyFile.exists()) {
@@ -525,13 +530,36 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
     }
 
     /**
+     * Non-guaranteed workaround to force sorted output from Properties.store().
+     * Relies on current JDK implementation using entrySet() iteration.
+     * May break in future Java versions.
+     *
+     * For now we accept that risk.
+     * @author Daniel Becker
+     * @since 20.04.2026
+     */
+    private static class SortedProps extends Properties {
+
+        @Serial
+        private static final long serialVersionUID = 7883930320829117735L;
+
+        @Override
+        public Set<Map.Entry<Object, Object>> entrySet() {
+            TreeSet<Entry<Object, Object>> sorted = new TreeSet<>(Comparator.comparing((Map.Entry<Object, Object> e) -> String.valueOf(e.getKey())).thenComparing(System::identityHashCode));
+            sorted.addAll(SortedProps.super.entrySet());
+            return sorted;
+        }
+    }
+
+    /**
      * Write back to a File
      *
      * @since 01.07.2006
      */
     private void writePropertyFile() {
         try {
-            java.util.Properties props = new java.util.Properties();
+//            Properties props = new Properties();
+            Properties props = new SortedProps();
 
             MultimediaContainerManager.getContainerConfigs(props);
             getXmasConfigPanel().writeProperties(props);
@@ -592,9 +620,9 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
                 if (ok) ok = propertyFile.createNewFile();
                 if (!ok) logger.log(Level.ERROR, "Could not create property file: " + propertyFile.getCanonicalPath());
             }
-            java.io.FileOutputStream fos = null;
+            FileOutputStream fos = null;
             try {
-                fos = new java.io.FileOutputStream(propertyFile);
+                fos = new FileOutputStream(propertyFile);
                 props.store(fos, WINDOW_TITLE);
             } finally {
                 if (fos != null) try {
@@ -607,7 +635,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
     }
 
     private static UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
-//        java.util.ArrayList<UIManager.LookAndFeelInfo> allLAFs = new java.util.ArrayList<UIManager.LookAndFeelInfo>();
+//        ArrayList<UIManager.LookAndFeelInfo> allLAFs = new ArrayList<UIManager.LookAndFeelInfo>();
 //        allLAFs.add(new UIManager.LookAndFeelInfo("Kunststoff", "com.incors.plaf.kunststoff.KunststoffLookAndFeel"));
 //        allLAFs.add(new UIManager.LookAndFeelInfo("Oyoaha", "com.oyoaha.swing.plaf.oyoaha.OyoahaLookAndFeel"));
 //        allLAFs.add(new UIManager.LookAndFeelInfo("MacOS", "it.unitn.ing.swing.plaf.macos.MacOSLookAndFeel"));
@@ -663,7 +691,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
     }
 
     /**
-     * Do main initialising
+     * Do main initializing
      *
      * @since 22.06.2006
      */
@@ -1365,7 +1393,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
      */
     private TrayIcon getTrayIcon() {
         if (javaModTrayIcon == null && SystemTray.isSupported()) {
-            java.net.URL iconURL = MainForm.class.getResource(DEFAULTTRAYICONPATH);
+            URL iconURL = MainForm.class.getResource(DEFAULTTRAYICONPATH);
             if (iconURL != null) {
                 Image trayIconImage = Toolkit.getDefaultToolkit().getImage(iconURL);
                 Dimension trayIconSize = SystemTray.getSystemTray().getTrayIconSize();
@@ -1435,19 +1463,20 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
      */
     private List<Image> getWindowIconImages(String path) {
         if (windowIcons == null) {
-            java.net.URL iconURL = MainForm.class.getResource(path);
+            URL iconURL = MainForm.class.getResource(path);
+
+            // Create some typical dimensions of our Icon for Java to use.
             if (iconURL != null) {
                 Image tempImage = Toolkit.getDefaultToolkit().getImage(iconURL);
                 // The icon is not quadratic so to keep aspect ratio, the smaller width is set to -1
                 windowIcons = new ArrayList<>();
-                // Create some typical dimensions of our Icon for Java to use.
                 windowIcons.add(tempImage.getScaledInstance(-1, 16, Image.SCALE_SMOOTH));
                 windowIcons.add(tempImage.getScaledInstance(-1, 20, Image.SCALE_SMOOTH));
                 windowIcons.add(tempImage.getScaledInstance(-1, 32, Image.SCALE_SMOOTH));
                 windowIcons.add(tempImage.getScaledInstance(-1, 40, Image.SCALE_SMOOTH));
                 windowIcons.add(tempImage.getScaledInstance(-1, 64, Image.SCALE_SMOOTH));
                 windowIcons.add(tempImage.getScaledInstance(-1, 128, Image.SCALE_SMOOTH));
-                // create all sizes from 16 - 128
+//                // create all sizes from 16 - 128
 //                for (int size = 16; size <= 128; size += 2)
 //                    windowIcons.add(tempImage.getScaledInstance(-1, size, Image.SCALE_SMOOTH));
             }
@@ -2026,7 +2055,8 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
         return balanceSlider;
     }
 
-    /* DspAudioProcessor CallBack -------------------------------------------*/
+    // DspAudioProcessor CallBack
+
     @Override
     public void currentSampleChanged(float[] leftSample, float[] rightSample) {
         getVULMeterPanel().setVUMeter(leftSample);
@@ -2053,8 +2083,10 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
     public void playThreadEventOccurred(PlayThread thread) {
         if (thread.isRunning()) {
             getButton_Play().setIcon(buttonPlay_Active);
+            getCurrentContainer().playBackStarted();
         } else { // Signaling: not running-->Piece finished...
             getButton_Play().setIcon(buttonPlay_normal);
+            getCurrentContainer().playBackStarted();
             if (thread.getHasFinishedNormally()) {
                 boolean ok = doNextPlayListEntry();
                 if (!ok) doStopPlaying();
@@ -2081,7 +2113,8 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
         getPrevItem().setEnabled(getButton_Prev().isEnabled());
         getNextItem().setEnabled(getButton_Next().isEnabled());
     }
-    /* EVENT METHODS --------------------------------------------------------*/
+
+    // EVENT METHODS
 
     /**
      * @since 29.12.2018
@@ -2197,6 +2230,43 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
     public void doOpenURL(String surl) {
         if (surl != null) {
             loadMultimediaOrPlayListFile(Helpers.createURLfromString(surl));
+        }
+    }
+
+    /**
+     * @param sourceFile
+     * @param targetFile
+     * @param fromMillisecondPosition
+     * @param duration -1: no limit, else will stop playback after duration (in milliseconds) is reached
+     * @param progress
+     * @since 09.11.2019
+     */
+    private void exportFileToWave(URL sourceFile, File targetFile, long fromMillisecondPosition, long duration, ProgressDialog progress) {
+        Updater updater = null;
+        try {
+            MultimediaContainer newContainer = MultimediaContainerManager.getMultimediaContainer(sourceFile);
+            if (newContainer != null) {
+                Mixer mixer = getCurrentContainer().createNewMixer();
+                if (mixer != null) {
+                    mixer.setAudioProcessor(null);
+                    mixer.setVolume(currentVolume);
+                    mixer.setBalance(currentBalance);
+                    mixer.setSoundOutputStream(getSoundOutputStream());
+                    mixer.setPlayDuringExport(false);
+                    mixer.setExportFile(targetFile);
+                    mixer.setMillisecondPosition(fromMillisecondPosition);
+                    if (duration > -1) mixer.setStopMillisecondPosition(fromMillisecondPosition + duration);
+                    if (progress != null) {
+                        updater = new Updater(mixer, fromMillisecondPosition, duration, progress);
+                        updater.start();
+                    }
+                    mixer.startPlayback();
+                }
+            }
+        } catch (Throwable ex) {
+            logger.log(Level.ERROR, "[MainForm::exportToWave]", ex);
+        } finally {
+            if (updater != null) updater.stopMe();
         }
     }
 
@@ -2339,43 +2409,6 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
                     Thread.sleep(10L);
                 } catch (InterruptedException ex) { /*NOOP*/ }
             }
-        }
-    }
-
-    /**
-     * @param sourceFile
-     * @param targetFile
-     * @param fromMillisecondPosition
-     * @param duration                -1: no limit, else will stop playback after duration (in milliseconds) is reached
-     * @param progress
-     * @since 09.11.2019
-     */
-    private void exportFileToWave(URL sourceFile, File targetFile, long fromMillisecondPosition, long duration, ProgressDialog progress) {
-        Updater updater = null;
-        try {
-            MultimediaContainer newContainer = MultimediaContainerManager.getMultimediaContainer(sourceFile);
-            if (newContainer != null) {
-                Mixer mixer = getCurrentContainer().createNewMixer();
-                if (mixer != null) {
-                    mixer.setAudioProcessor(null);
-                    mixer.setVolume(currentVolume);
-                    mixer.setBalance(currentBalance);
-                    mixer.setSoundOutputStream(getSoundOutputStream());
-                    mixer.setPlayDuringExport(false);
-                    mixer.setExportFile(targetFile);
-                    mixer.setMillisecondPosition(fromMillisecondPosition);
-                    if (duration > -1) mixer.setStopMillisecondPosition(fromMillisecondPosition + duration);
-                    if (progress != null) {
-                        updater = new Updater(mixer, fromMillisecondPosition, duration, progress);
-                        updater.start();
-                    }
-                    mixer.startPlayback();
-                }
-            }
-        } catch (Throwable ex) {
-            logger.log(Level.ERROR, "[MainForm::exportToWave]", ex);
-        } finally {
-            if (updater != null) updater.stopMe();
         }
     }
 

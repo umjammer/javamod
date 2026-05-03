@@ -104,7 +104,7 @@ public abstract class MultimediaContainer {
         listeners.remove(listener);
     }
 
-    protected void fireMultimediaContainerEvent(MultimediaContainerEvent event) {
+    public void fireMultimediaContainerEvent(MultimediaContainerEvent event) {
         for (MultimediaContainerEventListener listener : listeners) listener.multimediaContainerEventOccurred(event);
     }
 
@@ -180,6 +180,18 @@ public abstract class MultimediaContainer {
      * @since 11.11.2023
      */
     public abstract void cleanUp();
+
+    /**
+     * Inform the container, that the playback started
+     * @since 28.04.2026
+     */
+    public abstract void playBackStarted();
+
+    /**
+     * Inform the container, that the playback stopped
+     * @since 28.04.2026
+     */
+    public abstract void playBackStopped();
 
     /**
      * Get the mixer of this container

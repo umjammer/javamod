@@ -47,6 +47,10 @@ import static java.lang.System.getLogger;
 
 
 /**
+ * <p>
+ * system property
+ * <li>{@code vavi.sound.sampled.spi.mod.sid} ... this reader enabled sid or not, default {@code true}</li>
+ * </p>
  * @author Daniel Becker
  * @since 04.10.2009
  */
@@ -105,6 +109,8 @@ public class SIDContainer extends MultimediaContainer implements SpiMultimediaCo
 
     @Override
     public boolean isSupported(InputStream stream) {
+        if (!Boolean.parseBoolean(System.getProperty("vavi.sound.sampled.spi.mod.sid", "true")))
+            return false;
         try {
             stream.mark(SpiModfileInputStream.MAX_BUFFER_SIZE);
             SidTune sidTune = SidTune.load("spi.stream", stream);
@@ -273,5 +279,13 @@ logger.log(Level.DEBUG, e.getMessage(), e);
 
     @Override
     public void cleanUp() {
+    }
+
+    @Override
+    public void playBackStarted() {
+    }
+
+    @Override
+    public void playBackStopped() {
     }
 }

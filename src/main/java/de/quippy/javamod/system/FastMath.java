@@ -22,6 +22,33 @@ package de.quippy.javamod.system;
  * This class provides fast mathematical calculations which are good
  * enough for some audio calculations.
  *
+ * Results from a benchmark:
+ * === sin ===
+ * max abs error: 0.002056233678349173
+ *
+ * === cos ===
+ * max abs error: 0.0020562337006925224
+ *
+ * === exp ===
+ * max relative error: 0.016748421865565175
+ *
+ * === log ===
+ * max relative error: 0.16600066001181757
+ *
+ * === pow ===
+ * max abs error: 4.355155840791321E7
+ * max relative error: 0.023296620585072942
+ *
+ * === ultra fast pow === (yes, it's fast, but mostly wrong. Do not use it)
+ * max abs error: 7.554160640000019E8
+ * max relative error: 0.2391985954837864
+ *
+ * === sqrt ===
+ * max relative error: 4.716988791170354E-6
+ *
+ * === inv sqrt ===
+ * max relative error: 4.697479434203409E-6
+ *
  * @author Daniel Becker
  * @since 29.01.2012
  */
@@ -30,77 +57,74 @@ public class FastMath {
     private static final double B = 1.2732395447351628D;
     private static final double C = -0.4052847345693511D;
     private static final double P = 0.218D;
-    public static final double hPI = Math.PI / 2D;
-    public static final double PI2 = Math.PI * 2D;
-    public static final double sPI = Math.PI + hPI;
+    private static final double hPI = Math.PI / 2D;
+    private static final double PI2 = Math.PI * 2D;
     private static final double atan2_coeff_1 = 0.78539816339744828D;
     private static final double atan2_coeff_2 = 2.3561944901923448D;
 
     public FastMath() {
     }
 
-    public static double wrap(double angle) {
-        angle %= PI2;
-        if (angle > 3.1415926535897931D)
-            angle -= PI2;
-        else if (angle < -3.1415926535897931D) angle += PI2;
-        if (angle < -3.1415926535897931D || angle > 3.1415926535897931D)
-            throw new IllegalArgumentException("Wrong angel : " + angle);
-        else
-            return angle;
-    }
-
-    public static double fastSin(double theta) {
-        return fastSin0(wrap(theta));
-    }
-
-    public static double fastCos(double theta) {
-        return fastSin0(wrap(theta + hPI));
-    }
-
-    public static double fastSin0(double theta) {
+    /**
+     * Sin and Cos both rely on this internal implementation
+     *
+     * @param theta
+     * @return
+     * @since 29.01.2023
+     */
+    private static double fastSin0(double theta) {
         double y = B * theta + C * theta * Math.abs(theta);
         y = P * (y * Math.abs(y) - y) + y;
         return y;
     }
 
-    public static double fastCos0(double theta) {
-        if (theta > hPI)
-            theta -= sPI;
+    /**
+     * Wrap the π
+     *
+     * @param angle
+     * @return
+     * @since 29.01.2023
+     */
+    private static double wrap(double angle) {
+        angle %= PI2;
+        if (angle > Math.PI)
+            angle -= PI2;
+        else if (angle < -Math.PI) angle += PI2;
+
+        if (angle < -Math.PI || angle > Math.PI)
+            throw new IllegalArgumentException("Wrong angel : " + angle);
         else
-            theta += hPI;
-        return fastSin0(theta);
+            return angle;
     }
 
-    public static double exp(double val) {
-        long tmp = (long) (1512775D * val + 1072632447D);
-        return Double.longBitsToDouble(tmp << 32);
+    /**
+     * valid only in [-π, π] after normalization
+     *
+     * @since 29.01.2023
+     * @param theta
+     * @return
+     */
+    public static double fastSin(double theta) {
+        return fastSin0(wrap(theta));
     }
 
-    public static double log(double x) {
-        return (6D * (x - 1.0D)) / (x + 1.0D + 4D * Math.sqrt(x));
+    /**
+     * valid only in [-π, π] after normalization
+     *
+     * @since 29.01.2023
+     * @param theta
+     * @return
+     */
+    public static double fastCos(double theta) {
+        return fastSin0(wrap(theta + hPI));
     }
 
-    public static double pow(double a, double b) {
-        long x = Double.doubleToLongBits(a) >> 32;
-        long y = (long) (b * (double) (x - 1072632447) + 1072632447D);
-        return Double.longBitsToDouble(y << 32);
-    }
-
-    public static float floor(float value) {
-        if (value < 0.0F)
-            throw new IllegalArgumentException("Wrong value : " + value);
-        else
-            return (float) (int) value;
-    }
-
-    public static double floor(double value) {
-        if (value < 0.0D)
-            throw new IllegalArgumentException("Wrong value : " + value);
-        else
-            return (double) (long) value;
-    }
-
+    /**
+     * @since 29.01.2023
+     * @param y
+     * @param x
+     * @return
+     */
     public static double atan2(double y, double x) {
         if (y == 0.0D) return 0.0D;
         if (x == 0.0D) return (y > 0.0D) ? hPI : -hPI;
@@ -108,25 +132,184 @@ public class FastMath {
         double abs_y = Math.abs(y);
         double angle;
         if (x > 0.0D) {
-            double r = (x - abs_y) / (x + abs_y);
+            final double r = (x - abs_y) / (x + abs_y);
             angle = atan2_coeff_1 - atan2_coeff_1 * r;
         } else {
-            double r = (x + abs_y) / (abs_y - x);
+            final double r = (x + abs_y) / (abs_y - x);
             angle = atan2_coeff_2 - atan2_coeff_1 * r;
         }
         return y >= 0.0D ? angle : -angle;
     }
 
-    public static double fastSqrt(double a) {
-        long x = Double.doubleToLongBits(a) >> 32;
-        double y = Double.longBitsToDouble(x + 0x3FEF1280L << 31);
-        return y;
+    /**
+     * @since 29.01.2023
+     * @param x
+     * @return
+     */
+    public static double fastExp(double x) {
+        if (x > 709.0) return Double.POSITIVE_INFINITY;
+        if (x < -745.0) return 0.0;
+
+        // range reduction: x = k*ln2 + r
+        double fx = x * 1.4426950408889634;
+        int k = (int) fx;
+
+        double r = x - k * 0.6931471805599453;
+
+        // polynomial exp approximation on small interval
+        double r2 = r * r;
+
+        double y = 1.0 +
+                r +
+                0.5 * r2 +
+                0.16666666666666666 * r2 * r;
+
+        // reconstruct exponent
+        return Double.longBitsToDouble(((long) (k + 1023)) << 52) * y;
     }
 
-    public static double sqrt(double a) {
-        long x = Double.doubleToLongBits(a) >> 32;
-        double y = Double.longBitsToDouble(x + 0x3FEF1280L << 31);
-        y = (y + a / y) * 0.5D;
-        return y;
+    /**
+     * @since 29.01.2023
+     * @param x
+     * @return
+     */
+    public static double fastLog(double x) {
+        long bits = Double.doubleToRawLongBits(x);
+
+        int exp = (int) ((bits >> 52) & 0x7FF) - 1023;
+        long mantBits = (bits & ((1L << 52) - 1));
+
+        // normalized mantissa in [1,2)
+        double m = 1.0 + (mantBits / (double) (1L << 52));
+
+        // range reduction improves accuracy
+        m = (m - 1.0) / (m + 1.0);
+
+        double m2 = m * m;
+
+        // 2nd-order log approximation (better than pure Taylor)
+        double ln_m = 2.0 * (m + (m2 * m) / 3.0);
+
+        return exp * 0.6931471805599453 + ln_m;
+    }
+
+    /**
+     * @since 29.01.2023
+     * @param a
+     * @param b
+     * @return
+     */
+    public static double fastPow(double a, double b) {
+        return fastExp(b * fastLog(a));
+    }
+
+    /**
+     * Faster than fastPow, but only approximation / heuristic. You decide!
+     * "I am very fast in math"
+     * "OK, what is 12*8"
+     * "102"
+     * "That is wrong!"
+     * "But I was fast!"
+     * Kept it because of the interesting bit shifting with "magic numbers"
+     *
+     * @since 29.01.2023
+     * @param a
+     * @param b
+     * @return
+     */
+    public static double ultraFastPow(double a, double b) {
+        long x = Double.doubleToRawLongBits(a) >> 32;
+        long y = (long) (b * (x - 1072632447L) + 1072632447L);
+        return Double.longBitsToDouble(y << 32);
+    }
+
+    /**
+     * @since 29.01.2023
+     * @param value
+     * @return
+     */
+    public static float floor(float value) {
+        int result = (int) value;
+        return result - (value < result ? 1 : 0);
+    }
+
+    /**
+     * @since 29.01.2023
+     * @param value
+     * @return
+     */
+    public static double floor(double value) {
+        long result = (long) value;
+        return result - (value < result ? 1 : 0);
+    }
+
+    /**
+     * A java port of the 1/sqrt(x) float version
+     * used in Quake III
+     *
+     * @since 29.01.2023
+     * @param number
+     * @return
+     */
+    public static float fastInvSqrt(float number) {
+        if (!Float.isFinite(number) || number <= 0F) return Float.NaN; // not defined
+
+        float xhalf = 0.5F * number;
+
+        int i = Float.floatToRawIntBits(number); // C-Code equivalent: int i = *(int *)&y;
+        i = 0x5f3759df - (i >> 1); // Magic Number for Float
+        float result = Float.intBitsToFloat(i); // C-Code equivalent: float result = *(float *)&i;
+
+        // 1–2 Newton steps
+        result *= 1.5F - (xhalf * result * result);
+        result *= 1.5F - (xhalf * result * result); // optional second iteration for improved precision
+
+        return result;
+    }
+
+    /**
+     * Using the Quake InvSQRT to calculate sqrt
+     *
+     * @since 29.01.2023
+     * @param x
+     * @return
+     */
+    public static float fastSqrt(float x) {
+        return x * fastInvSqrt(x);
+    }
+
+    /**
+     * A java port of the 1/sqrt(x) double version
+     * used in Quake III
+     *
+     * @since 29.01.2023
+     * @param number
+     * @return
+     */
+    public static double fastInvSqrt(double number) {
+        if (!Double.isFinite(number) || number <= 0D) return Double.NaN; // not defined
+
+        double xhalf = 0.5d * number;
+
+        long i = Double.doubleToRawLongBits(number); // C-Code equivalent: long i = *(long *)&y;
+        i = 0x5fe6ec85e7de30daL - (i >> 1); // Magic Number for Double
+        double result = Double.longBitsToDouble(i); // C-Code equivalent: double result = *(double *)&i;
+
+        // 1–2 Newton steps
+        result *= 1.5D - (xhalf * result * result);
+        result *= 1.5D - (xhalf * result * result); // optional second iteration for improved precision
+
+        return result;
+    }
+
+    /**
+     * Using the Quake InvSQRT to calculate sqrt
+     *
+     * @since 29.01.2023
+     * @param x
+     * @return
+     */
+    public static double fastSqrt(double x) {
+        return x * fastInvSqrt(x);
     }
 }
