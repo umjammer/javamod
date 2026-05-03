@@ -792,7 +792,7 @@ public abstract class BasicModMixer {
      * For faster tuning calculations, this is pre-calculated
      */
     protected void calculateGlobalTuning() {
-        this.globalTuning = (int) ((((((long) ModConstants.BASEPERIOD) << ModConstants.PERIOD_SHIFT) * ((long) ModConstants.BASEFREQUENCY)) << ModConstants.SHIFT) / ((long) sampleRate));
+        this.globalTuning = (int) (((((long) ModConstants.BASEPERIOD) << (ModConstants.PERIOD_SHIFT + ModConstants.SHIFT)) * (long) ModConstants.BASEFREQUENCY) / (long) sampleRate);
     }
 
     /**
