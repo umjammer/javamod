@@ -18,226 +18,194 @@
 
 package de.quippy.javamod.mixer.dsp.iir.filter;
 
+import java.util.Random;
+
+
 /**
+ * Optimierte Dither-Klasse mit Integer-Arithmetik (Fixed-Point).
+ * Erwartet und liefert 32-Bit Signed Integer Samples.
+ *
+ * Optimized version of a dithering based in integer arithmetic (fixed point)
+ * expects 32 bit signed interger samples - uses long, because samples need not
+ * to be clipped yet.
+ * Result after "process" is always in target bit range. With byPassDither simply no
+ * noise is added.
  * @author Daniel Becker
- * @since 23.05.2020
+ * @since 29.04.2026
  */
 public class Dither {
 
-    private final double[] firstOrder = {
-            0.0D, 1.0D
-    };
-    private final double[] secondOrder = {
-            0.0D, 2D, -1D
-    };
-    private final double[] psychAccoust3 = {
-            0.0D, 1.623D, -0.98199999999999998D, 0.109D
-    };
-    private final double[] psychAccoust5 = {
-            0.0D, 2.0329999999999999D, -2.165D, 1.9590000000000001D, -1.5900000000000001D, 0.6149D
-    };
-    private final double[] psychAccoust9 = {
-            0.0D, 2.4119999999999999D, -3.3700000000000001D, 3.9369999999999998D, -4.1740000000000004D, 3.3530000000000002D, -2.2050000000000001D, 1.2809999999999999D, -0.56899999999999995D, 0.084699999999999998D
-    };
+    // Fixpunkt-Faktor: 2^14 = 16384 (genug für die Koeffizienten-Präzision)
+    private static final int SHIFT = 14;
+    private static final int SCALE = 1 << SHIFT;
+    private static final int HALFSCALE = 1 << (SHIFT - 1);
 
-    public enum FilterType {
-        FirstOrder, SecondOrder, Psychoacoustic3, Psychoacoustic5, Psychoacoustic9
-    }
+    // static scaled filter coefficients based on SHIFT (Q14)
+    private final int[] firstOrder = {
+            0, 16384
+    };
+    private final int[] secondOrder = {
+            0, 32768, -16384
+    };
+    private final int[] psychAccoust3 = {
+            0, 26591, -16088, 1786
+    };
+    private final int[] psychAccoust5 = {
+            0, 33309, -35470, 32096, -26050, 10075
+    };
+    private final int[] psychAccoust9 = {
+            0, 39518, -55213, 64504, -68386, 54936, -36126, 20988, -9321, 1388
+    };
 
     public static final String[] FilterTypeNames = {
             "First Oder", "Second Order", "Psychoacoustic 3", "Psychoacoustic 5", "Psychoacoustic 9",
     };
 
-    public enum DitherType {
-        Rectangular, Triangular, HighPass
-    }
-
     public static final String[] DitherTypeNames = {
             "Rectangular", "Triangular", "High-Pass"
     };
 
-    private int mChannels = 0;
-    private double[] noiseShapeFilter = null;
-    private double[] scalarProduct = null;
-    private double[][] oldSamples = null;
-    private double qt = 0;
-    private boolean mByPass = false;
-    private int toNumberBits = 0;
-    private int mDitherType = 0;
-    private boolean mWithNoiseShaping = true;
-    private boolean mWithDither = true;
-    private double[] randValue = null;
+    private long[][] oldSamples = null;
+    private int[] lastRand = null;
+    private final Random random = new Random();
+
+    private int[] noiseShapeFilter = psychAccoust9;
+    private int ditherType = 2;
+    private int channels = 0;
+    private boolean withNoiseShaping = true;
+    private boolean withDither = true;
+    private boolean byPassDither = false;
+
+    // quantifying bit shifts - will be set with "setSampleSizeInBits" - and only there!
+    private int qShift = 0;
+    private long halfStep = 0;
 
     /**
      * Constructor for Dither
      */
-    public Dither() {
-        noiseShapeFilter = psychAccoust9;
-        mByPass = false;
-        mDitherType = 0;
-        mWithNoiseShaping = true;
-        mWithDither = true;
-    }
-
     public Dither(int channels, int toBits, int filterType, int ditherType, boolean byPassDither) {
-        this();
-        mChannels = channels;
-        toNumberBits = toBits;
-        mDitherType = ditherType;
-        mByPass = byPassDither;
+        this.ditherType = ditherType;
+        this.byPassDither = byPassDither;
         setFilterType(filterType);
+        setSampleSizeInBits(toBits);
+        setAnzChannels(channels); // also does "cleanStateCoefficients()"
     }
 
-    public void setAnzChannels(int i) {
-        mChannels = i;
-    }
-
-    public void setSampleSizeInBits(int i) {
-        toNumberBits = i;
-        cleanStateCoefficients();
-    }
-
-    /**
-     * @param i Values from 0 to 4
-     * @since 23.05.2020
-     */
     public void setFilterType(int i) {
-        switch (i) {
-            case 0:
-                noiseShapeFilter = firstOrder;
-                break;
-            case 1:
-                noiseShapeFilter = secondOrder;
-                break;
-            case 2:
-                noiseShapeFilter = psychAccoust3;
-                break;
-            case 3:
-                noiseShapeFilter = psychAccoust5;
-                break;
-            default:
-            case 4:
-                noiseShapeFilter = psychAccoust9;
-                break;
-        }
+        noiseShapeFilter = switch (i) {
+            case 0 -> firstOrder;
+            case 1 -> secondOrder;
+            case 2 -> psychAccoust3;
+            case 3 -> psychAccoust5;
+            case 4 -> psychAccoust9;
+            default -> psychAccoust9;
+        };
+    }
+
+    public void setDitherType(int newDitherType) {
+        ditherType = newDitherType;
+    }
+
+    public void setAnzChannels(int newAnzChannels) {
+        channels = newAnzChannels;
         cleanStateCoefficients();
     }
 
-    /**
-     * @param i Values from 0 to 2
-     * @since 23.05.2020
-     */
-    public void setDitherType(int i) {
-        mDitherType = i;
-        cleanStateCoefficients();
+    public void setSampleSizeInBits(int bits) {
+        // how many bits to throw away
+        this.qShift = 32 - bits;
+        this.halfStep = 1L << (qShift - 1);
     }
 
-    public void setWithDither(boolean withDither) {
-        mWithDither = withDither;
+    public void setWithDither(final boolean newWithDither) {
+        withDither = newWithDither;
     }
 
-    public void setWithNoiseShaping(boolean withNoiseShaping) {
-        mWithNoiseShaping = withNoiseShaping;
+    public void setWithNoiseShaping(boolean newWithNoiseShaping) {
+        withNoiseShaping = newWithNoiseShaping;
     }
 
-    public void setBypass(boolean byPass) {
-        mByPass = byPass;
+    public void setBypass(final boolean newByPass) {
+        byPassDither = newByPass;
     }
 
     public void cleanStateCoefficients() {
-        randValue = new double[mChannels];
-        scalarProduct = new double[mChannels];
+        if (channels <= 0) return;
+        lastRand = new int[channels];
         int filterLength = noiseShapeFilter.length;
-        oldSamples = new double[mChannels][filterLength];
+        oldSamples = new long[channels][filterLength];
 
-        for (int i = 0; i < mChannels; i++) {
-            randValue[i] = 2D * Math.random() - 1.0D;
-            scalarProduct[i] = 0.0D;
+        for (int i = 0; i < channels; i++) {
+            lastRand[i] = random.nextInt(SCALE) - (HALFSCALE); // somewhat -0.5..0.5 but quantified
             for (int j = 0; j < filterLength; j++)
-                oldSamples[i][j] = 0.0D;
+                oldSamples[i][j] = 0;
         }
-
-        qt = Math.pow(2D, 1 - toNumberBits);
-    }
-
-    public void byPassAlgorithm(boolean flag) {
-        mByPass = flag;
-    }
-
-    public void useDither(boolean flag) {
-        mWithDither = flag;
-        for (int i = 0; i < mChannels; i++) {
-            scalarProduct[i] = 0.0D;
-        }
-    }
-
-    public void useNoiseShaping(boolean flag) {
-        mWithNoiseShaping = flag;
-        cleanStateCoefficients();
-    }
-
-    public void numberChannels(int i) {
-        mChannels = i;
-    }
-
-    static double scalarProduct(double[] ad, double[] ad1) {
-        double d = 0.0D;
-        int i = ad.length;
-        int j = ad1.length;
-        if (i != j) return 0.0D;
-        for (int k = 0; k < i; k++)
-            d += ad[k] * ad1[k];
-
-        return d;
     }
 
     /**
      * Shift all entries of given Array one to the right
      * set new value at position 0
-     *
-     * @param ad
-     * @param newValue
-     * @since 30.05.2020
      */
-    static void shiftAndSet(double[] ad, double newValue) {
-        int lastIndex = ad.length - 1;
-        for (int k = lastIndex; k > 0; k--) ad[k] = ad[k - 1];
+    private static void shiftAndSet(long[] ad, long newValue) {
+        for (int k = ad.length - 1; k > 0; k--)
+            ad[k] = ad[k - 1];
         ad[0] = newValue;
     }
 
     /**
-     * Dither given sample to defined sample size for channel
+     * Core-logik in integer arithmetic
      *
-     * @param sample
-     * @param forChannel
-     * @return
-     * @since 30.05.2020
+     * @since 29.04.2026
+     * @param sample 32-Bit Signed Integer (yet unclipped, so data type is long)
+     * @param ch the channel to use
+     * @return the sample in target bit depth (plus dither or without)
      */
-    public final double process(double sample, int forChannel) {
-        scalarProduct[forChannel] = scalarProduct(noiseShapeFilter, oldSamples[forChannel]);
+    public final long process(long sample, int ch) {
+        if (byPassDither) return (sample + halfStep) / (1L << qShift);
 
-        double sampleNoiseShaped = (mWithNoiseShaping) ? sample - scalarProduct[forChannel] : sample;
+        // 1. Noise Shaping (Error Feedback)
+        long errorPrediction = 0;
+        if (withNoiseShaping) {
+            final long[] oldSamplesChannel = oldSamples[ch];
+            for (int i=0; i<noiseShapeFilter.length; i++)
+                errorPrediction += (long)noiseShapeFilter[i] * oldSamplesChannel[i];
+            errorPrediction /= (1<<SHIFT);
+        }
 
-        double sampleDitherd;
-        if (mWithDither) {
-            double rndOne = randValue[forChannel] = 2D * Math.random() - 1.0D;
-            double ditheredSample = switch (mDitherType) {
-                case 0 -> (rndOne * qt) / 2D;
-                case 1 -> {
-                    double rndTwo = 2D * Math.random() - 1.0D;
-                    yield ((rndOne + rndTwo) * qt) / 2D;
+        long sampleNoiseShaped = sample - errorPrediction;
+
+        // 2. Dithering
+        long ditherValue = 0;
+        if (withDither) {
+            int r1 = random.nextInt(SCALE) - (HALFSCALE); // -8192 bis 8191
+            switch (ditherType) {
+                case 0 -> { // Rectangular
+                    ditherValue = r1;
                 }
-                default -> ((rndOne - randValue[forChannel]) * qt) / 2D;
+                case 1 -> { // Triangular
+                    int r2 = random.nextInt(SCALE) - (HALFSCALE);
+                    ditherValue = r1 + r2;
+                }
+//                case 2
+                default -> { // High Pass
+                    ditherValue = r1 - lastRand[ch];
+                    lastRand[ch] = r1;
+                }
             };
-            sampleDitherd = Math.floor(((sampleNoiseShaped + ditheredSample) / qt) + 0.5D) * qt;
-        } else
-            sampleDitherd = Math.floor((sampleNoiseShaped / qt) + 0.5D) * qt;
 
-        shiftAndSet(oldSamples[forChannel], sampleDitherd - sampleNoiseShaped);
+            // scale dither to target bits
+            ditherValue = (ditherValue << qShift) / (1 << SHIFT);
+        }
 
-        if (mByPass)
-            return sample;
-        else
-            return sampleDitherd;
+        // 3. quantization (rounding via "halfStep")
+        long inputToQuantizer = sampleNoiseShaped + ditherValue;
+        // 4. quantize for output plus rounding
+        long quantized = (inputToQuantizer + halfStep) / (1L <<qShift);
+
+        // 5. Now store the error, which is the sub sample part (rest) that was
+        // lost in the target sample
+        shiftAndSet(oldSamples[ch], (quantized << qShift) - inputToQuantizer);
+
+        return quantized;
     }
 }

@@ -222,4 +222,12 @@ logger.log(Level.TRACE, e.getMessage(), e);
     @Override
     public void cleanUp() {
     }
+
+    @Override
+    public void playBackStarted() {
+    }
+
+    @Override
+    public void playBackStopped() {
+    }
 }

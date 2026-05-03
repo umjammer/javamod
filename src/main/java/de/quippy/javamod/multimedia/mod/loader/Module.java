@@ -632,6 +632,13 @@ public abstract class Module {
     }
 
     /**
+     * Return true, if this mod allows for Amiga Paula emulation
+     * @since 28.04.2026
+     * @return
+     */
+    public abstract boolean supportsAmigaFilter();
+
+    /**
      * Returns true if the loader thinks this mod can be loaded by him
      *
      * @param inputStream {@link ModfileInputStream}
@@ -656,7 +663,7 @@ public abstract class Module {
     /**
      * @return Returns the mixer.
      */
-    public abstract BasicModMixer getModMixer(int sampleRate, int doISP, int doNoLoops, int maxNNAChannels);
+    public abstract BasicModMixer getModMixer(int sampleRate, int doISP, int doAmigaEmulation, int doNoLoops, int maxNNAChannels);
 
     /**
      * Retrieve the file extension list this loader/player is used for

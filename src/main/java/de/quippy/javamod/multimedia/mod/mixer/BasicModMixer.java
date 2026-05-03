@@ -29,6 +29,7 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import de.quippy.javamod.multimedia.mod.ModConstants;
+import de.quippy.javamod.multimedia.mod.SampleFrame;
 import de.quippy.javamod.multimedia.mod.gui.ModUpdateListener;
 import de.quippy.javamod.multimedia.mod.gui.ModUpdateListener.PatternPositionInformation;
 import de.quippy.javamod.multimedia.mod.gui.ModUpdateListener.PeekInformation;
@@ -295,8 +296,8 @@ public abstract class BasicModMixer {
 
     protected Random swinger;
 
-    // out sample buffer for two stereo samples
-    private final long[] samples = new long[2];
+    // out sample frame buffer
+    private final SampleFrame samples = new SampleFrame();
 
     // Global FilterMode:
     protected boolean globalFilterMode;
@@ -339,6 +340,8 @@ public abstract class BasicModMixer {
     protected int sampleRate;
     /** 0: no ISP; 1:linear; 2:Cubic Spline; 3:Windowed FIR */
     protected int doISP;
+    /** 0: no, 1: Amiga500, 2: Amiga1200 */
+    protected int doAmigaEmulation;
     /** activates infinite loop recognition */
     protected int doNoLoops;
 
@@ -363,13 +366,16 @@ public abstract class BasicModMixer {
     // What type of Mod is it?
     protected boolean isFastTrackerFamily, isScreamTrackerFamily, isMOD, isXM, isSTM, isS3M, isIT, isModPlug;
 
+    protected Paula paulaFilter;
+
     /**
      * Constructor for BasicModMixer
      */
-    public BasicModMixer(Module mod, int sampleRate, int doISP, int doNoLoops, int maxNNAChannels) {
+    public BasicModMixer(Module mod, int sampleRate, int doISP, int doAmigaEmulation, int doNoLoops, int maxNNAChannels) {
         this.mod = mod;
         this.sampleRate = sampleRate;
         this.doISP = doISP;
+        this.doAmigaEmulation = doAmigaEmulation;
         this.doNoLoops = doNoLoops;
         this.maxNNAChannels = maxNNAChannels;
 
@@ -392,6 +398,7 @@ public abstract class BasicModMixer {
         sampleRate = newSampleRate;
         calculateSamplesPerTick();
         calculateGlobalTuning();
+        setPaula(doAmigaEmulation, sampleRate, maxChannels);
         for (int c = 0; c < maxChannels; c++) setNewPlayerTuningFor(channelMemory[c]);
     }
 
@@ -403,6 +410,17 @@ public abstract class BasicModMixer {
      */
     public void changeISP(int newISP) {
         this.doISP = newISP;
+        setPaula(doAmigaEmulation, sampleRate, maxChannels);
+    }
+
+    /**
+     * Changes the Amiga Emulation routine. This can be done at any time
+     * @since 09.07.2006
+     * @param newAmigaEmulation
+     */
+    public void changeAmigaEmulation(final int newAmigaEmulation) {
+        this.doAmigaEmulation = newAmigaEmulation;
+        setPaula(doAmigaEmulation, sampleRate, maxChannels);
     }
 
     /**
@@ -550,6 +568,9 @@ public abstract class BasicModMixer {
         for (int cutOff = 0; cutOff < 256; cutOff++)
             cutoffToFreq[cutOff] = 110.0d * Math.pow(2.0d, cutOff * fac + 0.25d);
 
+        // clear interweave buffers - well are filled first, so no setting here necessary
+        //for (int i = 0; i < ModConstants.INTERWEAVE_LEN; i++) interweaveBufferLeft[i] = interweaveBufferRight[i] = 0;
+
         // Reset all rows played to false
         mod.resetLoopRecognition();
 
@@ -571,8 +592,8 @@ public abstract class BasicModMixer {
                 if (channelMemory[c] != null) muteStatus[c] = channelMemory[c].muted;
             }
         }
-        channelMemory = new ChannelMemory[maxChannels];
 
+        channelMemory = new ChannelMemory[maxChannels];
         for (int c = 0; c < maxChannels; c++) {
             ChannelMemory aktMemo = (channelMemory[c] = new ChannelMemory());
             if (c < nChannels) {
@@ -594,7 +615,32 @@ public abstract class BasicModMixer {
                 if (channelMemory[c] != null) channelMemory[c].muted = muteStatus[c];
             }
         }
+
         resetJumpPositionSet();
+
+        // set Paula (at various additional places!)
+        // we use maxChannels, not "mod.getNChannels()"
+        // with ProTracker, these values will not differ
+        // but if we have IT with NNAs - and the user
+        // decides to use AMIGA-Filter on those - NNAs must be
+        // mixed through Paula Emulation as well...
+        setPaula(doAmigaEmulation, sampleRate, maxChannels);
+    }
+
+    /**
+     * If wanted, set Paula emulation
+     * @since 25.04.2026
+     * @param amigaModel
+     * @param sampleRate
+     */
+    private void setPaula(int amigaModel, int sampleRate, int channels) {
+        if (mod.supportsAmigaFilter() && (amigaModel == ModConstants.AMIGAEMULATION_AMIGA500 || amigaModel == ModConstants.AMIGAEMULATION_AMIGA1200)) {
+            if (paulaFilter != null)
+                paulaFilter.initialize(amigaModel, sampleRate, channels);
+            else
+                paulaFilter = new Paula(amigaModel, sampleRate, channels);
+        } else
+            paulaFilter = null;
     }
 
 //    /**
@@ -867,31 +913,6 @@ public abstract class BasicModMixer {
     }
 
     /**
-     * Get the period of the nearest halftone
-     *
-     * @param period period for index
-     * @return period
-     */
-    protected int getRoundedPeriod(ChannelMemory aktMemo, int period) {
-        if (isMOD) {
-            int i = ModConstants.getNoteIndexForPeriod(period);
-            if (i > 0) {
-                int diff1 = ModConstants.noteValues[i - 1] - period;
-                int diff2 = period - ModConstants.noteValues[i];
-                if (diff1 < diff2) return ModConstants.noteValues[i - 1];
-            }
-            return ModConstants.noteValues[i];
-        } else {
-            for (int i = 1; i < 180; i++) {
-                int checkPeriod = getFineTunePeriod(aktMemo, i) >> ModConstants.PERIOD_SHIFT;
-                if (checkPeriod > 0 && checkPeriod <= period)
-                    return checkPeriod;
-            }
-            return 0;
-        }
-    }
-
-    /**
      * Because of special notes like KEY_OFF, NOTE_CUT, NOTE_FADE this is <b>not</b>
      * {@code !hasNoNote()}
      *
@@ -994,28 +1015,28 @@ public abstract class BasicModMixer {
      * @param buffer result
      * @since 05.07.2020
      */
-    private void doResonance(ChannelMemory aktMemo, long[] buffer) {
+    private void doResonance(ChannelMemory aktMemo, SampleFrame buffer) {
         // Speeds up things a bit
         long A0 = aktMemo.filter_A0;
         long B0 = aktMemo.filter_B0;
         long B1 = aktMemo.filter_B1;
         long HP = aktMemo.filter_HP;
 
-        long sampleAmp = buffer[0] << ModConstants.FILTER_PREAMP_BITS; // with preAmp
-        long fy = ((sampleAmp * A0) + (aktMemo.filter_Y1 * B0) + (aktMemo.filter_Y2 * B1) + ModConstants.HALF_FILTER_PRECISION) >> ModConstants.FILTER_SHIFT_BITS;
+        long sampleAmp = buffer.left << ModConstants.FILTER_PREAMP_BITS; // with preAmp
+        long fy = ((sampleAmp * A0) + (aktMemo.filter_Y1 * B0) + (aktMemo.filter_Y2 * B1) + ModConstants.HALF_FILTER_PRECISION) / (1 << ModConstants.FILTER_SHIFT_BITS);
         aktMemo.filter_Y2 = aktMemo.filter_Y1;
         aktMemo.filter_Y1 = fy - (sampleAmp & HP);
         if (aktMemo.filter_Y1 < ModConstants.FILTER_CLIP_MIN) aktMemo.filter_Y1 = ModConstants.FILTER_CLIP_MIN;
         else if (aktMemo.filter_Y1 > ModConstants.FILTER_CLIP_MAX) aktMemo.filter_Y1 = ModConstants.FILTER_CLIP_MAX;
-        buffer[0] = (fy + (1 << (ModConstants.FILTER_PREAMP_BITS - 1))) >> ModConstants.FILTER_PREAMP_BITS;
+        buffer.left = (fy + (1 << (ModConstants.FILTER_PREAMP_BITS - 1))) / (1 << ModConstants.FILTER_PREAMP_BITS);
 
-        sampleAmp = buffer[1] << ModConstants.FILTER_PREAMP_BITS; // with preAmp
-        fy = ((sampleAmp * A0) + (aktMemo.filter_Y3 * B0) + (aktMemo.filter_Y4 * B1) + ModConstants.HALF_FILTER_PRECISION) >> ModConstants.FILTER_SHIFT_BITS;
+        sampleAmp = buffer.right << ModConstants.FILTER_PREAMP_BITS; // with preAmp
+        fy = ((sampleAmp * A0) + (aktMemo.filter_Y3 * B0) + (aktMemo.filter_Y4 * B1) + ModConstants.HALF_FILTER_PRECISION) / (1 << ModConstants.FILTER_SHIFT_BITS);
         aktMemo.filter_Y4 = aktMemo.filter_Y3;
         aktMemo.filter_Y3 = fy - (sampleAmp & HP);
         if (aktMemo.filter_Y3 < ModConstants.FILTER_CLIP_MIN) aktMemo.filter_Y3 = ModConstants.FILTER_CLIP_MIN;
         else if (aktMemo.filter_Y3 > ModConstants.FILTER_CLIP_MAX) aktMemo.filter_Y3 = ModConstants.FILTER_CLIP_MAX;
-        buffer[1] = (fy + (1 << (ModConstants.FILTER_PREAMP_BITS - 1))) >> ModConstants.FILTER_PREAMP_BITS;
+        buffer.right = (fy + (1 << (ModConstants.FILTER_PREAMP_BITS - 1))) / (1 << ModConstants.FILTER_PREAMP_BITS);
     }
 
     /**
@@ -1052,7 +1073,7 @@ public abstract class BasicModMixer {
      *
      * @param aktMemo memory
      */
-    protected abstract void doVolumeColumnTickEffect(ChannelMemory aktMemo);
+    protected abstract void doVolumeColumnTickEffect(BasicModMixer.ChannelMemory aktMemo);
 
     /**
      * call doTickEffects and doVolumeColumnTickEffect in correct order
@@ -1596,9 +1617,14 @@ public abstract class BasicModMixer {
      * @since 19.06.2006
      */
     protected void resetInstrumentPointers(ChannelMemory aktMemo, boolean forceS3MZero) {
+        // Paula relevant event (8BitBubsy's startDMA)
+        // in his implementation, the currentTuningPos is reset *after* calling refetchPeriod
+        // end explicitly marked as necessary
+        if (paulaFilter!=null) paulaFilter.refetchPeriod(aktMemo.channelNumber, aktMemo.currentTuning, aktMemo.currentTuningPos);
+
         aktMemo.EFxOffset =
-                aktMemo.currentTuningPos =
-                        aktMemo.interpolationMagic = 0;
+        aktMemo.currentTuningPos =
+        aktMemo.interpolationMagic = 0;
         aktMemo.isForwardDirection = true;
         aktMemo.instrumentFinished = false;
 
@@ -2146,6 +2172,11 @@ public abstract class BasicModMixer {
             int addToSamplePos = aktMemo.currentTuningPos >> ModConstants.SHIFT;
             aktMemo.currentTuningPos &= ModConstants.SHIFT_MASK;
 
+
+            // New tuning position - so initiate a blebInjection:
+            // 8BitBubsy's paulaGenerateSamples
+            if (paulaFilter!=null) paulaFilter.refetchPeriod(aktMemo.channelNumber, aktMemo.currentTuning, aktMemo.currentTuningPos);
+
             // Set the start/end loop position to check against...
             int loopStart = 0;
             int loopEnd = sample.length;
@@ -2240,8 +2271,22 @@ public abstract class BasicModMixer {
             // Retrieve the sample data for this point (interpolated, if necessary)
             // the array "samples" is created with 2 elements per default
             // we will receive 2 long values even with mono samples
-            int doISPhere = (aktMemo.assignedInstrument != null && aktMemo.assignedInstrument.resampling > -1) ? aktMemo.assignedInstrument.resampling : doISP;
+            // Evaluate the doISP: if paulaFilter is active, do NO ISP! Otherwise, respect assignment in assignedInstrument (OMPT)
+            int doISPhere = (paulaFilter != null) ? 0 :
+                    (aktMemo.assignedInstrument != null && aktMemo.assignedInstrument.resampling > -1) ? aktMemo.assignedInstrument.resampling : doISP;
             aktMemo.currentSample.getInterpolatedSample(samples, doISPhere, aktMemo.currentTuning, aktMemo.currentSamplePos, aktMemo.currentTuningPos, !aktMemo.isForwardDirection, aktMemo.interpolationMagic);
+
+            if (paulaFilter != null) {
+                // Add to Blep (Paula decides, if anything is to add)
+                paulaFilter.blepAdd(aktMemo.channelNumber, samples.left);
+                // and add the correction delta to the output
+                // THIS IS MONO! The Paula is only suitable for MODs with mono samples
+                // as then samples[0] and samples[1] are equal - and this works.
+                // Otherwise we would need a Paula emulation for stereo samples.
+                final long blepCorrection = paulaFilter.blepRun(aktMemo.channelNumber);
+                samples.left += blepCorrection;
+                samples.right += blepCorrection;
+            }
 
             // Resonance Filters
             if (aktMemo.filterOn) doResonance(aktMemo, samples);
@@ -2275,8 +2320,8 @@ public abstract class BasicModMixer {
             // do not store, if muted...
             if (!aktMemo.muted) {
                 // Fit into volume for the two channels
-                long sampleL = (samples[0] * volL) >> (ModConstants.MAXVOLUMESHIFT + ModConstants.VOLRAMPLEN_FRAC);
-                long sampleR = (samples[1] * volR) >> (ModConstants.MAXVOLUMESHIFT + ModConstants.VOLRAMPLEN_FRAC);
+                long sampleL = (samples.left * volL) / (1 << (ModConstants.MAXVOLUMESHIFT + ModConstants.VOLRAMPLEN_FRAC));
+                long sampleR = (samples.right * volR) / (1 << (ModConstants.MAXVOLUMESHIFT + ModConstants.VOLRAMPLEN_FRAC));
 
                 // and off you go
                 leftBuffer[i] += sampleL;
@@ -2305,7 +2350,6 @@ public abstract class BasicModMixer {
      * @param aktMemo memory
      * @since 18.06.2006
      */
-//	private ChannelMemory memory = new ChannelMemory();
     private void fillRampDataIntoBuffers(long[] leftBuffer, long[] rightBuffer, ChannelMemory aktMemo) {
         // Remember changeable values
         long filter_Y1 = aktMemo.filter_Y1;
@@ -2325,9 +2369,7 @@ public abstract class BasicModMixer {
         Sample assignedSample = aktMemo.assignedSample;
         aktMemo.assignedSample = null; // no sample swap here!
 
-//		memory.setUpFrom(aktMemo);
         mixChannelIntoBuffers(leftBuffer, rightBuffer, 0, ModConstants.INTERWEAVE_LEN, aktMemo);
-//		aktMemo.setUpFrom(memory);
 
         // set them back
         aktMemo.filter_Y1 = filter_Y1;
@@ -2421,6 +2463,8 @@ public abstract class BasicModMixer {
                 }
                 interweave = false;
             }
+
+            if (paulaFilter != null) paulaFilter.performFilters(leftBuffer, rightBuffer, startIndex, endIndex);
 
             startIndex += mixAmount;
             samplesMixed += mixAmount;

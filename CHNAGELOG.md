@@ -1,10 +1,21 @@
-## New in Version 3.9.6
+# JavaMod V3.9.6 GAMMA
 * FIX: Playlists are now saved in ANSI cp1252 - not ISO-8859-1.
 * FIX: Multichannel Mods considered too many ProTracker Quirks. Ignore illegal
   note delay, tempo changes handled on first tick, no on the fly sample
   swap
 * FIX: ProTracker-Mods with non-ProTracker-periods should be played as XMs. The
   change during loading was however not considered properly
+* FIX: Now using PAL PAULA Frequencies for calculating the player tuning with
+  ProTracker MODs (AMIGA_TABLE), i.e. the amount of samples needed to reach
+  the real note.
+  In that turn we cleaned up the code - also with ScreamTracker
+* NEW: Properties file is written in sorted order, for whatever that is good for
+* NEW: Amiga 500 and Amiga 1200 Filters added. We use Paula-emulation from
+  8BitBubsy/Aciddose implementation. Is only used if Mod is an AMIGA MOD
+* NEW: Dithering configuration is moved to a config sub dialog
+* NEW: Dithering was changed to an integer version to gain more performance
+* NEW: Introduction of SampleFrame to avoid something like long[] to retrieve
+  sample data
 
 ## New in Version 3.9.5
 * NEW: Audio CD rips with CloneCD create an image file ending with IMG. That is

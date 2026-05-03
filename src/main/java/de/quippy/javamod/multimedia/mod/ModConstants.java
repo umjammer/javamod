@@ -114,8 +114,8 @@ public class ModConstants {
     public static final int SHIFT_MAX = 1 << SHIFT;
     public static final int SHIFT_MASK = SHIFT_MAX - 1;
 
-    public static final int PERIOD_SHIFT = 4;
     // Interpolation shift samples and clipping
+    public static final int PERIOD_SHIFT = 4;
     public static final int SAMPLE_SHIFT = 12;
     public static final long CLIPP32BIT_MAX = 0x000000007FFFFFFFL;
     public static final long CLIPP32BIT_MIN = 0xffFFFFFF80000000L;
@@ -126,6 +126,22 @@ public class ModConstants {
     public static final int INTERPOLATION_CUBIC = 2;
     public static final int INTERPOLATION_KAISER = 3;
     public static final int INTERPOLATION_WINDOWSFIR = 4;
+    // AmigaEmulation
+    public static final int AMIGAEMULATION_NONE			= 0;
+    public static final int AMIGAEMULATION_AMIGA500		= 1;
+    public static final int AMIGAEMULATION_AMIGA1200	= 2;
+
+    //Paula: main crystal oscillator for PAL Amiga systems
+    public static final double AMIGA_PAL_XTAL_HZ = 28375160;
+    public static final double AMIGA_PAL_CCK_HZ = (AMIGA_PAL_XTAL_HZ / 8.0);
+//    public static final double CIA_PAL_CLK = (AMIGA_PAL_CCK_HZ / 5.0);
+    public static final int PAULA_PRECISION = PERIOD_SHIFT + SHIFT;
+    public static final long PAULA_PAL_CLK = (long) (AMIGA_PAL_CCK_HZ * (double) (1L << PAULA_PRECISION));
+    public static final int PAL_PAULA_MIN_PERIOD = 113;
+    public static final int PAL_PAULA_MAX_PERIOD = 856;
+//    public static final int PAL_PAULA_MIN_SAFE_PERIOD = 124;
+//    public static final double PAL_PAULA_MAX_HZ = (PAULA_PAL_CLK / (double) PAL_PAULA_MIN_PERIOD);
+//    public static final double PAL_PAULA_MAX_SAFE_HZ = (PAULA_PAL_CLK / (double) PAL_PAULA_MIN_SAFE_PERIOD);
 
     public static final int INTERWEAVE_FRAC = 4;
     public static final int INTERWEAVE_LEN = 1 << INTERWEAVE_FRAC;
@@ -1075,6 +1091,7 @@ public class ModConstants {
         return "0.%x".formatted(cwtv);
     }
 
+//    // This is HOW OMPT does it - however, that does not work. The below implementation does.
 //    private static final int ST2TempoFactor[] = {140, 50, 25, 15, 10, 7, 6, 4, 3, 3, 2, 2, 2, 2, 1, 1};
 //    private static final int st2MixingRate = 23863; // Highest possible setting in ST2
 //

@@ -170,7 +170,7 @@ public class ModInfoPanel extends JPanel {
     }
 
     /**
-     * @param parent the parentInfoDialog to set
+     * @param parent the parentContainer to set
      */
     public void setParentContainer(ModContainer parent) {
         parentContainer = parent;

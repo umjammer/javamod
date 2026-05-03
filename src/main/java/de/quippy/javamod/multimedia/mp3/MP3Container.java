@@ -109,11 +109,6 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
         return result;
     }
 
-    /**
-     * @param url
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getSongInfosFor(java.net.URL)
-     */
     @Override
     public Map<String, Object> getSongInfosFor(URL url) {
         Map<String, Object> result = new HashMap<>();
@@ -144,28 +139,16 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
         return result;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#canExport()
-     */
     @Override
     public boolean canExport() {
         return true;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getConfigPanel()
-     */
     @Override
     public JPanel getConfigPanel() {
         return null;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getInfoPanel()
-     */
     @Override
     public JPanel getInfoPanel() {
         if (isStreaming) {
@@ -183,10 +166,6 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
         }
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getFileExtensionList()
-     */
     @Override
     public String[] getFileExtensionList() {
         return MP3FILEEXTENSION;
@@ -194,33 +173,20 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
 
     /**
      * @return the name of the group of files this container knows
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#getName()
      */
     @Override
     public String getName() {
         return "MP3-File";
     }
 
-    /**
-     * @param newProps
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationChanged(java.util.Properties)
-     */
     @Override
     public void configurationChanged(Properties newProps) {
     }
 
-    /**
-     * @param props
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#configurationSave(java.util.Properties)
-     */
     @Override
     public void configurationSave(Properties props) {
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#createNewMixer()
-     */
     @Override
     public Mixer createNewMixer() {
         currentMixer = new MP3Mixer(getFileURL());
@@ -228,10 +194,6 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
         return currentMixer;
     }
 
-    /**
-     * @param tpe
-     * @see de.quippy.javamod.multimedia.mp3.streaming.TagParseListener#tagParsed(de.quippy.javamod.multimedia.mp3.streaming.TagParseEvent)
-     */
     @Override
     public void tagParsed(TagParseEvent tpe) {
         IcyTag tag = tpe.getIcyTag();
@@ -253,10 +215,15 @@ public class MP3Container extends MultimediaContainer implements TagParseListene
         }
     }
 
-    /**
-     * @see de.quippy.javamod.multimedia.MultimediaContainer#cleanUp()
-     */
     @Override
     public void cleanUp() {
+    }
+
+    @Override
+    public void playBackStarted() {
+    }
+
+    @Override
+    public void playBackStopped() {
     }
 }

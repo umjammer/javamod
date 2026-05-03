@@ -210,8 +210,8 @@ public class SampleInstrumentPlayer {
 
                 // Dither
                 if (sampleSizeInBits < 32) { // our maximum - no dithering needed
-                    sampleL = (long) ((dither.process((double) sampleL / (double) (0x7fff_ffffL), 0) * maximum) + 0.5d);
-                    sampleR = (long) ((dither.process((double) sampleR / (double) (0x7fff_ffffL), 1) * maximum) + 0.5d);
+                    sampleL = dither.process(sampleL, 0);
+                    sampleR = dither.process(sampleR, 1);
                 }
 
                 // Clip the values to target:

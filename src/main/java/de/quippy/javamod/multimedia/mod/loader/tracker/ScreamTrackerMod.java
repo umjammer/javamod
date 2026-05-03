@@ -111,8 +111,8 @@ public class ScreamTrackerMod extends Module {
     }
 
     @Override
-    public BasicModMixer getModMixer(int sampleRate, int doISP, int doNoLoops, int maxNNAChannels) {
-        return new ScreamTrackerMixer(this, sampleRate, doISP, doNoLoops, maxNNAChannels);
+    public BasicModMixer getModMixer(int sampleRate, int doISP, int doAmigaEmulation, int doNoLoops, int maxNNAChannels) {
+        return new ScreamTrackerMixer(this, sampleRate, doISP, doAmigaEmulation, doNoLoops, maxNNAChannels);
     }
 
     @Override
@@ -177,6 +177,11 @@ public class ScreamTrackerMod extends Module {
         byte[] buf = new byte[4];
         di.readFully(buf);
         return S3M_ID.equals(new String(buf));
+    }
+
+    @Override
+    public boolean supportsAmigaFilter() {
+        return false;
     }
 
     /**

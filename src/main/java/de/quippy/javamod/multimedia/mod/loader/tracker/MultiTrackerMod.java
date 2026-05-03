@@ -60,8 +60,8 @@ public class MultiTrackerMod extends ProTrackerMod {
     }
 
     @Override
-    public BasicModMixer getModMixer(int sampleRate, int doISP, int doNoLoops, int maxNNAChannels) {
-        return new ProTrackerMixer(this, sampleRate, doISP, doNoLoops, maxNNAChannels);
+    public BasicModMixer getModMixer(int sampleRate, int doISP, int doAmigaEmulation, int doNoLoops, int maxNNAChannels) {
+        return new ProTrackerMixer(this, sampleRate, doISP, doAmigaEmulation, doNoLoops, maxNNAChannels);
     }
 
     @Override

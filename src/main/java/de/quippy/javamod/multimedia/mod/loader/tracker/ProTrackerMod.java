@@ -82,8 +82,8 @@ public class ProTrackerMod extends Module {
     }
 
     @Override
-    public BasicModMixer getModMixer(int sampleRate, int doISP, int doNoLoops, int maxNNAChannels) {
-        return new ProTrackerMixer(this, sampleRate, doISP, doNoLoops, maxNNAChannels);
+    public BasicModMixer getModMixer(int sampleRate, int doISP, int doAmigaEmulation, int doNoLoops, int maxNNAChannels) {
+        return new ProTrackerMixer(this, sampleRate, doISP, doAmigaEmulation, doNoLoops, maxNNAChannels);
     }
 
     @Override
@@ -170,6 +170,11 @@ public class ProTrackerMod extends Module {
                 modID.equals(".M.K") ||
                 modID.equals("WARD") ||
                 modID.equals("!PM!");
+    }
+
+    @Override
+    public boolean supportsAmigaFilter() {
+        return isAmigaLike;
     }
 
     /**

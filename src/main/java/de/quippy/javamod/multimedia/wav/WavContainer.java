@@ -171,4 +171,12 @@ public class WavContainer extends MultimediaContainer {
     @Override
     public void cleanUp() {
     }
+
+    @Override
+    public void playBackStarted() {
+    }
+
+    @Override
+    public void playBackStopped() {
+    }
 }

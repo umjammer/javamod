@@ -280,4 +280,12 @@ logger.log(Level.DEBUG, e.getMessage(), e);
     @Override
     public void cleanUp() {
     }
+
+    @Override
+    public void playBackStarted() {
+    }
+
+    @Override
+    public void playBackStopped() {
+    }
 }
