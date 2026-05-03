@@ -2113,7 +2113,8 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
         getPrevItem().setEnabled(getButton_Prev().isEnabled());
         getNextItem().setEnabled(getButton_Next().isEnabled());
     }
-    /* EVENT METHODS --------------------------------------------------------*/
+
+    // EVENT METHODS
 
     /**
      * @since 29.12.2018
@@ -2229,6 +2230,43 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
     public void doOpenURL(String surl) {
         if (surl != null) {
             loadMultimediaOrPlayListFile(Helpers.createURLfromString(surl));
+        }
+    }
+
+    /**
+     * @param sourceFile
+     * @param targetFile
+     * @param fromMillisecondPosition
+     * @param duration -1: no limit, else will stop playback after duration (in milliseconds) is reached
+     * @param progress
+     * @since 09.11.2019
+     */
+    private void exportFileToWave(URL sourceFile, File targetFile, long fromMillisecondPosition, long duration, ProgressDialog progress) {
+        Updater updater = null;
+        try {
+            MultimediaContainer newContainer = MultimediaContainerManager.getMultimediaContainer(sourceFile);
+            if (newContainer != null) {
+                Mixer mixer = getCurrentContainer().createNewMixer();
+                if (mixer != null) {
+                    mixer.setAudioProcessor(null);
+                    mixer.setVolume(currentVolume);
+                    mixer.setBalance(currentBalance);
+                    mixer.setSoundOutputStream(getSoundOutputStream());
+                    mixer.setPlayDuringExport(false);
+                    mixer.setExportFile(targetFile);
+                    mixer.setMillisecondPosition(fromMillisecondPosition);
+                    if (duration > -1) mixer.setStopMillisecondPosition(fromMillisecondPosition + duration);
+                    if (progress != null) {
+                        updater = new Updater(mixer, fromMillisecondPosition, duration, progress);
+                        updater.start();
+                    }
+                    mixer.startPlayback();
+                }
+            }
+        } catch (Throwable ex) {
+            logger.log(Level.ERROR, "[MainForm::exportToWave]", ex);
+        } finally {
+            if (updater != null) updater.stopMe();
         }
     }
 
@@ -2371,43 +2409,6 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
                     Thread.sleep(10L);
                 } catch (InterruptedException ex) { /*NOOP*/ }
             }
-        }
-    }
-
-    /**
-     * @param sourceFile
-     * @param targetFile
-     * @param fromMillisecondPosition
-     * @param duration                -1: no limit, else will stop playback after duration (in milliseconds) is reached
-     * @param progress
-     * @since 09.11.2019
-     */
-    private void exportFileToWave(URL sourceFile, File targetFile, long fromMillisecondPosition, long duration, ProgressDialog progress) {
-        Updater updater = null;
-        try {
-            MultimediaContainer newContainer = MultimediaContainerManager.getMultimediaContainer(sourceFile);
-            if (newContainer != null) {
-                Mixer mixer = getCurrentContainer().createNewMixer();
-                if (mixer != null) {
-                    mixer.setAudioProcessor(null);
-                    mixer.setVolume(currentVolume);
-                    mixer.setBalance(currentBalance);
-                    mixer.setSoundOutputStream(getSoundOutputStream());
-                    mixer.setPlayDuringExport(false);
-                    mixer.setExportFile(targetFile);
-                    mixer.setMillisecondPosition(fromMillisecondPosition);
-                    if (duration > -1) mixer.setStopMillisecondPosition(fromMillisecondPosition + duration);
-                    if (progress != null) {
-                        updater = new Updater(mixer, fromMillisecondPosition, duration, progress);
-                        updater.start();
-                    }
-                    mixer.startPlayback();
-                }
-            }
-        } catch (Throwable ex) {
-            logger.log(Level.ERROR, "[MainForm::exportToWave]", ex);
-        } finally {
-            if (updater != null) updater.stopMe();
         }
     }
 
