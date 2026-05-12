@@ -40,8 +40,10 @@ public class Sample {
 
     /** Name of the sample */
     public String name;
-	public int byteLength;		// typically equal to length
-	public int length;			// full length in samples (already *2 --> Mod-Format)
+    /** not always equal to sampleLength (sampleLength is changed during loading) */
+    public int byteLength;
+    /** full length in samples (already *2 --> Mod-Format) */
+    public int sampleLength;
     /** normalized loading flags (signed, unsigned, 8-Bit, compressed, ...) */
     public int sampleType;
     /** Fine tuning -8..+8 */
@@ -132,7 +134,7 @@ public class Sample {
      * @since 03.07.2020
      */
     public void allocSampleData() {
-        int alloc = length + ((1 + 1 + 4 + 4 + 4 + 4) * INTERPOLATION_LOOK_AHEAD);
+        int alloc = sampleLength + ((1 + 1 + 4 + 4 + 4 + 4) * INTERPOLATION_LOOK_AHEAD);
         sampleL = new long[alloc];
         if (isStereo) sampleR = new long[alloc];
         else sampleR = null;
@@ -147,18 +149,18 @@ public class Sample {
      * @since 27.08.2006
      */
     public void fixSampleLoops(int modType) {
-        if (sampleL == null || length == 0) {
+        if (sampleL == null || sampleLength == 0) {
             loopType = loopLength = loopStop = loopStart =
                     sustainLoopLength = sustainLoopStart = sustainLoopStop = 0;
             return;
         }
         // A sample point index greater than the array index
         // needs to be allowed (! >=)
-        if (loopStop > length) loopStop = length;
+        if (loopStop > sampleLength) loopStop = sampleLength;
         if (loopStart < 0) loopStart = 0;
         loopLength = loopStop - loopStart;
 
-        if (sustainLoopStop > length) sustainLoopStop = length;
+        if (sustainLoopStop > sampleLength) sustainLoopStop = sampleLength;
         if (sustainLoopStart < 0) sustainLoopStart = 0;
         sustainLoopLength = sustainLoopStop - sustainLoopStart;
 
@@ -224,14 +226,14 @@ public class Sample {
         // [PRE | sample data | POST | 4x endLoop | 4x endSustain]
 
         final int startSampleData = INTERPOLATION_LOOK_AHEAD;
-        int afterSampleData = startSampleData + length;
+        int afterSampleData = startSampleData + sampleLength;
         interpolationStopLoop = afterSampleData + INTERPOLATION_LOOK_AHEAD;
         interpolationStopSustain = interpolationStopLoop + (4 * INTERPOLATION_LOOK_AHEAD);
         interpolationStartLoop = interpolationStopSustain + (4 * INTERPOLATION_LOOK_AHEAD);
         interpolationStartSustain = interpolationStartLoop + (4 * INTERPOLATION_LOOK_AHEAD);
 
         // First move sampleData out of the way, as it is loaded at index 0
-        for (int pos = length - 1; pos >= 0; pos--) {
+        for (int pos = sampleLength - 1; pos >= 0; pos--) {
             sampleL[startSampleData + pos] = sampleL[pos];
             if (sampleR != null) sampleR[startSampleData + pos] = sampleR[pos];
         }
@@ -343,7 +345,7 @@ public class Sample {
                                                 "unpacked") +
                 ", " +
                 ((sampleType & ModConstants.SM_STEREO) != 0 ? "stereo" : "mono") + ", " +
-                "length: " + length;
+                "length: " + sampleLength;
         return bf;
     }
 
@@ -579,203 +581,10 @@ public class Sample {
     }
 
     /**
-     * @param baseFrequency The baseFrequency to set.
+     * @param newCues the cues to set
      */
-    public void setBaseFrequency(int baseFrequency) {
-        this.baseFrequency = baseFrequency;
-    }
-
-    /**
-     * @param dosFileName The dosFileName to set.
-     */
-    public void setDosFileName(String dosFileName) {
-        this.dosFileName = dosFileName;
-    }
-
-    /**
-     * @param sampleType the sampleType to set
-     */
-    public void setSampleType(int sampleType) {
-        this.sampleType = sampleType;
-    }
-
-    /**
-     * @param fineTune The fineTune to set.
-     */
-    public void setFineTune(int fineTune) {
-        this.fineTune = fineTune;
-    }
-
-    /**
-     * @param newFlags The flags to set.
-     */
-    public void setFlags(int newFlags) {
-        flags = newFlags;
-    }
-
-    /**
-     * @param byteLength the byteLength to set
-     */
-    public void setByteLength(int byteLength) {
-        this.byteLength = byteLength;
-    }
-
-    /**
-     * @param length The length to set.
-     */
-    public void setLength(int length) {
-        this.length = length;
-    }
-
-    /**
-     * @param loopType The loopType to set.
-     */
-    public void setLoopType(int loopType) {
-        this.loopType = loopType;
-    }
-
-    /**
-     * @param name The name to set.
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @param loopLength The loopLength to set.
-     */
-    public void setLoopLength(int loopLength) {
-        this.loopLength = loopLength;
-    }
-
-    /**
-     * @param loopStart The loopStart to set.
-     */
-    public void setLoopStart(int loopStart) {
-        this.loopStart = loopStart;
-    }
-
-    /**
-     * @param loopEnd The loopStop to set.
-     */
-    public void setLoopStop(int loopEnd) {
-        this.loopStop = loopEnd;
-    }
-
-    /**
-     * @param sustainLoopStart the sustainLoopStart to set
-     */
-    public void setSustainLoopStart(int sustainLoopStart) {
-        this.sustainLoopStart = sustainLoopStart;
-    }
-
-    /**
-     * @param sustainLoopStop the sustainLoopEnd to set
-     */
-    public void setSustainLoopStop(int sustainLoopStop) {
-        this.sustainLoopStop = sustainLoopStop;
-    }
-
-    /**
-     * @param sustainLoopLength the sustainLoopLength to set
-     */
-    public void setSustainLoopLength(int sustainLoopLength) {
-        this.sustainLoopLength = sustainLoopLength;
-    }
-
-    /**
-     * @param sample The sample to set.
-     */
-    public void setSampleL(long[] sample) {
-        this.sampleL = sample;
-    }
-
-    /**
-     * @param sample The sample to set.
-     */
-    public void setSampleR(long[] sample) {
-        this.sampleR = sample;
-    }
-
-    /**
-     * @param transpose The transpose to set.
-     */
-    public void setTranspose(int transpose) {
-        this.transpose = transpose;
-    }
-
-    /**
-     * @param type The type to set.
-     */
-    public void setType(int type) {
-        this.type = type;
-    }
-
-    /**
-     * @param volume The volume to set.
-     */
-    public void setVolume(int volume) {
-        this.volume = volume;
-    }
-
-    /**
-     * @param newDefaultPanning The panning to set.
-     */
-    public void setDefaultPanning(int newDefaultPanning) {
-        this.defaultPanning = newDefaultPanning;
-    }
-
-    public void setPanning(boolean newSetPanning) {
-        setPanning = newSetPanning;
-    }
-
-    /**
-     * @param isStereo the isStereo to set
-     */
-    public void setStereo(boolean isStereo) {
-        this.isStereo = isStereo;
-    }
-
-    /**
-     * @param flag_CvT the cvT to set
-     */
-    public void setCvT(int flag_CvT) {
-        this.flag_CvT = flag_CvT;
-    }
-
-    /**
-     * @param vibratoDepth The vibratoDepth to set.
-     */
-    public void setVibratoDepth(int vibratoDepth) {
-        this.vibratoDepth = vibratoDepth;
-    }
-
-    /**
-     * @param vibratoRate The vibratoRate to set.
-     */
-    public void setVibratoRate(int vibratoRate) {
-        this.vibratoRate = vibratoRate;
-    }
-
-    /**
-     * @param vibratoSweep The vibratoSweep to set.
-     */
-    public void setVibratoSweep(int vibratoSweep) {
-        this.vibratoSweep = vibratoSweep;
-    }
-
-    /**
-     * @param vibratoType The vibratoType to set.
-     */
-    public void setVibratoType(int vibratoType) {
-        this.vibratoType = vibratoType;
-    }
-
-    /**
-     * @param globalVolume the globalVolume to set
-     */
-    public void setGlobalVolume(int globalVolume) {
-        this.globalVolume = globalVolume;
+    public void setCues(int[] newCues) {
+        cues = newCues;
     }
 
     /**
@@ -783,13 +592,6 @@ public class Sample {
      */
     public int[] getCues() {
         return cues;
-    }
-
-    /**
-     * @param newCues the cues to set
-     */
-    public void setCues(int[] newCues) {
-        cues = newCues;
     }
 
     // not needed those (yet!)

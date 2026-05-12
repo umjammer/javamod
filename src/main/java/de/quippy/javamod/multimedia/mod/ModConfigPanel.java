@@ -625,7 +625,7 @@ public class ModConfigPanel extends JPanel {
             playerSetUp_Interpolation = new JComboBox<>();
             playerSetUp_Interpolation.setName("playerSetUp_Interpolation");
 
-            DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<>(ModContainer.INTERPOLATION);
+            DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<>(ModConstants.INTERPOLATION);
             playerSetUp_Interpolation.setModel(theModel);
             playerSetUp_Interpolation.setFont(Helpers.getDialogFont());
             playerSetUp_Interpolation.setEnabled(true);
@@ -658,7 +658,7 @@ public class ModConfigPanel extends JPanel {
             playerSetUp_AmigaEmulation = new JComboBox<>();
             playerSetUp_AmigaEmulation.setName("playerSetUp_AmigaEmulation");
 
-            final DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<>(ModContainer.AMIGA_EMULATION);
+            final DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<>(ModConstants.AMIGA_EMULATION);
             playerSetUp_AmigaEmulation.setModel(theModel);
             playerSetUp_AmigaEmulation.setFont(Helpers.getDialogFont());
             playerSetUp_AmigaEmulation.setEnabled(true);

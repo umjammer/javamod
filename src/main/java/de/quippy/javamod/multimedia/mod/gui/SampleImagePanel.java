@@ -61,7 +61,7 @@ public class SampleImagePanel extends JComponent {
         g.drawLine(left, top + halfHeight, left + width, top + halfHeight);
 
         if (buffer != null) {
-            int anzSamples = sample.length; //-1; // with this we show the first sample for interpolation as well - but is needed for loopEnd display
+            int anzSamples = sample.sampleLength; //-1; // with this we show the first sample for interpolation as well - but is needed for loopEnd display
 
             int xpOld = 0;
             int ypOld = 0;

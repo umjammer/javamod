@@ -108,7 +108,8 @@ public class InstrumentsContainer {
      */
     public int getFullSampleLength() {
         int fullSampleLength = 0;
-        for (Sample sample : samples) fullSampleLength += sample.length;
+        for (Sample sample : samples)
+            fullSampleLength += sample.sampleLength;
         return fullSampleLength;
     }
 

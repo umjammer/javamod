@@ -144,11 +144,11 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         env.setITType(inputStream.read());
         int nPoints = inputStream.read();
         if (nPoints > 25) nPoints = 25;
-        env.setNPoints(nPoints);
-        env.setLoopStartPoint(inputStream.read());
-        env.setLoopEndPoint(inputStream.read());
-        env.setSustainStartPoint(inputStream.read());
-        env.setSustainEndPoint(inputStream.read());
+        env.setNumberOfPoints(nPoints);
+        env.loopStartPoint = inputStream.read();
+        env.loopEndPoint = inputStream.read();
+        env.sustainStartPoint = inputStream.read();
+        env.sustainEndPoint = inputStream.read();
 
         int[] values = new int[nPoints];
         int[] points = new int[nPoints];
@@ -158,27 +158,12 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
             points[i] = inputStream.readIntelUnsignedWord();
         }
 
-        env.setPositions(points);
-        env.setValue(values);
+        env.positions = points;
+        env.value = values;
 
         env.sanitize(maxValue);
 
         inputStream.seek(pos + 82L);
-    }
-
-    private static String[] readNames(RandomAccessInputStream inputStream, int marker, int stringSize) throws IOException {
-        String[] result = null;
-        long readMarker = inputStream.readIntelDWord();
-        if (readMarker == marker) {
-            int size = inputStream.readIntelDWord();
-            int anzNames = size / stringSize;
-            result = new String[anzNames];
-            for (int c = 0; c < anzNames; c++)
-                result[c] = inputStream.readString(stringSize);
-        } else
-            inputStream.skipBack(4);
-
-        return result;
     }
 
     /**
@@ -236,7 +221,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         if (getNInstruments() > 0xff || getNSamples() == 0 || getNPattern() == 0 || getSongLength() == 0)
             throw new IOException("Unsupported IT Module!");
 
-        // Cwt:      Created with tracker.
+        // Cwtv:     Created with tracker.
         version = inputStream.readIntelUnsignedWord();
         // Cmwt:     Compatible with tracker with version greater than value. (ie. format version)
         cmwt = inputStream.readIntelUnsignedWord();
@@ -346,7 +331,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         // Checking for (Open) ModPlug Tracker
         if ((version & 0xF000) == 0x5000) {
             int mptVersion = (version & 0x0FFF) << 16;
-            if (reserved == 0x54504D4F) //"OMPT"
+            if (reserved == ModConstants.getMagicLE("OMPT")) // 0x54504D4F
                 setModType(getModType() | ModConstants.MODTYPE_OMPT);
             else if (mptVersion >= 0x01290000)
                 mptVersion |= reserved & 0xffFF;
@@ -427,13 +412,13 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         if (hasEditHistory && inputStream.getFilePointer() + 2 < inputStream.getLength()) {
             histSize = ((long) inputStream.readIntelUnsignedWord()) << 3;
             // if we overlap into lowest parapointer, something is broken.
-            if (minFilePointer < inputStream.getFilePointer() + histSize) histSize = 0;
+            if (inputStream.getFilePointer() + histSize >= minFilePointer) histSize = 0;
         }
         if (histSize > 0) inputStream.skip(histSize);
 
         midiMacros = new MidiMacros();
         // read the MidiMacros
-        if (hasMidiMacros && inputStream.getFilePointer() + MidiMacros.SIZE_OF_SCTUCT < inputStream.getLength()) {
+        if (hasMidiMacros && (inputStream.getFilePointer() + MidiMacros.SIZE_OF_SCTUCT) < inputStream.getLength()) {
             midiMacros.loadFrom(inputStream);
         }
 
@@ -447,25 +432,27 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         if ((version < 0x0214 && cmwt < 0x214) || (lastSavedWithVersion > 0 && lastSavedWithVersion < 0x10000A6))
             midiMacros.clearZxxMacros();
 
-        boolean isBeRoTracker = false;
-        if (histSize <= 0) {
-            int beroMarker = inputStream.readIntelDWord();
-            if (beroMarker == 0x4D4F4455) // "MODU"
-                isBeRoTracker = true;
-            else
-                inputStream.skipBack(4);
-        } else if ((version & 0xF000) == 0x6000) {
-            if ((version & 0x0FFF) == 0) isBeRoTracker = true;
-        }
+//        boolean isBeRoTracker = false;
+//        if (histSize <= 0) {
+//            int beroMarker = inputStream.readIntelDWord();
+//            if (beroMarker == 0x4D4F4455) // "MODU"
+//                isBeRoTracker = true;
+//            else
+//                inputStream.skipBack(4);
+//        } else if ((version & 0xF000) == 0x6000) {
+//            if ((version & 0x0FFF) == 0) isBeRoTracker = true;
+//        }
 
         // read Pattern Names:
-        String[] patNames = readNames(inputStream, 0x4D414E50, 32); // PNAM - LE saved
+        String[] patNames = readNames(inputStream, ModConstants.getMagicLE("PNAM"), 32); // 0x4D414E50 PNAM - LE saved
         // Read Channel Names
-        String[] chnNames = readNames(inputStream, 0x4D414E43, 20); // CNAM - LE saved
+        String[] chnNames = readNames(inputStream, ModConstants.getMagicLE("CNAM"), 20); // 0x4D414E43 CNAM - LE saved
 
-        hasModPlugExtensions = patNames != null || chnNames != null;
+        int result = loadMixPlugins(inputStream);
+        boolean hasMixPlugins = (result&0xF0)!=0;
+        boolean isBeRoTracker = (result&0x0F)!=0;
 
-        //TODO: read mix plugins information
+        hasModPlugExtensions = patNames!=null || chnNames!=null || hasMixPlugins;
 
         // now for some disguised MPTs
         if (version == 0x0217 && cmwt == 0x200 && reserved == 0) {
@@ -492,73 +479,103 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         for (int i = 0; i < getNInstruments(); i++) {
             inputStream.seek(instrumentParaPointer[i]);
 
-            if (inputStream.readMotorolaDWord() != 0x494D5049 /*IMPI*/)
-                continue; //throw new IOException("Unsupported IT Instrument Header!");
+            // Do we want to check this?
+            /* int IMPI = */ inputStream.readIntelDWord();
+            //if (IMPI != ModConstants.getMagicLE("IMPI")) /* 0x49504D49 IMPI*/) continue;
 
             Instrument currentIns = new Instrument();
-            currentIns.setDosFileName(inputStream.readString(13));
+            currentIns.dosFileName = inputStream.readString(13);
 
             Envelope volumeEnvelope = new Envelope(EnvelopeType.volume);
-            currentIns.setVolumeEnvelope(volumeEnvelope);
+            currentIns.volumeEnvelope = volumeEnvelope;
             Envelope panningEnvelope = new Envelope(EnvelopeType.panning);
-            currentIns.setPanningEnvelope(panningEnvelope);
+            currentIns.panningEnvelope = panningEnvelope;
             Envelope pitchEnvelope = new Envelope(EnvelopeType.panning);
-            currentIns.setPitchEnvelope(pitchEnvelope);
+            currentIns.pitchEnvelope = pitchEnvelope;
 
             // Depending on cmwt:
             if (cmwt < 0x200) { // Old Instrument format
                 volumeEnvelope.setITType(inputStream.read());
-                volumeEnvelope.setLoopStartPoint(inputStream.read());
-                volumeEnvelope.setLoopEndPoint(inputStream.read());
-                volumeEnvelope.setSustainStartPoint(inputStream.read());
-                volumeEnvelope.setSustainEndPoint(inputStream.read());
+                volumeEnvelope.loopStartPoint = inputStream.read();
+                volumeEnvelope.loopEndPoint = inputStream.read();
+                volumeEnvelope.sustainStartPoint = inputStream.read();
+                volumeEnvelope.sustainEndPoint = inputStream.read();
                 inputStream.skip(2);
-                currentIns.setVolumeFadeOut(inputStream.readIntelUnsignedWord() << 6);
-                currentIns.setNNA(inputStream.read());
-                currentIns.setDuplicateNoteCheck(inputStream.read());
+                currentIns.volumeFadeOut = inputStream.readIntelUnsignedWord() << 6;
+                currentIns.NNA = inputStream.read();
+                currentIns.duplicateNoteCheck = inputStream.read();
                 inputStream.skip(2); // TrackerVersion, that saved the instrument - ignored
                 inputStream.skip(2); // NoS - ignored
-                currentIns.setGlobalVolume(128);
-                currentIns.setPanning(false);
-                currentIns.setDefaultPan(128);
+                currentIns.globalVolume = 128;
+                currentIns.setPanning = false;
+                currentIns.defaultPanning = 128;
             } else {
-                currentIns.setNNA(inputStream.read());
-                currentIns.setDuplicateNoteCheck(inputStream.read());
-                currentIns.setDuplicateNoteAction(inputStream.read());
-                currentIns.setVolumeFadeOut(inputStream.readIntelUnsignedWord() << 5);
-                currentIns.setPitchPanSeparation(inputStream.read());
-                currentIns.setPitchPanCenter(inputStream.read());
-                currentIns.setGlobalVolume(inputStream.read());
+                currentIns.NNA = inputStream.read();
+                currentIns.duplicateNoteCheck = inputStream.read();
+                currentIns.duplicateNoteAction = inputStream.read();
+                currentIns.volumeFadeOut = inputStream.readIntelUnsignedWord() << 5;
+                currentIns.pitchPanSeparation = inputStream.read();
+                currentIns.pitchPanCenter = inputStream.read();
+                currentIns.globalVolume =  inputStream.read();
                 // Default Pan, 0->64, &128 => Don't use
                 int panning = inputStream.read();
-                currentIns.setPanning((panning & 0x80) == 0);
+                currentIns.setPanning = (panning & 0x80) == 0;
                 panning = (panning & 0x7F) << 2;
                 if (panning > 256) panning = 256;
-                currentIns.setDefaultPan(panning);
-                currentIns.setRandomVolumeVariation(inputStream.read());
+                currentIns.defaultPanning = panning;
+                currentIns.randomVolumeVariation = inputStream.read();
                 if (currentIns.randomVolumeVariation > 100) currentIns.randomVolumeVariation = 100;
-                currentIns.setRandomPanningVariation(inputStream.read());
+                currentIns.randomPanningVariation = inputStream.read();
                 if (currentIns.randomPanningVariation > 64) currentIns.randomVolumeVariation = 64;
                 inputStream.skip(4);
             }
 
-            currentIns.setName(inputStream.readString(26));
+            currentIns.name = inputStream.readString(26);
             if (cmwt < 0x200) { // Old Instrument format
                 inputStream.skip(6);
             } else {
-                currentIns.setInitialFilterCutoff(inputStream.read());
-                currentIns.setInitialFilterResonance(inputStream.read());
-                inputStream.skip(4);
+                currentIns.initialFilterCutoff = inputStream.read();
+                currentIns.initialFilterResonance = inputStream.read();
+                int midiChannel = inputStream.read();
+                if (midiChannel >= 128) {
+                    // Handle old format where MIDI channel and Plugin index are stored in the same variable
+                    currentIns.mixPlugIn = midiChannel - 128;
+                    midiChannel = 0;
+                }
+                currentIns.midiChannel = midiChannel;
+                int mpr = inputStream.read();
+                int b1 = inputStream.read();
+                int b2 = inputStream.read();
+
+                // MPT used to have a slightly different encoding of MIDI program and banks which we are trying to fix here.
+                // Impulse Tracker / Schism Tracker will set trkvers to 0 in IT files,
+                // and we won't care about correctly importing MIDI programs and banks in ITI files.
+                // Chibi Tracker sets trkvers to 0x214, but always writes mpr=mbank=0 anyway.
+                // Old BeRoTracker versions set trkvers to 0x214 or 0x217.
+                //         <= MPT 1.07          <= MPT 1.16       OpenMPT 1.17-?      <= OpenMPT 1.26     definitely not MPT
+                if ((version == 0x0202 || version == 0x0211 || version == 0x0220 || version == 0x0214) && mpr != 0xFF) {
+                    if (mpr <= 128)
+                        currentIns.midiProgram = mpr;
+                    int midiBank = b1 | (b2 << 8);
+                    // These versions also ignored the high bank nibble (was only handled correctly in OpenMPT instrument extensions)
+                    if (midiBank < 128)
+                        currentIns.midiBank = midiBank;
+                } else {
+                    if (mpr < 128)
+                        currentIns.midiProgram = mpr + 1;
+                    int bank = 0;
+                    if (b1 < 128) bank = b1 + 1;
+                    if (b2 < 128) bank += b2 << 7;
+                    currentIns.midiBank = bank;
+                }
             }
 
-            int[] sampleIndex = new int[120];
-            int[] noteIndex = new int[120];
+            currentIns.noteIndex = new int[120];
+            currentIns.sampleIndex = new int[120];
             for (int j = 0; j < 120; j++) {
-                noteIndex[j] = inputStream.read();
-                sampleIndex[j] = inputStream.read();
+                currentIns.noteIndex[j] = inputStream.read();
+                currentIns.sampleIndex[j] = inputStream.read();
             }
-            currentIns.setIndexArray(sampleIndex);
-            currentIns.setNoteArray(noteIndex);
 
             if (cmwt < 0x200) { // Old Instrument format
                 // now 200 bytes of volume envelope data follow, according to ITTECH.TXT,
@@ -582,9 +599,9 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                     // this is last data, file pointer is set to next instrument
                     if (volumeEnvelopePosition[nPoints] == 0xff) maxValues = nPoints;
                 }
-                volumeEnvelope.setNPoints(maxValues);
-                volumeEnvelope.setPositions(volumeEnvelopePosition);
-                volumeEnvelope.setValue(volumeEnvelopeValue);
+                volumeEnvelope.nPoints = maxValues;
+                volumeEnvelope.positions = volumeEnvelopePosition;
+                volumeEnvelope.value = volumeEnvelopeValue;
                 volumeEnvelope.sanitize(64);
             } else {
                 readEnvelopeData(volumeEnvelope, 0, 64, inputStream); // 0..64, no transform
@@ -601,17 +618,18 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         for (int i = 0; i < getNSamples(); i++) {
             inputStream.seek(samplesParaPointer[i]);
 
-            if (inputStream.readMotorolaDWord() != 0x494D5053 /*IMPS*/)
-                continue;//throw new IOException("Unsupported IT Sample Header!");
+            // IT does not check for the IMPS magic, and some bad XM->IT converter out there doesn't write the magic bytes for empty sample slots.
+            /* int IMPS = */ inputStream.readIntelDWord();
+            //if (IMPS != ModConstants.getMagicLE("IMPS")) /* 0x53504D49 IMPS*/) continue;
 
             Sample currentSample = new Sample();
 
-            currentSample.setDosFileName(inputStream.readString(13));
+            currentSample.dosFileName = inputStream.readString(13);
             int globalVolume = inputStream.read();
-            currentSample.setGlobalVolume((globalVolume > 64) ? 64 : globalVolume);
+            currentSample.globalVolume = Math.min(globalVolume, 64);
 
             int flags = inputStream.read();
-            currentSample.setFlags(flags);
+            currentSample.flags = flags;
             /*Bit 4. On = Use loop
             Bit 5. On = Use sustain loop
             Bit 6. On = Ping Pong loop, Off = Forwards loop
@@ -621,66 +639,65 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
             if ((flags & sampleSustain) != 0) loopType |= ModConstants.LOOP_SUSTAIN_ON;
             if ((flags & sampleBidiLoop) != 0) loopType |= ModConstants.LOOP_IS_PINGPONG;
             if ((flags & sampleBidiSustain) != 0) loopType |= ModConstants.LOOP_SUSTAIN_IS_PINGPONG;
-            currentSample.setLoopType(loopType);
+            currentSample.loopType = loopType;
 
             int volume = inputStream.read();
-            if (volume > 64) volume = 64;
-            currentSample.setVolume(volume);
+            currentSample.volume = Math.min(volume, 64);
 
-            currentSample.setName(inputStream.readString(26));
+            currentSample.name = inputStream.readString(26);
             int CvT = inputStream.read();
-            currentSample.setCvT(CvT);
+            currentSample.flag_CvT = CvT;
             // DfP - Default Pan. Bits 0->6 = Pan value, Bit 7 ON to USE (opposite of inst)
             int panning = inputStream.read();
-            currentSample.setPanning((panning & 0x80) != 0);
+            currentSample.setPanning = (panning & 0x80) != 0;
             panning = (panning & 0x7F) << 2;
             if (panning > 256) panning = 256;
-            currentSample.setDefaultPanning(panning);
-            currentSample.setLength(inputStream.readIntelDWord());
-            currentSample.setByteLength(currentSample.length);
+            currentSample.defaultPanning = panning;
+            currentSample.byteLength = currentSample.sampleLength = inputStream.readIntelDWord();
 
             int repeatStart = inputStream.readIntelDWord();
             int repeatStop = inputStream.readIntelDWord();
-            currentSample.setLoopStart(repeatStart);
-            currentSample.setLoopStop(repeatStop);
-            currentSample.setLoopLength(repeatStop - repeatStart);
+            currentSample.loopStart = repeatStart;
+            currentSample.loopStop = repeatStop;
+            currentSample.loopLength = repeatStop-repeatStart;
 
-            currentSample.setFineTune(0);
-            currentSample.setTranspose(0);
+            currentSample.fineTune = 0;
+            currentSample.transpose = 0;
             int c4Speed = inputStream.readIntelDWord();
-            currentSample.setBaseFrequency((c4Speed == 0) ? ModConstants.BASEFREQUENCY : (c4Speed < 256) ? 256 : c4Speed);
+            currentSample.baseFrequency = (c4Speed == 0) ? ModConstants.BASEFREQUENCY : Math.max(c4Speed, 256);
 
             int sustainLoopStart = inputStream.readIntelDWord();
             int sustainLoopStop = inputStream.readIntelDWord();
-            currentSample.setSustainLoopStart(sustainLoopStart);
-            currentSample.setSustainLoopStop(sustainLoopStop);
-            currentSample.setSustainLoopLength(sustainLoopStop - sustainLoopStart);
+            currentSample.sustainLoopStart = sustainLoopStart;
+            currentSample.sustainLoopStop = sustainLoopStop;
+            currentSample.sustainLoopLength = sustainLoopStop - sustainLoopStart;
 
             int sampleOffset = inputStream.readIntelDWord();
 
-            currentSample.setVibratoRate(inputStream.read());
-            currentSample.setVibratoDepth(inputStream.read() & 0x7F);
-            currentSample.setVibratoSweep(inputStream.read()); // +3)>>2 was copied from old ModPlug - in autoVib than sweep<<3
-            currentSample.setVibratoType(autovibit2xm[inputStream.read() & 0x07]);
+            currentSample.vibratoRate = inputStream.read();
+            currentSample.vibratoDepth = inputStream.read() & 0x7F;
+            currentSample.vibratoSweep = inputStream.read(); // +3)>>2 was copied from old ModPlug - but in autoVib then sweep<<3
+            currentSample.vibratoType = autovibit2xm[inputStream.read() & 0x07];
 
-            if (sampleOffset > 0 && currentSample.length > 0) {
-                int loadFlag = 0;
-                if (CvT == cvtADPCMSample && (flags & (sample16Bit | sampleStereo)) == 0)  // ModPlug ADPCM compression, only mono 8Bit (I check for mono - nobody else does that. Why?!)
-                    loadFlag |= ModConstants.SM_ADPCM;
-                else {
-                    if ((flags & sample16Bit) != 0) loadFlag |= ModConstants.SM_16BIT;
-                    if ((flags & sampleStereo) != 0) loadFlag |= ModConstants.SM_STEREO;
-                    if ((CvT & cvtBigEndian) != 0) loadFlag |= ModConstants.SM_BigEndian;
-                    if ((CvT & cvtPTM8to16) != 0) loadFlag |= ModConstants.SM_PTM8Dto16;
+            int loadFlag = 0;
+            if (CvT == cvtADPCMSample && (flags & (sample16Bit | sampleStereo)) == 0)  // ModPlug ADPCM compression, only mono 8Bit (I check for mono - nobody else does that. Why?!)
+                loadFlag |= ModConstants.SM_ADPCM;
+            else {
+                if ((flags & sample16Bit) != 0) loadFlag |= ModConstants.SM_16BIT;
+                if ((flags & sampleStereo) != 0) loadFlag |= ModConstants.SM_STEREO;
+                if ((CvT & cvtBigEndian) != 0) loadFlag |= ModConstants.SM_BigEndian;
+                if ((CvT & cvtPTM8to16) != 0) loadFlag |= ModConstants.SM_PTM8Dto16;
 
-                    if ((flags & sampleCompressed) != 0)
-                        loadFlag |= ((CvT & cvtDelta) != 0) ? ModConstants.SM_IT215 : ModConstants.SM_IT214;
-                    else
-                        loadFlag |= ((CvT & cvtDelta) != 0) ? ModConstants.SM_PCMD : ((CvT & cvtSignedSample) != 0) ? ModConstants.SM_PCMS : ModConstants.SM_PCMU;
-                }
-                currentSample.setStereo((loadFlag & ModConstants.SM_STEREO) != 0);
+                if ((flags & sampleCompressed) != 0)
+                    loadFlag |= ((CvT & cvtDelta) != 0) ? ModConstants.SM_IT215 : ModConstants.SM_IT214;
+                else
+                    loadFlag |= ((CvT & cvtDelta) != 0) ? ModConstants.SM_PCMD : ((CvT & cvtSignedSample) != 0) ? ModConstants.SM_PCMS : ModConstants.SM_PCMU;
+            }
+            currentSample.isStereo = (loadFlag & ModConstants.SM_STEREO) != 0;
+            currentSample.sampleType = loadFlag;
+
+            if (sampleOffset > 0) {
                 inputStream.seek(sampleOffset);
-                currentSample.setSampleType(loadFlag);
                 if ((flags & sampleDataPresent) != 0) {
                     if ((CvT & cvtExternalSample) != 0) {
                         int strLen = inputStream.read();
@@ -689,7 +706,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                             logger.log(Level.INFO, fileName + " --> loading external sample \"" + currentSample.name + "\" not supported");
                         } else
                             logger.log(Level.ERROR, "External sample \"" + currentSample.name + "\" without file name!");
-                    } else if (CvT == cvtOPLInstrument && currentSample.length == 12) { // OMPT OPL3 support
+                    } else if (CvT == cvtOPLInstrument && currentSample.sampleLength == 12) { // OMPT OPL3 support
                         currentSample.adLib_Instrument = new byte[12];
                         inputStream.read(currentSample.adLib_Instrument, 0, 12);
                         if (needsOPL == NO_OPL) needsOPL = OPL3;
@@ -697,7 +714,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                         readSampleData(currentSample, inputStream);
                     }
                 } else
-                    currentSample.setLength(0);
+                    currentSample.sampleLength = 0;
             }
 
             instrumentContainer.setSample(i, currentSample);

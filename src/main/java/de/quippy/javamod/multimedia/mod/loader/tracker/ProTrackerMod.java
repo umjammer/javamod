@@ -296,9 +296,9 @@ public class ProTrackerMod extends Module {
         long seek = inputStream.getLength();
         for (int i = getNSamples() - 1; i >= 0; i--) {
             Sample current = getInstrumentContainer().getSample(i);
-            int sampleLength = current.length;
+            int sampleLength = current.sampleLength;
             if (isDeltaPacked) { // this is only one MOD Type - and those are never with ADPCM
-                current.setSampleType(ModConstants.SM_PCMD);
+                current.sampleType = ModConstants.SM_PCMD;
             } else {
                 boolean isADPCM = false;
                 int ADPCMLength = ((sampleLength + 1) >> 1) + 16 + 5; //shorten length and add header and magic
@@ -310,10 +310,10 @@ public class ProTrackerMod extends Module {
                     if (ADPCMMagic.equals("ADPCM")) isADPCM = true;
                 }
                 if (isADPCM) {
-                    current.setSampleType(ModConstants.SM_ADPCM);
+                    current.sampleType = ModConstants.SM_ADPCM;
                     sampleLength = ADPCMLength;
                 } else {
-                    current.setSampleType(ModConstants.SM_PCMS);
+                    current.sampleType = ModConstants.SM_PCMS;
                 }
             }
             seek -= sampleLength;
@@ -463,12 +463,11 @@ public class ProTrackerMod extends Module {
         for (int i = 0; i < getNSamples(); i++) {
             Sample current = new Sample();
             // Samplename
-            current.setName(inputStream.readString(22));
-            current.setStereo(false); // Default
+            current.name = inputStream.readString(22);
+            current.isStereo = false; // Default
 
             // Length
-            current.setLength(inputStream.readMotorolaUnsignedWord() << 1);
-            current.setByteLength(current.length);
+            current.byteLength = current.sampleLength = inputStream.readMotorolaUnsignedWord() << 1;
 
             int fine = 0;
             if (isHMNT) // His Masters Noise - Noise Tracker (FEST) - different FineTune setting...
@@ -478,48 +477,48 @@ public class ProTrackerMod extends Module {
                 // finetune Value is a two's complement based on four bits
                 fine = fine > 7 ? fine - 16 : fine;
             }
-            current.setFineTune((isAmigaLike) ? fine : fine << 4); // if not amiga like, we use XM_AMIGA_TABLE - finetune is -128-+127 then
+            current.fineTune = (isAmigaLike) ? fine : fine << 4; // if not Amiga like, we use XM_AMIGA_TABLE - finetune is -128-+127 then
             // BaseFrequenzy from Table: FineTune is -8...+7
-            current.setBaseFrequency(ModConstants.IT_fineTuneTable[fine + 8]);
-            current.setTranspose(0);
+            current.baseFrequency = ModConstants.IT_fineTuneTable[fine + 8];
+            current.transpose = 0;
 
-            if (current.length > 65535) isNoiseTracker = false;
+            if (current.sampleLength > 65535) isNoiseTracker = false;
 
             // volume 64 is maximum
             int vol = inputStream.read() & 0x7F;
-            current.setVolume(Math.min(vol, 64));
-            current.setGlobalVolume(ModConstants.MAXSAMPLEVOLUME);
+            current.volume = Math.min(vol, 64);
+            current.globalVolume = ModConstants.MAXSAMPLEVOLUME;
 
             // Repeat start and stop
             int repeatStart = inputStream.readMotorolaUnsignedWord() << 1;
             int repeatLength = inputStream.readMotorolaUnsignedWord() << 1;
             int repeatStop = repeatStart + repeatLength;
 
-            if (current.length < 4) current.length = 0;
-            if (current.length > 0) {
-                if (repeatStart > current.length) repeatStart = current.length - 1;
-                if (repeatStop > current.length) repeatStop = current.length;
+            if (current.sampleLength < 4) current.sampleLength = 0;
+            if (current.sampleLength > 0) {
+                if (repeatStart > current.sampleLength) repeatStart = current.sampleLength - 1;
+                if (repeatStop > current.sampleLength) repeatStop = current.sampleLength;
                 if (repeatStart >= repeatStop || repeatStop <= 8 || (repeatStop - repeatStart) <= 4) {
                     repeatStart = repeatStop = 0;
-                    current.setLoopType(0);
+                    current.loopType = 0;
                 }
                 if (repeatStart < repeatStop)
-                    current.setLoopType(ModConstants.LOOP_ON);
+                    current.loopType = ModConstants.LOOP_ON;
             } else
-                current.setLoopType(0);
+                current.loopType = 0;
 
-            current.setLoopStart(repeatStart);
-            current.setLoopStop(repeatStop);
-            current.setLoopLength(repeatStop - repeatStart);
+            current.loopStart = repeatStart;
+            current.loopStop = repeatStop;
+            current.loopLength = repeatStop-repeatStart;
 
             // Defaults for non-existent SustainLoop
-            current.setSustainLoopStart(0);
-            current.setSustainLoopStop(0);
-            current.setSustainLoopLength(0);
+            current.sustainLoopStart = 0;
+            current.sustainLoopStop = 0;
+            current.sustainLoopLength = 0;
 
             // Defaults!
-            current.setPanning(false);
-            current.setDefaultPanning(128);
+            current.setPanning = false;
+            current.defaultPanning = 128;
 
             instrumentContainer.setSample(i, current);
         }
@@ -595,7 +594,7 @@ public class ProTrackerMod extends Module {
             setModType((isAmigaLike || isGenericMultiChannel) ? ModConstants.MODTYPE_MOD : ModConstants.MODTYPE_XM);
             for (int i = 0; i < getNSamples(); i++) {
                 Sample current = instrumentContainer.getSample(i);
-                current.setFineTune(current.fineTune << 4); // if not amiga like, we use XM_AMIGA_TABLE - finetune is -128-+127 then
+                current.fineTune = current.fineTune << 4; // if not Amiga like, we use XM_AMIGA_TABLE - finetune is -128-+127 then
             }
         }
 

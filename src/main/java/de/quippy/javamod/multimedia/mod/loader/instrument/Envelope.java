@@ -242,7 +242,7 @@ public class Envelope {
         if (positions != null && positions.length > 0) {
             // limit endPoint to the smallest possible array index
             // and consider arrays of different length
-            setNPoints((nPoints > positions.length) ? positions.length : (nPoints > value.length) ? value.length : nPoints);
+            setNumberOfPoints((nPoints > positions.length) ? positions.length : (nPoints > value.length) ? value.length : nPoints);
 
             // sanitize the values and positions
             positions[0] = 0;
@@ -272,73 +272,19 @@ public class Envelope {
     }
 
     /**
-     * @param loopEndPoint The loopEndPoint to set.
+     * @param points set the number of points
      */
-    public void setLoopEndPoint(int loopEndPoint) {
-        this.loopEndPoint = loopEndPoint;
-    }
-
-    /**
-     * @param loopStartPoint The loopStartPoint to set.
-     */
-    public void setLoopStartPoint(int loopStartPoint) {
-        this.loopStartPoint = loopStartPoint;
-    }
-
-    /**
-     * @param points The nPoints to set.
-     */
-    public void setNPoints(int points) {
+    public void setNumberOfPoints(int points) {
         endPoint = (nPoints = points) - 1;
     }
 
     /**
-     * @param positions The positions to set.
+     * Set the sustainPoints (XM-Version)
+     *
+     * @param sustainPoint
      */
-    public void setPositions(int[] positions) {
-        this.positions = positions;
-    }
-
-    /**
-     * @param value The value to set.
-     */
-    public void setValue(int[] value) {
-        this.value = value;
-    }
-
-    /**
-     * @param sustainPoint The sustainPoint to set. (XM-Version)
-     */
-    public void setSustainPoint(int sustainPoint) {
+    public void setSustainPoints_XM(int sustainPoint) {
         this.sustainStartPoint = this.sustainEndPoint = sustainPoint;
-    }
-
-    /**
-     * @param sustainEndPoint the sustainEndPoint to set (IT-Version)
-     */
-    public void setSustainEndPoint(int sustainEndPoint) {
-        this.sustainEndPoint = sustainEndPoint;
-    }
-
-    /**
-     * @param sustainStartPoint the sustainStartPoint to set (IT-Version)
-     */
-    public void setSustainStartPoint(int sustainStartPoint) {
-        this.sustainStartPoint = sustainStartPoint;
-    }
-
-    /**
-     * @param envelopeType the envelopeType to set
-     */
-    public void setEnvelopeType(EnvelopeType envelopeType) {
-        this.envelopeType = envelopeType;
-    }
-
-    /**
-     * @return the envelopeType
-     */
-    public EnvelopeType getEnvelopeType() {
-        return envelopeType;
     }
 
     /**

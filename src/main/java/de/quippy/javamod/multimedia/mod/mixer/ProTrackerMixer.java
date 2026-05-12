@@ -773,9 +773,9 @@ public class ProTrackerMixer extends BasicModMixer {
                                 aktMemo.isForwardDirection = true;
                                 break;
                             case 0xF: // Play backward. The current instrument will be played backwards, or it will temporarily set the direction of a loop to go backward.
-                                if (aktMemo.currentSample != null && aktMemo.currentSamplePos == 0 && aktMemo.currentSample.length > 0 &&
+                                if (aktMemo.currentSample != null && aktMemo.currentSamplePos == 0 && aktMemo.currentSample.sampleLength > 0 &&
                                         (hasNewNote(element) || (aktMemo.currentSample.loopType & ModConstants.LOOP_ON) != 0)) {
-                                    aktMemo.currentSamplePos = aktMemo.currentSample.length - 1;
+                                    aktMemo.currentSamplePos = aktMemo.currentSample.sampleLength - 1;
                                     aktMemo.currentTuningPos = 0;
                                 }
                                 aktMemo.isForwardDirection = false;
@@ -1236,7 +1236,7 @@ public class ProTrackerMixer extends BasicModMixer {
 
         Sample sample = aktMemo.currentSample;
         boolean hasLoop = (sample.loopType & ModConstants.LOOP_ON) != 0;
-        int length = hasLoop ? sample.loopStop : sample.length;
+        int length = hasLoop ? sample.loopStop : sample.sampleLength;
 
         if (isMOD) {
             // ProTracker >64K sample offset "silent bug" (or early loop)
@@ -1259,12 +1259,12 @@ public class ProTrackerMixer extends BasicModMixer {
                 if (hasLoop)
                     aktMemo.currentSamplePos = sample.loopStart;
                 else
-                    aktMemo.currentSamplePos = sample.length - 1;
+                    aktMemo.currentSamplePos = sample.sampleLength - 1;
             }
         } else { // FT2
             aktMemo.currentSamplePos = aktMemo.sampleOffset;
             if (aktMemo.currentSamplePos >= length) {
-                aktMemo.currentSamplePos = sample.length - 1;
+                aktMemo.currentSamplePos = sample.sampleLength - 1;
                 aktMemo.instrumentFinished = true;
                 setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod = 0); // FT2 Compatibility: Don't play note if offset is beyond sample/loop length
             }

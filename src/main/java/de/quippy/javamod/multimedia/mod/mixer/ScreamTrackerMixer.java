@@ -514,7 +514,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
         if (hasInstrument) { // At this point we reset volume and panning for IT, STM, S3M
             if (isPortaToNoteEffect) { // Sample/Instrument change at Porta2Note needs special handling
                 if (isS3M) { // set new sample volume, if sample is different, not null (already checked) and has samples
-                    if (aktMemo.assignedSample.length > 0)
+                    if (aktMemo.assignedSample.sampleLength > 0)
                         resetVolumeAndPanning(aktMemo, aktMemo.currentAssignedInstrument, aktMemo.assignedSample);
                     else {
                         aktMemo.currentAssignedInstrumentIndex = aktMemo.assignedInstrumentIndex;
@@ -938,9 +938,9 @@ public class ScreamTrackerMixer extends BasicModMixer {
                                 aktMemo.isForwardDirection = true;
                                 break;
                             case 0xF: // Play backward. The current instrument will be played backwards, or it will temporarily set the direction of a loop to go backward.
-                                if (aktMemo.currentSample != null && aktMemo.currentSamplePos == 0 && aktMemo.currentSample.length > 0 &&
+                                if (aktMemo.currentSample != null && aktMemo.currentSamplePos == 0 && aktMemo.currentSample.sampleLength > 0 &&
                                         (hasNewNote(element) || (aktMemo.currentSample.loopType & ModConstants.LOOP_ON) != 0)) {
-                                    aktMemo.currentSamplePos = aktMemo.currentSample.length - 1;
+                                    aktMemo.currentSamplePos = aktMemo.currentSample.sampleLength - 1;
                                     aktMemo.currentTuningPos = 0;
                                 }
                                 aktMemo.isForwardDirection = false;
@@ -1474,7 +1474,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
     protected int validateNewSampleOffset(ChannelMemory aktMemo, int newSampleOffset) {
         Sample sample = aktMemo.currentSample;
         boolean hasLoop = (sample.loopType & ModConstants.LOOP_ON) != 0;
-        int length = hasLoop ? sample.loopStop : sample.length;
+        int length = hasLoop ? sample.loopStop : sample.sampleLength;
 
         if (newSampleOffset >= length) {
             if (isS3M) {

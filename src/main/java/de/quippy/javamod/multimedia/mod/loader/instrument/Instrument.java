@@ -61,16 +61,28 @@ public class Instrument {
     public int volumeFadeOut = -1;
 
     // Midi and Plugin stuff
-    public int midiBank = 0;        // MIDI Bank (1...16384). 0 = Don't send.
-    public int midiProgram = 0;     // MIDI Program (1...128). 0 = Don't send.
-    public int midiChannel = 0;     // MIDI Channel (1...16). 0 = Don't send. 17 = Mapped (Send to tracker channel modulo 16).
-    public int pitchWheelDepth = 2; // MIDI Pitch Wheel Depth and CMD_FINETUNE depth in semitones
-    public int plugin = 0;          // Plugin Number - we do not support MPT standard plugins yet
+    /** MIDI Bank (1...16384). 0 = Don't send. */
+    public int midiBank = 0;
+    /** MIDI Program (1...128). 0 = Don't send. */
+    public int midiProgram = 0;
+    /** MIDI Channel (1...16). 0 = Don't send. 17 = Mapped (Send to tracker channel modulo 16). */
+    public int midiChannel = 0;
+    /** MIDI Pitch Wheel Depth and CMD_FINETUNE depth in semitones */
+    public int pitchWheelDepth = 2;
+    /** Plugin Number - we do not support MPT standard plugins yet */
+    public int mixPlugIn = 0;
+    /** XM: mute samples in channel */
+    public boolean xm_muteComputer;
+    /** XM: use Midi */
+    public boolean xm_enableMidi;
 
     // OMPT
-    public int volRampUp = -1;      // ys of volRamping up, -1 || 0 == use default
-    public int resampling = -1;     // resampling - we support -1: default: 0:none, 1: linear, 2: cubic, 3&>:Windowed FIR
-    public boolean mute = false;    // MPT seems to have supported the muting of instruments. Is not written anymore
+    /** ys of volRamping up, -1 || 0 == use default */
+    public int volRampUp = -1;
+    /** resampling - we support -1: default: 0:none, 1: linear, 2: cubic, 3&>:Windowed FIR */
+    public int resampling = -1;
+    /** MPT seems to have supported the muting of instruments. Is not written anymore */
+    public boolean mute = false;
 
     // MadTracker
     public int filterMode = ModConstants.FLTMODE_UNCHANGED;
@@ -82,20 +94,6 @@ public class Instrument {
         super();
     }
 
-    /**
-     * Sets the Sample array
-     *
-     * @param sampleIndexArray
-     * @since 19.06.2006
-     */
-    public void setIndexArray(int[] sampleIndexArray) {
-        this.sampleIndex = sampleIndexArray;
-    }
-
-    public void setNoteArray(int[] noteIndexArray) {
-        this.noteIndex = noteIndexArray;
-    }
-
     public int getSampleIndex(int noteIndex) {
         if (sampleIndex == null) return -1;
         return this.sampleIndex[noteIndex] - 1;
@@ -104,124 +102,6 @@ public class Instrument {
     public int getNoteIndex(int noteIndex) {
         if (this.noteIndex == null) return noteIndex;
         return this.noteIndex[noteIndex];
-    }
-
-    public void setPanningEnvelope(Envelope panningEnvelope) {
-        this.panningEnvelope = panningEnvelope;
-    }
-
-    public void setVolumeEnvelope(Envelope volumeEnvelope) {
-        this.volumeEnvelope = volumeEnvelope;
-    }
-
-    public void setPitchEnvelope(Envelope pitchEnvelope) {
-        this.pitchEnvelope = pitchEnvelope;
-    }
-
-    /**
-     * @param name The name to set.
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @param dosFileName the dosFileName to set
-     */
-    public void setDosFileName(String dosFileName) {
-        this.dosFileName = dosFileName;
-    }
-
-    /**
-     * @param volumeFadeOut The volumeFadeOut to set.
-     */
-    public void setVolumeFadeOut(int volumeFadeOut) {
-        this.volumeFadeOut = volumeFadeOut;
-    }
-
-    /**
-     * @param duplicateNoteCheck the duplicateNoteCheck to set
-     */
-    public void setDuplicateNoteCheck(int duplicateNoteCheck) {
-        this.duplicateNoteCheck = duplicateNoteCheck;
-    }
-
-    /**
-     * @param duplicateNoteAction the dublicateNodeAction to set
-     */
-    public void setDuplicateNoteAction(int duplicateNoteAction) {
-        this.duplicateNoteAction = duplicateNoteAction;
-    }
-
-    /**
-     * @param nna the NewNoteAction to set
-     */
-    public void setNNA(int nna) {
-        NNA = nna;
-    }
-
-    /**
-     * @param pitchPanSeparation the pitchPanSeparation to set
-     */
-    public void setPitchPanSeparation(int pitchPanSeparation) {
-        this.pitchPanSeparation = pitchPanSeparation;
-    }
-
-    /**
-     * @param pitchPanCenter the pitchPanCenter to set
-     */
-    public void setPitchPanCenter(int pitchPanCenter) {
-        this.pitchPanCenter = pitchPanCenter;
-    }
-
-    /**
-     * @param globalVolume the globalVolume to set
-     */
-    public void setGlobalVolume(int globalVolume) {
-        this.globalVolume = globalVolume;
-    }
-
-    /**
-     * @param newDefaultPanning the defaultPan to set
-     */
-    public void setDefaultPan(int newDefaultPanning) {
-        this.defaultPanning = newDefaultPanning;
-    }
-
-    public void setPanning(boolean newSetPanning) {
-        setPanning = newSetPanning;
-    }
-
-    public void setMute(boolean newMute) {
-        mute = newMute;
-    }
-
-    /**
-     * @param randomVolumeVariation the randomVolumeVariation to set
-     */
-    public void setRandomVolumeVariation(int randomVolumeVariation) {
-        this.randomVolumeVariation = randomVolumeVariation;
-    }
-
-    /**
-     * @param randomPanningVariation the randomPanningVariation to set
-     */
-    public void setRandomPanningVariation(int randomPanningVariation) {
-        this.randomPanningVariation = randomPanningVariation;
-    }
-
-    /**
-     * @param initialFilterCutoff the initialFilterCutoff to set
-     */
-    public void setInitialFilterCutoff(int initialFilterCutoff) {
-        this.initialFilterCutoff = initialFilterCutoff;
-    }
-
-    /**
-     * @param initialFilterResonance the initialFilterResonance to set
-     */
-    public void setInitialFilterResonance(int initialFilterResonance) {
-        this.initialFilterResonance = initialFilterResonance;
     }
 
     /**

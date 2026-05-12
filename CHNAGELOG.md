@@ -1,4 +1,4 @@
-# JavaMod V3.9.6 Epsilon
+# JavaMod V3.9.6 Zeta
 * FIX: Playlists are now saved in ANSI cp1252 - not ISO-8859-1.
 * FIX: Multichannel Mods considered too many ProTracker Quirks. Ignore illegal
   note delay, tempo changes handled on first tick, no on the fly sample
@@ -9,9 +9,15 @@
   ProTracker MODs (AMIGA_TABLE), i.e. the amount of samples needed to reach
   the real note.
   In that turn we cleaned up the code - also with ScreamTracker
-* FIX: GlobalVolumeSlides in FastTracker are "NOT ON TICK 0" -
-  not "ONLY ON TICK 0"
 * FIX: Optimized FastMath
+* FIX: XM: GlobalVolumeSlides in FastTracker are "NOT ON TICK 0" -
+  not "ONLY ON TICK 0"
+* FIX: XM: loading of instruments was blocked if no sample data present. That is
+  not a good idea.
+* FIX: IT: Do not check for magic IMPS - IT doesn't as well and some trackers
+  even do not write it
+* FIX: IT: Even if the sample size is zero, jump to the loading point of non
+  existent sample data
 * NEW: Properties file is written in sorted order, for whatever that is good for
 * NEW: Amiga 500 and Amiga 1200 Filters added. We use Paula-emulation from
   8BitBubsy/Aciddose implementation. Is only used if Mod is an AMIGA MOD
@@ -19,6 +25,9 @@
 * NEW: Dithering was changed to an integer version to gain more performance
 * NEW: Introduction of SampleFrame to avoid something like long[] to retrieve
   sample data
+* NEW: Preparing load of MIDI Data (XM, IT, OMPT/MPT)
+* NEW: Instrument Dialog got some fancy sliders for some values plus nice
+  tooltip texts
 
 ## New in Version 3.9.5
 * NEW: Audio CD rips with CloneCD create an image file ending with IMG. That is

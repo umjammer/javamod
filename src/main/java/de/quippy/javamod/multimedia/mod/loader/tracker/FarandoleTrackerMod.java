@@ -227,19 +227,19 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
 
     private void readSampleData(int sampleIndex, RandomAccessInputStream inputStream) throws IOException {
         Sample current = new Sample();
-        current.setName(inputStream.readString(32));
+        current.name = inputStream.readString(32);
 
         // Length
-        int length = inputStream.readIntelDWord();
+        int sampleLength = current.byteLength = inputStream.readIntelDWord();
 
         // finetune Value>7 means negative 8..15= -8..-1
-        /* final int fine = */ inputStream.read(); // shall we use this?!
-        current.setFineTune(0);
-        current.setBaseFrequency(ModConstants.BASEFREQUENCY);
+        /* int fine = */ inputStream.read(); // shall we use this?!
+        current.fineTune = 0;
+        current.baseFrequency = ModConstants.BASEFREQUENCY;
 
         // volume
         int vol = inputStream.read();
-        current.setVolume((vol > 64) ? 64 : vol);
+        current.volume = Math.min(vol, 64);
 
         // Repeat start and stop
         int repeatStart = inputStream.readIntelDWord();
@@ -250,40 +250,40 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
         int loopType = inputStream.read();
 
         if ((sampleType & 0x01) != 0) { // 16Bit:
-            length >>= 1;
+            sampleLength >>= 1;
             repeatStart >>= 1;
             repeatStop >>= 1;
         }
 
-        current.setLength(length);
-        if (current.length > 0) {
-            if (repeatStart > current.length) repeatStart = current.length - 1;
-            if (repeatStop > current.length) repeatStop = current.length;
+        current.sampleLength = sampleLength;
+        if (sampleLength > 0) {
+            if (repeatStart > sampleLength) repeatStart = sampleLength - 1;
+            if (repeatStop > sampleLength) repeatStop = sampleLength;
             if (repeatStop <= repeatStart) repeatStart = repeatStop = 0;
         }
 
-        current.setLoopStart(repeatStart);
-        current.setLoopStop(repeatStop);
-        current.setLoopLength(repeatStop - repeatStart);
+        current.loopStart = repeatStart;
+        current.loopStop = repeatStop;
+        current.loopLength = repeatStop - repeatStart;
         if ((loopType & 8) != 0 && repeatStop > repeatStart)
-            current.setLoopType(ModConstants.LOOP_ON);
+            current.loopType = ModConstants.LOOP_ON;
 
         // Defaults for non-existent SustainLoop
-        current.setSustainLoopStart(0);
-        current.setSustainLoopStop(0);
-        current.setSustainLoopLength(0);
+        current.sustainLoopStart = 0;
+        current.sustainLoopStop = 0;
+        current.sustainLoopLength = 0;
 
         // Defaults!
-        current.setStereo(false);
-        current.setGlobalVolume(ModConstants.MAXSAMPLEVOLUME);
-        current.setTranspose(0);
-        current.setPanning(false);
-        current.setDefaultPanning(128);
+        current.isStereo = false;
+        current.globalVolume = ModConstants.MAXSAMPLEVOLUME;
+        current.transpose = 0;
+        current.setPanning = false;
+        current.defaultPanning = 128;
 
         // SampleData
         int flags = ModConstants.SM_PCMS;
         if ((sampleType & 0x01) != 0) flags |= ModConstants.SM_16BIT;
-        current.setSampleType(flags);
+        current.sampleType = flags;
         readSampleData(current, inputStream);
 
         getInstrumentContainer().setSample(sampleIndex, current);
@@ -295,7 +295,7 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
         setNChannels(16);
         setBaseVolume(ModConstants.MAXGLOBALVOLUME);
         int preAmp = ModConstants.MAX_MIXING_PREAMP / getNChannels();
-        setMixingPreAmp((preAmp < ModConstants.MIN_MIXING_PREAMP) ? ModConstants.MIN_MIXING_PREAMP : (preAmp > 0x80) ? 0x80 : preAmp);
+        setMixingPreAmp((preAmp < ModConstants.MIN_MIXING_PREAMP) ? ModConstants.MIN_MIXING_PREAMP : Math.min(preAmp, 0x80));
         songFlags = ModConstants.SONG_ISSTEREO;
 
         // ModID
