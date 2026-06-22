@@ -212,12 +212,12 @@ public class MidiMixer extends BasicMixer {
                 midiOutput = MidiSystem.getMidiDevice(outputDeviceInfo);
             }
             if (!midiOutput.isOpen()) midiOutput.open();
-            if (midiOutput instanceof Synthesizer && (soundBankFile != null)) {
+            if (soundBankFile != null && midiOutput instanceof Synthesizer) {
                 try {
                     Soundbank bank = MidiSystem.getSoundbank(soundBankFile);
                     ((Synthesizer) midiOutput).loadAllInstruments(bank);
                 } catch (Exception ex) {
-                    logger.log(Level.ERROR, "Error occured when opening soundfont bank", ex);
+                    logger.log(Level.ERROR, "Error occurred when opening soundfont bank", ex);
                 }
             }
             Receiver synthReceiver = midiOutput.getReceiver();
@@ -226,7 +226,7 @@ public class MidiMixer extends BasicMixer {
             if (isPlaying) startLine(false);
         } catch (MidiUnavailableException ex) {
             closeAudioDevice();
-            logger.log(Level.ERROR, "Error occured when opening midi device", ex);
+            logger.log(Level.ERROR, "Error occurred when opening midi device", ex);
         }
     }
 

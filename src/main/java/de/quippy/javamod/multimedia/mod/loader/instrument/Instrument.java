@@ -23,6 +23,7 @@
 package de.quippy.javamod.multimedia.mod.loader.instrument;
 
 import de.quippy.javamod.multimedia.mod.ModConstants;
+import de.quippy.javamod.multimedia.mod.midi.ModMidiMixer;
 
 
 /**
@@ -72,9 +73,13 @@ public class Instrument {
     /** Plugin Number - we do not support MPT standard plugins yet */
     public int mixPlugIn = 0;
     /** XM: mute samples in channel */
-    public boolean xm_muteComputer;
+    public boolean xm_muteComputer = false;
     /** XM: use Midi */
-    public boolean xm_enableMidi;
+    public boolean xm_enableMidi = false;
+    /** extended Instrument OpenModPlug PVEH */
+    public int pluginVelocityHandling = ModMidiMixer.PLUGIN_VELOCITYHANDLING_CHANNEL;
+    /** extended Instrument OpenModPlug PVOH */
+    public int pluginVolumeHandling = ModMidiMixer.PLUGIN_VOLUMEHANDLING_IGNORE;
 
     // OMPT
     /** ys of volRamping up, -1 || 0 == use default */
@@ -102,6 +107,10 @@ public class Instrument {
     public int getNoteIndex(int noteIndex) {
         if (this.noteIndex == null) return noteIndex;
         return this.noteIndex[noteIndex];
+    }
+
+    public boolean hasValidMidiChannel() {
+        return (midiChannel >= 1 && midiChannel <= 18);
     }
 
     /**

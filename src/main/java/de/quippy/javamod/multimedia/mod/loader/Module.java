@@ -1363,8 +1363,10 @@ public abstract class Module {
                 ins.mixPlugIn = (int) inputStream.readIntelBytes(size);
                 break;
             case 0x50564548: //"PVEH" PluginVelocityHandling
+                ins.pluginVelocityHandling = (int) inputStream.readIntelBytes(size);
+                break;
             case 0x50564F48: //"PVOH" PluginVolumeHandling
-                inputStream.skip(size);
+                ins.pluginVolumeHandling = (int) inputStream.readIntelBytes(size);
                 break;
             case 0x4D422E2E: //"MB.." MidiBank
                 ins.midiBank = (int) inputStream.readIntelBytes(size);

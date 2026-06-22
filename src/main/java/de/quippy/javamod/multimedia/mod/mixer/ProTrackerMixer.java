@@ -109,8 +109,13 @@ public class ProTrackerMixer extends BasicModMixer {
                 return note2Period[C4Period] << (ModConstants.PERIOD_SHIFT - 2); // table values are already shifted by 2
 
             default:
-                return super.getFineTunePeriod(aktMemo, period);
+                return 0; // something went wrong
         }
+    }
+
+    @Override
+    protected int getFineTunePeriod(ChannelMemory aktMemo) {
+        return (aktMemo.assignedNoteIndex == 0) ? 0 : getFineTunePeriod(aktMemo, aktMemo.assignedNoteIndex + aktMemo.currentTranspose);
     }
 
     @Override
@@ -138,10 +143,10 @@ public class ProTrackerMixer extends BasicModMixer {
                 } else {
                     // We have a different LUT table as original FT2 - to avoid the doubles used there
                     // So we need some adoption to the algorithm used in FT2 but stay as close as possible to the coding there:
-                    final int invPeriod = ((12 * 192 * 4) + 767 - period) & 0xFFFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
-                    final int quotient = invPeriod / (12 * 16 * 4);
-                    final int remainder = period % (12 * 16 * 4);
-                    final int newFrequency = ModConstants.lintab[remainder] >> (((14 - quotient) & 0x1F) - 2); // values are 4 times bigger in FT2
+                    int invPeriod = ((12 * 192 * 4) + 767 - period) & 0xFFFF; // 12 octaves * (12 * 16 * 4) LUT entries = 9216, add 767 for rounding
+                    int quotient = invPeriod / (12 * 16 * 4);
+                    int remainder = period % (12 * 16 * 4);
+                    int newFrequency = ModConstants.lintab[remainder] >> (((14 - quotient) & 0x1F) - 2); // values are 4 times bigger in FT2
                     aktMemo.currentTuning = (int) (((long) newFrequency << ModConstants.SHIFT) / sampleRate);
                 }
                 return;
@@ -293,6 +298,18 @@ public class ProTrackerMixer extends BasicModMixer {
     }
 
     /**
+     * @param aktMemo
+     * @since 19.05.2026
+     */
+    protected void doNNAPlugins_XM(ChannelMemory aktMemo) {
+        // Do we need to apply New/Duplicate Note Action for Midi?
+        if (aktMemo.hasMidiOutput() && aktMemo.hasNewNote() && aktMemo.lastMidiNoteWithoutArp != ModConstants.NO_NOTE && modMidiMixer.isNotePlaying(aktMemo, aktMemo.lastMidiNoteWithoutArp)) {
+            modMidiMixer.sendMidiNote(aktMemo, ModConstants.KEY_OFF, 0);
+            aktMemo.lastMidiNoteWithoutArp = ModConstants.NO_NOTE;
+        }
+    }
+
+    /**
      * @since 14.07.2024
      */
     @Override
@@ -317,7 +334,7 @@ public class ProTrackerMixer extends BasicModMixer {
             if (currentTempo == currentTick && aktMemo.noteDelayCount >= currentTempo) {
                 if (!mod.isAmigaLike()) return; // ignore illegal note delays with multichannel mods
                 aktMemo.noteDelayCount = -1;
-                if (hasNoNote(aktMemo.currentElement)) { // only if there is no note present
+                if (aktMemo.hasNoNote()) { // only if there is no note present
                     // simply set the period
                     setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod = getFineTunePeriod(aktMemo));
                 }
@@ -339,7 +356,7 @@ public class ProTrackerMixer extends BasicModMixer {
                     // Otherwise, it will be set after loop
                     // Of course not, if note delay effect
                     if (mod.isAmigaLike() && // No inplace instrument swap for Multichannel Protrackers
-                            ((hasNoNote(element) && !isNoteDelayEffect) && // Inplace: no note - plus not with note delay
+                            ((aktMemo.hasNoNote() && !isNoteDelayEffect) && // Inplace: no note - plus not with note delay
                             ((aktMemo.currentSample == null || !aktMemo.currentSample.hasSampleData()) || // previous is empty
                                     (element.getEffect() == 0x0E && (element.getEffectOp() & 0xF0) == 0x90)) || // 0xE9x Re-Trigger command.
                                     (!isNoteDelayEffect && aktMemo.currentSample != aktMemo.assignedSample && aktMemo.instrumentFinished))) { // inplace of finished instrument, even with note
@@ -350,7 +367,7 @@ public class ProTrackerMixer extends BasicModMixer {
                 }
             }
 
-            if (hasNewNote(element)) {
+            if (aktMemo.hasNewNote()) {
                 // copy for Porta2Note / NoteDelay
                 aktMemo.assignedNotePeriod = aktMemo.currentAssignedNotePeriod;
                 aktMemo.assignedNoteIndex = aktMemo.currentAssignedNoteIndex;
@@ -360,6 +377,9 @@ public class ProTrackerMixer extends BasicModMixer {
                 }
             }
         } else if (isXM) {
+            // This is only for midi output!
+            doNNAPlugins_XM(aktMemo);
+
             boolean isKeyOff = element.getPeriod() == ModConstants.KEY_OFF || element.getNoteIndex() == ModConstants.KEY_OFF;
             boolean isK00 = isKeyOffEffect(aktMemo.currentAssignedEffect, aktMemo.currentAssignedEffectParam) && aktMemo.currentAssignedEffectParam == 0;
             // special K00/KeyOff handling of XMs - instrument and note are "invisible" with K00
@@ -399,6 +419,10 @@ public class ProTrackerMixer extends BasicModMixer {
                     resetVolumeAndPanning(aktMemo, aktMemo.currentAssignedInstrument, aktMemo.assignedSample);
                     if (!isKeyOff) triggerFTInstrument(aktMemo);
                 }
+            }
+            // send possible Midi Note - also KeyOff:
+            if (aktMemo.hasMidiOutput()) {
+                modMidiMixer.processMidiOut(aktMemo, 12, 0x0C, 0x01, isPortaToNoteEffect); // XM is missing one octave
             }
         }
     }
@@ -491,7 +515,7 @@ public class ProTrackerMixer extends BasicModMixer {
                 doPanning(aktMemo, aktMemo.assignedEffectParam, ModConstants.PanBits.Pan8Bit);
                 break;
             case 0x09:        // Sample Offset
-                if (isXM && hasNoNote(element)) break; // is normally done in "triggerFTNote"
+                if (isXM && aktMemo.hasNoNote()) break; // is normally done in "triggerFTNote"
                 rowsUsed = new AtomicInteger(0);
                 int newSampleOffset = calculateExtendedValue(aktMemo, rowsUsed);
                 if (newSampleOffset != 0) {
@@ -501,7 +525,7 @@ public class ProTrackerMixer extends BasicModMixer {
                     } else
                         aktMemo.sampleOffset = newSampleOffset;
                 }
-                doSampleOffsetEffect(aktMemo, element);
+                doSampleOffsetEffect(aktMemo);
                 break;
             case 0x0A:            // Volume Slide
                 // With Protracker Mods Volume Slide has not effect memory
@@ -578,7 +602,7 @@ public class ProTrackerMixer extends BasicModMixer {
 //                        } else
                         if (frequencyTableType == ModConstants.AMIGA_TABLE) {
                             aktMemo.currentFineTune = (effectOp > 7) ? effectOp - 16 : effectOp;
-                            if (hasNewNote(element)) setNewPlayerTuningFor(aktMemo, getFineTunePeriod(aktMemo));
+                            if (aktMemo.hasNewNote()) setNewPlayerTuningFor(aktMemo, getFineTunePeriod(aktMemo));
                         }
                         break;
                     case 0x6:    // JumpLoop
@@ -774,7 +798,7 @@ public class ProTrackerMixer extends BasicModMixer {
                                 break;
                             case 0xF: // Play backward. The current instrument will be played backwards, or it will temporarily set the direction of a loop to go backward.
                                 if (aktMemo.currentSample != null && aktMemo.currentSamplePos == 0 && aktMemo.currentSample.sampleLength > 0 &&
-                                        (hasNewNote(element) || (aktMemo.currentSample.loopType & ModConstants.LOOP_ON) != 0)) {
+                                        (aktMemo.hasNewNote() || (aktMemo.currentSample.loopType & ModConstants.LOOP_ON) != 0)) {
                                     aktMemo.currentSamplePos = aktMemo.currentSample.sampleLength - 1;
                                     aktMemo.currentTuningPos = 0;
                                 }
@@ -912,7 +936,7 @@ public class ProTrackerMixer extends BasicModMixer {
     protected void preparePortaToNoteEffect(ChannelMemory aktMemo) {
         PatternElement element = aktMemo.currentElement;
         if (frequencyTableType == ModConstants.AMIGA_TABLE) {
-            if (hasNewNote(element)) {
+            if (aktMemo.hasNewNote()) {
                 // The original coding in ProTracker
                 int lookUpFineTune = ((aktMemo.currentFineTune < 0) ? aktMemo.currentFineTune + 16 : aktMemo.currentFineTune) * 37;
                 int period = aktMemo.assignedNotePeriod;
@@ -939,7 +963,7 @@ public class ProTrackerMixer extends BasicModMixer {
             boolean isKeyOff = (element.getPeriod() == ModConstants.KEY_OFF || element.getNoteIndex() == ModConstants.KEY_OFF);
             if (isKeyOff) {
                 doKeyOff(aktMemo);
-            } else if (hasNewNote(element)) { // KeyOff is not a note...
+            } else if (aktMemo.hasNewNote()) { // KeyOff is not a note...
                 // because of p->note being uint8, we need to simulate
                 int note = (((aktMemo.assignedNoteIndex + aktMemo.currentTranspose - 1) & 0xff) << 4) + ((aktMemo.currentFineTune >> 3) + 16);
                 if (note < (10 * 12 * 16) + 16) {
@@ -1013,6 +1037,8 @@ public class ProTrackerMixer extends BasicModMixer {
             // FT2 bug, should've been unsigned comparison
             int tmpPeriod = aktMemo.currentNotePeriod >> (ModConstants.PERIOD_SHIFT - 2);
             if ((short) tmpPeriod < 1) aktMemo.currentNotePeriod = 1 << (ModConstants.PERIOD_SHIFT - 2);
+
+            if (aktMemo.hasMidiOutput()) midiPortamento(aktMemo, op >> ModConstants.PERIOD_SHIFT, true);
         }
 
         setNewPlayerTuningFor(aktMemo);
@@ -1035,6 +1061,8 @@ public class ProTrackerMixer extends BasicModMixer {
             // FT2 bug, should've been unsigned comparison
             int tmpPeriod = aktMemo.currentNotePeriod >> (ModConstants.PERIOD_SHIFT - 2);
             if ((short) tmpPeriod > 32000) aktMemo.currentNotePeriod = (32000 - 1) << (ModConstants.PERIOD_SHIFT - 2);
+
+            if (aktMemo.hasMidiOutput()) midiPortamento(aktMemo, -(op >> ModConstants.PERIOD_SHIFT), true);
         }
 
         setNewPlayerTuningFor(aktMemo);
@@ -1111,9 +1139,14 @@ public class ProTrackerMixer extends BasicModMixer {
 
         int tmpVib = getVibratoDelta(aktMemo.vibratoType, aktMemo.vibratoTablePos);
         tmpVib = ((tmpVib << ModConstants.PERIOD_SHIFT) * aktMemo.vibratoAmplitude) >> 7;
-
         setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod + tmpVib);
         if (!isTick0) aktMemo.vibratoTablePos += aktMemo.vibratoStep;
+
+        if (aktMemo.hasMidiOutput()) {
+            int pwd = 2;
+            if (aktMemo.assignedInstrument != null) pwd = aktMemo.assignedInstrument.pitchWheelDepth;
+            modMidiMixer.midiVibrato(aktMemo, tmpVib >> 2, pwd);
+        }
     }
 
     /**
@@ -1226,13 +1259,12 @@ public class ProTrackerMixer extends BasicModMixer {
 
     /**
      * @param aktMemo memory
-     * @param element
      * @since 18.01.2024
      */
-    private void doSampleOffsetEffect(ChannelMemory aktMemo, PatternElement element) {
+    private void doSampleOffsetEffect(ChannelMemory aktMemo) {
         if (isMOD) aktMemo.prevSampleOffset += aktMemo.sampleOffset;
 
-        if (hasNoNote(element) || aktMemo.currentSample == null) return;
+        if (aktMemo.hasNoNote() || aktMemo.currentSample == null) return;
 
         Sample sample = aktMemo.currentSample;
         boolean hasLoop = (sample.loopType & ModConstants.LOOP_ON) != 0;
@@ -1298,7 +1330,7 @@ public class ProTrackerMixer extends BasicModMixer {
             if (aktMemo.retrigCount <= 0)
                 doRetrig = false;
             else {
-                if (tick == 0 && hasNewNote(aktMemo.currentElement)) // Re-trigger on first tick if there is no note (0 % x) is always 0
+                if (tick==0 && aktMemo.hasNewNote()) // Re-trigger on first tick if there is no note (0 % x) is always 0
                     doRetrig = false;
                 else
                     doRetrig = ((tick % aktMemo.retrigCount) == 0);
@@ -1611,6 +1643,11 @@ public class ProTrackerMixer extends BasicModMixer {
                                 // This affects volume slides and kills fine vol slides, vibrato adjustments or porta2note
                                 if (aktMemo.currentAssignedVolumeEffect == 0x01 || aktMemo.currentAssignedVolumeEffect == 0x08)
                                     doVolumeColumnRowEffect(aktMemo);
+
+                                // send possible Midi Note:
+                                if (aktMemo.hasMidiOutput() && element.getNoteIndex() != ModConstants.NO_NOTE) {
+                                    modMidiMixer.processMidiOut(aktMemo, 12, 0x0C, 0x01, false); // XM is missing one octave
+                                }
                             }
                         }
                         break;

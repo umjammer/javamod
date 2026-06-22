@@ -70,14 +70,11 @@ public class MidiContainer extends MultimediaContainer {
 
     // GUI Constants
 
-    public static final String DEFAULT_OUTPUTDEVICE = "Java Sound Synthesizer";
+    public static final String DEFAULT_OUTPUTDEVICE = "Gervill";
     public static final String DEFAULT_SOUNDBANKURL = Helpers.EMPTY_STING;
     public static final String DEFAULT_CAPUTRE = "0";
     public static final String DEFAULT_MIXERNAME = Helpers.EMPTY_STING;
     public static final String DEFAULT_PORTNAME = Helpers.EMPTY_STING;
-
-    public static final MidiDevice.Info[] MIDIOUTDEVICEINFOS;
-    public static final javax.sound.sampled.Mixer.Info[] MIXERDEVICEINFOS;
 
     private Properties currentProps = null;
 
@@ -85,15 +82,6 @@ public class MidiContainer extends MultimediaContainer {
     private Sequence currentSequence;
     private MidiConfigPanel midiConfigPanel;
     private MidiInfoPanel midiInfoPanel;
-
-    /*
-     * Will be executed during class load
-     */
-    static {
-        // This can sometimes take a while
-        MIDIOUTDEVICEINFOS = getMidiOutDevices();
-        MIXERDEVICEINFOS = getInputMixerNames();
-    }
 
     /**
      * @return

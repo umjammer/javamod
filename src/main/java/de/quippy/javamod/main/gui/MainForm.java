@@ -2246,12 +2246,10 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
         try {
             MultimediaContainer newContainer = MultimediaContainerManager.getMultimediaContainer(sourceFile);
             if (newContainer != null) {
-                Mixer mixer = getCurrentContainer().createNewMixer();
+                Mixer mixer = createNewMixer();
                 if (mixer != null) {
                     mixer.setAudioProcessor(null);
-                    mixer.setVolume(currentVolume);
-                    mixer.setBalance(currentBalance);
-                    mixer.setSoundOutputStream(getSoundOutputStream());
+                    removeMixer(); // no seek bar
                     mixer.setPlayDuringExport(false);
                     mixer.setExportFile(targetFile);
                     mixer.setMillisecondPosition(fromMillisecondPosition);

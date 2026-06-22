@@ -32,8 +32,10 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.io.Serial;
 import java.util.Properties;
+import javax.sound.midi.MidiDevice;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -41,10 +43,15 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
+import javax.swing.filechooser.FileFilter;
 
+import de.quippy.javamod.main.gui.tools.FileChooserFilter;
+import de.quippy.javamod.main.gui.tools.FileChooserResult;
 import de.quippy.javamod.mixer.dsp.iir.filter.Dither;
+import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.mod.loader.Module;
 import de.quippy.javamod.system.Helpers;
 
@@ -81,16 +88,25 @@ public class ModConfigPanel extends JPanel {
     private JComboBox<String> playerSetUp_MaxNNAChannels = null;
 
     private JButton modConfig_openDitherConfigDialog = null;
+    private JButton modConfig_openMidiConfigDialog = null;
     private JLabel playerSetUp_L_DitherFilterType = null;
     private JComboBox<String> playerSetUp_DitherFilterType = null;
     private JLabel playerSetUp_L_DitherType = null;
     private JComboBox<String> playerSetUp_DitherType = null;
     private JCheckBox playerSetUp_ByPassDither = null;
-    private JButton buttonClose = null;
+    private JButton ditherButtonClose = null;
+
+    private JLabel midiOutputDeviceLabel = null;
+    private JComboBox<MidiDevice.Info> midiOutputDevice = null;
+    private JLabel midiSoundBankLabel = null;
+    private JTextField midiSoundBankUrl = null;
+    private JButton searchButton = null;
 
     private ModContainer parentContainer = null;
     private Window parentConfigDialog = null;
     private DitherConfigDialog ditherConfigDialog = null;
+    private MidiConfigDialog midiConfigDialog = null;
+    private JButton midiButtonClose = null;
 
     private Color defaultColor;
     public static final Color DARKGREEN = new Color(0,128,0);
@@ -106,14 +122,14 @@ public class ModConfigPanel extends JPanel {
         }
 
         private void initialize() {
-            this.setLayout(new java.awt.GridBagLayout());
+            setLayout(new java.awt.GridBagLayout());
 
-            this.add(getPlayerSetUp_L_DitherType(), Helpers.getGridBagConstraint(0, 0, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0));
-            this.add(getPlayerSetUp_L_DitherFilterType(), Helpers.getGridBagConstraint(1, 0, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0));
-            this.add(getPlayerSetUp_ByPassDither(), Helpers.getGridBagConstraint(2, 0, 2, 1, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
-            this.add(getPlayerSetUp_DitherType(), Helpers.getGridBagConstraint(0, 1, 1, 1, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
-            this.add(getPlayerSetUp_DitherFilterType(), Helpers.getGridBagConstraint(1, 1, 1, 1, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
-            this.add(getButtonClose(), Helpers.getGridBagConstraint(0, 2, 1, 3, java.awt.GridBagConstraints.CENTER, java.awt.GridBagConstraints.CENTER, 0.0, 0.0));
+            add(getPlayerSetUp_L_DitherType(), Helpers.getGridBagConstraint(0, 0, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0));
+            add(getPlayerSetUp_L_DitherFilterType(), Helpers.getGridBagConstraint(1, 0, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0));
+            add(getPlayerSetUp_ByPassDither(), Helpers.getGridBagConstraint(2, 0, 2, 1, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
+            add(getPlayerSetUp_DitherType(), Helpers.getGridBagConstraint(0, 1, 1, 1, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
+            add(getPlayerSetUp_DitherFilterType(), Helpers.getGridBagConstraint(1, 1, 1, 1, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
+            add(getButtonClose(), Helpers.getGridBagConstraint(0, 2, 1, 3, java.awt.GridBagConstraints.CENTER, java.awt.GridBagConstraints.CENTER, 0.0, 0.0));
 
             setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
             addWindowListener(new WindowAdapter() {
@@ -129,26 +145,73 @@ public class ModConfigPanel extends JPanel {
             setLocation(Helpers.getFrameCenteredLocation(this, this.getOwner()));
         }
 
-        public void doClose() {
+        private void doClose() {
             setVisible(false);
             dispose();
         }
 
         private JButton getButtonClose() {
-            if (buttonClose == null) {
-                buttonClose = new JButton();
-                buttonClose.setName("button_close");
-                buttonClose.setMnemonic('c');
-                buttonClose.setText("Close");
-                buttonClose.setActionCommand("Ende");
-                buttonClose.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(final ActionEvent e) {
-                        doClose();
-                    }
-                });
+            if (ditherButtonClose == null) {
+                ditherButtonClose = new JButton();
+                ditherButtonClose.setName("ditherButtonClose");
+                ditherButtonClose.setMnemonic('c');
+                ditherButtonClose.setText("Close");
+                ditherButtonClose.setActionCommand("Ende");
+                ditherButtonClose.addActionListener(_ -> doClose());
             }
-            return buttonClose;
+            return ditherButtonClose;
+        }
+    }
+
+    private class MidiConfigDialog extends JDialog {
+
+        @Serial
+        private static final long serialVersionUID = 3655311145089822833L;
+
+        public MidiConfigDialog(final Window owner, final boolean modal) {
+            super(owner, modal ? DEFAULT_MODALITY_TYPE : ModalityType.MODELESS);
+            initialize();
+        }
+
+        private void initialize() {
+            setLayout(new java.awt.GridBagLayout());
+
+            add(getMidiOutputDeviceLabel(), Helpers.getGridBagConstraint(0, 0, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0));
+            add(getMidiSoundBankLabel(), Helpers.getGridBagConstraint(1, 0, 1, 0, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0));
+            add(getMidiOutputDevice(), Helpers.getGridBagConstraint(0, 1, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0));
+            add(getMidiSoundBankURL(), Helpers.getGridBagConstraint(1, 1, 1, 1, java.awt.GridBagConstraints.HORIZONTAL, java.awt.GridBagConstraints.WEST, 1.0, 0.0));
+            add(getSearchButton(), Helpers.getGridBagConstraint(2, 1, 1, 0, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0));
+            add(getButtonClose(), Helpers.getGridBagConstraint(0, 2, 1, 3, java.awt.GridBagConstraints.CENTER, java.awt.GridBagConstraints.CENTER, 0.0, 0.0));
+
+            setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+            addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(final java.awt.event.WindowEvent e) {
+                    doClose();
+                }
+            });
+
+            this.setName("Configure MIDI device");
+            this.setTitle("Configure MIDI device");
+            pack();
+            setLocation(Helpers.getFrameCenteredLocation(this, this.getOwner()));
+        }
+
+        private void doClose() {
+            setVisible(false);
+            dispose();
+        }
+
+        private JButton getButtonClose() {
+            if (midiButtonClose == null) {
+                midiButtonClose = new JButton();
+                midiButtonClose.setName("midiButtonClose");
+                midiButtonClose.setMnemonic('c');
+                midiButtonClose.setText("Close");
+                midiButtonClose.setActionCommand("Ende");
+                midiButtonClose.addActionListener(_ -> doClose());
+            }
+            return midiButtonClose;
         }
     }
 
@@ -276,6 +339,7 @@ public class ModConfigPanel extends JPanel {
         this.setLayout(new java.awt.GridBagLayout());
 
         this.add(getPlayerSetUp_WideStereoMix(), Helpers.getGridBagConstraint(0, 0, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0));
+        this.add(getPlayerSetUp_MidiConfigDialog(), Helpers.getGridBagConstraint(1, 3, 2, 1, java.awt.GridBagConstraints.CENTER, java.awt.GridBagConstraints.CENTER, 0.0, 0.0));
         this.add(getPlayerSetUp_NoiseReduction(), Helpers.getGridBagConstraint(1, 0, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0));
         this.add(getPlayerSetUp_MegaBass(), Helpers.getGridBagConstraint(2, 0, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0));
         this.add(getPlayerSetUp_DCRemoval(), Helpers.getGridBagConstraint(3, 0, 1, 1, java.awt.GridBagConstraints.NONE, java.awt.GridBagConstraints.WEST, 0.0, 0.0));
@@ -658,7 +722,7 @@ public class ModConfigPanel extends JPanel {
             playerSetUp_AmigaEmulation = new JComboBox<>();
             playerSetUp_AmigaEmulation.setName("playerSetUp_AmigaEmulation");
 
-            final DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<>(ModConstants.AMIGA_EMULATION);
+            DefaultComboBoxModel<String> theModel = new DefaultComboBoxModel<>(ModConstants.AMIGA_EMULATION);
             playerSetUp_AmigaEmulation.setModel(theModel);
             playerSetUp_AmigaEmulation.setFont(Helpers.getDialogFont());
             playerSetUp_AmigaEmulation.setEnabled(true);
@@ -734,10 +798,32 @@ public class ModConfigPanel extends JPanel {
         return modConfig_openDitherConfigDialog;
     }
 
-    protected DitherConfigDialog getDitherConfigDialog() {
+    protected ModConfigPanel.DitherConfigDialog getDitherConfigDialog() {
         if (ditherConfigDialog == null)
             ditherConfigDialog = new DitherConfigDialog(parentConfigDialog, true);
         return ditherConfigDialog;
+    }
+
+    private JButton getPlayerSetUp_MidiConfigDialog() {
+        if (modConfig_openMidiConfigDialog == null) {
+            modConfig_openMidiConfigDialog = new JButton();
+            modConfig_openMidiConfigDialog.setName("modConfig_openMidiConfigDialog");
+            modConfig_openMidiConfigDialog.setText("set MIDI device");
+            modConfig_openMidiConfigDialog.setMnemonic('M');
+            modConfig_openMidiConfigDialog.setFont(Helpers.getDialogFont());
+            modConfig_openMidiConfigDialog.setToolTipText("Configure MIDI device");
+            modConfig_openMidiConfigDialog.addActionListener(_ -> {
+                getMidiConfigDialog().setLocation(Helpers.getFrameCenteredLocation(midiConfigDialog, parentConfigDialog));
+                getMidiConfigDialog().setVisible(!getMidiConfigDialog().isVisible());
+            });
+        }
+        return modConfig_openMidiConfigDialog;
+    }
+
+    protected MidiConfigDialog getMidiConfigDialog() {
+        if (midiConfigDialog == null)
+            midiConfigDialog = new MidiConfigDialog(parentConfigDialog, true);
+        return midiConfigDialog;
     }
 
     private JLabel getPlayerSetUp_L_DitherType() {
@@ -826,6 +912,72 @@ public class ModConfigPanel extends JPanel {
         return playerSetUp_ByPassDither;
     }
 
+    private javax.swing.JLabel getMidiOutputDeviceLabel() {
+        if (midiOutputDeviceLabel == null) {
+            midiOutputDeviceLabel = new JLabel("Midi Ouput Devices");
+            midiOutputDeviceLabel.setFont(Helpers.getDialogFont());
+        }
+        return midiOutputDeviceLabel;
+    }
+
+    private JComboBox<MidiDevice.Info> getMidiOutputDevice() {
+        if (midiOutputDevice == null) {
+            midiOutputDevice = new JComboBox<>();
+            midiOutputDevice.setName("midiOutputDevice");
+
+            if (MultimediaContainer.getMidiOutDeviceInfos() != null) {
+                final javax.swing.DefaultComboBoxModel<MidiDevice.Info> theModel = new javax.swing.DefaultComboBoxModel<>(MultimediaContainer.getMidiOutDeviceInfos());
+                midiOutputDevice.setModel(theModel);
+            }
+            midiOutputDevice.setFont(Helpers.getDialogFont());
+            midiOutputDevice.setEnabled(true);
+        }
+        return midiOutputDevice;
+    }
+
+    private javax.swing.JLabel getMidiSoundBankLabel() {
+        if (midiSoundBankLabel == null) {
+            midiSoundBankLabel = new JLabel("soundbank file for default synthesizer");
+            midiSoundBankLabel.setFont(Helpers.getDialogFont());
+        }
+        return midiSoundBankLabel;
+    }
+
+    private JTextField getMidiSoundBankURL() {
+        if (midiSoundBankUrl == null) {
+            midiSoundBankUrl = new javax.swing.JTextField();
+            midiSoundBankUrl.setColumns(20);
+            midiSoundBankUrl.setFont(Helpers.getDialogFont());
+        }
+        return midiSoundBankUrl;
+    }
+
+    private JButton getSearchButton() {
+        if (searchButton == null) {
+            searchButton = new javax.swing.JButton();
+            searchButton.setMnemonic('S');
+            searchButton.setText("Search");
+            searchButton.setFont(Helpers.getDialogFont());
+            searchButton.setToolTipText("Search a soundbank file for the default synthesizer");
+            searchButton.addActionListener(new java.awt.event.ActionListener() {
+                @Override
+                public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                    doSelectSoundbankFile();
+                }
+            });
+        }
+        return searchButton;
+    }
+
+    private void doSelectSoundbankFile() {
+        FileFilter[] fileFilter = new FileFilter[] {new FileChooserFilter("*", "All files"), new FileChooserFilter("gm", "Soundbank file (*.gm)"), new FileChooserFilter("sf2", "Soundfont files (*.sf2)")};
+        FileChooserResult selectedFile = Helpers.selectFileNameFor(this, null, "Select soundbank file", fileFilter, false, 0, false, false);
+        if (selectedFile != null) {
+            final File select = selectedFile.getSelectedFile();
+            getMidiSoundBankURL().setText(select.toString());
+        }
+    }
+
     public void configurationChanged(Properties props) {
         // IF ANYTHING IS CHANGED HERE, WE HAVE TO CHANGE IN ModContainer (config methods plus createNewMixer0) AS WELL
         getPlayerSetUp_SampleRate().setSelectedItem(props.getProperty(ModContainer.PROPERTY_PLAYER_FREQUENCY, ModContainer.DEFAULT_SAMPLERATE));
@@ -843,6 +995,8 @@ public class ModConfigPanel extends JPanel {
         getPlayerSetUp_DitherFilterType().setSelectedIndex(Integer.parseInt(props.getProperty(ModContainer.PROPERTY_PLAYER_DITHERFILTER, ModContainer.DEFAULT_DITHERFILTER)));
         getPlayerSetUp_DitherType().setSelectedIndex(Integer.parseInt(props.getProperty(ModContainer.PROPERTY_PLAYER_DITHERTYPE, ModContainer.DEFAULT_DITHERTYPE)));
         getPlayerSetUp_ByPassDither().setSelected(Boolean.parseBoolean(props.getProperty(ModContainer.PROPERTY_PLAYER_DITHERBYPASS, ModContainer.DEFAULT_DITHERBYPASS)));
+        getMidiOutputDevice().setSelectedItem(ModContainer.getMidiOutDeviceByName(props.getProperty(ModContainer.PROPERTY_PLAYER_MIDIOUTPUTDEVICE, ModContainer.DEFAULT_MIDIOUTPUTDEVICE)));
+        getMidiSoundBankURL().setText(props.getProperty(ModContainer.PROPERTY_PLAYER_MIDISOUNDBANK, ModContainer.DEFAULT_MIDISOUNDBANKURL));
     }
 
     public void configurationSave(Properties props) {
@@ -862,5 +1016,8 @@ public class ModConfigPanel extends JPanel {
         props.setProperty(ModContainer.PROPERTY_PLAYER_DITHERFILTER, Integer.toString(getPlayerSetUp_DitherFilterType().getSelectedIndex()));
         props.setProperty(ModContainer.PROPERTY_PLAYER_DITHERTYPE, Integer.toString(getPlayerSetUp_DitherType().getSelectedIndex()));
         props.setProperty(ModContainer.PROPERTY_PLAYER_DITHERBYPASS, Boolean.toString(getPlayerSetUp_ByPassDither().isSelected()));
+        MidiDevice.Info outputDevice = (MidiDevice.Info) getMidiOutputDevice().getSelectedItem();
+        if (outputDevice != null) props.setProperty(ModContainer.PROPERTY_PLAYER_MIDIOUTPUTDEVICE, outputDevice.getName());
+        props.setProperty(ModContainer.PROPERTY_PLAYER_MIDISOUNDBANK, getMidiSoundBankURL().getText());
     }
 }

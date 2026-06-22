@@ -476,6 +476,9 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
 
         InstrumentsContainer instrumentContainer = new InstrumentsContainer(this, getNInstruments(), getNSamples());
         this.setInstrumentContainer(instrumentContainer);
+
+        //int NoS = 0;
+        int trkVersion = 0;
         for (int i = 0; i < getNInstruments(); i++) {
             inputStream.seek(instrumentParaPointer[i]);
 
@@ -504,8 +507,9 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                 currentIns.volumeFadeOut = inputStream.readIntelUnsignedWord() << 6;
                 currentIns.NNA = inputStream.read();
                 currentIns.duplicateNoteCheck = inputStream.read();
-                inputStream.skip(2); // TrackerVersion, that saved the instrument - ignored
-                inputStream.skip(2); // NoS - ignored
+                trkVersion = inputStream.readIntelWord();
+                /* NoS = */ inputStream.read();
+                inputStream.skip(1); // Reserved
                 currentIns.globalVolume = 128;
                 currentIns.setPanning = false;
                 currentIns.defaultPanning = 128;
@@ -527,7 +531,9 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                 if (currentIns.randomVolumeVariation > 100) currentIns.randomVolumeVariation = 100;
                 currentIns.randomPanningVariation = inputStream.read();
                 if (currentIns.randomPanningVariation > 64) currentIns.randomVolumeVariation = 64;
-                inputStream.skip(4);
+                trkVersion = inputStream.readIntelWord();
+                /* NoS = */ inputStream.read();
+                inputStream.skip(1); // Reserved
             }
 
             currentIns.name = inputStream.readString(26);
@@ -537,12 +543,6 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                 currentIns.initialFilterCutoff = inputStream.read();
                 currentIns.initialFilterResonance = inputStream.read();
                 int midiChannel = inputStream.read();
-                if (midiChannel >= 128) {
-                    // Handle old format where MIDI channel and Plugin index are stored in the same variable
-                    currentIns.mixPlugIn = midiChannel - 128;
-                    midiChannel = 0;
-                }
-                currentIns.midiChannel = midiChannel;
                 int mpr = inputStream.read();
                 int b1 = inputStream.read();
                 int b2 = inputStream.read();
@@ -552,8 +552,8 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                 // and we won't care about correctly importing MIDI programs and banks in ITI files.
                 // Chibi Tracker sets trkvers to 0x214, but always writes mpr=mbank=0 anyway.
                 // Old BeRoTracker versions set trkvers to 0x214 or 0x217.
-                //         <= MPT 1.07          <= MPT 1.16       OpenMPT 1.17-?      <= OpenMPT 1.26     definitely not MPT
-                if ((version == 0x0202 || version == 0x0211 || version == 0x0220 || version == 0x0214) && mpr != 0xFF) {
+                //            <= MPT 1.07             <= MPT 1.16          OpenMPT 1.17-?         <= OpenMPT 1.26     definitely not MPT
+                if ((trkVersion == 0x0202 || trkVersion == 0x0211 || trkVersion == 0x0220 || trkVersion == 0x0214) && mpr != 0xFF) {
                     if (mpr <= 128)
                         currentIns.midiProgram = mpr;
                     int midiBank = b1 | (b2 << 8);
@@ -567,6 +567,12 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                     if (b1 < 128) bank = b1 + 1;
                     if (b2 < 128) bank += b2 << 7;
                     currentIns.midiBank = bank;
+                }
+                currentIns.midiChannel = midiChannel;
+                if (currentIns.midiChannel >= 128) {
+                    // Handle old format where MIDI channel and Plugin index are stored in the same variable
+                    currentIns.mixPlugIn = currentIns.midiChannel - 128;
+                    currentIns.midiChannel = 0;
                 }
             }
 
@@ -785,8 +791,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
 //                        // internally IT uses note 0xFD as its blank value, but loading it as such is probably
 //                        // undesirable since old Schism Tracker used this value incorrectly for note fade
 //                        // MPT however does exactly that for all ITs not being saved with OMPT
-//                        if (noteIndex == 0xFD) // NOTE NONE!
-//                        {
+//                        if (noteIndex == 0xFD) { // NOTE NONE!
 //                            noteIndex = period = ModConstants.NO_NOTE;
                     } else if (noteIndex > 119) { // per definition: 119 < noteindex < 0xFE is note_fade
                         noteIndex = period = ModConstants.NOTE_FADE;
@@ -944,7 +949,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
                         if (cmwt > 0x0214) {
                             setTrackerName("Impulse Tracker 2.15");
                         } else if (version > 0x0214) {
-                            setTrackerName("Impulse Tracker 2.14p" + (version - 0x0214));
+                            setTrackerName("Impulse Tracker 2.14p" + (version - 0x0213));
                         } else {
 //							setTrackerName("Impulse Tracker V" + ModConstants.getAsHex((version>>8)&0xF, 1) + "." + ModConstants.getAsHex(version&0xff, 2) + " (CmwT: " + ModConstants.getAsHex((cmwt>>8)&0xF, 1) + "." + ModConstants.getAsHex(cmwt&0xff, 2) + ")");
                             setTrackerName("Impulse Tracker V" + ModConstants.getAsHex((version >> 8) & 0xF, 1) + "." + ModConstants.getAsHex(version & 0xff, 2));
