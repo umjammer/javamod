@@ -28,12 +28,14 @@ import java.lang.System.Logger.Level;
 import java.util.Arrays;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiMessage;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
+import javax.sound.midi.SysexMessage;
 
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Instrument;
@@ -165,6 +167,20 @@ public class ModMidiMixer {
         }
     }
 
+    public static class RawMidiMessage extends MidiMessage {
+
+        protected RawMidiMessage(byte[] data) {
+            super(data);
+        }
+
+        @Override
+        public Object clone() {
+            byte[] newData = new byte[length];
+            System.arraycopy(data, 0, newData, 0, newData.length);
+            return new RawMidiMessage(newData);
+        }
+    }
+
     private final MidiDevice.Info outputDeviceInfo;
     private final File soundBankFile;
     private MidiDevice midiOutput;
@@ -226,18 +242,44 @@ public class ModMidiMixer {
     }
 
     /**
+     * @param data
+     * @since 29.05.2026
+     */
+    public void sendSysExToReceiver(final byte[] data) {
+        try {
+            if (receiver != null)
+                receiver.send(new SysexMessage(data, data.length), -1);
+        } catch (Throwable ex) {
+            logger.log(Level.ERROR, "[ModMidiMixher]::sendSysExToReceiver", ex);
+        }
+    }
+
+    /**
+     * @param data
+     * @since 28.05.2026
+     */
+    public void sendToReceiver(final byte[] data) {
+        try {
+            if (receiver != null)
+                receiver.send(new RawMidiMessage(data), -1);
+        } catch (Throwable ex) {
+            logger.log(Level.ERROR, "[ModMidiMixher]::sendToReceiver", ex);
+        }
+    }
+
+    /**
      * @param command
      * @param channel
      * @param data1
      * @param data2
      * @since 23.05.2026
      */
-    private void sendToReceiver(int command, int channel, int data1, int data2) {
+    public void sendToReceiver(int command, int channel, int data1, int data2) {
         try {
             if (receiver != null)
                 receiver.send(new ShortMessage(command, channel, data1, data2), -1);
         } catch (InvalidMidiDataException ex) {
-            logger.log(Level.ERROR, "[ModMidiMixher]::triggerMidiNote", ex);
+            logger.log(Level.ERROR, "[ModMidiMixher]::sendToReceiver", ex);
         }
     }
 
@@ -269,7 +311,7 @@ public class ModMidiMixer {
         if (aktMemo != null) {
             Instrument instrument = aktMemo.currentAssignedInstrument;
             if (instrument != null && instrument.hasValidMidiChannel())
-                return instrument.midiChannel - 1;
+                return instrument.getMidiChannel(aktMemo.channelNumber);
         }
         return 0;
     }
@@ -617,7 +659,7 @@ public class ModMidiMixer {
                     velocity = aktMemo.currentVolume << 2; // 0..64 --> 0..256
             }
 
-            velocity += aktMemo.swingVolume;
+            velocity += aktMemo.swingVolume << 2; // 0..64 --> 0..256
             if (velocity < 0) velocity = 0;
             else if (velocity > 256) velocity = 256;
 
@@ -630,7 +672,7 @@ public class ModMidiMixer {
 
         boolean processVolumeAlsoOnNote = (instrument.pluginVelocityHandling == PLUGIN_VELOCITYHANDLING_VOLUME);
         if ((hasVolumeCommand && note == ModConstants.NO_NOTE) || (note > ModConstants.NO_NOTE && processVolumeAlsoOnNote)) {
-            final int midiChannel = instrument.midiChannel - 1;
+            int midiChannel = instrument.getMidiChannel(aktMemo.channelNumber);
             switch (instrument.pluginVolumeHandling) {
                 case PLUGIN_VOLUMEHANDLING_DRYWET: // TODO: dry / wet mix
 //					if (hasVolumeCommand)

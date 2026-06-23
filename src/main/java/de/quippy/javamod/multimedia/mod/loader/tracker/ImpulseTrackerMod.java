@@ -1013,8 +1013,10 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         // reset if instrument has valid midi data and midi output - with OMPT the plugin is important - even if that instrument has a sample mapping!
         if ((getModType() & ModConstants.MODTYPE_OMPT) != 0) {
             Instrument[] ins = instrumentContainer.getInstruments();
-            for (Instrument currentIns : ins) {
-                currentIns.hasValidMidiData = (currentIns.mixPlugIn > 0 && currentIns.hasValidMidiBank() && currentIns.hasValidMidiChannel() && currentIns.hasValidMidiProgram());
+            if (ins != null) {
+                for (Instrument currentIns : ins) {
+                    currentIns.hasValidMidiData = (currentIns.mixPlugIn > 0 && currentIns.hasValidMidiBank() && currentIns.hasValidMidiChannel() && currentIns.hasValidMidiProgram());
+                }
             }
         }
 

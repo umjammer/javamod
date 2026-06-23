@@ -173,7 +173,6 @@ public class MidiMacros {
                 case ZxxProgChange:
                     formatString = "Cc%02X";
                     break;
-
                 case ZxxCustom:
                 default:
                     formatString = Helpers.EMPTY_STING;
@@ -185,96 +184,30 @@ public class MidiMacros {
     }
 
     /**
-     * Delete all unwanted characters
+     * Return the size of a midi message
      *
-     * @param macroString
+     * @param firstByte
      * @return
-     * @since 16.06.2020
+     * @since 28.05.2026
      */
-    public static String getSafeMacro(String macroString) {
-        StringBuilder sb = new StringBuilder();
-        for (char c : macroString.toCharArray())
-            if ("0123456789ABCDEFabchmnopsuvxyz".indexOf(c) != -1) sb.append(c);
-        return sb.toString();
-    }
-
-    /**
-     * get the midi command
-     *
-     * @param macroString
-     * @return
-     * @since 16.06.2020
-     */
-    public static int getMacroPlugCommand(String macroString) {
-        char[] macro = MidiMacros.getSafeMacro(macroString).toCharArray();
-        return (Character.digit(macro[0], 16) << 16) |
-                (Character.digit(macro[1], 16) << 8) |
-                (Character.digit(macro[2], 16) << 5) |
-                (Character.digit(macro[3], 16));
-    }
-
-    /**
-     * get the midi command
-     *
-     * @param macroIndex
-     * @return
-     * @since 16.06.2020
-     */
-    public int getMacroPlugCommand(int macroIndex) {
-        return MidiMacros.getMacroPlugCommand(midiSFXExt[macroIndex]);
-    }
-
-    /**
-     * Get the value of the midi plug parameter
-     *
-     * @param macroString
-     * @return
-     * @since 16.06.2020
-     */
-    public static int getMacroPlugParam(String macroString) {
-        char[] macro = MidiMacros.getSafeMacro(macroString).toCharArray();
-        int code = Character.digit(macro[4], 16) << 4 | Character.digit(macro[5], 16);
-        if (macro.length >= 4 && macro[3] == '0')
-            return (code - 128);
-        else
-            return (code + 128);
-    }
-
-    /**
-     * Get the value of the midi plug parameter
-     * from a midiSFXExt entry
-     *
-     * @param macroIndex
-     * @return
-     * @since 16.06.2020
-     */
-    public int macroToPlugParam(int macroIndex) {
-        return MidiMacros.getMacroPlugParam(midiSFXExt[macroIndex]);
-    }
-
-    /**
-     * Get the value of the midi CC parameter
-     *
-     * @param macroString
-     * @return
-     * @since 16.06.2020
-     */
-    public static int getMacroMidiCC(String macroString) {
-        char[] macro = MidiMacros.getSafeMacro(macroString).toCharArray();
-        int code = Character.digit(macro[2], 16) << 4 | Character.digit(macro[3], 16);
-        return code;
-    }
-
-    /**
-     * Get the value of the midi CC parameter
-     * from a midiSFXExt entry
-     *
-     * @param macroIndex
-     * @return
-     * @since 16.06.2020
-     */
-    public int getMacroMidiCC(int macroIndex) {
-        return MidiMacros.getMacroMidiCC(midiSFXExt[macroIndex]);
+    public static int getEventLength(int firstByte) {
+        switch (firstByte & 0xF0) {
+            case 0xC0:
+            case 0xD0:
+                return 2;
+            case 0xF0:
+                switch (firstByte) {
+                    case 0xF1:
+                    case 0xF3:
+                        return 2;
+                    case 0xF2:
+                        return 3;
+                    default:
+                        return 1;
+                }
+            default:
+                return 3;
+        }
     }
 
     /**

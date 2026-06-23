@@ -32,7 +32,6 @@ import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement;
 import de.quippy.javamod.multimedia.mod.midi.MidiMacros;
 import de.quippy.javamod.multimedia.mod.midi.ModMidiMixer;
-import de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory;
 
 
 /**
@@ -123,14 +122,59 @@ public class ScreamTrackerMixer extends BasicModMixer {
         return (aktMemo.assignedNoteIndex == 0) ? 0 : getFineTunePeriod(aktMemo, aktMemo.assignedNoteIndex);
     }
 
+    /**
+     * @param aktMemo
+     * @param currentPeriod
+     * @return
+     * @since 29.05.2026
+     */
+    protected int applyMPTFineTune(ChannelMemory aktMemo, int currentPeriod) {
+        int finetune = aktMemo.mictroTuning;
+
+        Instrument ins = aktMemo.currentAssignedInstrument;
+        if (ins != null) finetune *= ins.pitchWheelDepth; // if the pwd is zero, this effect does nothing here!
+
+        if (finetune != 0) // do only calculate (that expensive Math.pow) if anything is to calculate!
+            return ((int) ((currentPeriod << 8) * Math.pow(2.0, finetune / (12.0 * 256.0 * 128.0)))) >> 8; // OMPT has periods / Freq shifted by 8 - we don't
+        else
+            return currentPeriod;
+    }
+
+    /**
+     * @param aktMemo
+     * @return
+     * @since 29.05.2026
+     */
+    protected int applyMPTFineTune(ChannelMemory aktMemo) {
+        return applyMPTFineTune(aktMemo, getFineTunePeriod(aktMemo));
+    }
+
+    /**
+     * @param aktMemo
+     * @param isSmooth
+     * @since 29.05.2026
+     */
+    protected void setMPTFinetune(ChannelMemory aktMemo, boolean isSmooth) {
+        int newTuning = calculateExtendedValue(aktMemo, null) - 0x8000;
+        if (isSmooth)
+            newTuning = (int) calculateSmoothParamChange(aktMemo, aktMemo.mictroTuning, newTuning);
+        aktMemo.mictroTuning = newTuning;
+
+        setNewPlayerTuningFor(aktMemo);
+        if (aktMemo.hasMidiOutput()) modMidiMixer.midiPitchBendRaw(aktMemo, aktMemo.getMIDIPitchBend());
+    }
+
     @Override
-    protected void setNewPlayerTuningFor(ChannelMemory aktMemo, int newPeriod) {
-        aktMemo.currentNotePeriodSet = newPeriod;
+    protected void setNewPlayerTuningFor(ChannelMemory aktMemo, int theNewPeriod) {
+        int newPeriod = aktMemo.currentNotePeriodSet = theNewPeriod;
 
         if (newPeriod <= 0) {
             aktMemo.currentTuning = 0;
             return;
         }
+
+        // now do this OMPT fine tune thing
+        newPeriod = applyMPTFineTune(aktMemo, newPeriod);
 
         switch (frequencyTableType) {
             case ModConstants.IT_LINEAR_TABLE:
@@ -267,7 +311,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
                         break;
                     case ModConstants.DCT_PLUGIN:
                         if (aktMemo.hasMidiOutput()) applyDNAToPlug = true;
-                        // TODO: Unsupported
+                        // Plugins are unsupported - maybe we will never really need this.
                         break;
                 }
 
@@ -525,10 +569,6 @@ public class ScreamTrackerMixer extends BasicModMixer {
     }
 
     /**
-     * TODO: Clean up this mess - it is now only for STM, S3M, IT and MPTM
-     *
-     * @param aktMemo
-     * @see de.quippy.javamod.multimedia.mod.mixer.BasicModMixer#setNewInstrumentAndPeriod(de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory)
      * @since 14.07.2024
      */
     @Override
@@ -592,7 +632,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
             } else { // only new Instrument, no Porta2Note: reset only volume and panning for now
                 resetVolumeAndPanning(aktMemo, aktMemo.currentAssignedInstrument, aktMemo.assignedSample);
             }
-        } else if (element.getInstrument() > 0 && aktMemo.hasMidiOutput())
+        } else if (aktMemo.hasMidiOutput())
             resetVolumeAndPanning(aktMemo, aktMemo.currentAssignedInstrument, aktMemo.assignedSample);
 
         // Now safe those instruments for later re-use
@@ -615,7 +655,11 @@ public class ScreamTrackerMixer extends BasicModMixer {
             boolean newInstrumentWasSet = false;
 
             // because of sample offset (S3M recall old offset), reset to zero, if sample is set.
-            if (isS3M && hasInstrument) aktMemo.prevSampleOffset = 0;
+            if (hasInstrument) {
+                if (isS3M)
+                    aktMemo.prevSampleOffset = 0;
+                aktMemo.mictroTuning = 0;
+            }
 
             // We have an instrument/sample assigned, so there was (once) an instrument set!
             if (aktMemo.assignedInstrument != null || aktMemo.assignedInstrumentIndex > 0) {
@@ -883,7 +927,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
                     case 0x1:    // Glissando
                         aktMemo.glissando = effectOpEx != 0;
                         break;
-                    case 0x2:    // Set FineTune
+                    case 0x2:	// Set FineTune (ScreamTracker!)
                         aktMemo.currentFineTune = ModConstants.IT_fineTuneTable[effectOpEx];
                         aktMemo.currentFinetuneFrequency = ModConstants.IT_fineTuneTable[effectOpEx];
                         setNewPlayerTuningFor(aktMemo, getFineTunePeriod(aktMemo));
@@ -1144,6 +1188,16 @@ public class ScreamTrackerMixer extends BasicModMixer {
                     else
                         processMIDIMacro(aktMemo, true, smoothMacro.getMidiZXXExt(aktMemo.assignedEffectParam & 0x7F), 0);
                 }
+                break;
+            case 0x1D:            // Note delay&Cut
+                if (isModPlug) { // is done in BasicModMixer::doRowEvents
+                    aktMemo.noteDelayCount = aktMemo.assignedEffectParam >> 4;
+                    aktMemo.noteCutCount = aktMemo.assignedEffectParam & 0xF + aktMemo.noteDelayCount;
+                }
+                break;
+            case 0x1E:            // Set Finetune
+            case 0x1F:            // Set Smooth Finetune
+                setMPTFinetune(aktMemo, aktMemo.assignedEffect == 0x1F);
                 break;
             default:
                 //logger.log(Level.DEBUG, "Unknown Effect: Effect:%02X Op:%02X in [Pattern:%03d: Row:%03d Channel:%03d]".formatted(Integer.valueOf(aktMemo.effect), Integer.valueOf(aktMemo.effectParam), Integer.valueOf(currentPatternIndex), Integer.valueOf(currentRow), Integer.valueOf(aktMemo.channelNumber+1)));
@@ -1894,6 +1948,11 @@ public class ScreamTrackerMixer extends BasicModMixer {
                     else
                         processMIDIMacro(aktMemo, true, smoothMacro.getMidiZXXExt(aktMemo.assignedEffectParam & 0x7F), 0);
                 }
+                break;
+            case 0x1D:            // Note delay&Cut - still doing it globally
+                break;
+            case 0x1F:            // Set Smooth Finetune
+                setMPTFinetune(aktMemo, true);
                 break;
         }
     }

@@ -111,7 +111,7 @@ On Linux consider starting with OpenGL render pipeline activated:
    java -Dsun.java2d.opengl=true -jar ./javamod.jar
 
 ## Remarks to 3.9.x version updates
-With JavaMod versions 4.0 to 5.0 I want to integrate Midi and AdLib support.
+With JavaMod versions 4.0 to 5.0 I want to integrate AdLib support.
 However, before starting that I want to have all test mods of Schism and
 Open ModPlug Tracker to work. We finished MOD, XM, STM and S3M with this version
 and a whole lot of other stuff as well. So I decided to release new versions
