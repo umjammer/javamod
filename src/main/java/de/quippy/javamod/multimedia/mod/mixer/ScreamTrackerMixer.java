@@ -475,7 +475,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
             // NNA_CUT is default for instruments with no NNA
             // so do not copy this to a new channel for just finishing
             // it off then.
-            if (currentInstrument.NNA!=ModConstants.NNA_CUT) doNNANew(aktMemo, nna);
+            /* if (currentInstrument.NNA!=ModConstants.NNA_CUT) */ doNNANew(aktMemo, nna);
             // but apply to plugins - which is only midi
             if (aktMemo.hasMidiOutput()) doNNAPlugins(aktMemo, nna);
         }
@@ -487,12 +487,13 @@ public class ScreamTrackerMixer extends BasicModMixer {
      */
     protected void doNoteCut(ChannelMemory aktMemo) {
         aktMemo.noteCut = true;
+        aktMemo.doFastVolRamp = true;
         //aktMemo.currentVolume = 0;
         // Schism sets tuning=0 and deletes the last period
         setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod = 0);
         // that would be our way:
         //aktMemo.instrumentFinished = true;
-        aktMemo.doFastVolRamp = true;
+        if (aktMemo.hasMidiOutput()) modMidiMixer.sendMidiNote(aktMemo, ModConstants.KEY_OFF, 0);
     }
 
     /**
@@ -1909,7 +1910,6 @@ public class ScreamTrackerMixer extends BasicModMixer {
                             if (aktMemo.noteCutCount <= 0) {
                                 aktMemo.noteCutCount = -1;
                                 doNoteCut(aktMemo);
-                                aktMemo.doFastVolRamp = true;
                             }
                         }
                         break;

@@ -1,4 +1,11 @@
-# JavaMod V3.9.6 (The MIDI release)
+# JavaMod V3.9.7
+
+## New in Version 3.9.7
+* FIX: Complete overhaul of volume ramping - got rid of the default
+       "interweaving" technology
+* FIX: Bidi Loops and interpolation was still wrong.
+
+## New in Version 3.9.6
 * FIX: Playlists are now saved in ANSI cp1252 - not ISO-8859-1.
 * FIX: Multichannel Mods considered too many ProTracker Quirks. Ignore illegal
        note delay, tempo changes handled on first tick, no on the fly sample
@@ -47,7 +54,7 @@
 * NEW: Dithering was changed to an integer version to gain more performance
 * NEW: Introduction of SampleFrame to avoid something like long[] to retrieve
        sample data
-* NEW: Sinc 8 and 16 taps - Windowed FIR is still on the menue
+* NEW: Sinc 8 and 16 taps - Windowed FIR is still on the menu
 * NEW: MIDI Data (XM, IT, MPTM), Midi Macros, all loaded, interpreted and send
        to a selected MIDI device.
        Remarks:

@@ -530,8 +530,6 @@ public class Paula {
     /**
      * Will apply the filters needed for Amiga emulation.
      * This is the last call in "BasicModMixer::mixIntoBuffer".
-     * We *must* call it after interweaving samples , otherwise
-     * un-filtered weave data is added.
      *
      * @param leftBuffer
      * @param rightBuffer
