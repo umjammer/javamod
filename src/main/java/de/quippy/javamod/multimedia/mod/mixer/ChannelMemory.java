@@ -278,7 +278,11 @@ public class ChannelMemory {
      * @since 07.06.2026
      */
     protected void setUpRampDown() {
-//		rampDownMemory.currentElement = currentElement; // DEBUG:where were we set? 
+        // is already checked in BasicModMixer::startRampDown
+//        if (hasMidiOutput()) return; // no ramp down for midi channels
+
+//        rampDownMemory.currentElement = currentElement; // DEBUG:where were we set?
+
         if (rampDownMemory.currentSample == null) rampDownMemory.currentSample = currentSample;
         if (rampDownMemory.assignedInstrument == null) rampDownMemory.assignedInstrument = assignedInstrument;
         rampDownMemory.instrumentFinished = instrumentFinished;
@@ -313,8 +317,10 @@ public class ChannelMemory {
      * @since 07.06.2026
      */
     protected void prepareRampDown() {
-        rampDownMemory.currentSample = currentSample;
-        rampDownMemory.assignedInstrument = assignedInstrument;
+        if (!hasMidiOutput()) { // no RampDown for midi channels
+            rampDownMemory.currentSample = currentSample;
+            rampDownMemory.assignedInstrument = assignedInstrument;
+        }
         // Do not mix it (yet!) - for instance because of note delay
         rampDownMemory.instrumentFinished = true;
     }

@@ -420,7 +420,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
             // channelVolume so temporary silent channels are not killed
             // (left and right volume are shifted by 12+6 bit, so channel volume
             //  has space in the lower part)
-            // additionally we also consider channels being far beyond their endpoint
+            // additionally we also consider channels being far beyond their volume envelope endpoint
             int currentVolume = (memo.actVolumeLeft + memo.actVolumeRight) | memo.channelVolume;
             if ((currentVolume < lowVol) || (currentVolume == lowVol && memo.volEnvTick > envPos)) {
                 envPos = memo.volEnvTick;
@@ -433,7 +433,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
             newChannel.setUpFrom(aktMemo);
             doDNA(aktMemo);
             doNNA(newChannel, NNA);
-            // stop the current channel - it is copied
+            // stop the current channel - it is copied - no RampDown needed, it will get mixed
             aktMemo.instrumentFinished = true;
         }
     }
@@ -491,8 +491,11 @@ public class ScreamTrackerMixer extends BasicModMixer {
         aktMemo.noteCut = true;
         //aktMemo.currentVolume = 0;
         //aktMemo.doFastVolRamp = true;
+        startRampDown(aktMemo);
         // Schism sets tuning=0 and deletes the last period
         setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod = 0);
+        // if this is a NNA-Channel, release it
+        if (aktMemo.isNNA) aktMemo.channelNumber = -1;
         if (aktMemo.hasMidiOutput()) modMidiMixer.sendMidiNote(aktMemo, ModConstants.KEY_OFF, 0);
     }
 
@@ -1743,7 +1746,9 @@ public class ScreamTrackerMixer extends BasicModMixer {
         if (((currentTempo - currentTick) % aktMemo.retrigMemo) == 0 && inTick) {
             aktMemo.retrigCount = aktMemo.retrigMemo;
 
+//            aktMemo.prepareRampDown(); // We might be still on our old sample before this row
             resetInstrumentPointers(aktMemo, true);
+            aktMemo.rampDownMemory.instrumentFinished=true; // No Ramp Down
 
             if (aktMemo.retrigVolSlide > 0) {
                 switch (aktMemo.retrigVolSlide) {
@@ -2113,10 +2118,6 @@ public class ScreamTrackerMixer extends BasicModMixer {
         };
     }
 
-    /**
-     * @param aktMemo
-     * @see de.quippy.javamod.multimedia.mod.mixer.BasicModMixer#processTickEffects(de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory)
-     */
     @Override
     protected void processTickEffects(ChannelMemory aktMemo) {
         if (isS3M) {
@@ -2132,10 +2133,6 @@ public class ScreamTrackerMixer extends BasicModMixer {
         if (isAfterEffect) doTickEffects(aktMemo);
     }
 
-    /**
-     * @param aktMemo
-     * @see de.quippy.javamod.multimedia.mod.mixer.BasicModMixer#processEffects(de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory)
-     */
     @Override
     protected void processEffects(ChannelMemory aktMemo) {
         if (isS3M) {

@@ -185,14 +185,14 @@ public class Sample {
      * We copy now for a loop - for short Loops we need to simulate it
      *
      * @param startIndex
-     * @param length
+     * @param loopEnd
      * @param isPingPong
      * @since 03.07.2020
      */
-    private void addInterpolationLookAheadDataLoop(int startIndex, int length, int sourceIndex, boolean isForward, boolean isPingPong) {
+    private void addInterpolationLookAheadDataLoop(int startIndex, int loopEnd, int sourceIndex, boolean isForward, boolean isPingPong) {
         int numSamples = 2 * INTERPOLATION_LOOK_AHEAD + (isForward ? 1 : 0);
         int destIndex = startIndex + (2 * INTERPOLATION_LOOK_AHEAD - 1);
-        int readPosition = length - 1;
+        int readPosition = loopEnd - 1;
         int writeIncrement = isForward ? 1 : -1;
         int readIncrement = writeIncrement;
 
@@ -201,7 +201,7 @@ public class Sample {
             if (sampleR != null) sampleR[destIndex] = sampleR[sourceIndex + readPosition];
             destIndex += writeIncrement;
 
-            if (readPosition == length - 1 && readIncrement > 0) {
+            if (readPosition == loopEnd - 1 && readIncrement > 0) {
                 if (isPingPong) {
                     readIncrement = -1;
                     if (readPosition > 0) readPosition -= ITPingPongCorrection;
@@ -211,7 +211,7 @@ public class Sample {
                 if (isPingPong) {
                     readIncrement = 1;
                 } else
-                    readPosition = length - 1;
+                    readPosition = loopEnd - 1;
             } else
                 readPosition += readIncrement;
         }
@@ -239,9 +239,10 @@ public class Sample {
         for (int pos = 0; pos < INTERPOLATION_LOOK_AHEAD; pos++) {
             sampleL[afterSampleData + pos] = sampleL[afterSampleData - 1];
             if (sampleR != null) sampleR[afterSampleData + pos] = sampleR[afterSampleData - 1];
-            sampleL[pos] = sampleL[startSampleData];
+            //sampleL[pos] = sampleL[startSampleData];
+            // Add inverted data at the front, for a possible ping pong loop start at 0 - do not repeat the sample on index 0
+            sampleL[INTERPOLATION_LOOK_AHEAD - pos - 1] = sampleL[startSampleData + pos + 1]; // Ping Pong Loops like this - and a sample start does not seem to be affected...
             if (sampleR != null) sampleR[pos] = sampleR[startSampleData];
-
         }
 
         if ((loopType & ModConstants.LOOP_ON) != 0) {

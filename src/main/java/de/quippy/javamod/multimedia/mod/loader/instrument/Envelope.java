@@ -44,6 +44,7 @@ public class Envelope {
     public int endPoint;
     public EnvelopeType envelopeType;
     public boolean on, sustain, loop, carry, filter, xm_style;
+    public boolean sustainIsZero, loopIsZero; // will be true, if all values in the loop are zero
     public byte[] oldITVolumeEnvelope;
 
     private static final int SHIFT = 16;
@@ -94,7 +95,7 @@ public class Envelope {
                     copyBack = true;
                     if (sustain && !aktMemo.keyOff) {
                         if (envPos - 1 == sustainStartPoint) {
-                            envPos--; // silly, as we do not copy back...
+                            envPos--;
                             copyBack = false;
                         }
                     }
@@ -242,7 +243,7 @@ public class Envelope {
         if (positions != null && positions.length > 0) {
             // limit endPoint to the smallest possible array index
             // and consider arrays of different length
-            setNumberOfPoints((nPoints > positions.length) ? positions.length : (nPoints > value.length) ? value.length : nPoints);
+            setNumberOfPoints((nPoints > positions.length) ? positions.length : Math.min(nPoints, value.length));
 
             // sanitize the values and positions
             positions[0] = 0;
@@ -253,8 +254,7 @@ public class Envelope {
                 // So, if position is smaller than prior position and no MSB is set:
                 if (positions[pos] < positions[pos - 1] && (positions[pos] & 0xff00) == 0) {
                     positions[pos] |= (positions[pos - 1] & 0xff00); // add possible high byte of prior position
-                    if (positions[pos] < positions[pos - 1])
-                        positions[pos] |= 0x0100; // still smaller? Force MSB set (OMPT does "+=" - which seems wrong)
+                    if (positions[pos] < positions[pos - 1]) positions[pos] += 0x0100; // Force MSB set via adding
                 }
                 positions[pos] = Math.max(positions[pos], positions[pos - 1]);
                 value[pos] = Helpers.limitMax(value[pos], maxValue);
@@ -268,6 +268,18 @@ public class Envelope {
         } else {
             endPoint = -1;
             on = sustain = loop = carry = filter = xm_style = false;
+        }
+        loopIsZero = false;
+        if (loop) {
+            int addMeUp = 0;
+            for (int i = loopStartPoint; i <= loopEndPoint; i++) addMeUp += value[i];
+            loopIsZero = addMeUp == 0;
+        }
+        sustainIsZero = false;
+        if (sustain) {
+            int addMeUp = 0;
+            for (int i = sustainStartPoint; i <= sustainEndPoint; i++) addMeUp += value[i];
+            sustainIsZero = addMeUp == 0;
         }
     }
 

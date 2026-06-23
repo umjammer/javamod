@@ -288,8 +288,10 @@ public class ProTrackerMixer extends BasicModMixer {
      * @param aktMemo memory
      * @since 26.07.2024
      */
+    @Override
     protected void doKeyOff(ChannelMemory aktMemo) {
         aktMemo.keyOff = true;
+
         // XM has a certain envelope tick reset with key off and existing envelopes - tick is reset to the previous start position
         // That way a sustain release is managed - however, with panning because of a bug, that does not work
         Instrument currentInstrument = aktMemo.assignedInstrument;
@@ -1370,8 +1372,11 @@ public class ProTrackerMixer extends BasicModMixer {
                 else
                     doRetrig = ((tick % aktMemo.retrigCount) == 0);
             }
-            if (doRetrig)
+            if (doRetrig) {
+//                aktMemo.prepareRampDown(); // We might be still on our old sample before this row
                 resetInstrumentPointers(aktMemo, true);
+                aktMemo.rampDownMemory.instrumentFinished = true; // No Ramp Down
+            }
             return;
         }
 
@@ -1390,7 +1395,7 @@ public class ProTrackerMixer extends BasicModMixer {
             }
 
             if (doRetrig) {
-                // FT2 does triggerNote and triggerInstrument at this point
+//                aktMemo.prepareRampDown(); // We might be still on our old sample before this row                // FT2 does triggerNote and triggerInstrument at this point
                 // triggerNote will reset the sample and recalculate the period
                 // and set that - but as that should not have changed, at the
                 // end it's only resetting the sample pointer
@@ -1399,6 +1404,7 @@ public class ProTrackerMixer extends BasicModMixer {
                 triggerFTInstrument(aktMemo);
                 // And also with Midi
                 if (aktMemo.hasMidiOutput()) modMidiMixer.processMidiOut(aktMemo, 0, -1, 0x01, false);
+                aktMemo.rampDownMemory.instrumentFinished = true; // No Ramp Down
             }
             return;
         } else { // multi retrigger note
