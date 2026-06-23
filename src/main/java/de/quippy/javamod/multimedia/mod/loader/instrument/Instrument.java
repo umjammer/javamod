@@ -72,8 +72,10 @@ public class Instrument {
     public int pitchWheelDepth = 2;
     /** Plugin Number - we do not support MPT standard plugins yet */
     public int mixPlugIn = 0;
-    /** XM: mute samples in channel */
+    /** XM: mute samples in channel (only midi device) */
     public boolean xm_muteComputer = false;
+    /** true, if this instrument has valid midi data (you don't say!) */
+    public boolean hasValidMidiData = false;
     /** XM: use Midi */
     public boolean xm_enableMidi = false;
     /** extended Instrument OpenModPlug PVEH */
@@ -92,13 +94,6 @@ public class Instrument {
     // MadTracker
     public int filterMode = ModConstants.FLTMODE_UNCHANGED;
 
-    /**
-     * Constructor for Instrument
-     */
-    public Instrument() {
-        super();
-    }
-
     public int getSampleIndex(int noteIndex) {
         if (sampleIndex == null) return -1;
         return this.sampleIndex[noteIndex] - 1;
@@ -110,13 +105,17 @@ public class Instrument {
     }
 
     public boolean hasValidMidiChannel() {
-        return (midiChannel >= 1 && midiChannel <= 18);
+        return midiChannel >= 1 && midiChannel <= 18;
     }
 
-    /**
-     * @return
-     * @see java.lang.Object#toString()
-     */
+    public boolean hasValidMidiBank() {
+        return midiBank >= 1 && midiBank <= 16384;
+    }
+
+    public boolean hasValidMidiProgram() {
+        return midiProgram >= 1 && midiProgram <= 128;
+    }
+
     @Override
     public String toString() {
         return name;

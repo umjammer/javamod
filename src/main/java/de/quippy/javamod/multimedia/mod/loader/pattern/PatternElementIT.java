@@ -45,19 +45,11 @@ public class PatternElementIT extends PatternElement {
         super(parentMod, parentPatternRow, patternIndex, patternRow, channel);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement#getEffectChar()
-     */
     @Override
     public char getEffectChar() {
         return (effect == 0x1B) ? '#' : (effect == 0 && effectOp != 0) ? '.' : (char) ('A' + effect - 1);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement#getEffectName()
-     */
     @Override
     public String getEffectName() {
         switch (effect) {
@@ -189,11 +181,13 @@ public class PatternElementIT extends PatternElement {
                 break;
             case 0x14:
                 return
+                        ((effectOp == 0) ?        // 0x00
+                                "Set BPM (cont.)" :
                         (effectOp >> 4 == 0) ?    // 0x0X
-                                "Set BPM (slower)" :
-                                (effectOp >> 4 == 1) ?    // 0x1X
-                                        "Set BPM (faster)" :
-                                        "Set BPM";        // else
+                                "Set BPM (slow.)":
+                        (effectOp >> 4 == 1) ?    // 0x1X
+                                "Set BPM (fast.)" :
+                                "Set BPM");
             case 0x15:
                 return "Fine Vibrato";
             case 0x16:

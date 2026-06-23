@@ -25,6 +25,7 @@ package de.quippy.javamod.multimedia.mod.midi;
 import java.io.File;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.util.Arrays;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
@@ -145,20 +146,30 @@ public class ModMidiMixer {
         public int midiPitchBendPos;
         public int[][] noteOnMap;
 
-        public MidiChannelMemory(final int modChannels) {
+        public MidiChannelMemory(int modChannels) {
+            resetMidiChannelMemory(modChannels);
+        }
+
+        public void resetMidiChannelMemory(final int modChannels) {
             lastMidiProgram = lastMidiBank = -1;
             lastMidiNote = ModConstants.NO_NOTE;
-            midiPitchBendPos = 0;
-            noteOnMap = new int[128][modChannels];
+            midiPitchBendPos = PITCHBENDCENTER<<PITCHBENDSHIFT;
+
+            if (noteOnMap == null || noteOnMap[0] == null || noteOnMap[0].length != modChannels)
+                noteOnMap = new int[128][modChannels];
+            else {
+                for (int[] channelNoteOnMap : noteOnMap) {
+                    Arrays.fill(channelNoteOnMap, 0);
+                }
+            }
         }
     }
 
     private final MidiDevice.Info outputDeviceInfo;
     private final File soundBankFile;
     private MidiDevice midiOutput;
-    private Synthesizer midiSynthesizer;
     private Receiver receiver;
-    private MidiChannelMemory[] midiChan;
+    private ModMidiMixer.MidiChannelMemory[] midiChan;
 
     /**
      * Constructor for ModMidiMixer
@@ -168,41 +179,66 @@ public class ModMidiMixer {
         this.midiOutput = null;
         this.outputDeviceInfo = outputDeviceInfo;
         this.soundBankFile = soundBankFile;
-        midiChan = new MidiChannelMemory[16];
-        for (int i = 0; i < midiChan.length; i++) {
-            midiChan[i] = new MidiChannelMemory(modChannels);
-            midiChan[i].midiPitchBendPos = PITCHBENDCENTER << PITCHBENDSHIFT;
+        resetMidiMixer(modChannels);
+    }
+
+    public void resetMidiMixer(int modChannels) {
+        if (midiChan == null) midiChan = new MidiChannelMemory[16];
+        for (int i = 0, len = midiChan.length; i < len; i++) {
+            if (midiChan[i] == null)
+                midiChan[i] = new MidiChannelMemory(modChannels);
+            else
+                midiChan[i].resetMidiChannelMemory(modChannels);
         }
     }
 
     public void openOutputDevice() {
         try {
-            if (midiOutput != null) closeOuptutDevice();
+            if (midiOutput != null) closeOutputDevice();
 
             midiOutput = MidiSystem.getMidiDevice(outputDeviceInfo);
             if (!midiOutput.isOpen()) midiOutput.open();
 
-            if (midiOutput instanceof Synthesizer)
-
-                if (soundBankFile != null && midiOutput instanceof Synthesizer) {
-                    midiSynthesizer = (Synthesizer) midiOutput;
-                    try {
-                        Soundbank bank = MidiSystem.getSoundbank(soundBankFile);
-                        midiSynthesizer.loadAllInstruments(bank);
-                    } catch (Exception ex) {
-                        logger.log(Level.ERROR, "Error occurred when opening soundfont bank", ex);
-                    }
+            // if this midi output is a Synthesizer and we have a soundbank file, load it
+            // this is true for Gervill, the standard java midi device
+            if (midiOutput instanceof Synthesizer && soundBankFile != null) {
+                try {
+                    Soundbank bank = MidiSystem.getSoundbank(soundBankFile);
+                    ((Synthesizer) midiOutput).loadAllInstruments(bank);
+                } catch (Exception ex) {
+                    logger.log(Level.ERROR, "Error occurred when opening soundfont bank", ex);
                 }
+            }
+
+            // now open a receiver where we can send midi events to:
             receiver = midiOutput.getReceiver();
-        } catch (final MidiUnavailableException ex) {
-            closeOuptutDevice();
-            logger.log(Level.ERROR, "Error occured when opening midi device", ex);
+        } catch (MidiUnavailableException ex) {
+            closeOutputDevice();
+            logger.log(Level.ERROR, "Error occurred when opening midi device", ex);
         }
     }
 
-    public void closeOuptutDevice() {
+    public void closeOutputDevice() {
+        if (receiver != null) receiver.close();
         if (midiOutput != null && midiOutput.isOpen()) midiOutput.close();
         midiOutput = null;
+        receiver = null;
+    }
+
+    /**
+     * @param command
+     * @param channel
+     * @param data1
+     * @param data2
+     * @since 23.05.2026
+     */
+    private void sendToReceiver(int command, int channel, int data1, int data2) {
+        try {
+            if (receiver != null)
+                receiver.send(new ShortMessage(command, channel, data1, data2), -1);
+        } catch (InvalidMidiDataException ex) {
+            logger.log(Level.ERROR, "[ModMidiMixher]::triggerMidiNote", ex);
+        }
     }
 
     /**
@@ -212,11 +248,11 @@ public class ModMidiMixer {
      * @since 17.05.2026
      */
     public boolean isNotePlaying(ChannelMemory aktMemo, int note) {
-        final Instrument instrument = aktMemo.currentAssignedInstrument;
+        Instrument instrument = aktMemo.currentAssignedInstrument;
         if (instrument == null) return false;
 
-        final MidiChannelMemory midiMemo = midiChan[instrument.midiChannel - 1];
-        final int trkChannel = aktMemo.channelNumber;
+        MidiChannelMemory midiMemo = midiChan[instrument.midiChannel - 1];
+        int trkChannel = aktMemo.channelNumber;
 
         if (note <= ModConstants.NO_NOTE || trkChannel > midiMemo.noteOnMap[note].length)
             return false;
@@ -231,7 +267,7 @@ public class ModMidiMixer {
      */
     private static int getMidiChannel(ChannelMemory aktMemo) {
         if (aktMemo != null) {
-            final Instrument instrument = aktMemo.currentAssignedInstrument;
+            Instrument instrument = aktMemo.currentAssignedInstrument;
             if (instrument != null && instrument.hasValidMidiChannel())
                 return instrument.midiChannel - 1;
         }
@@ -259,18 +295,12 @@ public class ModMidiMixer {
      * @since 17.05.2026
      */
     private void sendMidiPitchBend(int midiChannel, int newPitchBendPos) {
-        if (receiver == null) return;
-
-        final int change = newPitchBendPos >> PITCHBENDSHIFT;
+        int change = newPitchBendPos >> PITCHBENDSHIFT;
         if (change >= PITCHBENDMIN && change <= PITCHBENDMAX) {
-            final int low = change & 0x7F;
-            final int high = (change >> 7) & 0x7F;
+            int low = change & 0x7F;
+            int high = (change >> 7) & 0x7F;
             midiChan[midiChannel].midiPitchBendPos = newPitchBendPos;
-            try {
-                receiver.send(new ShortMessage(ShortMessage.PITCH_BEND, midiChannel, low, high), -1);
-            } catch (InvalidMidiDataException ex) {
-                logger.log(Level.ERROR, "[ModMidiMixher]::triggerMidiNote", ex);
-            }
+            sendToReceiver(ShortMessage.PITCH_BEND, midiChannel, low, high);
         }
     }
 
@@ -295,7 +325,7 @@ public class ModMidiMixer {
      */
     public void midiPitchBend(ChannelMemory aktMemo, int inc, int pwd) {
         int increment;
-//		if(m_SndFile.m_playBehaviour[kOldMIDIPitchBends]) { // TODO: where is this set
+//		if (m_SndFile.m_playBehaviour[kOldMIDIPitchBends]) { // TODO: where is this set
 //			// OpenMPT Legacy: Old pitch slides never were really accurate, but setting the PWD to 13 in plugins would give the closest results.
 //			increment = (inc * 0x800 * 13) / (0xFF * pwd);
 //			increment = increment<<PITCHBENDSHIFT;
@@ -304,9 +334,8 @@ public class ModMidiMixer {
         increment = applyPitchWheelDepth(increment, pwd);
 //		}
 
-        final int midiCh = getMidiChannel(aktMemo);
+        int midiCh = getMidiChannel(aktMemo);
         int newPitchBendPos = (increment + midiChan[midiCh].midiPitchBendPos) & PITCHBENDMASK;
-
         newPitchBendPos = (newPitchBendPos > (PITCHBENDMAX << PITCHBENDSHIFT)) ? PITCHBENDMAX << PITCHBENDSHIFT : (newPitchBendPos < (PITCHBENDMIN << PITCHBENDSHIFT)) ? PITCHBENDMIN << PITCHBENDSHIFT : newPitchBendPos;
         sendMidiPitchBend(midiCh, newPitchBendPos);
     }
@@ -367,6 +396,80 @@ public class ModMidiMixer {
     }
 
     /**
+     * Send portamento commands to plugins
+     *
+     * @param aktMemo
+     * @param param
+     * @param doFineSlides
+     * @since 21.05.2026
+     */
+    public void midiPortamento(ChannelMemory aktMemo, int param, boolean doFineSlides, boolean firstTick) {
+        final int actualParam = (param > 0) ? param : -param;
+        int pitchBend = 0;
+
+        // Old MIDI Pitch Bends:
+        // - Applied on every tick
+        // - No fine pitch slides (they are interpreted as normal slides)
+        // New MIDI Pitch Bends:
+        // - Behavior identical to sample pitch bends if the instrument's PWD parameter corresponds to the actual VSTi setting.
+        if (doFineSlides && actualParam >= 0xE0) {
+            if (firstTick) // only first tick! - because of "else" not as && in if above
+            {
+                // Extra fine slide...
+                pitchBend = (actualParam & 0x0F) * ((param < 0) ? -1 : 1);
+                if (actualParam >= 0xF0) {
+                    pitchBend <<= 2; // ... or just a fine slide!
+                }
+            }
+        } else {
+            pitchBend = param << 2; // Regular slide
+        }
+
+        if (pitchBend != 0) {
+            int pwd = 13; // Early OpenMPT legacy... Actually it's not *exactly* 13, but close enough...
+            if (aktMemo.assignedInstrument != null) pwd = aktMemo.assignedInstrument.pitchWheelDepth;
+            midiPitchBend(aktMemo, pitchBend, pwd);
+        }
+    }
+
+    /**
+     * @param aktMemo
+     * @param isTick
+     * @since 25.05.2026
+     */
+    public void midiArpeggio(ChannelMemory aktMemo, int isTick) {
+        if (aktMemo == null || aktMemo.muted || aktMemo.lastMidiNoteWithoutArp <= ModConstants.NO_NOTE) return;
+
+        final Instrument instrument = aktMemo.currentAssignedInstrument;
+        if (instrument == null || instrument.mute) return;
+
+        int arpNote = aktMemo.lastMidiNoteWithoutArp;
+        switch (isTick) {
+            case 1:
+                arpNote += (aktMemo.arpeggioParam >> 4) & 0x0F;
+                break;
+            case 2:
+                arpNote += (aktMemo.arpeggioParam) & 0x0F;
+                break;
+        }
+        // Arpeggio with velocity - either instrument global volume or channel volume
+        if (arpNote != aktMemo.arpeggioLastNote) {
+            // when we enter this the first time, arpeggioLastNote should be NO_NOTE
+            // In that case, lastMidiNoteWithoutArp (the base note) must be switched off
+            // But if not, we played an arpeggio note, and need to switch that one off
+            if (aktMemo.arpeggioLastNote > ModConstants.NO_NOTE) {
+                if (aktMemo.arpeggioLastNote != arpNote)
+                    sendMidiNote(aktMemo, aktMemo.arpeggioLastNote | MIDI_NOTE_OFF, 0);
+            } else {
+                sendMidiNote(aktMemo, aktMemo.lastMidiNoteWithoutArp | MIDI_NOTE_OFF, 0);
+            }
+            // Now turn the new note on:
+            sendMidiNote(aktMemo, arpNote | MIDI_NOTE_ARPEGGIO, (instrument.pluginVelocityHandling == PLUGIN_VELOCITYHANDLING_CHANNEL) ? aktMemo.currentVolume << 2 : instrument.globalVolume << 1);
+            aktMemo.arpeggioLastNote = arpNote;
+        }
+    }
+
+    /**
      * @param aktMemo    the current Mod Channel Memory
      * @param instrument the instrument at hand
      * @param note       0-127
@@ -390,70 +493,68 @@ public class ModMidiMixer {
         int volume = (vol + 1) >> 1;
         if (volume > 127) volume = 127;
 
-        try {
-            // Bank Change
-            if (bankChanged) {
-                receiver.send(new ShortMessage(ShortMessage.CONTROL_CHANGE, midiChannel, MIDICC_BankSelect_Coarse, (midiBank >> 7) & 0x7F), -1);
-                receiver.send(new ShortMessage(ShortMessage.CONTROL_CHANGE, midiChannel, MIDICC_BankSelect_Fine, midiBank & 0x7F), -1);
-                midiMemo.lastMidiBank = midiBank;
-            }
-            // Program change
-            // According to the MIDI specs, a bank change alone doesn't have to change the active program - it will only change the bank of subsequent program changes.
-            // Thus we send program changes also if only the bank has changed.
-            if (progChanged || bankChanged) {
-                receiver.send(new ShortMessage(ShortMessage.PROGRAM_CHANGE, midiChannel, midiProg, 0), -1);
-                midiMemo.lastMidiProgram = midiProg;
-            }
+        // Bank Change
+        if (bankChanged) {
+            sendToReceiver(ShortMessage.CONTROL_CHANGE, midiChannel, MIDICC_BankSelect_Coarse, (midiBank >> 7) & 0x7F);
+            sendToReceiver(ShortMessage.CONTROL_CHANGE, midiChannel, MIDICC_BankSelect_Fine, midiBank & 0x7F);
+            midiMemo.lastMidiBank = midiBank;
+        }
+        // Program change
+        // According to the MIDI specs, a bank change alone doesn't have to change the active program - it will only change the bank of subsequent program changes.
+        // Thus we send program changes also if only the bank has changed.
+        if (progChanged || bankChanged) {
+            sendToReceiver(ShortMessage.PROGRAM_CHANGE, midiChannel, midiProg, 0);
+            midiMemo.lastMidiProgram = midiProg;
+        }
 
-            // Specific Note Off - this is tricky - NOTE_CUT, KEY_OFF and NOTE_FADE are negative - and we use that a lot to identify a valid noteindex>0
-            if (note > ModConstants.NO_NOTE && (note & MIDI_NOTE_OFF) != 0) {
-                rawNote -= ModConstants.NOTE_MIN; // we can do that, as this is a complete if else block
-                if (rawNote < maxNote && midiChan[midiChannel].noteOnMap[rawNote][trkChannel] > 0) {
-                    midiMemo.noteOnMap[rawNote][trkChannel]--;
-                    receiver.send(new ShortMessage(ShortMessage.NOTE_OFF, midiChannel, rawNote, volume), -1);
+        if (note == ModConstants.NOTE_CUT) { // ^^
+            // "Hard core" All Sounds Off on this midi and tracker channel
+            // This one doesn't check the note mask - just one note off per note.
+            // Also less likely to cause a VST event buffer overflow.
+            sendToReceiver(ShortMessage.CONTROL_CHANGE, midiChannel, MIDICC_AllNotesOff, 0);
+            sendToReceiver(ShortMessage.CONTROL_CHANGE, midiChannel, MIDICC_AllSoundOff, 0);
+            for (int n = 0; n < maxNote; n++) {
+                midiMemo.noteOnMap[n][trkChannel] = 0;
+                sendToReceiver(ShortMessage.NOTE_OFF, midiChannel, n, volume);
+            }
+        } else if (note == ModConstants.KEY_OFF || note == ModConstants.NOTE_FADE) { // ==, ~~
+            for (int n = 0; n < maxNote; n++) {
+                while (midiMemo.noteOnMap[n][trkChannel] > 0) {
+                    midiMemo.noteOnMap[n][trkChannel]--;
+                    sendToReceiver(ShortMessage.NOTE_OFF, midiChannel, n, 0);
                 }
-            } else
-                // "Hard core" All Sounds Off on this midi and tracker channel
-                // This one doesn't check the note mask - just one note off per note.
-                // Also less likely to cause a VST event buffer overflow.
-                if (note == ModConstants.NOTE_CUT) { // ^^
-                    receiver.send(new ShortMessage(ShortMessage.CONTROL_CHANGE, midiChannel, MIDICC_AllNotesOff, 0), -1);
-                    receiver.send(new ShortMessage(ShortMessage.CONTROL_CHANGE, midiChannel, MIDICC_AllSoundOff, 0), -1);
-                    for (int n = 0; n < maxNote; n++) {
-                        midiMemo.noteOnMap[n][trkChannel] = 0;
-                        receiver.send(new ShortMessage(ShortMessage.NOTE_OFF, midiChannel, n, volume), -1);
-                    }
-                } else if (note == ModConstants.KEY_OFF || note == ModConstants.NOTE_FADE) { // ==, ~~
-                    for (int n = 0; n < maxNote; n++) {
-                        while (midiMemo.noteOnMap[n][trkChannel] > 0) {
-                            receiver.send(new ShortMessage(ShortMessage.NOTE_OFF, midiChannel, n, volume), -1);
-                            midiMemo.noteOnMap[n][trkChannel]--;
-                        }
-                    }
-                } else
-                    // Note On
-                    if (rawNote >= ModConstants.NOTE_MIN && rawNote <= maxNote) {
-                        if ((note & MIDI_NOTE_ARPEGGIO) == 0) {
-                            aktMemo.lastMidiNoteWithoutArp = midiMemo.lastMidiNote = rawNote;
+            }
+        } else
+        if (rawNote >= ModConstants.NOTE_MIN && rawNote <= maxNote) { // NOTE_ON or NOTE_OFF
+            // Specific Note Off
+            if ((note & MIDI_NOTE_OFF) != 0) {
+                rawNote -= ModConstants.NOTE_MIN;
+                if (midiChan[midiChannel].noteOnMap[rawNote][trkChannel] > 0) {
+                    midiMemo.noteOnMap[rawNote][trkChannel]--;
+                    sendToReceiver(ShortMessage.NOTE_OFF, midiChannel, rawNote, 0);
+                }
+            }
+        } else {
+            // Note On
+            if ((note & MIDI_NOTE_ARPEGGIO) == 0) {
+                aktMemo.lastMidiNoteWithoutArp = midiMemo.lastMidiNote = rawNote; // NO -Note_MIN
 
-                            // Reset pitch bend on each new note, tracker style.
-                            // This is done if the pitch wheel has been moved or there was a vibrato on the previous row (in which case the "vstVibratoFlag" bit of the pitch bend memory is set)
-                            int newPitchBendPos = aktMemo.getMIDIPitchBend();
-                            if (newPitchBendPos < PITCHBENDMIN) newPitchBendPos = PITCHBENDMIN;
-                            else if (newPitchBendPos > PITCHBENDMAX) newPitchBendPos = PITCHBENDMAX;
-                            newPitchBendPos <<= PITCHBENDSHIFT;
-                            if (midiMemo.midiPitchBendPos != newPitchBendPos) {
-                                sendMidiPitchBend(midiChannel, newPitchBendPos);
-                            }
-                        }
+                // Reset pitch bend on each new note, tracker style.
+                // This is done if the pitch wheel has been moved or there was a vibrato on the previous row (in which case the "vstVibratoFlag" bit of the pitch bend memory is set)
+                int newPitchBendPos = aktMemo.getMIDIPitchBend();
+                if (newPitchBendPos < PITCHBENDMIN) newPitchBendPos = PITCHBENDMIN;
+                else
+                    if (newPitchBendPos > PITCHBENDMAX) newPitchBendPos = PITCHBENDMAX;
+                newPitchBendPos <<= PITCHBENDSHIFT;
+                if (midiMemo.midiPitchBendPos != newPitchBendPos) {
+                    sendMidiPitchBend(midiChannel, newPitchBendPos);
+                }
+            }
 
-                        rawNote -= ModConstants.NOTE_MIN;
-                        if (midiMemo.noteOnMap[rawNote][trkChannel] < Integer.MAX_VALUE)
-                            midiMemo.noteOnMap[rawNote][trkChannel]++;
-                        receiver.send(new ShortMessage(ShortMessage.NOTE_ON, midiChannel, rawNote, volume), -1);
-                    }
-        } catch (InvalidMidiDataException ex) {
-            logger.log(Level.ERROR, "[ModMidiMixher]::triggerMidiNote", ex);
+            rawNote -= ModConstants.NOTE_MIN;
+            if (midiMemo.noteOnMap[rawNote][trkChannel] < Integer.MAX_VALUE)
+                midiMemo.noteOnMap[rawNote][trkChannel]++;
+            sendToReceiver(ShortMessage.NOTE_ON, midiChannel, rawNote, volume);
         }
     }
 
@@ -482,7 +583,7 @@ public class ModMidiMixer {
      * @since 17.05.2026
      */
     public void processMidiOut(ChannelMemory aktMemo, int noteCorrection, int trackerVolCommand, int trackerVolColCommand, boolean isPortaToNoteEffekt) {
-        if (aktMemo == null || aktMemo.muted || receiver == null) return;
+        if (aktMemo == null || aktMemo.muted) return;
 
         Instrument instrument = aktMemo.currentAssignedInstrument;
         if (instrument == null || instrument.mute) return;
@@ -538,15 +639,11 @@ public class ModMidiMixer {
 //						pPlugin->SetDryRatio(1.0f - static_cast<float>(2 * defaultVolume) / 127.0f);
                     break;
                 case PLUGIN_VOLUMEHANDLING_MIDI:
-                    try {
-                        if (hasVolumeCommand) {
-                            commandVolume <<= 1;
-                            receiver.send(new ShortMessage(ShortMessage.CONTROL_CHANGE, midiChannel, MIDICC_Volume_Coarse, (commandVolume > 127) ? 127 : commandVolume), -1);
-                        } else
-                            receiver.send(new ShortMessage(ShortMessage.CONTROL_CHANGE, midiChannel, MIDICC_Volume_Coarse, (defaultVolume > 127) ? 127 : defaultVolume), -1);
-                    } catch (InvalidMidiDataException ex) {
-                        logger.log(Level.ERROR, "[ModMidiMixher]::triggerMidiNote", ex);
-                    }
+                    if (hasVolumeCommand) {
+                        commandVolume <<= 1;
+                        sendToReceiver(ShortMessage.CONTROL_CHANGE, midiChannel, MIDICC_Volume_Coarse, Math.min(commandVolume, 127));
+                    } else
+                        sendToReceiver(ShortMessage.CONTROL_CHANGE, midiChannel, MIDICC_Volume_Coarse, Math.min(defaultVolume, 127));
                     break;
                 default:
                     break;

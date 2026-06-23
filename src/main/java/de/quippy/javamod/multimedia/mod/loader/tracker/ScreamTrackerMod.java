@@ -91,9 +91,9 @@ public class ScreamTrackerMod extends Module {
     private static final int songST2Vibrato = 0x01;
     private static final int songST2Tempo = 0x02;
     private static final int songAmigaSlides = 0x04;
-    //    private static final int songVolOptimized	 = 0x08;
+//    private static final int songVolOptimized	 = 0x08;
     private static final int songAmigaLimit = 0x10;
-    //    private static final int songEnableFilter	 = 0x20;
+//    private static final int songEnableFilter	 = 0x20;
     private static final int songFastVolSlide = 0x40;
 //	private static final int songCustomData		 = 0x80;
 
@@ -307,7 +307,7 @@ public class ScreamTrackerMod extends Module {
         if ((flags & songAmigaSlides) != 0) songFlags |= ModConstants.SONG_AMIGASLIDES;
         if ((flags & songAmigaLimit) != 0) songFlags |= ModConstants.SONG_AMIGALIMITS;
         if ((flags & songFastVolSlide) != 0 || version == 0x1300) songFlags |= ModConstants.SONG_FASTVOLSLIDES;
-//		final boolean hasCustomData = (flags&songCustomData)!=0; 
+//		  boolean hasCustomData = (flags&songCustomData) != 0;
         songFlags |= ModConstants.SONG_ITOLDEFFECTS; // default, so we do not need to check for IT
 
         // Samples Type (version)
@@ -413,7 +413,7 @@ public class ScreamTrackerMod extends Module {
         int anzChannels = 0;
         for (int c = 0; c < 32; c++) {
             int status = channelStatus[c] & 0xff;
-            if ((status & ~0x80) < 19 || !REMOVE_UNUSED_CHANNELS) { // active channel
+            if ((status & ~0x80) < 0x19 || !REMOVE_UNUSED_CHANNELS) { // active channel
                 tmpPanning[anzChannels] = tmpPanning[c];
                 channelMap[c] = anzChannels++;
             } else

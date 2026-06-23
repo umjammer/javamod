@@ -673,7 +673,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         channelButton.setMinimumSize(CHANNELBUTTON_SIZE);
         channelButton.setMaximumSize(CHANNELBUTTON_SIZE);
         channelButton.setPreferredSize(CHANNELBUTTON_SIZE);
-        channelButton.addActionListener(e -> doMute(TOGGLEMUTE, channelNumber));
+        channelButton.addActionListener(_ -> doMute(TOGGLEMUTE, channelNumber));
         channelButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -731,7 +731,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         volEffectLabel.setMinimumSize(CHANNELBUTTON_SIZE);
         volEffectLabel.setMaximumSize(CHANNELBUTTON_SIZE);
         volEffectLabel.setPreferredSize(CHANNELBUTTON_SIZE);
-        volEffectLabel.addActionListener(e -> doMute(TOGGLEMUTE, channelNumber));
+        volEffectLabel.addActionListener(_ -> doMute(TOGGLEMUTE, channelNumber));
         volEffectLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -761,7 +761,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         effectLabel.setMinimumSize(CHANNELBUTTON_SIZE);
         effectLabel.setMaximumSize(CHANNELBUTTON_SIZE);
         effectLabel.setPreferredSize(CHANNELBUTTON_SIZE);
-        effectLabel.addActionListener(e -> doMute(TOGGLEMUTE, channelNumber));
+        effectLabel.addActionListener(_ -> doMute(TOGGLEMUTE, channelNumber));
         effectLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -896,7 +896,6 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
                     internalMuteStatus[i] = muteStatus[i];
                 }
             }
-
         }
     }
 
@@ -1016,7 +1015,14 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
                 } else {
                     clearCurrentEffectNames();
                 }
-            } catch (Throwable ex) { /*NOOP*/ }
+            } catch (Throwable _) {
+                // NOOP
+                // Invoke Later problem:
+                // as this is called from the SWING Queue, it might be that updating the
+                // display is not finished, when a new MOD is loaded,
+                // That might lead to ArrayIndexOutOfBoundsException, as the global arrays
+                // are already changing when a new mod is loaded
+            }
         });
     }
 

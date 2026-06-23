@@ -57,13 +57,21 @@ public class ModConstants {
     public static final int XM_LINEAR_TABLE = 0x20;
 
     // Mod Types
-    public static final int MODTYPE_MOD = 0x01;
-    public static final int MODTYPE_XM = 0x02;
-    public static final int MODTYPE_STM = 0x04;
-    public static final int MODTYPE_S3M = 0x08;
-    public static final int MODTYPE_IT = 0x10;
-    public static final int MODTYPE_OMPT = 0x20; // OpenModPlugTracker
-    public static final int MODTYPE_MPT = 0x40; // ModPlugTracker - LEGACY
+    public static final int MODTYPE_MOD = 0x0001;
+    public static final int MODTYPE_XM = 0x0002;
+    public static final int MODTYPE_STM = 0x0004;
+    public static final int MODTYPE_S3M = 0x0008;
+    public static final int MODTYPE_IT = 0x0010;
+    public static final int MODTYPE_OMPT = 0x0020; // OpenModPlugTracker
+    public static final int MODTYPE_MPT = 0x0040; // ModPlugTracker - LEGACY
+    public static final int MODTYPE_MIX_Original = 0x0100; // Olivier's version gives us floats in [-0.5; 0.5] and slightly saturates VSTis.
+    public static final int MODTYPE_MIX_v1_17RC1 = 0x0200; // Ericus' version gives us floats in [-0.06; 0.06] and requires attenuation to avoid massive VSTi saturation.
+    public static final int MODTYPE_MIX_v1_17RC2 = 0x0400; // 1.17RC2 gives us floats in [-1.0; 1.0] and hopefully plays VSTis at the right volume... but we attenuate by 2x to approx. match sample volume.
+    public static final int MODTYPE_MIX_v1_17RC3 = 0x0800; // 1.17RC3 ignores the horrible global, system-specific pre-amp, treats panning as balance to avoid saturation on loud sample and allows display of attenuation in decibels.
+    public static final int MODTYPE_MIX_Compatible = 0x1000; // A mixmode that is intended to be compatible to legacy trackers (IT/FT2/etc). This is basically derived from mixmode 1.17 RC3, with panning mode and volume levels changed. Sample attenuation is the same as in Schism Tracker (more attenuation than with RC3, thus VSTi attenuation is also higher).
+    public static final int MODTYPE_MIX_CompatibleFT2 = 0x2000; // A mixmode that is intended to be compatible to legacy trackers (IT/FT2/etc). This is basically derived from mixmode 1.17 RC3, with panning mode and volume levels changed. Sample attenuation is the same as in Schism Tracker (more attenuation than with RC3, thus VSTi attenuation is also higher).
+    public static final int MODTYPE_MIX_ALL_LEGACY = MODTYPE_MIX_Original | MODTYPE_MIX_v1_17RC1 | MODTYPE_MIX_v1_17RC2;
+
     public static final int MODTYPE_FASTTRACKER = MODTYPE_MOD | MODTYPE_XM;
     public static final int MODTYPE_SCREAMTRACKER = MODTYPE_S3M | MODTYPE_STM;
     public static final int MODTYPE_IMPULSETRACKER = MODTYPE_IT | MODTYPE_SCREAMTRACKER;
@@ -101,9 +109,9 @@ public class ModConstants {
     public static final int MAX_SAMPLE_VOL = MAXSAMPLEVOLUME;                    // and its corresponding max
     public static final int MIN_SAMPLE_VOL = 0;                                // and min values (in this case "zero" is 3)
     public static final int VOLUMESHIFT = 6;                                // this is the shift done in processEnvelopes
-    public static final int MAXCHANNELVOLUME = MAX_SAMPLE_VOL << VOLUMESHIFT;    // plus the max (reflecting VOLUME_INIT_SHIFT)
+    public static final int MAXCHANNELVOLUME = MAX_SAMPLE_VOL << VOLUMESHIFT;    // plus the max (reflecting VOLUMESHIFT)
     public static final int MINCHANNELVOLUME = 0;                                // and min value for clipping ((1<<VOLUMESHIFT)-1: could be a better value
-    // This is the final SHIFT before rendering into buffers for reducing VOLUMESHIFT (64), VOLUME_INIT_SHIFT (4), MAXCHANNELVOLUME (64) -1 because of extraAttenuation of 0 for OMPT
+    // This is the final SHIFT before rendering into buffers for reducing the extra VOLUMESHIFT (64) + MAXSAMPLEVOLUME (64) -1 because of extraAttenuation of 0 for OMPT
     public static final int MAXVOLUMESHIFT = VOLUMESHIFT + 6 - 1;
 
     public static final int MAXFADEOUTVOLSHIFT = 16; // This is for loop fade out *and* NOTE_FADE!!!
@@ -363,12 +371,12 @@ public class ModConstants {
             216, 203, 192, 181, 171, 161, 152, 144, 136, 128, 121, 114, 0,
 
             /* Arpeggio on -1 finetuned samples can do an out-of-bounds read from
- * this table. Here's the correct overflow values from the
- * "CursorPosTable" and "UnshiftedKeymap" table in the PT code, which are
- * located right after the period table. These tables and their order didn't
- * seem to change in the different PT1.x/PT2.x versions (I checked the
- * source codes). (8bitbubsy)
-*/
+             * this table. Here's the correct overflow values from the
+             * "CursorPosTable" and "UnshiftedKeymap" table in the PT code, which are
+             * located right after the period table. These tables and their order didn't
+             * seem to change in the different PT1.x/PT2.x versions (I checked the
+             * source codes). (8bitbubsy)
+             */
             774, 1800, 2314, 3087, 4113, 4627, 5400, 6426, 6940, 7713,
             8739, 9253, 24625, 12851, 13365
     };
@@ -1102,6 +1110,24 @@ public class ModConstants {
         if ((version & 0xffFF) == 0)
             return "%x.%02x".formatted((version >> 24) & 0xff, (version >> 16) & 0xff);
         return "%x.%02x.%02x.%02x".formatted((version >> 24) & 0xff, (version >> 16) & 0xff, (version >> 8) & 0xff, version & 0xff);
+    }
+
+    /**
+     * @param versionString
+     * @return
+     */
+    public static int parseModPlugVersionString(String versionString) {
+        if (versionString == null || versionString.isEmpty()) return 0;
+        char[] chars = versionString.trim().toUpperCase().toCharArray();
+        int version = 0;
+        final StringBuilder numbers = new StringBuilder();
+        for (char c : chars) {
+            if ((Character.isDigit(c) || (c >= 'A' && c <= 'F')) && c != '.')
+                numbers.append(c);
+        }
+        while (numbers.length() < 7) numbers.append('0');
+        version = Integer.parseInt(numbers.toString(), 16);
+        return version;
     }
 
     /**

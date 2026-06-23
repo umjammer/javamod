@@ -125,11 +125,12 @@ public class ModMixer extends BasicMixer {
         if (modMidiMixer != null) modMidiMixer.openOutputDevice();
     }
 
+    /**
+     * @since 14.05.2026
+     * @param newModMidiMixer
+     */
     public void setModMidiMixer(ModMidiMixer newModMidiMixer) {
-        if (modMixer != null)
-            modMixer.setModMidiMixer(modMidiMixer = newModMidiMixer);
-        else
-            modMidiMixer = null;
+        modMixer.setModMidiMixer(modMidiMixer = newModMidiMixer);
     }
 
     /**
@@ -537,7 +538,7 @@ public class ModMixer extends BasicMixer {
         } finally {
             modMixer.setFireUpdates(false);
             setIsStopped();
-            if (modMidiMixer != null) modMidiMixer.closeOuptutDevice();
+            if (modMidiMixer != null) modMidiMixer.closeOutputDevice();
             closeAudioDevice();
         }
     }

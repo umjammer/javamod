@@ -1093,6 +1093,13 @@ public class ModSampleDialog extends JDialog {
         spinnerModelData.add(ModConstants.getAsHex(0, 2));
         getSelectSample().setModel(new SpinnerListModel(spinnerModelData));
 
+        clearSampleFields();
+
+        // after setting the new model, make the editor of the spinner un-editable
+        ((DefaultEditor) getSelectSample().getEditor()).getTextField().setEditable(false);
+    }
+
+    private void clearSampleFields() {
         getButton_Play().setEnabled(false);
         getZoomSelector().setEnabled(false);
 
@@ -1122,12 +1129,13 @@ public class ModSampleDialog extends JDialog {
 
         getImageBufferPanel().setVisible(true);
         getAdlibSamplePanel().setVisible(false);
-
-        // after setting the new model, make the editor of the spinner un-editable
-        ((DefaultEditor) getSelectSample().getEditor()).getTextField().setEditable(false);
     }
 
     private void fillWithSample(Sample sample) {
+        if (sample == null) {
+            clearSampleFields();
+            return;
+        }
         getButton_Play().setEnabled(true);
         getZoomSelector().setEnabled(true);
 

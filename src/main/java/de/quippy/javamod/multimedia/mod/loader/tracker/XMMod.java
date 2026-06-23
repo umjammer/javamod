@@ -38,6 +38,7 @@ import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternContainer;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement;
 import de.quippy.javamod.multimedia.mod.midi.MidiMacros;
+import de.quippy.javamod.system.Helpers;
 
 
 /**
@@ -53,6 +54,22 @@ public class XMMod extends ProTrackerMod {
     private static final int XM_HEADER_SIZE = 276;
     private static final int INSTR_HEADER_SIZE = 263;
     private static final int SAMPLE_HEADER_SIZE = 40;
+
+    // OMPT and MPT also saved XMs - and we want to find out:
+    private static final int verUnknown = 0x00;  // Probably not made with MPT
+    private static final int verOldModPlug = 0x01;  // Made with MPT Alpha / Beta
+    private static final int verNewModPlug = 0x02;  // Made with MPT (not Alpha / Beta)
+    private static final int verModPlugBidiFlag = 0x04;  // MPT up to v1.11 sets both normal loop and pingpong loop flags
+    private static final int verOpenMPT = 0x08;  // Made with OpenMPT
+    private static final int verConfirmed = 0x10;  // We are very sure that we found the correct tracker version.
+
+    private static final int verFT2Generic = 0x20;  // "FastTracker v2.00", but FastTracker has NOT been ruled out
+//    private static final int verOther =  0x40;  // Something we don't know, testing for DigiTrakker.
+    private static final int verFT2Clone = 0x80;  // NOT FT2: itype changed between instruments, or \0 found in song title
+    private static final int verPlayerPRO = 0x100;  // Could be PlayerPRO
+    private static final int verDigiTrakker = 0x200;  // Probably DigiTrakker
+//    private static final int verUNMO3 = 0x400;  // TODO: UNMO3-ed XMs are detected as MPT 1.16
+    private static final int verEmptyOrders = 0x800;  // Allow empty order list like in OpenMPT (FT2 just plays pattern 0 if the order list is empty according to the header)
 
     private int version;
     private String songMessage;
@@ -188,10 +205,12 @@ public class XMMod extends ProTrackerMod {
             int rows = (version == 0x0102) ? inputStream.read() + 1 : inputStream.readIntelUnsignedWord();
             if (rows == 0)
                 rows = 64;
-            else {
-                int MaxPatternSize = ((getModType() & (ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT)) != 0) ? 1024 : 256;
-                if (rows > MaxPatternSize) rows = MaxPatternSize;
-            }
+            else
+                if (rows > 4096) rows = 4096;
+//            {
+//                int MaxPatternSize = ((getModType() & (ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT)) != 0) ? 1024 : 256;
+//                if (rows > MaxPatternSize) rows = MaxPatternSize;
+//            }
 
             int packedPatternDataSize = inputStream.readIntelUnsignedWord();
             if (packedPatternDataSize == 0) {
@@ -254,11 +273,11 @@ public class XMMod extends ProTrackerMod {
     /**
      * Get the ModType
      *
-     * @param kennung
+     * @param id
      * @return
      */
-    private static boolean isXMMod(String kennung) {
-        if (kennung.equalsIgnoreCase("Extended Module: ")) return true;
+    private boolean isXMMod(String id) {
+        if (id.equalsIgnoreCase("Extended Module: ")) return true;
         return false;
     }
 
@@ -308,7 +327,10 @@ public class XMMod extends ProTrackerMod {
         if (!isXMMod(getModID())) throw new IOException("Unsupported XM Module!");
 
         // Songname
-        setSongName(inputStream.readString(20));
+        byte[] songNameBuffer = new byte[20];
+        int read = inputStream.read(songNameBuffer, 0, 20);
+        setSongName(Helpers.retrieveAsString(songNameBuffer, 0, read));
+
         // 0x1A:
         inputStream.skip(1);
 
@@ -323,22 +345,8 @@ public class XMMod extends ProTrackerMod {
         // Header Size
         int headerSize = inputStream.readIntelDWord();
 
-        // lets start with some version / tracker guessing
         setModType(ModConstants.MODTYPE_XM);
         setTrackerName(trackerName.trim());
-        if (trackerName.startsWith("FastTracker v2.00") && headerSize == XM_HEADER_SIZE) {
-            int highVersion = (version >> 8) & 0xff;
-            setTrackerName("FastTracker II V" + ModConstants.getAsHex(highVersion, (highVersion > 0x0f) ? 2 : 1) + "." + ModConstants.getAsHex(version & 0xff, 2));
-            if (!trackerName.endsWith("   "))
-                setTrackerName(getTrackerName() + " (generic)");
-        } else if (trackerName.equals("FastTracker v 2.00  ")) {
-            setTrackerName("ModPlug Tracker V1.0");
-            setModType(getModType() | ModConstants.MODTYPE_MPT);
-        } else if (trackerName.startsWith("OpenMPT")) {
-            setModType(getModType() | ModConstants.MODTYPE_OMPT);
-        } else if (trackerName.startsWith("*Converted ")) {
-            setTrackerName("DigiTracker");
-        }
 
         // OrderNum:
         setSongLength(inputStream.readIntelUnsignedWord());
@@ -369,7 +377,7 @@ public class XMMod extends ProTrackerMod {
         setBPMSpeed(inputStream.readIntelUnsignedWord());
 
         // always space for 256 pattern...
-        // ModPlug used to allow marker pattern like in IT
+        // ModPlug allows marker pattern like in IT
         //  255 = "---", End of song marker
         //  254 = "+++", Skip to next order
         allocArrangement(256);
@@ -377,6 +385,90 @@ public class XMMod extends ProTrackerMod {
         for (int i = 0; i < 256; i++) arrangement[i] = inputStream.read();
 
         inputStream.seek(LSEEK + headerSize);
+
+        // lets start with some version / tracker guessing
+        // Version detection stuff:
+        boolean instrumentWithSamplesEncountered = false;
+        boolean anyADPCM = false;
+        int sampleReserved = 0;
+        int lastSampleHeaderSize = -1;
+        int lastInstrumentType = -1;
+        int lastSampleReserved = -1;
+        String madeWithTracker = null;
+        int madeWith = verUnknown;
+        //boolean isMadTracker = false; // only used to identify the encoding
+        if (trackerName.startsWith("FastTracker v2.00   ") && headerSize == XM_HEADER_SIZE) {
+            int firstZero = -1;
+            int space = -1;
+            final int songNameSize = songNameBuffer.length;
+            for (int i = 0; i < songNameSize; i++) {
+                if (songNameBuffer[i] == 0 && firstZero == -1)
+                    firstZero = i;
+                if (songNameBuffer[i] == 0x20 && firstZero != -1 && space == -1)
+                    space = i;
+            }
+
+            if (version < 0x0104) {
+                madeWith = verFT2Generic | verConfirmed;
+            } else if (firstZero != -1) {
+                // FT2 pads the song title with spaces, some other trackers use null chars
+                // PlayerPRO fills the remaining buffer after the null terminator with space characters.
+                // PlayerPRO does not support song restart position.
+                if (songRestart != 0)
+                    madeWith = verFT2Clone | verNewModPlug | verEmptyOrders;
+                else if (firstZero == songNameSize - 1)
+                    madeWith = verFT2Clone | verNewModPlug | verPlayerPRO | verEmptyOrders;
+                else if (space != -1)
+                    madeWith = verPlayerPRO | verConfirmed;
+                else
+                    madeWith = verFT2Clone | verNewModPlug | verEmptyOrders;
+            } else {
+                if (songRestart != 0)
+                    madeWith = verFT2Generic | verNewModPlug;
+                else
+                    madeWith = verFT2Generic | verNewModPlug | verPlayerPRO;
+            }
+        } else if (trackerName.equals("FastTracker v 2.00  ")) {
+            // MPT 1.0 (exact version to be determined later)
+            madeWith = verOldModPlug;
+        } else {
+            // Something else!
+            madeWith = verUnknown | verConfirmed;
+
+            //madeWithTracker = mpt::ToUnicode(mpt::Charset::CP437, mpt::String::ReadBuf(mpt::String::spacePadded, fileHeader.trackerName));
+
+            if (trackerName.startsWith("OpenMPT")) {
+                madeWith = verOpenMPT | verConfirmed | verEmptyOrders;
+            } else if (trackerName.startsWith("MilkyTracker ")) {
+                madeWithTracker = trackerName;
+//                // MilkyTracker prior to version 0.90.87 doesn't set a version string.
+//                // Luckily, starting with v0.90.87, MilkyTracker also implements the FT2 panning scheme.
+//                if (trackerName.endsWith("        ")) {
+//                    m_nMixLevels = MixLevels::CompatibleFT2;
+//                }
+            } else if (trackerName.startsWith("Fasttracker II clone")) {
+                // 8bitbubsy's FT2 clone should be treated exactly like FT2
+                madeWith = verFT2Generic | verConfirmed;
+            } else if (trackerName.equals("MadTracker 2.0")) // ends with a zero '\x0'
+            {
+                madeWithTracker = trackerName;
+//                // Fix channel 2 in m3_cha.xm
+//                m_playBehaviour.reset(kFT2PortaNoNote);
+//                // Fix arpeggios in kragle_-_happy_day.xm
+//                m_playBehaviour.reset(kFT2Arpeggio);
+//                isMadTracker = true;
+            } else if (trackerName.equals("Skale Tracker") || trackerName.equals("Sk@le Tracker")) {
+                madeWithTracker = trackerName;
+//                m_playBehaviour.reset(kFT2ST3OffsetOutOfRange);
+//                // Fix arpeggios in KAPTENFL.XM
+//                m_playBehaviour.reset(kFT2Arpeggio);
+            } else if (trackerName.startsWith("*Converted ")) {
+                madeWithTracker = "DigiTrakker";
+                madeWith = verDigiTrakker;
+            }
+        }
+        if ((songFlags & ModConstants.SONG_EXFILTERRANGE) != 0 && (madeWith & verNewModPlug) != 0)
+            madeWith = verFT2Clone | verNewModPlug | verConfirmed | verEmptyOrders;
 
         // Read the patternData
         if (version >= 0x0104) readXMPattern(inputStream);
@@ -387,7 +479,6 @@ public class XMMod extends ProTrackerMod {
         int sampleOffsetIndex = 0;
         // Read the instrument data
         for (int ins = 0; ins < getNInstruments(); ins++) {
-            int sampleHeaderSize = 0;
             int vibratoType = 0;
             int vibratoSweep = 0;
             int vibratoDepth = 0;
@@ -408,102 +499,178 @@ public class XMMod extends ProTrackerMod {
             currentIns.randomPanningVariation = -1;
 
             int instrumentHeaderSize = inputStream.readIntelDWord();
-            if (instrumentHeaderSize <= 0 || instrumentHeaderSize > INSTR_HEADER_SIZE)
-                instrumentHeaderSize = INSTR_HEADER_SIZE;
+            int readInstrumentHeaderSize = instrumentHeaderSize; // need the pure size for version guessing
+            if (instrumentHeaderSize == 0) instrumentHeaderSize = INSTR_HEADER_SIZE;
+            if (instrumentHeaderSize < 0) continue;
 
             // Read the instrument header
             // In C we would now read as many bytes into a struct, as are presented here
             // and if it's less than the struct has place, the rest simply stays zero/uninitialized
             currentIns.name = inputStream.readString(22);
-            /* int insType = */
-            inputStream.read();
+            int insType = inputStream.read();
             int anzSamples = inputStream.readIntelWord();
+            if (anzSamples < 0) anzSamples = 0;
 
             setNSamples(getNSamples() + anzSamples);
 
-            sampleHeaderSize = inputStream.readIntelDWord();
+            int sampleHeaderSize = inputStream.readIntelDWord();
+            int readSampleHeaderSize = sampleHeaderSize; // need the pure size for version guessing
             if (sampleHeaderSize <= 0 || sampleHeaderSize > SAMPLE_HEADER_SIZE) sampleHeaderSize = SAMPLE_HEADER_SIZE;
 
-            currentIns.sampleIndex = new int[96];
-            currentIns.noteIndex = new int[96];
-            for (int i = 0; i < 96; i++) {
-                int sampleIndex = inputStream.read();
-                if (sampleIndex < anzSamples) // if this instrument has no samples associated, sampleIndex=0, anzSamples=0
-                    currentIns.sampleIndex[i] = sampleIndex + sampleOffsetIndex + 1;
-                else
-                    currentIns.sampleIndex[i] = 0;
-                currentIns.noteIndex[i] = i;
-            }
-
-            int[] volumeEnvelopePosition = new int[12];
-            int[] volumeEnvelopeValue = new int[12];
-            for (int i = 0; i < 12; i++) {
-                volumeEnvelopePosition[i] = inputStream.readIntelUnsignedWord();
-                volumeEnvelopeValue[i] = inputStream.readIntelUnsignedWord();
-            }
+            // A headersize of 33 means, only header, no instrument data
+            // However, some values need to be initialized to avoid NullPointer Exceptions
             Envelope volumeEnvelope = new Envelope(EnvelopeType.volume);
-            volumeEnvelope.positions = volumeEnvelopePosition;
-            volumeEnvelope.value = volumeEnvelopeValue;
-            currentIns.volumeEnvelope = volumeEnvelope;
-
-            int[] panningEnvelopePosition = new int[12];
-            int[] panningEnvelopeValue = new int[12];
-            for (int i = 0; i < 12; i++) {
-                panningEnvelopePosition[i] = inputStream.readIntelUnsignedWord();
-                panningEnvelopeValue[i] = inputStream.readIntelUnsignedWord();
-            }
             Envelope panningEnvelope = new Envelope(EnvelopeType.panning);
-            panningEnvelope.positions = panningEnvelopePosition;
-            panningEnvelope.value = panningEnvelopeValue;
-            currentIns.panningEnvelope = panningEnvelope;
+            if (instrumentHeaderSize > 33) {
+                currentIns.sampleIndex = new int[96];
+                currentIns.noteIndex = new int[96];
+                for (int i = 0; i < 96; i++) {
+                    final int sampleIndex = inputStream.read();
+                    if (sampleIndex < anzSamples) // if this instrument has no samples associated, sampleIndex=0, anzSamples=0
+                        currentIns.sampleIndex[i] = sampleIndex + sampleOffsetIndex + 1;
+                    else
+                        currentIns.sampleIndex[i] = 0;
+                    currentIns.noteIndex[i] = i;
+                }
 
-            volumeEnvelope.setNumberOfPoints(inputStream.read());
-            panningEnvelope.setNumberOfPoints(inputStream.read());
+                int[] volumeEnvelopePosition = new int[12];
+                int[] volumeEnvelopeValue = new int[12];
+                for (int i = 0; i < 12; i++) {
+                    volumeEnvelopePosition[i] = inputStream.readIntelUnsignedWord();
+                    volumeEnvelopeValue[i] = inputStream.readIntelUnsignedWord();
+                }
+                volumeEnvelope.positions = volumeEnvelopePosition;
+                volumeEnvelope.value = volumeEnvelopeValue;
+                currentIns.volumeEnvelope = volumeEnvelope;
 
-            volumeEnvelope.setSustainPoints_XM(inputStream.read());
-            volumeEnvelope.loopStartPoint = inputStream.read();
-            volumeEnvelope.loopEndPoint = inputStream.read();
+                int[] panningEnvelopePosition = new int[12];
+                int[] panningEnvelopeValue = new int[12];
+                for (int i = 0; i < 12; i++) {
+                    panningEnvelopePosition[i] = inputStream.readIntelUnsignedWord();
+                    panningEnvelopeValue[i] = inputStream.readIntelUnsignedWord();
+                }
+                panningEnvelope.positions = panningEnvelopePosition;
+                panningEnvelope.value = panningEnvelopeValue;
+                currentIns.panningEnvelope = panningEnvelope;
 
-            panningEnvelope.setSustainPoints_XM(inputStream.read());
-            panningEnvelope.loopStartPoint = inputStream.read();
-            panningEnvelope.loopEndPoint = inputStream.read();
+                volumeEnvelope.setNumberOfPoints(inputStream.read());
+                panningEnvelope.setNumberOfPoints(inputStream.read());
 
-            volumeEnvelope.setXMType(inputStream.read());
-            panningEnvelope.setXMType(inputStream.read());
+                volumeEnvelope.setSustainPoints_XM(inputStream.read());
+                volumeEnvelope.loopStartPoint = inputStream.read();
+                volumeEnvelope.loopEndPoint = inputStream.read();
 
-            volumeEnvelope.sanitize(64);
-            panningEnvelope.sanitize(64);
+                panningEnvelope.setSustainPoints_XM(inputStream.read());
+                panningEnvelope.loopStartPoint = inputStream.read();
+                panningEnvelope.loopEndPoint = inputStream.read();
 
-            vibratoType = inputStream.read();
-            vibratoSweep = inputStream.read();
-            vibratoDepth = inputStream.read();
-            vibratoRate = inputStream.read();
+                volumeEnvelope.setXMType(inputStream.read());
+                panningEnvelope.setXMType(inputStream.read());
 
-            currentIns.volumeFadeOut = inputStream.readIntelUnsignedWord();
+                volumeEnvelope.sanitize(64);
+                panningEnvelope.sanitize(64);
 
-            // most of my doku says, 2 bytes follow. Only one says 22 bytes follow
+                vibratoType = inputStream.read();
+                vibratoSweep = inputStream.read();
+                vibratoDepth = inputStream.read();
+                vibratoRate = inputStream.read();
 
-            // Read Midi Data
-            currentIns.xm_enableMidi = inputStream.read() > 0;        // MIDI Out Enabled (0 / 1)
-            currentIns.midiChannel = inputStream.read();              // MIDI Channel (0...15)
-            currentIns.midiProgram = inputStream.readIntelWord();     // MIDI Program (0...127)
-            currentIns.pitchWheelDepth = inputStream.readIntelWord(); // MIDI Pitch Wheel Range (0...36 halftones)
-            currentIns.xm_muteComputer = inputStream.read() > 0;      // Mute instrument if MIDI is enabled (0 / 1)
-            // sanitize if midi is enabled
-            if (currentIns.xm_enableMidi) {
-                currentIns.midiChannel++;
-                if (currentIns.midiChannel < 1) currentIns.midiChannel = 1;
-                else if (currentIns.midiChannel > 16) currentIns.midiChannel = 16;
+                currentIns.volumeFadeOut = inputStream.readIntelUnsignedWord();
 
-                currentIns.midiProgram++;
-                if (currentIns.midiProgram < 1) currentIns.midiProgram = 1;
-                else if (currentIns.midiProgram > 128) currentIns.midiProgram = 128;
+                // most of my doku says, 2 bytes follow. Only one says 22 bytes follow
+
+                // Read Midi Data
+                currentIns.xm_enableMidi = inputStream.read() > 0;            // MIDI Out Enabled (0 / 1)
+                currentIns.midiChannel = inputStream.read();                // MIDI Channel (0...15)
+                currentIns.midiProgram = inputStream.readIntelWord();        // MIDI Program (0...127)
+                currentIns.pitchWheelDepth = inputStream.readIntelWord();    // MIDI Pitch Wheel Range (0...36 halftones)
+                currentIns.xm_muteComputer = inputStream.read() > 0;            // Mute instrument if MIDI is enabled (0 / 1)
+                // sanitize if midi is enabled
+                if (currentIns.xm_enableMidi) {
+                    currentIns.midiChannel++;
+                    if (currentIns.midiChannel < 1) currentIns.midiChannel = 1;
+                    else if (currentIns.midiChannel > 16) currentIns.midiChannel = 16;
+
+                    currentIns.midiProgram++;
+                    if (currentIns.midiProgram < 1) currentIns.midiProgram = 1;
+                    else if (currentIns.midiProgram > 128) currentIns.midiProgram = 128;
+                }
+                // save once if instrument has valid midi data and midi output
+                currentIns.hasValidMidiData = (currentIns.hasValidMidiChannel() && currentIns.hasValidMidiProgram() && anzSamples == 0);
             }
-
             // At this point 15 bytes of junk follows - we ignore that by
             inputStream.seek(LSEEK += instrumentHeaderSize);
 
-            if (anzSamples > 0) { // lets skip this, if nothing is to do!
+            // Time for some version detection stuff.
+            if ((madeWith & verOldModPlug) != 0) {
+                madeWith |= verConfirmed;
+                if (readInstrumentHeaderSize == 245) {
+                    // ModPlug Tracker Alpha
+                    madeWithTracker = "ModPlug Tracker 1.0 alpha";
+                    lastSavedWithVersion = 0x10000A5;
+                } else if (readInstrumentHeaderSize == INSTR_HEADER_SIZE) {
+                    // ModPlug Tracker Beta (Beta 1 still behaves like Alpha, but Beta 3.3 does it this way)
+                    madeWithTracker = "ModPlug Tracker 1.0 beta";
+                    lastSavedWithVersion = 0x10000B3;
+                } else {
+                    // WTF?
+                    madeWith = (verUnknown | verConfirmed);
+                }
+            } else if (anzSamples == 0) {
+                // Empty instruments make tracker identification pretty easy!
+                if (readInstrumentHeaderSize == INSTR_HEADER_SIZE && readSampleHeaderSize == 0 && (madeWith & verNewModPlug) != 0)
+                    madeWith |= verConfirmed;
+                else if (readInstrumentHeaderSize != 29 && (madeWith & verDigiTrakker) != 0)
+                    madeWith &= ~verDigiTrakker;
+                else if ((madeWith & (verFT2Clone | verFT2Generic)) != 0 && readInstrumentHeaderSize != 33) {
+                    // Sure isn't FT2.
+                    // 4-mat's eternity.xm has an empty instruments with a header size of 29.
+                    // Another module using that size is funky_dumbass.xm. Mysterious!
+                    // Note: This may happen when the XM Commenter by Aka (XMC.EXE) adds empty instruments at the end of the list,
+                    // which would explain the latter case, but in eternity.xm the empty slots are not at the end of the list.
+                    madeWith = verUnknown;
+                }
+
+                if (readInstrumentHeaderSize != 33) {
+                    madeWith &= ~verPlayerPRO;
+                } else if (readSampleHeaderSize > SAMPLE_HEADER_SIZE && (madeWith & verPlayerPRO) != 0) {
+                    // Older PlayerPRO versions appear to write garbage in the sampleHeaderSize field, and it's different for each sample.
+                    // Note: FT2 NORMALLY writes sampleHeaderSize=40 for all samples, but for any instruments before the first
+                    // instrument that has numSamples != 0, sampleHeaderSize will be uninitialized. It will always be the same
+                    // value, though.
+                    if (instrumentWithSamplesEncountered || (lastSampleHeaderSize != -1 && readSampleHeaderSize != lastSampleHeaderSize))
+                        madeWith = verPlayerPRO | verConfirmed;
+                    lastSampleHeaderSize = readSampleHeaderSize;
+                }
+            }
+
+            if (lastInstrumentType == -1) {
+                lastInstrumentType = insType;
+            } else if (lastInstrumentType != insType && (madeWith & verFT2Generic) != 0) {
+                // FT2 writes some random junk for the instrument type field,
+                // but it's always the SAME junk for every instrument saved.
+                // Note: This may happen when running an FT2-made XM through PutInst and adding new instrument slots.
+                madeWith &= ~verFT2Generic;
+                madeWith |= verFT2Clone;
+            }
+
+            if (anzSamples > 0) { // let's skip this, if nothing is to do!
+                instrumentWithSamplesEncountered = true;
+                // If MIDI settings are present, this is definitely not an old MPT or PlayerPRO.
+                if ((currentIns.midiChannel | currentIns.midiProgram) != 0 || currentIns.xm_enableMidi || currentIns.xm_muteComputer)
+                    madeWith &= ~(verOldModPlug | verNewModPlug | verPlayerPRO);
+
+                if (readInstrumentHeaderSize != INSTR_HEADER_SIZE || insType != 0)
+                    madeWith &= ~verPlayerPRO;
+
+                if ((madeWith & verConfirmed) == 0 && (madeWith & verPlayerPRO) != 0) {
+                    // Note: Earlier (?) PlayerPRO versions do not seem to set the loop points to 0xFF (george_megas_-_q.xm)
+                    if ((!volumeEnvelope.loop && volumeEnvelope.loopStartPoint == 0xFF && volumeEnvelope.loopEndPoint == 0xFF) ||
+                            (!panningEnvelope.loop && panningEnvelope.loopStartPoint == 0xFF && panningEnvelope.loopEndPoint == 0xFF)) {
+                        madeWith |= verConfirmed;
+                        madeWith &= ~verNewModPlug;
+                    }
+                }
 
                 instrumentContainer.reallocSampleSpace(getNSamples());
                 for (int samIndex = 0; samIndex < anzSamples; samIndex++) {
@@ -536,6 +703,9 @@ public class XMMod extends ProTrackerMod {
                     if ((current.flags & 0x03) != 0) loopType |= ModConstants.LOOP_ON;
                     if ((current.flags & 0x02) != 0) loopType |= ModConstants.LOOP_IS_PINGPONG;
                     current.loopType = loopType;
+
+                    if ((current.flags & 3) == 3 && (madeWith & verNewModPlug) != 0)
+                        madeWith |= verModPlugBidiFlag;
 
                     int sampleLoadingFlags = 0;
                     if ((current.flags & 0x10) != 0) {
@@ -572,24 +742,46 @@ public class XMMod extends ProTrackerMod {
                     current.baseFrequency = getPeriod2Hz(current, getFrequencyTable());
 
                     // Reserved
-                    current.XM_reserved = inputStream.read(); // Reserved (abused for ModPlug's ADPCM compression)
+                    current.XM_reserved = inputStream.read(); // Reserved (abused for ModPlug's ADPCM compression) - its the length of the sample name (Pascal String)
+
+                    // Samplename
+                    current.name = inputStream.readString(22);
 
                     // Interpreting the loaded flags
                     if (current.XM_reserved == 0xAD && (current.flags & (0x10 | 0x20)) == 0) { // ModPlug ADPCM compression
                         sampleLoadingFlags |= ModConstants.SM_ADPCM;
-                        setTrackerName(getTrackerName() + " (ADPCM packed)");
+                        anyADPCM = true;
                     } else
                         sampleLoadingFlags |= ModConstants.SM_PCMD; // XM save in deltas
 
                     current.sampleType = sampleLoadingFlags;
 
-                    // Samplename
-                    current.name = inputStream.readString(22);
-
                     instrumentContainer.setSample(samIndex + sampleOffsetIndex, current);
 
                     // now let's seek to end of sample header - although we should already be there.
                     inputStream.seek(LSEEK += sampleHeaderSize);
+
+                    // Again version stuff:
+                    sampleReserved |= current.XM_reserved;
+                    if (current.XM_reserved != 0 && current.XM_reserved != 0xAD)
+                        madeWith &= ~(verOldModPlug | verNewModPlug | verOpenMPT);
+
+                    if (lastSampleReserved == -1)
+                        lastSampleReserved = current.XM_reserved;
+                    else if (lastSampleReserved != current.XM_reserved)
+                        madeWith &= ~verPlayerPRO;
+
+                    if (current.defaultPanning != 128)
+                        madeWith &= ~verPlayerPRO;
+                    if ((current.fineTune & 0x0F) != 0 && current.fineTune != 127)
+                        madeWith &= ~verPlayerPRO;
+
+                    // FT2 stores the sample name length here (it just copies the entire Pascal string, but that string might have ended with spaces even before space-padding it in the file, so we cannot do an exact length comparison)
+                    if ((madeWith & (verFT2Generic | verFT2Clone)) != 0 && (madeWith & (verNewModPlug | verPlayerPRO)) != 0 && (madeWith & verConfirmed) == 0 &&
+                            (current.XM_reserved > 22 || !(current.XM_reserved >= current.name.trim().length() && current.XM_reserved <= 22))) {
+                        madeWith &= ~verFT2Generic;
+                        madeWith |= (verFT2Clone | verConfirmed);
+                    }
                 }
 
                 if (version >= 0x0104)
@@ -600,6 +792,16 @@ public class XMMod extends ProTrackerMod {
             instrumentContainer.setInstrument(ins, currentIns);
         }
 
+        if (sampleReserved == 0 && (madeWith & verNewModPlug) != 0) {
+            // Null-terminated song name: Quite possibly MPT. (could really be an MPT-made file re-saved in FT2, though)
+            for (byte b : songNameBuffer) {
+                if (b == 0) {
+                    madeWith |= verConfirmed;
+                    break;
+                }
+            }
+        }
+
         if (version < 0x0104) {
             readXMPattern(inputStream);
             readXMSampleData(inputStream, instrumentContainer, sampleOffsetIndex, 0);
@@ -608,14 +810,22 @@ public class XMMod extends ProTrackerMod {
         // Remove marker pattern (supported with OpenModPlug in some versions)
         cleanUpArrangement();
 
+        // Fix lamb_-_dark_lighthouse.xm, which only contains one pattern and an empty order list
+        if (getSongLength() == 0 && (madeWith & verEmptyOrders) == 0) {
+            getArrangement()[0] = 1;
+            setSongLength(1);
+        }
+
         midiMacros = new MidiMacros();
         boolean hasMidiConfig = false;
         boolean hasExtraInstrumentInfos = false;
         boolean hasExtraSongProperties = false;
         if (checkMagic(inputStream, ModConstants.getMagicLE("text"))) { // 0x74786574 'text'
             // read the song text
-            final int len = inputStream.readIntelDWord();
+            int len = inputStream.readIntelDWord();
             songMessage = inputStream.readString(Math.min(len, inputStream.available()));
+            madeWith |= verConfirmed;
+            madeWith &= ~verPlayerPRO;
         }
 
         if (checkMagic(inputStream, ModConstants.getMagicLE("MIDI"))) { // 0x4944494D 'MIDI'
@@ -623,40 +833,127 @@ public class XMMod extends ProTrackerMod {
             int len = inputStream.readIntelDWord();
             if (len == MidiMacros.SIZE_OF_SCTUCT && len < inputStream.getLength()) {
                 midiMacros.loadFrom(inputStream);
-                hasMidiConfig = true;
             }
+            hasMidiConfig = true;
+            madeWith |= verConfirmed;
+            madeWith &= ~verPlayerPRO;
         }
 
         // OMPT extensions with FastTracker:
         // read Pattern Names:
         String[] patNames = readNames(inputStream, ModConstants.getMagicLE("PNAM"), 32); // 0x4D414E50 PNAM - LE saved
-        if (patNames != null) getPatternContainer().setPatternNames(patNames);
+        if (patNames != null) {
+            getPatternContainer().setPatternNames(patNames);
+            madeWith |= verConfirmed;
+            madeWith &= ~verPlayerPRO;
+        }
         // Read Channel Names
         String[] chnNames = readNames(inputStream, ModConstants.getMagicLE("CNAM"), 20); // 0x4D414E43 CNAM - LE saved
-        if (chnNames != null) getPatternContainer().setChannelNames(chnNames);
+        if (chnNames != null) {
+            getPatternContainer().setChannelNames(chnNames);
+            madeWith |= verConfirmed;
+            madeWith &= ~verPlayerPRO;
+        }
 
         int result = loadMixPlugins(inputStream);
         boolean hasMixPlugins = (result & 0xF0) != 0;
+        if (hasMixPlugins) {
+            madeWith |= verConfirmed;
+            madeWith &= ~verPlayerPRO;
+        }
 
         hasExtraInstrumentInfos = loadExtendedInstrumentProperties(inputStream);
         hasExtraSongProperties = loadExtendedSongProperties(inputStream, true);
+        boolean isMPT = hasExtraInstrumentInfos || hasExtraSongProperties;
 
-        boolean isMPT = (getModType() & (ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT)) != 0;
-        if (!isMPT && (hasExtraInstrumentInfos || hasExtraSongProperties || hasMixPlugins)) {
+        if ((madeWith & verConfirmed) != 0) {
+            if ((madeWith & verModPlugBidiFlag) != 0) {
+                lastSavedWithVersion = 0x1110000;
+                madeWithTracker = "ModPlug Tracker 1.0 - 1.11";
+            } else if ((madeWith & verNewModPlug) != 0 && (madeWith & verPlayerPRO) == 0) {
+                lastSavedWithVersion = 0x1160000;
+                madeWithTracker = "ModPlug Tracker 1.0 - 1.16";
+            } else if ((madeWith & verNewModPlug) != 0 && (madeWith & verPlayerPRO) != 0) {
+                lastSavedWithVersion = 0x1160000;
+                madeWithTracker = "ModPlug Tracker 1.0 - 1.16 / PlayerPRO";
+            } else if ((madeWith & verNewModPlug) == 0 && (madeWith & verPlayerPRO) != 0) {
+                madeWithTracker = "PlayerPRO";
+            }
+        }
+
+        if (trackerName.startsWith("OpenMPT")) {
+            lastSavedWithVersion = (trackerName.length() > 7) ? ModConstants.parseModPlugVersionString(trackerName.substring(8)) : 0;
+            madeWith = verOpenMPT | verConfirmed;
+
             setModType(getModType() | ModConstants.MODTYPE_OMPT);
-            isMPT = true;
+            if (lastSavedWithVersion < 0x1220719)
+                setModType(getModType() | ModConstants.MODTYPE_MIX_Compatible);
+            else
+                setModType(getModType() | ModConstants.MODTYPE_MIX_CompatibleFT2);
         }
-        if (isMPT && !hasExtraInstrumentInfos && !hasExtraSongProperties) {
-            setModType(getModType() & ~(ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT));
-            isMPT = false;
-            setTrackerName(getTrackerName() + ModConstants.COMPAT_MODE);
+
+        if (lastSavedWithVersion > 0 && (madeWith & verOpenMPT) == 0) {
+            setModType(getModType() | ModConstants.MODTYPE_MPT);
         }
-        // Classic FT2: delete midi macros, Zxx effects are illegal there
-        if (!hasMidiConfig && !isMPT)
-            midiMacros.clearZxxMacros();
+
+        if ((madeWith & verFT2Generic) != 0) {
+//            m_nMixLevels = MixLevels::CompatibleFT2;
+            if (!hasMidiConfig) {
+                // FT2 allows typing in arbitrary unsupported effect letters such as Zxx.
+                // Prevent these commands from being interpreted as filter commands by erasing the default MIDI Config.
+                midiMacros.clearZxxMacros();
+            }
+
+//            if (version >= 0x0104) {    // Old versions of FT2 didn't have (smooth) ramping. Disable it for those versions where we can be sure that there should be no ramping.
+//                // apply FT2-style super-soft volume ramping
+//                m_playBehaviour.set(kFT2VolumeRamping);
+//            }
+        }
+        if (madeWithTracker == null) {
+            if ((madeWith & verDigiTrakker) != 0 && sampleReserved == 0 && (lastInstrumentType != 0 ? lastInstrumentType : -1) == -1) {
+                madeWithTracker = "DigiTrakker";
+            } else if ((madeWith & verFT2Generic) != 0) {
+                madeWithTracker = "FastTracker 2 or compatible";
+                final int highVersion = (version >> 8) & 0xFF;
+                madeWithTracker = "FastTracker II V" + ModConstants.getAsHex(highVersion, (highVersion > 0x0f) ? 2 : 1) + "." + ModConstants.getAsHex(version & 0xFF, 2);
+                if (!trackerName.endsWith("   "))
+                    madeWithTracker += " (generic)";
+            } else {
+                madeWithTracker = "Unknown";
+            }
+        }
+
+        if (isMPT && lastSavedWithVersion < 0x1170000) {
+            // Up to OpenMPT 1.17.02.45 (r165), it was possible that the "last saved with" field was 0
+            // when saving a file in OpenMPT for the first time.
+            lastSavedWithVersion = 0x1170000;
+        }
+        if (lastSavedWithVersion >= 0x1170000) {
+            madeWithTracker = "OpenMPT " + ModConstants.getModPlugVersionString(lastSavedWithVersion);
+            if (!isMPT) {
+                madeWithTracker += ModConstants.COMPAT_MODE;
+                // Treat compatibility export as XMs
+                setModType(getModType() & ~(ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT));
+            }
+            if (createdWithVersion != -1)
+                madeWithTracker += " (first created with " + ModConstants.getModPlugVersionString(createdWithVersion) + ")";
+        }
+
+        if (anyADPCM)
+            madeWithTracker += " (ADPCM packed)";
+
+        setTrackerName(madeWithTracker);
+
+        // reset if instrument has valid midi data and midi output - with OMPT the plugin is important - even if that instrument has a sample mapping!
+        if (isMPT) {
+            Instrument[] ins = instrumentContainer.getInstruments();
+            for (Instrument currentIns : ins) {
+                currentIns.hasValidMidiData = (currentIns.mixPlugIn > 0 && currentIns.hasValidMidiChannel() && currentIns.hasValidMidiProgram());
+            }
+        }
 
         // With OpenModPlug Files we create default channel colors if none are set
-        if (isMPT && getPatternContainer().getChannelColors() == null)
+        if ((getModType() & ModConstants.MODTYPE_OMPT) != 0 && getPatternContainer().getChannelColors() == null)
             getPatternContainer().createMPTMDefaultRainbowColors();
     }
 
