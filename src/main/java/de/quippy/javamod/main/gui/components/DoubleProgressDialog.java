@@ -26,6 +26,7 @@ import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.Window;
 import java.io.Serial;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -43,11 +44,17 @@ public class DoubleProgressDialog extends JDialog implements ProgressDialog {
     @Serial
     private static final long serialVersionUID = 6413406398889206437L;
 
+    public interface CancelCallBack {
+        void cancelClicked();
+    }
+
     protected JPanel downloadPane = null;
     private JLabel currentFileName = null;
     private JProgressBar downloadProgressBar = null;
     private JProgressBar downloadDetailProgressBar = null;
+    private JButton cancelButton = null;
 
+    private CancelCallBack cancelCallBack;
 
     /**
      * Constructor for DoubleProgressDialog
@@ -108,6 +115,7 @@ public class DoubleProgressDialog extends JDialog implements ProgressDialog {
             downloadPane.add(getCurrentFileName(), Helpers.getGridBagConstraint(0, 0, 1, 0, java.awt.GridBagConstraints.BOTH, java.awt.GridBagConstraints.CENTER, 1.0, 1.0));
             downloadPane.add(getDownloadProgressBar(), Helpers.getGridBagConstraint(0, 1, 1, 0, java.awt.GridBagConstraints.BOTH, java.awt.GridBagConstraints.CENTER, 1.0, 1.0));
             downloadPane.add(getDownloadDetailProgressBar(), Helpers.getGridBagConstraint(0, 2, 1, 0, java.awt.GridBagConstraints.BOTH, java.awt.GridBagConstraints.CENTER, 1.0, 1.0));
+            downloadPane.add(getCancelButton(), Helpers.getGridBagConstraint(0, 3, 1, 0, java.awt.GridBagConstraints.BOTH, java.awt.GridBagConstraints.CENTER, 1.0, 1.0));
         }
         return downloadPane;
     }
@@ -132,6 +140,27 @@ public class DoubleProgressDialog extends JDialog implements ProgressDialog {
             downloadProgressBar.setValue(0);
         }
         return downloadProgressBar;
+    }
+
+    private JButton getCancelButton() {
+        if (cancelButton == null) {
+            cancelButton = new JButton();
+            cancelButton.setToolTipText("Will cancel the export after the current export finished");
+            cancelButton.setName("cancelButton");
+            cancelButton.setMnemonic('c');
+            cancelButton.setText("Cancel");
+            cancelButton.addActionListener(_ -> {
+                if (cancelCallBack != null) {
+                    cancelCallBack.cancelClicked();
+                    cancelButton.setText("Canceling ...");
+                }
+            });
+        }
+        return cancelButton;
+    }
+
+    public void setNewCancelAction(final CancelCallBack newCancelCallback) {
+        cancelCallBack = newCancelCallback;
     }
 
     public void setGeneralMinimum(int minValue) {

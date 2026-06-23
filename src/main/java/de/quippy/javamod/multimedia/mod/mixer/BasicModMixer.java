@@ -2464,7 +2464,7 @@ public abstract class BasicModMixer {
             if (leftOverSamplesPerTick <= 0) {
                 // now do the events
                 modFinished = doRowAndTickEvents();
-                leftOverSamplesPerTick = samplesPerTick; // speed changes also change samplesPerTick - so reset after doTickEvents!
+                leftOverSamplesPerTick = samplesPerTick; // a speed change also changes samplesPerTick - so reset after doTickEvents!
             }
 
             int mixAmount = ((endIndex + leftOverSamplesPerTick) >= bufferSize) ? bufferSize - endIndex : leftOverSamplesPerTick;
@@ -2477,8 +2477,9 @@ public abstract class BasicModMixer {
 
                 // Ramp Down for this channel
                 ChannelMemory rampDownMemo = aktMemo.rampDownMemory;
-                if (rampDownMemo.currentTuning == 0 && !rampDownMemo.instrumentFinished)
-                    rampDownMemo.currentTuning = 1;
+                if (rampDownMemo.actRampVolLeft <= 0 && rampDownMemo.actRampVolRight <= 0)
+                    rampDownMemo.instrumentFinished = true;
+                if (rampDownMemo.currentTuning == 0 && !rampDownMemo.instrumentFinished) rampDownMemo.currentTuning = 1;
                 if (rampDownMemo.isChannelActive())
                     mixChannelIntoBuffers(leftBuffer, rightBuffer, startIndex, endIndex, rampDownMemo, true);
 
