@@ -1316,7 +1316,7 @@ public abstract class BasicModMixer {
             boolean rampUp = targetVolLeft > aktMemo.actRampVolLeft || targetVolRight > aktMemo.actRampVolRight;
 
             // FT2 XMs have a default smooth VolRamp of 5ms for fastVolRamp and one tick, if not
-            int rampLengthYS = (isXM) ? 5000 : (rampUp) ? ModConstants.VOLRAMPLEN_UP_YS : ModConstants.VOLRAMPLEN_DOWN_YS;
+            int rampLengthYS = (isXM && (mod.getSongFlags() & ModConstants.SONG_FT2VOLUMERAMPING) != 0) ? 5000 : (rampUp) ? ModConstants.VOLRAMPLEN_UP_YS : ModConstants.VOLRAMPLEN_DOWN_YS;
             int defaultRampLen = (isXM && !aktMemo.doFastVolRamp) ? samplesPerTick : (int) ((long) sampleRate * (long) rampLengthYS / 1000000L);
 
             // Override default with settings in instruments, if any (only for ramp up!)
@@ -1813,7 +1813,7 @@ public abstract class BasicModMixer {
                     setupChannelFilter(aktMemo, !aktMemo.filterOn, 256);
                 }
 //            } else if (macroCode == 0x03 && !isExtended) { // F0.F0.03.xx: Set plug dry/wet
-//                final float newRatio = (127 - param) / 127.0f;
+//                float newRatio = (127 - param) / 127.0f;
 //                if (isSmoothMidi)
 //                    modMidiMixer.setDryRatio((int) calculateSmoothParamChange(aktMemo, modMidiMixer.dryWetRatio, newRatio));
 //                else
@@ -1823,9 +1823,7 @@ public abstract class BasicModMixer {
 //                PLUGINDEX plug = (plugin != 0) ? plugin : GetBestPlugin(playState, nChn, PrioritiseChannel, EvenIfMuted);
 //                if (plug > 0 && plug <= MAX_MIXPLUGINS && param < 0x80) {
 //                    plug--;
-//                    if ( IMixPlugin * pPlugin = m_MixPlugins[plug].pMixPlugin;
-//                    pPlugin)
-//                    {
+//                    if (IMixPlugin * pPlugin = m_MixPlugins[plug].pMixPlugin; pPlugin) {
 //						const PlugParamIndex plugParam = isExtended ? (0x80 + macroCode) : (macroCode & 0x7F);
 //						const PlugParamValue value = param / 127.0f;
 //                        if (localOnly)
@@ -1907,8 +1905,8 @@ public abstract class BasicModMixer {
                 continue;
             } else {
                 // Other MIDI messages
-                final int msgSize = MidiMacros.getEventLength(out[sendPos]);
-                final int size = outSize - sendPos;
+                int msgSize = MidiMacros.getEventLength(out[sendPos]);
+                int size = outSize - sendPos;
                 sendLen = Math.min(msgSize, size);
             }
 
@@ -2371,8 +2369,11 @@ public abstract class BasicModMixer {
             boolean ignoreLoop = (doNoLoops & ModConstants.PLAYER_LOOP_IGNORE) != 0;
             boolean fadeOutLoop = (doNoLoops & ModConstants.PLAYER_LOOP_FADEOUT) != 0;
             boolean loopSong = (doNoLoops & ModConstants.PLAYER_LOOP_LOOPSONG) != 0;
+            int songLength = mod.getSongLength();
+            int[] arrangement = mod.getArrangement();
+
             if (patternBreakPatternIndex != -1) {
-                if (patternBreakPatternIndex >= mod.getSongLength())
+                if (patternBreakPatternIndex >= songLength)
                     patternBreakPatternIndex = mod.getSongRestart();
 
                 boolean infiniteLoop = isInfiniteLoop(patternBreakPatternIndex, patternBreakRowIndex);
@@ -2400,8 +2401,8 @@ public abstract class BasicModMixer {
             }
 
             // sanity check FT2.09 style
-            if (isXM && currentArrangement < mod.getSongLength()) {
-                int patIndex = mod.getArrangement()[currentArrangement];
+            if (isXM && currentArrangement < songLength) {
+                int patIndex = arrangement[currentArrangement];
                 Pattern pat = mod.getPatternContainer().getPattern(patIndex);
                 if (currentRow >= pat.getRowCount()) {
                     currentArrangement--;
@@ -2416,19 +2417,28 @@ public abstract class BasicModMixer {
             resetJumpPositionSet();
 
             // End of song? Fetch new pattern if not...
-            if (currentArrangement < mod.getSongLength()) {
-                currentPatternIndex = mod.getArrangement()[currentArrangement];
-                currentPattern = mod.getPatternContainer().getPattern(currentPatternIndex);
-            } else {
+            if (currentArrangement < songLength) {
+                currentPatternIndex = arrangement[currentArrangement];
+                // Jump over marker pattern
+                while ((currentPatternIndex == ModConstants.IGNORE_PAT_INDEX || currentPatternIndex == ModConstants.INVALID_PAT_INDEX) && currentArrangement < songLength) {
+                    currentArrangement++;
+                    if (currentArrangement >= songLength) break;
+                    currentPatternIndex = arrangement[currentArrangement];
+                }
+                // still not at end of song?
+                if (currentArrangement < songLength)
+                    currentPattern = mod.getPatternContainer().getPattern(currentPatternIndex);
+            }
+            // End of song? Fetch new pattern if not...
+            if (currentArrangement >= songLength) {
                 if (!ignoreLoop && loopSong) {
                     currentArrangement = mod.getSongRestart(); // can be -1 if not set
                     if (currentArrangement < 0) currentArrangement = 0;
-                    currentPatternIndex = mod.getArrangement()[currentArrangement];
+                    currentPatternIndex = arrangement[currentArrangement];
                     currentPattern = mod.getPatternContainer().getPattern(currentPatternIndex);
                     // as this is per definition an infinite loop, activate fadeout, if wished
                     if ((doNoLoops & ModConstants.PLAYER_LOOP_FADEOUT) != 0)
                         doLoopingGlobalFadeout = true;
-
                 } else {
                     currentPatternIndex = -1;
                     currentPattern = null;
@@ -2486,7 +2496,7 @@ public abstract class BasicModMixer {
             if (patternDelayCount > 0) {
                 // Process effects
                 for (int c = 0; c < maxChannels; c++) {
-                    ChannelMemory aktMemo = channelMemory[c];
+                    BasicModMixer.ChannelMemory aktMemo = channelMemory[c];
 
                     processEffectsInTick(aktMemo);
 
@@ -2647,7 +2657,7 @@ public abstract class BasicModMixer {
             // Evaluate the doISP: if paulaFilter is active, do NO ISP! Otherwise, respect assignment in assignedInstrument (OMPT)
             int doISPhere = (paulaFilter != null) ? 0 :
                     (aktMemo.assignedInstrument != null && aktMemo.assignedInstrument.resampling > -1) ? aktMemo.assignedInstrument.resampling : doISP;
-            aktMemo.currentSample.getInterpolatedSample(samples, doISPhere, aktMemo.currentTuning, aktMemo.currentSamplePos, aktMemo.currentTuningPos, !aktMemo.isForwardDirection, aktMemo.interpolationMagic);
+            aktMemo.currentSample.getInterpolatedSample(samples, doISPhere, aktMemo.currentTuning, aktMemo.currentSamplePos, aktMemo.currentTuningPos, aktMemo.interpolationMagic);
 
             if (paulaFilter != null) {
                 // Add to Blep (Paula decides, if anything is to add)

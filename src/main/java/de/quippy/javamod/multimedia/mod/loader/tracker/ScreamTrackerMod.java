@@ -287,8 +287,7 @@ public class ScreamTrackerMod extends Module {
         inputStream.readByte(); // should always be 0x1A to allow "TYPE SONG.S3M" on DOS
         byte type = inputStream.readByte();
         if (type != 0x10) throw new IOException("Unsupported S3M MOD (ID!=0x10)");
-        /*int reserved = */
-        inputStream.readIntelUnsignedWord();
+        /* int reserved = */ inputStream.readIntelUnsignedWord();
 
         setSongLength(inputStream.readIntelUnsignedWord());
         setNSamples(inputStream.readIntelUnsignedWord());
@@ -336,8 +335,7 @@ public class ScreamTrackerMod extends Module {
         setMixingPreAmp(Math.max(mixingPreAmp, 0x10));
 
         // UltraClick removal --> ignored (only for GUS playback)
-        /*int uc = */
-        inputStream.read();
+        /* int uc = */ inputStream.read();
 
         // DefaultPanning
         usePanningValues = inputStream.read() == 0xFC;
@@ -345,8 +343,7 @@ public class ScreamTrackerMod extends Module {
         // skip again arbitrary data (8Byte unused, 2Byte is pointer to special data, if "special data flag" at offset 0x26 is set
         int extVersionInfo = inputStream.readIntelUnsignedWord();
         inputStream.skip(6);
-        /*final int specialDataParaPointer = */
-        inputStream.readIntelUnsignedWord();
+        /* int specialDataParaPointer = */ inputStream.readIntelUnsignedWord();
 
         // PanningValues and active or inactive Channels
         channelStatus = new byte[32];
@@ -370,22 +367,33 @@ public class ScreamTrackerMod extends Module {
                 tmpPanning[c] = ModConstants.CHANNEL_IS_MUTED;
         }
 
+        // Orders:	This is the order in which the patterns are played.
+        //			Valid values are from 0->???. S3MTech does not say
+        //			255 = "---", End of song marker
+        //			254 = "+++", Skip to next order
         // Song Arrangement
         int songLength = getSongLength();
         if (songLength <= 0) songLength = 1;
         else if (songLength > 256) songLength = 256;
         allocArrangement(songLength);
-        for (int i = 0; i < songLength; i++) getArrangement()[i] = inputStream.read();
-        if (getArrangement()[0] == 255) {
-            getArrangement()[0] = 0;
-            getArrangement()[1] = 255;
+        int[] arrangement = getArrangement();
+        for (int i = 0; i < songLength; i++) {
+            arrangement[i] = inputStream.read();
+            if (arrangement[i] == 0xFF) arrangement[i] = ModConstants.INVALID_PAT_INDEX;
+            else if (arrangement[i] == 0xFE) arrangement[i] = ModConstants.IGNORE_PAT_INDEX;
+        }
+
+        // What did I fix with this?
+        if (arrangement[0] == ModConstants.INVALID_PAT_INDEX) {
+            arrangement[0] = 0;
+            arrangement[1] = ModConstants.INVALID_PAT_INDEX;
         }
 
         // if songLength is odd, there might be a 0xff left...
         long startSeek = 96L + getSongLength();
         if ((songLength & 0x01) != 0) {
             byte skipByte = inputStream.readByte();
-            if (skipByte == (byte) 0xff) startSeek++;
+            if (skipByte == (byte) 0xFF) startSeek++; // as we seek with this value directly afterwards, we do not need a skipBack
         }
 
         int anzPointers = getNSamples() + getNPattern();
@@ -586,9 +594,6 @@ public class ScreamTrackerMod extends Module {
         }
         patternContainer.setChannelActiveStatus(panningValue);
 
-        // Correct the songlength for playing, skip markerpattern... (do not want to skip them during playing!)
-        cleanUpArrangement();
-
         String trackerName = null;
         switch (version >> 12) {
             case 0:
@@ -654,5 +659,9 @@ public class ScreamTrackerMod extends Module {
         // but only, if standards of S3M are broken (in this case: OOPL3 is needed)
         if ((getModType() & (ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT)) != 0 && patternContainer.getChannelColors() == null)
             patternContainer.createMPTMDefaultRainbowColors();
+
+        // now we throw out the song end marker pattern
+        // or just keep it - we skip it during play back anyway.
+        removeEndOfArrangement();
     }
 }

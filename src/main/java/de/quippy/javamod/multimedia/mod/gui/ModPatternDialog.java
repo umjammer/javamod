@@ -59,6 +59,9 @@ import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.ModInfoPanel;
 import de.quippy.javamod.multimedia.mod.ModMixer;
+import de.quippy.javamod.multimedia.mod.gui.ModUpdateListener.PatternPositionInformation;
+import de.quippy.javamod.multimedia.mod.gui.ModUpdateListener.PeekInformation;
+import de.quippy.javamod.multimedia.mod.gui.ModUpdateListener.StatusInformation;
 import de.quippy.javamod.multimedia.mod.loader.Module;
 import de.quippy.javamod.multimedia.mod.loader.pattern.Pattern;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternContainer;
@@ -305,19 +308,26 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         return arrangementPanel;
     }
 
-    private JToggleButton createButtonForIndex(int index, int arrangementIndex, Dimension size) {
-        JToggleButton newButton = new JToggleButton();
+    private JToggleButton createButtonForIndex(int index, int arrangementIndex, int orderLength, Dimension size) {        JToggleButton newButton = new JToggleButton();
         newButton.setName("ArrangementButton_" + index);
-        newButton.setText((arrangementIndex > -1) ? ModConstants.getAsHex(arrangementIndex, 2) : "--");
+        newButton.setText((arrangementIndex > -1) ? arrangementIndex == ModConstants.INVALID_PAT_INDEX ? "---" :
+                                                    arrangementIndex == ModConstants.IGNORE_PAT_INDEX ? "+++" :
+                                                            ModConstants.getAsHex(arrangementIndex, 2) :
+                "?");
         newButton.setFont(Helpers.getDialogFont());
-        newButton.setToolTipText("Show pattern " + arrangementIndex + " of arrangement index " + index);
+        if (arrangementIndex == ModConstants.INVALID_PAT_INDEX)
+            newButton.setToolTipText("Arrangement index " + index + "/" + orderLength + " is an invalid pattern");
+        else if (arrangementIndex == ModConstants.IGNORE_PAT_INDEX)
+            newButton.setToolTipText("Arrangement index " + index + "/" + orderLength + " is a marker pattern");
+        else
+            newButton.setToolTipText("Show pattern " + arrangementIndex + " of arrangement index " + index + "/" + orderLength);
         newButton.setMargin(Helpers.NULL_INSETS);
         newButton.setSize(size);
         newButton.setMinimumSize(size);
         newButton.setMaximumSize(size);
         newButton.setPreferredSize(size);
-        if (arrangementIndex > -1) {
-            newButton.addActionListener(evt -> {
+        if (arrangementIndex > -1 && arrangementIndex != ModConstants.INVALID_PAT_INDEX && arrangementIndex != ModConstants.IGNORE_PAT_INDEX) {
+            newButton.addActionListener(_ -> {
                 if (currentMixer != null && !currentMixer.isStopped() && currentModMixer != null) {
                     Module mod = currentModMixer.getMod();
                     if (mod != null) {
@@ -336,14 +346,14 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
     }
 
     private void fillButtonsForArrangement() {
-        int length = (arrangement == null) ? 25 : arrangement.length;
+        int length = (arrangement == null) ? 1 : arrangement.length;
 
         getArrangementPanel().removeAll();
         buttonGroup = new ButtonGroup();
 
         buttonArrangement = new JToggleButton[length];
         for (int i = 0; i < length; i++) {
-            buttonArrangement[i] = createButtonForIndex(i, (arrangement == null) ? -1 : arrangement[i], PATTERNINDEX_BUTTON);
+            buttonArrangement[i] = createButtonForIndex(i, (arrangement == null || arrangement.length == 0) ? -1 : arrangement[i], (arrangement == null || arrangement.length == 0) ? 0 : arrangement.length - 1, PATTERNINDEX_BUTTON);
             buttonGroup.add(buttonArrangement[i]);
             getArrangementPanel().add(buttonArrangement[i], i);
         }
@@ -972,11 +982,27 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
     }
 
     private Pattern getPrevPattern(int index) {
-        return (index - 1) >= 0 ? patternContainer.getPattern(arrangement[index - 1]) : null;
+        int runIndex = index - 1;
+        while (runIndex >= 0) {
+            int patNum = arrangement[runIndex];
+            if (patNum == ModConstants.IGNORE_PAT_INDEX || patNum == ModConstants.INVALID_PAT_INDEX)
+                runIndex--;
+            else
+                return patternContainer.getPattern(arrangement[runIndex]);
+        }
+        return null;
     }
 
     private Pattern getNextPattern(int index) {
-        return (index + 1) < arrangement.length ? patternContainer.getPattern(arrangement[index + 1]) : null;
+        int runIndex = index + 1;
+        while (runIndex < arrangement.length) {
+            int patNum = arrangement[runIndex];
+            if (patNum == ModConstants.IGNORE_PAT_INDEX || patNum == ModConstants.INVALID_PAT_INDEX)
+                runIndex++;
+            else
+                return patternContainer.getPattern(arrangement[runIndex]);
+        }
+        return null;
     }
 
     private void setActivePlayingRow(PatternImagePosition position) {

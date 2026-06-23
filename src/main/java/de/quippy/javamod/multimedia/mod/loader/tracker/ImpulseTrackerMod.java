@@ -385,9 +385,23 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         //           255 = "---", End of song marker
         //           254 = "+++", Skip to next order
         // Song Arrangement
-        allocArrangement(getSongLength());
-        int[] arrangement = getArrangement();
-        for (int i = 0; i < getSongLength(); i++) arrangement[i] = inputStream.read();
+        if ((getModType() & (ModConstants.MODTYPE_MPT) | ModConstants.MODTYPE_OMPT) != 0 && version > 0x88A && version <= 0x88D) {
+            // Deprecated format used for MPTm files created with OpenMPT 1.17.02.46 - 1.17.02.48.
+            int mptVersion = inputStream.readIntelUnsignedWord();
+            if (mptVersion != 0) throw new IOException("Unsupported IT Module!");
+            int numOrd = inputStream.readIntelDWord();
+            setSongLength(numOrd);
+            allocArrangement(getSongLength());
+            for (int i = 0; i < getSongLength(); i++) getArrangement()[i] = inputStream.read();
+        } else {
+            allocArrangement(getSongLength());
+            int[] arrangement = getArrangement();
+            for (int i = 0; i < getSongLength(); i++) {
+                arrangement[i] = inputStream.read();
+                if (arrangement[i] == 0xFF) arrangement[i] = ModConstants.INVALID_PAT_INDEX;
+                else if (arrangement[i] == 0xFE) arrangement[i] = ModConstants.IGNORE_PAT_INDEX;
+            }
+        }
 
         // Now read the pointers
         long minFilePointer = (hasSongMessage && msgLength > 0) ? msgPointer : inputStream.getLength(); // this is for sanity checks later
@@ -457,7 +471,7 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         // now for some disguised MPTs
         if (version == 0x0217 && cmwt == 0x200 && reserved == 0 && !isBeRoTracker) {
             if (hasModPlugExtensions ||
-                    arrangement != null && arrangement[arrangement.length - 1] == 0xff ||
+                    getArrangement() != null && getArrangement()[getArrangement().length - 1] == 0xFF ||
                     hasFFPanningValue) {
                 lastSavedWithVersion = 0x01160000;
                 setTrackerName("ModPlug Tracker 1.09 - 1.16");
@@ -917,9 +931,6 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
         patternContainer.setChannelActiveStatus(panningValue);
         patternContainer.setPatternNames(patNames);
 
-        // Correct the songlength for playing, skip markerpattern... (do not want to skip them during playing!)
-        cleanUpArrangement();
-
         if (lastSavedWithVersion == -1 && version == 0x0888) lastSavedWithVersion = 0x01170000;
 
         if (lastSavedWithVersion != -1 && (getTrackerName() == null || getTrackerName().isEmpty())) {
@@ -1022,5 +1033,9 @@ public class ImpulseTrackerMod extends ScreamTrackerMod {
 
         // avoid division by zero at calculateSamplesPerTick
         if (rowsPerBeat == 0 && tempoMode == ModConstants.TEMPOMODE_MODERN) rowsPerBeat = 1;
+
+        // now we throw out the song end marker pattern
+        // or just keep it - we skip it during play back anyway.
+        removeEndOfArrangement();
     }
 }

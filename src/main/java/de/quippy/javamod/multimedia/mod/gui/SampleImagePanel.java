@@ -51,7 +51,6 @@ public class SampleImagePanel extends JComponent {
      * Constructor for SampleImagePanel
      */
     public SampleImagePanel() {
-        super();
         setDoubleBuffered(true);
     }
 
@@ -61,7 +60,7 @@ public class SampleImagePanel extends JComponent {
         g.drawLine(left, top + halfHeight, left + width, top + halfHeight);
 
         if (buffer != null) {
-            int anzSamples = sample.sampleLength; //-1; // with this we show the first sample for interpolation as well - but is needed for loopEnd display
+            int anzSamples = sample.sampleLength; //-1; // without the "-1" we show the first sample for interpolation as well - but is needed for loopEnd display
 
             int xpOld = 0;
             int ypOld = 0;

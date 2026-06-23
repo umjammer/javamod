@@ -550,7 +550,7 @@ public class ProTrackerMixer extends BasicModMixer {
                 patternJumpRowIndex = patternBreakRowIndex;
                 patternBreakSet = true;
                 break;
-            case 0x0C:            // Set volume
+            case 0x0C:            // Set Volume
                 aktMemo.currentVolume = aktMemo.assignedEffectParam;
                 if (aktMemo.currentVolume > ModConstants.MAX_SAMPLE_VOL)
                     aktMemo.currentVolume = ModConstants.MAX_SAMPLE_VOL;
