@@ -1,14 +1,14 @@
-# JavaMod V3.9.6 Kappa (MIDI RELEASE)
+# JavaMod V3.9.6 (The MIDI release)
 * FIX: Playlists are now saved in ANSI cp1252 - not ISO-8859-1.
 * FIX: Multichannel Mods considered too many ProTracker Quirks. Ignore illegal
-  note delay, tempo changes handled on first tick, no on the fly sample
-  swap
+       note delay, tempo changes handled on first tick, no on the fly sample
+       swap
 * FIX: ProTracker-Mods with non-ProTracker-periods should be played as XMs. The
-  change during loading was however not considered properly
+       change during loading was however not considered properly
 * FIX: Now using PAL PAULA Frequencies for calculating the player tuning with
-  ProTracker MODs (AMIGA_TABLE), i.e. the amount of samples needed to reach
-  the real note.
-  In that turn we cleaned up the code - also with ScreamTracker
+       ProTracker MODs (AMIGA_TABLE), i.e. the amount of samples needed to reach
+       the real note.
+       In that turn we cleaned up the code - also with ScreamTracker
 * FIX: Optimized FastMath
 * FIX: XM: GlobalVolumeSlides in FastTracker are "NOT ON TICK 0" -
            not "ONLY ON TICK 0"
@@ -34,7 +34,9 @@
        So we cannot just throw them out, we need to keep them.
 * FIX: STM set tempo/bpm handling was wrong because of wrong version setting,
        overwriting the low version number
-* FIX: Ping Pong Loops and interpolation magic had an error!
+* FIX: Ping Pong Loops and interpolation magic had an error - so why not
+       overhaul that completely. Added Kaiser Window with 16 taps. The Windowed
+       FIR interpolation is still existing but moved in favour of Kaiser.
 * NEW: added missing effects of OMPT: setFinetune, setSmoothFinetune and
        Note Delay&Cut
 * NEW: added MixingLevels of OMPT, XMs and ITs make use of that
