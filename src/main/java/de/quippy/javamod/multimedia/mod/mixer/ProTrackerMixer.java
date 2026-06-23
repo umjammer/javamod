@@ -31,7 +31,6 @@ import de.quippy.javamod.multimedia.mod.loader.instrument.Instrument;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
 import de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement;
 import de.quippy.javamod.multimedia.mod.midi.MidiMacros;
-import de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory;
 
 
 /**
@@ -137,15 +136,14 @@ public class ProTrackerMixer extends BasicModMixer {
                 if (clampedPeriod == 0) clampedPeriod = 65536; // On Amiga: period 0 = period 65536 (1+65535)
                 else if (clampedPeriod < ModConstants.PAL_PAULA_MIN_PERIOD) clampedPeriod = ModConstants.PAL_PAULA_MIN_PERIOD; // close to what happens on real Amiga
                 aktMemo.currentTuning = globalTuning / clampedPeriod;
-                return;
+                break;
 
             case ModConstants.XM_AMIGA_TABLE:
             case ModConstants.XM_LINEAR_TABLE:
                 int period = (newPeriod >> (ModConstants.PERIOD_SHIFT - 2)) & 0xffFF;
                 if (period == 0) {
                     aktMemo.currentTuning = 0;
-                    return;
-                }
+                } else
 
                 if (frequencyTableType == ModConstants.XM_AMIGA_TABLE) {
                     aktMemo.currentTuning = (globalTuning / period) >> 2;
@@ -158,12 +156,14 @@ public class ProTrackerMixer extends BasicModMixer {
                     int newFrequency = ModConstants.lintab[remainder] >> (((14 - quotient) & 0x1F) - 2); // values are 4 times bigger in FT2
                     aktMemo.currentTuning = (int) (((long) newFrequency << ModConstants.SHIFT) / sampleRate);
                 }
-                return;
+                break;
 
             default:
                 // if we end up here, something went terribly wrong!
-                super.setNewPlayerTuningFor(aktMemo, newPeriod);
+                aktMemo.currentTuning = 0;
+                break;
         }
+        if (aktMemo.currentTuning == 0 && !aktMemo.instrumentFinished) startRampDown(aktMemo);
     }
 
     @Override
@@ -297,8 +297,7 @@ public class ProTrackerMixer extends BasicModMixer {
         if (volumeEnv != null && volumeEnv.on) {
             aktMemo.volEnvTick = volumeEnv.getXMResetPosition(aktMemo.volEnvTick, aktMemo.volXMEnvPos);
         } else {
-            aktMemo.currentVolume = 0;
-            aktMemo.doFastVolRamp = true;
+            doNoteCut(aktMemo);
         }
         Envelope panningEnv = (currentInstrument != null) ? currentInstrument.panningEnvelope : null;
         if (panningEnv != null && !panningEnv.on) { // another FT2 Bug
@@ -311,8 +310,10 @@ public class ProTrackerMixer extends BasicModMixer {
      * @since 05.06.2026
      */
     protected void doNoteCut(ChannelMemory aktMemo) {
-        aktMemo.currentVolume = 0;
+//        startRampDown(aktMemo);
+//        aktMemo.instrumentFinished = true;
         aktMemo.doFastVolRamp = true;
+        aktMemo.currentVolume = 0;
     }
 
     /**
@@ -735,6 +736,7 @@ public class ProTrackerMixer extends BasicModMixer {
             case 0x10:            // Set global volume
                 globalVolume = (aktMemo.assignedEffectParam) << 1;
                 if (globalVolume > ModConstants.MAXGLOBALVOLUME) globalVolume = ModConstants.MAXGLOBALVOLUME;
+                aktMemo.doFastVolRamp = true;
                 break;
             case 0x11:            // Global volume slide
                 //doGlobalVolumeSlideEffect(aktMemo); //ONLY TICK ZERO!
@@ -1215,7 +1217,6 @@ public class ProTrackerMixer extends BasicModMixer {
         int pDelta = getVibratoDelta(aktMemo.panbrelloType, (aktMemo.panbrelloTablePos + 0x10) >> 2); // start with top value and be slow
         int newPanning = aktMemo.currentInstrumentPanning + (((pDelta * aktMemo.panbrelloAmplitude) + 4) >> 4); // +4: round me at bit 2
         aktMemo.panning = (newPanning < 0) ? 0 : (Math.min(newPanning, 256));
-        aktMemo.doFastVolRamp = true;
 
         aktMemo.panbrelloTablePos += aktMemo.panbrelloStep;
     }
@@ -1268,6 +1269,7 @@ public class ProTrackerMixer extends BasicModMixer {
         }
 
         aktMemo.currentInstrumentVolume = aktMemo.currentVolume;
+        if (isMOD) aktMemo.doFastVolRamp = true;
     }
 
     /**
@@ -1326,12 +1328,13 @@ public class ProTrackerMixer extends BasicModMixer {
                     aktMemo.currentSamplePos = sample.sampleLength - 1;
             }
         } else { // FT2
-            aktMemo.currentSamplePos = aktMemo.sampleOffset;
-            if (aktMemo.currentSamplePos >= length) {
+            if (aktMemo.sampleOffset >= length) {
+                startRampDown(aktMemo);
                 aktMemo.currentSamplePos = sample.sampleLength - 1;
                 aktMemo.instrumentFinished = true;
                 setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod = 0); // FT2 Compatibility: Don't play note if offset is beyond sample/loop length
-            }
+            } else
+                aktMemo.currentSamplePos = aktMemo.sampleOffset;
         }
     }
 

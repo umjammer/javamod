@@ -36,6 +36,7 @@ public class Kaiser {
     private static final int SINC_PHASES = (1 << SINC_PHASES_BITS);
     public static final int SINC_MASK = (SINC_PHASES - 1);
     public static final int SINC_QUANTSHIFT = 15;
+    public static final double SINC_QUANTSCALE = (double) (1 << SINC_QUANTSHIFT);
     public static final int SINC_FRACSHIFT = ModConstants.SHIFT - SINC_PHASES_BITS;
 
     public static final int SINC_WIDTH_8 = 8 * SINC_PHASES;
@@ -48,8 +49,8 @@ public class Kaiser {
     public static final int[] gDownsample13x_16 = new int[SINC_WIDTH_16];
     public static final int[] gDownsample2x_16 = new int[SINC_WIDTH_16];
 
-    public static final int gDownsample2x_Limit = 0x13 << (ModConstants.SHIFT - 4);
-    public static final int gDownsample13x_Limit = 0x18 << (ModConstants.SHIFT - 4);
+    public static final int gDownsample13x_Limit = 0x13 << (ModConstants.SHIFT - 4);
+    public static final int gDownsample2x_Limit = 0x18 << (ModConstants.SHIFT - 4);
 
     static {
         initialize();
@@ -74,10 +75,10 @@ public class Kaiser {
     }
 
     private static void getSinc(int numTaps, int[] lut, double beta, double cutoff) {
-        if (cutoff > 0.999) {
+        if (cutoff > 0.999d) {
             // Avoid mixer overflows.
             // 1.0 itself does not make much sense.
-            cutoff = 0.999;
+            cutoff = 0.999d;
         }
         double izeroBeta = iZero(beta);
         double kPi = 4.0d * Math.atan(1.0d) * cutoff; // 4.0 * Math.atan(1.0d) is equal to PI - with highest precision
@@ -100,7 +101,7 @@ public class Kaiser {
                 dsinc = Math.sin(xPi) * iZero(beta * Math.sqrt(1.0d - x * x * xMul)) / (izeroBeta * xPi); // Kaiser window
             }
             double coeff = dsinc * cutoff;
-            lut[isrc] = (int) Math.floor(coeff * (1 << SINC_QUANTSHIFT));
+            lut[isrc] = (int) Math.floor(coeff * SINC_QUANTSCALE);
         }
     }
 

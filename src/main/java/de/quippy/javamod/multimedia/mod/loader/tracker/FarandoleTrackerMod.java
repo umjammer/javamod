@@ -54,10 +54,6 @@ public class FarandoleTrackerMod extends ScreamTrackerMod {
 
     private String songMessage;
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.Module#getFileExtensionList()
-     */
     @Override
     public String[] getFileExtensionList() {
         return MODFILEEXTENSION;

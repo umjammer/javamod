@@ -22,7 +22,7 @@
 
 package de.quippy.javamod.multimedia.mod.loader.instrument;
 
-import de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory;
+import de.quippy.javamod.multimedia.mod.mixer.ChannelMemory;
 import de.quippy.javamod.system.Helpers;
 
 

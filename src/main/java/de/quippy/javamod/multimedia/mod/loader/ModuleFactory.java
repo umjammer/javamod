@@ -51,6 +51,10 @@ public class ModuleFactory {
     private static Map<String, Module> fileExtensionMap;
     private static ServiceLoader<Module> modules;
 
+    // A cache of the last loaded MOD for getInstance
+    private static Module lastLoadedMod;
+    private static URL lastLoadedModURL;
+
     static {
         for (Module mod : getModules()) {
             String[] extensions = mod.getFileExtensionList();
@@ -186,22 +190,23 @@ logger.log(Level.TRACE, e);
      * @return null, if fails
      */
     public static Module getInstance(URL url) throws IOException {
+        // return last loaded MOD, if same instance is requested again
+        if (lastLoadedMod != null && lastLoadedModURL != null && lastLoadedModURL.sameFile(url)) return lastLoadedMod;
+
         ModfileInputStream inputStream = null;
         try {
             inputStream = new ModfileInputStream(url);
             Module mod = getModuleFromStreamByID(inputStream);
             // If the header gives no infos, it's obviously a Noise Tracker file
             // So let's try all loaders
-            if (mod != null) {
-                mod.loadModFile(inputStream);
-                return mod;
-            } else {
+            if (mod == null) {
                 mod = getModuleFromStream(inputStream);
-                if (mod != null)
-                    return mod;
-                else
+                if (mod == null)
                     throw new IOException("Unsupported MOD-Type: " + inputStream.getFileName());
             }
+
+            lastLoadedModURL = url;
+            return lastLoadedMod = mod;
         } catch (Throwable ex) {
             throw new IOException("[ModuleFactory] Failed with loading of " + url.toString(), ex);
         } finally {

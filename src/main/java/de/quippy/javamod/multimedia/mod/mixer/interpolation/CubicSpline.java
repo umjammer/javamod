@@ -107,16 +107,18 @@ public class CubicSpline {
         final double scale = SPLINE_QUANTSCALE;
 
         for (int i = 0; i < SPLINE_LUTLEN; i++) {
-            double x = i * len;
+            double x = i * len; // x = i / SPLINE_LUTLEN;
             int idx = i << 2;
-            double cm1 = Math.floor(0.5 + scale * (-0.5 * x * x * x + 1.0 * x * x - 0.5 * x));
-            double c0 = Math.floor(0.5 + scale * (1.5 * x * x * x - 2.5 * x * x + 1.0));
-            double c1 = Math.floor(0.5 + scale * (-1.5 * x * x * x + 2.0 * x * x + 0.5 * x));
-            double c2 = Math.floor(0.5 + scale * (0.5 * x * x * x - 0.5 * x * x));
-            lut[idx] = (int) ((cm1 < -scale) ? -scale : ((cm1 > scale) ? scale : cm1));
-            lut[idx + 1] = (int) ((c0 < -scale) ? -scale : ((c0 > scale) ? scale : c0));
-            lut[idx + 2] = (int) ((c1 < -scale) ? -scale : ((c1 > scale) ? scale : c1));
-            lut[idx + 3] = (int) ((c2 < -scale) ? -scale : ((c2 > scale) ? scale : c2));
+            double x2 = x * x;
+            double x3 = x2 * x;
+            double cm1 = Math.floor(0.5d + scale * (-0.5d * x3 + 1.0d * x2 - 0.5d * x));
+            double c0 = Math.floor(0.5d + scale * (1.5d * x3 - 2.5d * x2 + 1.0d));
+            double c1 = Math.floor(0.5d + scale * (-1.5d * x3 + 2.0d * x2 + 0.5d * x));
+            double c2 = Math.floor(0.5d + scale * (0.5d * x3 - 0.5d * x2));
+            lut[idx] = (int) ((cm1 < -scale) ? -scale : (Math.min(cm1, scale)));
+            lut[idx + 1] = (int) ((c0 < -scale) ? -scale : (Math.min(c0, scale)));
+            lut[idx + 2] = (int) ((c1 < -scale) ? -scale : (Math.min(c1, scale)));
+            lut[idx + 3] = (int) ((c2 < -scale) ? -scale : (Math.min(c2, scale)));
 
             // forces coefs-set to unity gain:
             int sum = lut[idx] + lut[idx + 1] + lut[idx + 2] + lut[idx + 3];

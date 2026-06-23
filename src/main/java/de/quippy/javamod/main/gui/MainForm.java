@@ -2668,11 +2668,11 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
      * @since 14.09.2008
      */
     private boolean loadMultimediaOrPlayListFile(URL mediaPLSFileURL) {
-        addFileToLastLoaded(mediaPLSFileURL);
         currentPlayList = null;
         try {
             currentPlayList = PlayList.createFromFile(mediaPLSFileURL, false, false);
             if (currentPlayList != null) {
+                addFileToLastLoaded(mediaPLSFileURL);
                 getPlaylistGUI().setNewPlaylist(currentPlayList);
                 return doNextPlayListEntry();
             }

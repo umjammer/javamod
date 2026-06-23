@@ -39,7 +39,7 @@ import javax.sound.midi.SysexMessage;
 
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Instrument;
-import de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory;
+import de.quippy.javamod.multimedia.mod.mixer.ChannelMemory;
 
 
 /**
