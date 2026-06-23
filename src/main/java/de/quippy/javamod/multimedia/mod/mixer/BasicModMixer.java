@@ -58,6 +58,7 @@ public abstract class BasicModMixer {
         public int channelNumber;
         public boolean muted, muteWasITforced;
         public boolean isNNA;
+        public ChannelMemory rampDownMemory; // will store last seen values for a short ramp down
 
         public PatternElement currentElement;
 
@@ -305,7 +306,7 @@ public abstract class BasicModMixer {
          * @since 30.03.2010
          */
         protected boolean isChannelActive() {
-            return !instrumentFinished /* && currentTuning != 0 */ && currentSample != null && channelNumber != -1;
+            return !instrumentFinished && currentTuning != 0 && currentSample != null && channelNumber != -1;
         }
 
         /**
@@ -383,7 +384,6 @@ public abstract class BasicModMixer {
     }
 
     protected ChannelMemory[] channelMemory;
-    protected ChannelMemory[] rampDownMemory; // if we need a ramp out of an instrument, we use this channelMemory
     protected int maxNNAChannels; // configured value: the complete amount of mixing channels
     protected int maxChannels;
 
@@ -537,21 +537,19 @@ public abstract class BasicModMixer {
             newMaxChannels += maxNNAChannels;
         if (newMaxChannels != maxChannels) {
             ChannelMemory[] newChannelMemory = new ChannelMemory[newMaxChannels];
-            ChannelMemory[] newRampDownMemory = new ChannelMemory[newMaxChannels];
 
             for (int c = 0; c < newMaxChannels; c++) {
                 if (c < maxChannels) {
                     newChannelMemory[c] = channelMemory[c];
-                    newRampDownMemory[c] = rampDownMemory[c];
                 } else {
                     newChannelMemory[c] = new ChannelMemory();
-                    newRampDownMemory[c] = new ChannelMemory();
-                    newRampDownMemory[c].isNNA = newChannelMemory[c].isNNA = true; // must be the default in this case...
+                    newChannelMemory[c].rampDownMemory = new ChannelMemory();
+                    newChannelMemory[c].rampDownMemory.isNNA =
+                            newChannelMemory[c].isNNA = true; // must be the default in this case...
                 }
             }
             channelMemory = newChannelMemory;
             maxChannels = newMaxChannels;
-            rampDownMemory = newRampDownMemory;
         }
     }
 
@@ -684,21 +682,20 @@ public abstract class BasicModMixer {
             }
         }
 
-        rampDownMemory = new ChannelMemory[maxChannels];
         channelMemory = new ChannelMemory[maxChannels];
         for (int c = 0; c < maxChannels; c++) {
-            ChannelMemory rampDownMemo = rampDownMemory[c] = new ChannelMemory();
-            rampDownMemo.channelNumber = c;
             ChannelMemory aktMemo = (channelMemory[c] = new ChannelMemory());
+            aktMemo.rampDownMemory = new ChannelMemory();
+            aktMemo.rampDownMemory.channelNumber = c;
             if (c < nChannels) {
-                rampDownMemo.isNNA = aktMemo.isNNA = false;
+                aktMemo.rampDownMemory.isNNA = aktMemo.isNNA = false;
                 aktMemo.channelNumber = c;
                 // initialize with global default panning and volume values (get overridden by effect or by instrument/sample settings)
                 aktMemo.currentInstrumentPanning = aktMemo.panning = mod.getPanningValue(c);
                 aktMemo.channelVolume = mod.getChannelVolume(c);
                 initializeMixer(c, aktMemo); // additional Mod specific initializations
             } else {
-                rampDownMemo.isNNA = aktMemo.isNNA = true;
+                aktMemo.rampDownMemory.isNNA = aktMemo.isNNA = true;
                 aktMemo.channelNumber = -1;
 //                aktMemo.instrumentFinished = true;
             }
@@ -908,7 +905,8 @@ public abstract class BasicModMixer {
         int result = 0;
         for (int i = 0; i < maxChannels; i++) {
             BasicModMixer.ChannelMemory aktMemo = channelMemory[i];
-            if (aktMemo != null && aktMemo.isChannelActive()) result++; // can happen - is a race condition, that aktMemo becomes NULL
+            if (aktMemo != null && (aktMemo.isChannelActive() || aktMemo.hasMidiOutput()))
+                result++; // can happen - is a race condition, that aktMemo becomes NULL
         }
         return result;
     }
@@ -1293,7 +1291,7 @@ public abstract class BasicModMixer {
     protected void initNoteFade(ChannelMemory aktMemo) {
         // do not reactivate a dead channel or reactivate a
         // running noteFade
-        if (!aktMemo.noteFade && aktMemo.isChannelActive() || aktMemo.hasMidiOutput()) {
+        if (!aktMemo.noteFade && (aktMemo.isChannelActive() || aktMemo.hasMidiOutput())) {
             aktMemo.fadeOutVolume = ModConstants.MAXFADEOUTVOLUME;
             aktMemo.noteFade = true;
         }
@@ -1302,7 +1300,7 @@ public abstract class BasicModMixer {
     /**
      * Calculates the size of the volume ramping we want to do
      */
-    private void calculateVolRampLen(ChannelMemory aktMemo) {
+    private void calculateVolRampLen(BasicModMixer.ChannelMemory aktMemo) {
         int targetVolLeft = aktMemo.actVolumeLeft;
         int targetVolRight = aktMemo.actVolumeRight;
 
@@ -1438,6 +1436,7 @@ public abstract class BasicModMixer {
             }
         }
 
+        // Even though a keyOff (===) releases the sustain (if any), it initializes a note fade additionally
         if (aktMemo.keyOff) initNoteFade(aktMemo);
 
         // Do the note fade
@@ -1452,6 +1451,7 @@ public abstract class BasicModMixer {
 
             // With IT a finished noteFade also sets the instrument as finished
             if (isIT && aktMemo.fadeOutVolume <= 0 && aktMemo.isChannelActive()) {
+                initRampDown(aktMemo);
                 aktMemo.instrumentFinished = true;
                 if (aktMemo.isNNA) aktMemo.channelNumber = -1;
             }
@@ -1961,6 +1961,9 @@ public abstract class BasicModMixer {
      * @since 19.06.2006
      */
     protected void resetInstrumentPointers(ChannelMemory aktMemo, boolean forceS3MZero) {
+        // init the ramp down of this channel
+        initRampDown(aktMemo);
+
         // Paula relevant event (8BitBubsy's startDMA)
         // in his implementation, the currentTuningPos is reset *after* calling refetchPeriod
         // end explicitly marked as necessary
@@ -1984,6 +1987,7 @@ public abstract class BasicModMixer {
             aktMemo.prevSampleOffset =
                     aktMemo.currentSamplePos = 0;
         }
+        // and ramp up of this one
         aktMemo.actRampVolLeft = aktMemo.actRampVolRight = 0;
         aktMemo.doFastVolRamp = true;
     }
@@ -2236,20 +2240,53 @@ public abstract class BasicModMixer {
     }
 
     /**
-     * Do we have a ramp down situation in a channel?
+     * start the ramp down TODO:
+     * @since 07.06.2026
+     * @param aktMemo
+     */
+    protected void initRampDown(final ChannelMemory aktMemo) {
+        final ChannelMemory rampDownMemo = aktMemo.rampDownMemory;
+        if (!aktMemo.instrumentFinished) {
+            rampDownMemo.instrumentFinished = aktMemo.instrumentFinished;
+            rampDownMemo.muted = aktMemo.muted;
+            rampDownMemo.currentTuning = aktMemo.currentTuning;
+            rampDownMemo.currentTuningPos = aktMemo.currentTuningPos;
+            rampDownMemo.currentSamplePos = aktMemo.currentSamplePos;
+            rampDownMemo.interpolationMagic = aktMemo.interpolationMagic;
+            rampDownMemo.isForwardDirection = aktMemo.isForwardDirection;
+            rampDownMemo.filter_A0 = aktMemo.filter_A0;
+            rampDownMemo.filter_B0 = aktMemo.filter_B0;
+            rampDownMemo.filter_B1 = aktMemo.filter_B1;
+            rampDownMemo.filter_HP = aktMemo.filter_HP;
+            rampDownMemo.filter_Y1 = aktMemo.filter_Y1;
+            rampDownMemo.filter_Y2 = aktMemo.filter_Y2;
+            rampDownMemo.filter_Y3 = aktMemo.filter_Y3;
+            rampDownMemo.filter_Y4 = aktMemo.filter_Y4;
+            rampDownMemo.actRampVolLeft = aktMemo.actRampVolLeft;
+            rampDownMemo.actRampVolRight = aktMemo.actRampVolRight;
+
+            // ramp down to silence
+            rampDownMemo.actVolumeLeft = rampDownMemo.actVolumeRight = 0;
+            rampDownMemo.doFastVolRamp = true;
+            calculateVolRampLen(rampDownMemo);
+        } else // just to be sure: if we want to ramp down a finished NNA channel, release it
+            if (aktMemo.isNNA) {
+                aktMemo.channelNumber = -1;
+            }
+    }
+
+    /**
+     * Prepare / copy last seen values for a ramp down
      *
-     * @param channelIndex we cannot use aktMemo.channelNumber for this as
-     *                     NNA have the corresponding master channel set here
-     *                     (or -1) if not active
      * @param aktMemo      the channel memory to copy from
      * @since 07.06.2026
      */
-    protected void prepareRampDown(int channelIndex, ChannelMemory aktMemo) {
-        ChannelMemory rampDownMemo = rampDownMemory[channelIndex];
-        rampDownMemo.setUpFrom(aktMemo);
-        rampDownMemo.actVolumeLeft = rampDownMemo.actVolumeRight = 0;
-        rampDownMemo.doFastVolRamp = true;
-        calculateVolRampLen(rampDownMemo);
+    protected void prepareRampDown(ChannelMemory aktMemo) {
+        ChannelMemory rampDownMemo = aktMemo.rampDownMemory;
+        rampDownMemo.currentSample = aktMemo.currentSample;
+        rampDownMemo.assignedInstrument = aktMemo.assignedInstrument;
+        // Do not mix it (yet!) - for instance because of note delay
+        rampDownMemo.instrumentFinished = true;
     }
 
     /**
@@ -2267,28 +2304,18 @@ public abstract class BasicModMixer {
         for (int c = 0; c < maxChannels; c++) {
             ChannelMemory aktMemo = channelMemory[c];
 
-            if (aktMemo.isNNA) {
-                // Do we have a ramp down situation?
-                if (!aktMemo.hasMidiOutput() && aktMemo.channelNumber != -1 && aktMemo.doFastVolRamp) {
-                    prepareRampDown(c, aktMemo);
-                }
-            } else { // no NNA Channel
+            if (!aktMemo.isNNA) {
+                // before overwriting everything, we need to copy certain values for a ramp down
+                prepareRampDown(aktMemo);
+
                 // get pattern and channel memory data for current channel
                 PatternElement element = aktMemo.currentElement = patternRow.getPatternElement(c);
-
-                // Do we have a ramp down situation?
-                if (!aktMemo.hasMidiOutput() &&
-                        aktMemo.isChannelActive() && !aktMemo.instrumentFinished &&
-                        aktMemo.hasNewNote() && !isPortaToNoteEffect(element.getEffect(), element.getEffectOp(), element.getVolumeEffect(), element.getVolumeEffectOp(), element.getPeriod())) {
-                    prepareRampDown(c, aktMemo);
-                }
 
                 // reset all effects on this channel
                 resetAllEffects(aktMemo, element);
 
                 if (element.getPeriod() > ModConstants.NO_NOTE) aktMemo.currentAssignedNotePeriod = element.getPeriod();
-                if (element.getNoteIndex() > ModConstants.NO_NOTE)
-                    aktMemo.currentAssignedNoteIndex = element.getNoteIndex();
+                if (element.getNoteIndex() > ModConstants.NO_NOTE) aktMemo.currentAssignedNoteIndex = element.getNoteIndex();
 
                 aktMemo.currentAssignedEffect = element.getEffect();
                 aktMemo.currentAssignedEffectParam = element.getEffectOp();
@@ -2670,7 +2697,7 @@ public abstract class BasicModMixer {
      * @param aktMemo memory
      * @since 18.06.2006
      */
-    protected void mixChannelIntoBuffers(long[] leftBuffer, long[] rightBuffer, int startIndex, int endIndex, BasicModMixer.ChannelMemory aktMemo) {
+    protected void mixChannelIntoBuffers(long[] leftBuffer, long[] rightBuffer, int startIndex, int endIndex, ChannelMemory aktMemo, boolean isRampDown) {
         for (int i = startIndex; i < endIndex; i++) {
             // Retrieve the sample data for this point (interpolated, if necessary)
             // the array "samples" is created with 2 elements per default
@@ -2716,6 +2743,9 @@ public abstract class BasicModMixer {
                 } else
                     aktMemo.actRampVolRight += aktMemo.deltaVolRight;
             }
+
+            if (isRampDown && aktMemo.deltaVolLeft == 0 && aktMemo.deltaVolRight == 0)
+                aktMemo.instrumentFinished = true;
 
             // do not store, if muted...
             if (!aktMemo.muted) {
@@ -2770,27 +2800,25 @@ public abstract class BasicModMixer {
 
             for (int c = 0; c < maxChannels; c++) {
                 ChannelMemory aktMemo = channelMemory[c];
+
+                // Ramp Down for this channel
+                ChannelMemory rampDownMemo = aktMemo.rampDownMemory;
+                if (rampDownMemo.isChannelActive() && !rampDownMemo.hasMidiOutput()) {
+                    mixChannelIntoBuffers(leftBuffer, rightBuffer, startIndex, endIndex, rampDownMemo, true);
+                    // if the ramp down was finished and this is an NNA Channel (note cut), we also release the NNA channel
+                    if (rampDownMemo.instrumentFinished && aktMemo.isNNA) {
+                        aktMemo.instrumentFinished = true;
+                        aktMemo.channelNumber = -1;
+                    }
+                }
+
                 boolean channelIsActive = aktMemo.isChannelActive();
                 boolean isPlayingMidi = aktMemo.hasMidiOutput();
                 aktMemo.bigSampleLeft = aktMemo.bigSampleRight = 0;
 
-                // Ramp Down for this channel?
-                ChannelMemory rampDownMemo = rampDownMemory[c];
-                if (rampDownMemo.isChannelActive()) {
-                    mixChannelIntoBuffers(leftBuffer, rightBuffer, startIndex, endIndex, rampDownMemo);
-                    if (rampDownMemo.actRampVolLeft == 0 && rampDownMemo.actRampVolRight == 0) {
-                        rampDownMemo.instrumentFinished = true;
-                        // also release the corresponding NNA Channel
-                        if (rampDownMemo.isNNA) {
-                            aktMemo.instrumentFinished = true;
-                            aktMemo.channelNumber = -1;
-                        }
-                    }
-                }
-
                 // Mix this channel?
                 if (channelIsActive && !isPlayingMidi)
-                    mixChannelIntoBuffers(leftBuffer, rightBuffer, startIndex, endIndex, aktMemo);
+                    mixChannelIntoBuffers(leftBuffer, rightBuffer, startIndex, endIndex, aktMemo, false);
 
                 // Now for some eye-candy
                 if (isPlayingMidi) {

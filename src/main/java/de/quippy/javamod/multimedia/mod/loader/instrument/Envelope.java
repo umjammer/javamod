@@ -283,7 +283,7 @@ public class Envelope {
      *
      * @param sustainPoint
      */
-    public void setSustainPoints_XM(int sustainPoint) {
+    public void setSustainPoint_XM(int sustainPoint) {
         this.sustainStartPoint = this.sustainEndPoint = sustainPoint;
     }
 
