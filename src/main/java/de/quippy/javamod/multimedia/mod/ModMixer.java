@@ -22,6 +22,10 @@
 
 package de.quippy.javamod.multimedia.mod;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import javax.sound.sampled.AudioFormat;
 
 import de.quippy.javamod.mixer.BasicMixer;
@@ -29,6 +33,7 @@ import de.quippy.javamod.mixer.dsp.iir.filter.Dither;
 import de.quippy.javamod.multimedia.mod.loader.Module;
 import de.quippy.javamod.multimedia.mod.midi.ModMidiMixer;
 import de.quippy.javamod.multimedia.mod.mixer.BasicModMixer;
+import vavi.io.OutputEngine;
 
 
 /**
@@ -542,5 +547,137 @@ public class ModMixer extends BasicMixer {
             if (modMidiMixer != null) modMidiMixer.closeOutputDevice();
             closeAudioDevice();
         }
+    }
+
+    @Override
+    public OutputEngine getOutputEngine() {
+        return new OutputEngine() {
+
+            private static final Logger logger = System.getLogger(ModMixer.class.getName());
+
+            /** target */
+            private OutputStream out;
+
+            SampleFrame samples;
+            long allSamplesWritten;
+            int count;
+
+            @Override
+            public void initialize(OutputStream out) throws IOException {
+                if (this.out != null) {
+                    throw new IOException("Already initialized");
+                } else {
+                    this.out = out;
+
+                    ModMixer.this.initialize();
+                    currentSamplesWritten = 0; // not in initialize which is also called at freq. changes
+
+                    setIsPlaying();
+
+                    if (getSeekPosition() > 0) seek(getSeekPosition());
+
+                    samples = new SampleFrame();
+
+                    // how many Samples can we write out? We will need that to reset the currentSamplesWritten if MOD is looped.
+                    long lengthInMS = getLengthInMilliseconds();
+                    allSamplesWritten = (lengthInMS != -1) ? lengthInMS * sampleRate / 1000L : -1;
+
+                    // If we do export to wave and do not want to play during that, do not fire any updates
+                    modMixer.setFireUpdates(exportFile == null || playDuringExport);
+                }
+            }
+
+            @Override
+            public void execute() throws IOException {
+                if (out == null) {
+                    throw new IOException("Not yet initialized");
+                } else {
+                    try {
+                        // get "count" values of 32 bit signed sample data for mixing
+                        count = modMixer.mixIntoBuffer(LBuffer, RBuffer, bufferSize);
+                        if (count > 0) {
+                            int ox = 0;
+                            int ix = 0;
+                            while (ix < count) {
+                                // get Sample and reset to zero - the samples are clipped
+                                samples.left = LBuffer[ix];
+                                LBuffer[ix] = 0;
+                                samples.right = RBuffer[ix];
+                                RBuffer[ix] = 0;
+                                ix++;
+
+                                // DC Removal
+                                if (doDCRemoval) modDSP.processDCRemoval(samples);
+
+                                // Noise Reduction with a simple high pass filter:
+                                if (doNoiseReduction) modDSP.processNoiseReduction(samples);
+
+                                // MegaBass
+                                if (doMegaBass) modDSP.processMegaBass(samples);
+
+                                // WideStereo Mixing - but only with stereo
+                                //if (doWideStereoMix && channels>1) modDSP.processWideStereo(samples);
+                                if (doWideStereoMix && channels > 1) modDSP.processStereoSurround(samples);
+
+                                // Reduce to sample size by dithering - if necessary!
+                                if (sampleSizeInBits < 32) { // our maximum - no dithering needed
+                                    samples.left = dither.process(samples.left, 0);
+                                    samples.right = dither.process(samples.right, 1);
+                                }
+
+                                // Clip the values to target:
+                                if (samples.left > maximum) samples.left = maximum;
+                                else if (samples.left < minimum) samples.left = minimum;
+                                if (samples.right > maximum) samples.right = maximum;
+                                else if (samples.right < minimum) samples.right = minimum;
+
+                                // and after that put them into the output buffer
+                                // to write to the sound stream
+                                if (channels == 2) {
+                                    for (int i = 0; i < rounds; i++) {
+                                        output[ox] = (byte) samples.left;
+                                        output[ox + rounds] = (byte) samples.right;
+                                        ox++;
+                                        samples.left >>= 8;
+                                        samples.right >>= 8;
+                                    }
+                                    ox += rounds; // skip saved right channel
+                                } else {
+                                    long sample = (samples.left + samples.right) >> 1;
+                                    for (int i = 0; i < rounds; i++) {
+                                        output[ox++] = (byte) sample;
+                                        sample >>= 8;
+                                    }
+                                }
+                            }
+
+                            out.write(output, 0, ox);
+
+                            currentSamplesWritten += count;
+                            // let's reset the amount of samples written if we did a loop...
+                            if (allSamplesWritten != -1 && currentSamplesWritten > allSamplesWritten)
+                                currentSamplesWritten -= allSamplesWritten;
+                        } else {
+                            out.close();
+                        }
+
+                        if (stopPositionIsReached()) {
+                            setIsStopping();
+                            out.close();
+                        }
+                    } catch (Throwable e) {
+                        logger.log(Level.ERROR, e.getMessage(), e);
+                        out.close();
+                    }
+                }
+            }
+
+            @Override
+            public void finish() throws IOException {
+                modMixer.setFireUpdates(false);
+                setIsStopped();
+                if (modMidiMixer != null) modMidiMixer.closeOutputDevice();
+            }
+        };
     }
 }

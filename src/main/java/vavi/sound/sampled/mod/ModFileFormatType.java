@@ -27,6 +27,7 @@ public class ModFileFormatType extends AudioFileFormat.Type {
 
     /**
      * Specifies an emulator audio file.
+     * TODO should be at MultimediaContainer
      */
     public static final ModFileFormatType MOD = new ModFileFormatType("MOD", "stk,nst,mod,wow,xm,far,mtm,stm,sts,stx,s3m,it,mptm,powerpacker");
 

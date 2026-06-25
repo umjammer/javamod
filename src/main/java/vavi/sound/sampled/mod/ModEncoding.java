@@ -24,6 +24,7 @@ public class ModEncoding extends AudioFormat.Encoding {
 
     private static final Logger logger = getLogger(ModEncoding.class.getName());
 
+    // TODO should be at *Mixer?
     public static final ModEncoding MOD = new ModEncoding("MOD");
     public static final ModEncoding OPL3 = new ModEncoding("OPL3");
     public static final ModEncoding SID = new ModEncoding("SID");
@@ -42,7 +43,7 @@ public class ModEncoding extends AudioFormat.Encoding {
     };
 
     public static ModEncoding valueOf(String name) {
-logger.log(Level.DEBUG, name);
+logger.log(Level.DEBUG, "encoding: " + name);
         return Arrays.stream(encodings).filter(e -> name.equalsIgnoreCase(e.toString())).findFirst().get();
     }
 }

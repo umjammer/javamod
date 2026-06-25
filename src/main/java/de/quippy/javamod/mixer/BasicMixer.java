@@ -25,6 +25,8 @@ package de.quippy.javamod.mixer;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 
+import vavi.io.OutputEngine;
+
 import static java.lang.System.getLogger;
 
 
@@ -276,12 +278,13 @@ public abstract class BasicMixer extends Mixer {
             return -1;
     }
 
-    /**
-     * @param milliseconds
-     * @see de.quippy.javamod.mixer.Mixer#setStopMillisecondPosition(long)
-     */
     @Override
     public void setStopMillisecondPosition(long milliseconds) {
         if (!isPlaying()) stopPosition = milliseconds;
+    }
+
+    @Override
+    public OutputEngine getOutputEngine() {
+        throw new UnsupportedOperationException();
     }
 }

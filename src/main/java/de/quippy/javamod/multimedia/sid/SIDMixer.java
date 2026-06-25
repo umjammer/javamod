@@ -40,6 +40,7 @@ import sidplay.audio.AudioDriver;
 import sidplay.audio.JWAVDriver.JWAVStreamDriver;
 import sidplay.ini.IniConfig;
 import sidplay.player.State;
+import vavi.io.OutputEngine;
 
 import static java.lang.System.getLogger;
 
@@ -328,5 +329,97 @@ logger.log(Level.DEBUG, "play: " + sidPlayer.stateProperty().get());
             closeAudioDevice();
 logger.log(Level.DEBUG, "exit startPlayback");
         }
+    }
+
+    @Override
+    public OutputEngine getOutputEngine() {
+        return new OutputEngine() {
+
+            /** target */
+            private OutputStream out;
+
+            OutputStream os;
+
+            @Override
+            public void initialize(OutputStream out) throws IOException {
+                if (this.out != null) {
+                    throw new IOException("Already initialized");
+                } else {
+                    this.out = out;
+
+                    //
+                    SIDMixer.this.initialize();
+                    int bufferSize = sampleRate;
+                    int byteBufferSize = (isStereo) ? bufferSize : bufferSize << 1;
+                    setSourceLineBufferSize(byteBufferSize);
+
+                    parentSIDContainer.nameChanged();
+                    setIsPlaying();
+
+                    if (getSeekPosition() > 0) seek(getSeekPosition());
+
+                    os = new OutputStream() {
+                        @Override
+                        public void write(int b) throws IOException {
+                            byte[] buf = new byte[] {(byte) b};
+                            write(buf, 0, 1);
+                        }
+
+                        @Override
+                        public void write(byte[] b, int off, int len) throws IOException {
+                            try {
+logger.log(Level.TRACE, "write: " + len + ", " + sidPlayer.stateProperty().get());
+                                out.write(b, off, len);
+                            } catch (Exception e) {
+logger.log(Level.TRACE, "stream closed?: " + sidPlayer.stateProperty().get() + ", " + e);
+                            }
+                        }
+                    };
+
+                    AudioDriver audioDriver = sidConfig.getAudioSection().getAudio().getAudioDriver();
+logger.log(Level.TRACE, "audioDriver: " + audioDriver);
+                    if (!(audioDriver instanceof JWAVStreamDriver streamDriver)) {
+                        throw new IllegalStateException("unsupported audio driver: " + audioDriver);
+                    }
+
+                    streamDriver.setOut(os);
+
+                    sidPlayer.play(sidTune); // TODO do single thread decoding
+                    while (sidPlayer.stateProperty().get() != State.PLAY) {
+                        try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
+                    }
+                }
+            }
+
+            @Override
+            public void execute() throws IOException {
+                if (out == null) {
+                    throw new IOException("Not yet initialized");
+                } else {
+                    try {
+                        if (sidPlayer.stateProperty().get() == State.PLAY) {
+                            try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
+                        } else {
+                            setHasFinished(); // Piece was played full
+                            out.close();
+                        }
+                    } catch (Throwable e) {
+                        logger.log(Level.ERROR, e.getMessage(), e);
+                        out.close();
+                    }
+                }
+            }
+
+            @Override
+            public void finish() throws IOException {
+                try {
+                    os.close();
+                } catch (IOException e) {
+                    logger.log(Level.ERROR, e);
+                }
+                sidPlayer.quit();
+                setIsStopped();
+            }
+        };
     }
 }
