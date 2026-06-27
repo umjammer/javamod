@@ -193,9 +193,9 @@ public class ScreamTrackerMixer extends BasicModMixer {
                     } else if (newPeriod <= 0)
                         aktMemo.currentTuning = 0;
                     else
-                        aktMemo.currentTuning = globalTuning / ((newPeriod < aktMemo.portaStepUpEnd) ? aktMemo.portaStepUpEnd : newPeriod);
+                        aktMemo.currentTuning = globalTuning / (Math.max(newPeriod, aktMemo.portaStepUpEnd));
                 } else
-                    aktMemo.currentTuning = globalTuning / ((newPeriod > aktMemo.portaStepDownEnd) ? aktMemo.portaStepDownEnd : (newPeriod < aktMemo.portaStepUpEnd) ? aktMemo.portaStepUpEnd : newPeriod);
+                    aktMemo.currentTuning = globalTuning / ((newPeriod > aktMemo.portaStepDownEnd) ? aktMemo.portaStepDownEnd : Math.max(newPeriod, aktMemo.portaStepUpEnd));
                 break;
 
             default:

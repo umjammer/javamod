@@ -188,7 +188,7 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
     }
 
     /**
-     * @return gentleman agreement: Object[] { String::songname, Long::duration }
+     * @return "songname", "duration"
      */
     @Override
     public Map<String, Object> getSongInfosFor(URL url) {

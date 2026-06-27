@@ -1063,7 +1063,7 @@ public abstract class BasicModMixer {
                 boolean volEnvOn = (aktMemo.tempVolEnv != -1) ? aktMemo.tempVolEnv == 1 : volumeEnv.on;
                 if (volEnvOn) {
                     long volPos = volumeEnv.updatePosition(aktMemo, aktMemo.volEnvTick, aktMemo.volXMEnvPos, true);
-                    aktMemo.volEnvTick = (int) (volPos & 0xffffffffL);
+                    aktMemo.volEnvTick = (int) (volPos & 0xffff_ffffL);
                     aktMemo.volXMEnvPos = (int) (volPos >> 32);
                     int newVol = volumeEnv.getValueForPosition(aktMemo.volEnvTick, aktMemo.volXMEnvPos); // 0..512
                     currentVolume = (currentVolume * newVol) >> 9;
@@ -1084,7 +1084,7 @@ public abstract class BasicModMixer {
                 boolean panEnvOn = (aktMemo.tempPanEnv != -1) ? aktMemo.tempPanEnv == 1 : panningEnv.on;
                 if (panEnvOn) {
                     long panPos = panningEnv.updatePosition(aktMemo, aktMemo.panEnvTick, aktMemo.panXMEnvPos, false);
-                    aktMemo.panEnvTick = (int) (panPos & 0xffFFFFFF);
+                    aktMemo.panEnvTick = (int) (panPos & 0xffff_ffffL);
                     aktMemo.panXMEnvPos = (int) (panPos >> 32);
                     int newPanValue = panningEnv.getValueForPosition(aktMemo.panEnvTick, aktMemo.panXMEnvPos) - 256; // result -256..256
                     currentPanning += (newPanValue * ((currentPanning >= 128) ? (256 - currentPanning) : currentPanning)) >> 8;

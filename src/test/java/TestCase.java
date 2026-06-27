@@ -123,8 +123,8 @@ Debug.println("sampleRate: " + mixer.getCurrentSampleRate() + ", channels: " + m
      * @param ext separated by ','
      */
     static List<Path> listFilesUnderDirFilteredByExt(String dir, String ext) {
-        Debug.println("dir: " + dir);
-        Debug.println("ext: " + ext);
+//Debug.println("dir: " + dir);
+//Debug.println("ext: " + ext);
         Predicate<Path> x = p -> Arrays.stream(ext.split(",")).anyMatch(e -> p.getFileName().toString().toLowerCase().endsWith(e));
         return Arrays.stream(dir.split(File.pathSeparator)).flatMap(d -> {
             try {
