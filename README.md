@@ -156,25 +156,30 @@ JavaMod incorporates modified versions of the following libraries:
   * scrambled sound (especially with PipeWire)
 * With KDE:
   * JDialogs, when set visible, will not come to front
-  * and Wayland: TrayIcon technology not implemented in JAVA. Please deactivate
-    TrayIcons with KDE or Wayland - if others (like ICEWM) have the same topic
-    is not tested
+  * and Wayland:
+      * TrayIcon technology not implemented in JAVA. Please deactivate
+        TrayIcons with KDE or Wayland - if others (like ICEWM) have the same topic
+        is not tested
+      * Dialogs have a saved location, but move around nevertheless
 * Tray Icon: mouse wheel (volume control) & keyboard shortcuts do not work
   because of Java TrayIcon using xembed instead of SNI, TrayIcon events like
   mouse clicks are not reaching the application. There is no suitable workaround
 
 ## Planned:
 * finish loading of OMPT extended instrument / song data / mixer data
-* reading at least Midi Config with XMs / ITs
+  (only three fields are missing!)
 * VSTiVolume, SamplePreAmp, MixLevels - look, what OMPT has to say
-* check for further missing MPTM Effects like Reverb and Surround commands
+  (already quite good at it - but not at 100% I guess)
+* implement further missing MPTM Effects like Reverb and Surround commands
 * optimize recognition of different trackers - for whatever that is worth it
+  (already quite good at it - but there are still wrong recognitions)
 * Quad Speaker mixing (rear speakers)
 * + LongList:
-  * Midi and AdLib/OPL with Mods
+  * AdLib/OPL with Mods
   * WavPack and MusePack support
   * MO3 support
   * read from 7z archives
+  * support external saved samples (needs MP3, FLAC, ... loading)
 
 ---
 

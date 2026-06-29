@@ -1,9 +1,15 @@
-# JavaMod V3.9.7
+# JavaMod V3.9.7 Epsilon
 
 ## New in Version 3.9.7
 * FIX: Complete overhaul of volume ramping - got rid of the default
        "interweaving" technology
-* FIX: Bidi Loops and interpolation was still wrong.
+* FIX: Bidi Loops and interpolation was still wrong - especially when a bidi
+       loop is very small and a high pitched note is being played
+* FIX: Instrument Sample Player respects doKeyOff specials of FT2 now
+* NEW: ChannelMemory moved to its own class file now
+* NEW: complete overhaul on WindowedFIR (8 taps + Low Pass) interpolation
+* NEW: Export to Wave got a cancel button. Export will stop after current file
+* NEW: optimized performance in mixing routine
 
 ## New in Version 3.9.6
 * FIX: Playlists are now saved in ANSI cp1252 - not ISO-8859-1.
