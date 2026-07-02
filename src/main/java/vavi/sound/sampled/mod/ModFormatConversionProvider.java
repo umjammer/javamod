@@ -29,20 +29,20 @@ public class ModFormatConversionProvider extends FormatConversionProvider {
 
     @Override
     public Encoding[] getSourceEncodings() {
-        return Stream.concat(Arrays.stream(encodings), Stream.of(PCM_SIGNED))
+        return Stream.concat(encodings.stream(), Stream.of(PCM_SIGNED))
                 .toArray(Encoding[]::new);
     }
 
     @Override
     public Encoding[] getTargetEncodings() {
-        return Stream.concat(Arrays.stream(encodings), Stream.of(PCM_SIGNED))
+        return Stream.concat(encodings.stream(), Stream.of(PCM_SIGNED))
                 .toArray(Encoding[]::new);
         }
 
     @Override
     public Encoding[] getTargetEncodings(AudioFormat sourceFormat) {
         if (sourceFormat.getEncoding().equals(PCM_SIGNED)) {
-            return Arrays.stream(encodings).toArray(Encoding[]::new);
+            return encodings.toArray(Encoding[]::new);
         } else if (sourceFormat.getEncoding() instanceof ModEncoding) {
             return new Encoding[] {PCM_SIGNED};
         } else {

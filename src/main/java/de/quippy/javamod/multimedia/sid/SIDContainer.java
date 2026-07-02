@@ -31,6 +31,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import javax.sound.sampled.AudioFileFormat.Type;
+import javax.sound.sampled.AudioFormat.Encoding;
 import javax.swing.JPanel;
 
 import de.quippy.javamod.io.SpiModfileInputStream;
@@ -42,6 +44,8 @@ import de.quippy.javamod.multimedia.SpiMultimediaContainer;
 import libsidplay.sidtune.SidTune;
 import libsidplay.sidtune.SidTuneError;
 import libsidplay.sidtune.SidTuneInfo;
+import vavi.sound.sampled.mod.ModEncoding;
+import vavi.sound.sampled.mod.ModFileFormatType;
 
 import static java.lang.System.getLogger;
 
@@ -287,5 +291,15 @@ logger.log(Level.DEBUG, e.getMessage(), e);
 
     @Override
     public void playBackStopped() {
+    }
+
+    @Override
+    public Encoding getEncoding() {
+        return new ModEncoding("SID");
+    }
+
+    @Override
+    public Type getType() {
+        return new ModFileFormatType("SID", "sid");
     }
 }

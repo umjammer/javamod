@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.sound.midi.MidiDevice;
+import javax.sound.sampled.AudioFileFormat.Type;
+import javax.sound.sampled.AudioFormat.Encoding;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
@@ -225,6 +227,16 @@ public abstract class MultimediaContainer {
      * @since 12.10.2007
      */
     public abstract Mixer createNewMixer();
+
+    /** for spi */
+    public Encoding getEncoding() {
+        return null;
+    }
+
+    /** for spi */
+    public Type getType() {
+        return null;
+    }
 
     @Override
     public String toString() {

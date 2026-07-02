@@ -7,8 +7,12 @@
 package vavi.sound.sampled.mod;
 
 import java.lang.System.Logger;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
 import javax.sound.sampled.AudioFileFormat;
+
+import de.quippy.javamod.multimedia.MultimediaContainer;
 
 import static java.lang.System.getLogger;
 
@@ -26,34 +30,26 @@ public class ModFileFormatType extends AudioFileFormat.Type {
     private static final Logger logger = getLogger(ModFileFormatType.class.getName());
 
     /**
-     * Specifies an emulator audio file.
-     * TODO should be at MultimediaContainer
-     */
-    public static final ModFileFormatType MOD = new ModFileFormatType("MOD", "stk,nst,mod,wow,xm,far,mtm,stm,sts,stx,s3m,it,mptm,powerpacker");
-
-    /**
-     * Specifies a sid audio file.
-     */
-    public static final ModFileFormatType SID = new ModFileFormatType("SID", "sid");
-
-    /*
-     * Specifies an opl audio file.
-     */
-    public static final ModFileFormatType OPL3 = new ModFileFormatType("OPL3", "rol,laa,cmf,dro,sci");
-
-    /**
      * Constructs a file type.
      *
      * @param name      the name of the emulator audio File Format.
      * @param extension the file extension for this emulator audio File Format.
      */
-    private ModFileFormatType(String name, String extension) {
+    public ModFileFormatType(String name, String extension) {
         super(name, extension);
     }
 
-    private static final ModFileFormatType[] types = {MOD, SID, OPL3};
+    private static final List<ModFileFormatType> types = new ArrayList<>();
+
+    static {
+        for (var fileFormat : ServiceLoader.load(MultimediaContainer.class)) {
+            if (fileFormat.getType() != null) {
+                types.add((ModFileFormatType) fileFormat.getType());
+            }
+        }
+    }
 
     public static ModFileFormatType valueOf(String name) {
-        return Arrays.stream(types).filter(t -> name.equalsIgnoreCase(t.toString())).findFirst().orElseThrow();
+        return types.stream().filter(t -> name.equalsIgnoreCase(t.toString())).findFirst().orElseThrow();
     }
 }

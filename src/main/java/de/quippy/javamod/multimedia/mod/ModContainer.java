@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.Properties;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiDevice.Info;
+import javax.sound.sampled.AudioFileFormat.Type;
+import javax.sound.sampled.AudioFormat.Encoding;
 
 import de.quippy.javamod.io.SpiModfileInputStream;
 import de.quippy.javamod.mixer.Mixer;
@@ -48,6 +50,8 @@ import de.quippy.javamod.multimedia.mod.loader.Module;
 import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
 import de.quippy.javamod.multimedia.mod.midi.ModMidiMixer;
 import de.quippy.javamod.system.Helpers;
+import vavi.sound.sampled.mod.ModEncoding;
+import vavi.sound.sampled.mod.ModFileFormatType;
 
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.getLogger;
@@ -457,5 +461,15 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
     @Override
     public void cleanUp() {
         unwireListeners();
+    }
+
+    @Override
+    public Encoding getEncoding() {
+        return new ModEncoding("MOD");
+    }
+
+    @Override
+    public Type getType() {
+        return new ModFileFormatType("MOD", "stk,nst,mod,wow,xm,far,mtm,stm,sts,stx,s3m,it,mptm,powerpacker");
     }
 }

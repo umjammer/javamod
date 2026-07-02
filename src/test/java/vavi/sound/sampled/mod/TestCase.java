@@ -191,7 +191,7 @@ Debug.println(pcmAis.getClass().getName());
     void test2() throws Exception {
         URL url = Paths.get(mod).toUri().toURL();
         AudioInputStream ais = AudioSystem.getAudioInputStream(url);
-        assertEquals(ModEncoding.MOD, ais.getFormat().getEncoding());
+        assertEquals(ModEncoding.valueOf("MOD"), ais.getFormat().getEncoding());
     }
 
     @Test
@@ -199,7 +199,7 @@ Debug.println(pcmAis.getClass().getName());
     void test3() throws Exception {
         File file = Paths.get(mod).toFile();
         AudioInputStream ais = AudioSystem.getAudioInputStream(file);
-        assertEquals(ModEncoding.MOD, ais.getFormat().getEncoding());
+        assertEquals(ModEncoding.valueOf("MOD"), ais.getFormat().getEncoding());
     }
 
     @Test
