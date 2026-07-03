@@ -21,9 +21,9 @@
 | opl    | ROL, LAA, CMF, DRO, SCI                                                     |   ✅    |           ✅           | this                                                         | [opl3 class is duplicated](https://github.com/umjammer/vavi-sound-sandbox) | gbc,spc are not tested       |
 | opl    | HSC, SNG, D00, ADL, RAD                                                     |   🚫   |                       |                                                              |
 | sid    | SID                                                                         |   ✅    |           ✅           | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)           | RSID?                                                                      |
-| vgm    | VGM, GBC, NSF, SPC, KSS                                                     |   ✅    | ✅&nbsp;<sup>[1]</sup> | [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu) |                                                                            |
+| vgm    | VGM, GBC, NSF, SPC, KSS, GYM, SAP                                           |   ✅    | ✅&nbsp;<sup>[1]</sup> | [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu) |                                                                            |
 
-<sub>[1] implemented in [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu)</sub>
+<sub>[1] the spi is implemented in [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu)</sub>
 
 ### opl chips
 
@@ -72,9 +72,10 @@
 
 * https://github.com/quippy-git/javamod
 * https://github.com/martincameron/micromod
+* https://github.com/Walkyst/ibxm-fork
+* https://github.com/martincameron/Tracker3
 * https://github.com/PotcFdk/JSIDPlay2 → [patched](https://github.com/umjammer/JSIDPlay2)
 * https://modarchive.org/ (mod download)
-* https://github.com/Walkyst/ibxm-fork
 * https://github.com/OpenMPT/openmpt
 
 ## TODO
@@ -87,6 +88,7 @@
 * rename to vavi-sound-mod
 * ~~upstream made large update~~
 * system property that off opl spi
+* ~~make SidMixer single thread~~
 
 ---
 
