@@ -1,24 +1,75 @@
-# JavaMod V3.9.6 Epsilon
+# JavaMod V3.9.7 Epsilon
+
+## New in Version 3.9.7
+* FIX: Complete overhaul of volume ramping - got rid of the default
+       "interweaving" technology
+* FIX: Bidi Loops and interpolation was still wrong - especially when a bidi
+       loop is very small and a high pitched note is being played
+* FIX: Instrument Sample Player respects doKeyOff specials of FT2 now
+* NEW: ChannelMemory moved to its own class file now
+* NEW: complete overhaul on WindowedFIR (8 taps + Low Pass) interpolation
+* NEW: Export to Wave got a cancel button. Export will stop after current file
+* NEW: optimized performance in mixing routine
+
+## New in Version 3.9.6
 * FIX: Playlists are now saved in ANSI cp1252 - not ISO-8859-1.
 * FIX: Multichannel Mods considered too many ProTracker Quirks. Ignore illegal
-  note delay, tempo changes handled on first tick, no on the fly sample
-  swap
+       note delay, tempo changes handled on first tick, no on the fly sample
+       swap
 * FIX: ProTracker-Mods with non-ProTracker-periods should be played as XMs. The
-  change during loading was however not considered properly
+       change during loading was however not considered properly
 * FIX: Now using PAL PAULA Frequencies for calculating the player tuning with
-  ProTracker MODs (AMIGA_TABLE), i.e. the amount of samples needed to reach
-  the real note.
-  In that turn we cleaned up the code - also with ScreamTracker
-* FIX: GlobalVolumeSlides in FastTracker are "NOT ON TICK 0" -
-  not "ONLY ON TICK 0"
+       ProTracker MODs (AMIGA_TABLE), i.e. the amount of samples needed to reach
+       the real note.
+       In that turn we cleaned up the code - also with ScreamTracker
 * FIX: Optimized FastMath
+* FIX: XM: GlobalVolumeSlides in FastTracker are "NOT ON TICK 0" -
+           not "ONLY ON TICK 0"
+* FIX: XM: loading of instruments was blocked if no sample data present. That is
+           not a good idea.
+* FIX: XM saved with OMPT were played far too loud, version detection optimized
+* NEW: Mixing levels set with OMPT are read (XMex, S3MEx, ITex, MPTM) and set
+* FIX: XM: instrument header length considered
+* FIX: OMPT saves Global Volume in extended instrument values - uses 1..64,
+       but JavaMod needs 0..128
+* FIX: IT: Do not check for magic IMPS - IT doesn't as well and some trackers
+       even do not write it
+* FIX: IT: Even if the sample size is zero, jump to the loading point of non
+       existent sample data
+* FIX: IT: set more default values with old instrument format
+* FIX: Loading of s3m - removing unused channels - it's 0x19 - damn!
+* FIX: Error in loading patch.003-files for Sierra SCIs - URL does not behave
+       anymore (no decoding of URL "%20" etc)
+* FIX: Positions jumps exceeding song length mean "go to restart position"
+* FIX: Because of envModifiers we need OMPTs way of Resonance and Filters.
+       LUTs are now correctly calculated.
+* FIX: OMPT supports marker pattern. That influences the values of PositionJump.
+       So we cannot just throw them out, we need to keep them.
+* FIX: STM set tempo/bpm handling was wrong because of wrong version setting,
+       overwriting the low version number
+* FIX: Ping Pong Loops and interpolation magic had an error - so why not
+       overhaul that completely. Added Kaiser Window with 16 taps. The Windowed
+       FIR interpolation is still existing but moved in favour of Kaiser.
+* NEW: added missing effects of OMPT: setFinetune, setSmoothFinetune and
+       Note Delay&Cut
+* NEW: added MixingLevels of OMPT, XMs and ITs make use of that
 * NEW: Properties file is written in sorted order, for whatever that is good for
 * NEW: Amiga 500 and Amiga 1200 Filters added. We use Paula-emulation from
-  8BitBubsy/Aciddose implementation. Is only used if Mod is an AMIGA MOD
+       8BitBubsy/Aciddose implementation. Is only used if Mod is an AMIGA MOD
 * NEW: Dithering configuration is moved to a config sub dialog
 * NEW: Dithering was changed to an integer version to gain more performance
 * NEW: Introduction of SampleFrame to avoid something like long[] to retrieve
-  sample data
+       sample data
+* NEW: Sinc 8 and 16 taps - Windowed FIR is still on the menu
+* NEW: MIDI Data (XM, IT, MPTM), Midi Macros, all loaded, interpreted and send
+       to a selected MIDI device.
+       Remarks:
+       - Select a MIDI device in the MOD config dialog. The MIDI-device for
+         MIDI playback is handled separately.
+       - With Gervill you can select a soundfont SF2-File
+       - Gervill is not quite good at time sync
+* NEW: Instrument Dialog got some fancy sliders for some values plus nice
+       tooltip texts
 
 ## New in Version 3.9.5
 * NEW: Audio CD rips with CloneCD create an image file ending with IMG. That is

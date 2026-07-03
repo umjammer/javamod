@@ -57,13 +57,21 @@ public class ModConstants {
     public static final int XM_LINEAR_TABLE = 0x20;
 
     // Mod Types
-    public static final int MODTYPE_MOD = 0x01;
-    public static final int MODTYPE_XM = 0x02;
-    public static final int MODTYPE_STM = 0x04;
-    public static final int MODTYPE_S3M = 0x08;
-    public static final int MODTYPE_IT = 0x10;
-    public static final int MODTYPE_OMPT = 0x20; // OpenModPlugTracker
-    public static final int MODTYPE_MPT = 0x40; // ModPlugTracker - LEGACY
+    public static final int MODTYPE_MOD = 0x0001;
+    public static final int MODTYPE_XM = 0x0002;
+    public static final int MODTYPE_STM = 0x0004;
+    public static final int MODTYPE_S3M = 0x0008;
+    public static final int MODTYPE_IT = 0x0010;
+    public static final int MODTYPE_OMPT = 0x0020; // OpenModPlugTracker
+    public static final int MODTYPE_MPT = 0x0040; // ModPlugTracker - LEGACY
+    public static final int MODTYPE_MIX_Original = 0x0100; // Olivier's version gives us floats in [-0.5; 0.5] and slightly saturates VSTis.
+    public static final int MODTYPE_MIX_v1_17RC1 = 0x0200; // Ericus' version gives us floats in [-0.06; 0.06] and requires attenuation to avoid massive VSTi saturation.
+    public static final int MODTYPE_MIX_v1_17RC2 = 0x0400; // 1.17RC2 gives us floats in [-1.0; 1.0] and hopefully plays VSTis at the right volume... but we attenuate by 2x to approx. match sample volume.
+    public static final int MODTYPE_MIX_v1_17RC3 = 0x0800; // 1.17RC3 ignores the horrible global, system-specific pre-amp, treats panning as balance to avoid saturation on loud sample and allows display of attenuation in decibels.
+    public static final int MODTYPE_MIX_Compatible = 0x1000; // A mixmode that is intended to be compatible to legacy trackers (IT/FT2/etc). This is basically derived from mixmode 1.17 RC3, with panning mode and volume levels changed. Sample attenuation is the same as in Schism Tracker (more attenuation than with RC3, thus VSTi attenuation is also higher).
+    public static final int MODTYPE_MIX_CompatibleFT2 = 0x2000; // A mixmode that is intended to be compatible to legacy trackers (IT/FT2/etc). This is basically derived from mixmode 1.17 RC3, with panning mode and volume levels changed. Sample attenuation is the same as in Schism Tracker (more attenuation than with RC3, thus VSTi attenuation is also higher).
+    public static final int MODTYPE_MIX_ALL_LEGACY = MODTYPE_MIX_Original | MODTYPE_MIX_v1_17RC1 | MODTYPE_MIX_v1_17RC2;
+
     public static final int MODTYPE_FASTTRACKER = MODTYPE_MOD | MODTYPE_XM;
     public static final int MODTYPE_SCREAMTRACKER = MODTYPE_S3M | MODTYPE_STM;
     public static final int MODTYPE_IMPULSETRACKER = MODTYPE_IT | MODTYPE_SCREAMTRACKER;
@@ -90,6 +98,7 @@ public class ModConstants {
     // Panning values for old ProTracker and STMs / S3Ms
     public static final int OLD_PANNING_LEFT = 0;                                // 0: full left, 64: quarter left
     public static final int OLD_PANNING_RIGHT = 256 - OLD_PANNING_LEFT;
+    public static final int PANNING_CENTER = 128;
     // Special panning values for S3M and IT
     public static final int CHANNEL_IS_MUTED = 0x80 << 2;                            // IT and S3M use this
     public static final int CHANNEL_IS_SURROUND = 100 << 2;                            // IT uses this (YES, not hex!)
@@ -100,9 +109,9 @@ public class ModConstants {
     public static final int MAX_SAMPLE_VOL = MAXSAMPLEVOLUME;                    // and its corresponding max
     public static final int MIN_SAMPLE_VOL = 0;                                // and min values (in this case "zero" is 3)
     public static final int VOLUMESHIFT = 6;                                // this is the shift done in processEnvelopes
-    public static final int MAXCHANNELVOLUME = MAX_SAMPLE_VOL << VOLUMESHIFT;    // plus the max (reflecting VOLUME_INIT_SHIFT)
+    public static final int MAXCHANNELVOLUME = MAX_SAMPLE_VOL << VOLUMESHIFT;    // plus the max (reflecting VOLUMESHIFT)
     public static final int MINCHANNELVOLUME = 0;                                // and min value for clipping ((1<<VOLUMESHIFT)-1: could be a better value
-    // This is the final SHIFT before rendering into buffers for reducing VOLUMESHIFT (64), VOLUME_INIT_SHIFT (4), MAXCHANNELVOLUME (64) -1 because of extraAttenuation of 0 for OMPT
+    // This is the final SHIFT before rendering into buffers for reducing the extra VOLUMESHIFT (64) + MAXSAMPLEVOLUME (64) -1 because of extraAttenuation of 0 for OMPT
     public static final int MAXVOLUMESHIFT = VOLUMESHIFT + 6 - 1;
 
     public static final int MAXFADEOUTVOLSHIFT = 16; // This is for loop fade out *and* NOTE_FADE!!!
@@ -124,12 +133,20 @@ public class ModConstants {
     public static final int INTERPOLATION_NONE = 0;
     public static final int INTERPOLATION_LINEAR = 1;
     public static final int INTERPOLATION_CUBIC = 2;
-    public static final int INTERPOLATION_KAISER = 3;
+    public static final int INTERPOLATION_KAISER_8 = 3;
     public static final int INTERPOLATION_WINDOWSFIR = 4;
+    public static final int INTERPOLATION_KAISER_16 = 5;
     // AmigaEmulation
     public static final int AMIGAEMULATION_NONE			= 0;
     public static final int AMIGAEMULATION_AMIGA500		= 1;
     public static final int AMIGAEMULATION_AMIGA1200	= 2;
+    // Interpolation / Emulation Strings for display
+    public static final String[] INTERPOLATION = {
+            "None", "Linear", "Cubic", "Sinc 8 taps", "Sinc 8 + Low Pass", "Sinc 16 taps"
+    };
+    public static final String[] AMIGA_EMULATION = {
+            "None", "Amiga 500", "Amiga 1200"
+    };
 
     //Paula: main crystal oscillator for PAL Amiga systems
     public static final double AMIGA_PAL_XTAL_HZ = 28375160;
@@ -142,9 +159,6 @@ public class ModConstants {
 //    public static final int PAL_PAULA_MIN_SAFE_PERIOD = 124;
 //    public static final double PAL_PAULA_MAX_HZ = (PAULA_PAL_CLK / (double) PAL_PAULA_MIN_PERIOD);
 //    public static final double PAL_PAULA_MAX_SAFE_HZ = (PAULA_PAL_CLK / (double) PAL_PAULA_MIN_SAFE_PERIOD);
-
-    public static final int INTERWEAVE_FRAC = 4;
-    public static final int INTERWEAVE_LEN = 1 << INTERWEAVE_FRAC;
 
     // The volume ramping constants
     public static final int VOLRAMPLEN_FRAC = 12;
@@ -194,11 +208,17 @@ public class ModConstants {
 
     // KeyOff and NoteCut values
     public static final int NO_NOTE = 0;
+    public static final int NOTE_MIN = 1;
+    public static final int NOTE_MAX = 120;
+    public static final int NOTE_MIDDLEC = (5 * 12 + NOTE_MIN);
     public static final int KEY_OFF = -1;
     public static final int NOTE_CUT = -2;
     public static final int NOTE_FADE = -3;
     public static final int NOTE_PC = -4; // TODO: Param Control 'note'. Changes param value on first tick.
     public static final int NOTE_PCS = -5; // TODO: Param Control (Smooth) 'note'. Interpolates param value during the whole row.
+
+    public static final int INVALID_PAT_INDEX = 0xFFFF; // The Open Modplug tracker marker pattern in the order list
+    public static final int IGNORE_PAT_INDEX = INVALID_PAT_INDEX - 1;
 
     // Filter Modes
     public static final int FLTMODE_LOWPASS = 0;
@@ -214,21 +234,22 @@ public class ModConstants {
     public static final double TWO_PI = 2.0d * Math.PI;
 
     // Module flags
-    public static final int SONG_EMBEDMIDICFG = 0x00001;
-    public static final int SONG_FASTVOLSLIDES = 0x00002;
-    public static final int SONG_ITOLDEFFECTS = 0x00004;
-    public static final int SONG_ITCOMPATMODE = 0x00008;
-    public static final int SONG_LINEARSLIDES = 0x00010;
-    public static final int SONG_EXFILTERRANGE = 0x00020;
-    public static final int SONG_AMIGALIMITS = 0x00040;
-    public static final int SONG_ISSTEREO = 0x00080;
-    public static final int SONG_USEINSTRUMENTS = 0x00100;
-    public static final int SONG_ST2VIBRATO = 0x00200;
-    public static final int SONG_ST2TEMPO = 0x00400;
-    public static final int SONG_AMIGASLIDES = 0x00800;
-    public static final int SONG_VOL0MIXOPTI = 0x01000;
-    public static final int SONG_USEMIDIPITCH = 0x02000;
-    public static final int SONG_S3M_GUS = 0x80000;
+    public static final int SONG_EMBEDMIDICFG = 0x00000001;
+    public static final int SONG_FASTVOLSLIDES = 0x00000002;
+    public static final int SONG_ITOLDEFFECTS = 0x00000004;
+    public static final int SONG_ITCOMPATMODE = 0x00000008;
+    public static final int SONG_LINEARSLIDES = 0x00000010;
+    public static final int SONG_EXFILTERRANGE = 0x00000020;
+    public static final int SONG_AMIGALIMITS = 0x00000040;
+    public static final int SONG_ISSTEREO = 0x00000080;
+    public static final int SONG_USEINSTRUMENTS = 0x00000100;
+    public static final int SONG_ST2VIBRATO = 0x00000200;
+    public static final int SONG_ST2TEMPO = 0x00000400;
+    public static final int SONG_AMIGASLIDES = 0x00000800;
+    public static final int SONG_VOL0MIXOPTI = 0x00001000;
+    public static final int SONG_USEMIDIPITCH = 0x00002000;
+    public static final int SONG_FT2VOLUMERAMPING = 0x00004000;
+    public static final int SONG_S3M_GUS = 0x00080000;
 
     // Player flags
     public static final int PLAYER_LOOP_DEACTIVATED = 0x00;
@@ -352,12 +373,12 @@ public class ModConstants {
             216, 203, 192, 181, 171, 161, 152, 144, 136, 128, 121, 114, 0,
 
             /* Arpeggio on -1 finetuned samples can do an out-of-bounds read from
- * this table. Here's the correct overflow values from the
- * "CursorPosTable" and "UnshiftedKeymap" table in the PT code, which are
- * located right after the period table. These tables and their order didn't
- * seem to change in the different PT1.x/PT2.x versions (I checked the
- * source codes). (8bitbubsy)
-*/
+             * this table. Here's the correct overflow values from the
+             * "CursorPosTable" and "UnshiftedKeymap" table in the PT code, which are
+             * located right after the period table. These tables and their order didn't
+             * seem to change in the different PT1.x/PT2.x versions (I checked the
+             * source codes). (8bitbubsy)
+             */
             774, 1800, 2314, 3087, 4113, 4627, 5400, 6426, 6940, 7713,
             8739, 9253, 24625, 12851, 13365
     };
@@ -922,44 +943,6 @@ public class ModConstants {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     /**
-     * LUT for logarithmic damping factor (10^(-n/64))
-     * Used for resonant 2-pole filter (ModPlug/OpenMPT style)
-     */
-    public static final double[] ResonanceTable = {
-            1.0000000000000000d, 0.9786446094512940d, 0.9577452540397644d, 0.9372922182083130d,
-            0.9172759056091309d, 0.8976871371269226d, 0.8785166740417481d, 0.8597555756568909d,
-            0.8413951396942139d, 0.8234267830848694d, 0.8058421611785889d, 0.7886331081390381d,
-            0.7717915177345276d, 0.7553095817565918d, 0.7391796708106995d, 0.7233941555023193d,
-            0.7079457640647888d, 0.6928272843360901d, 0.6780316829681397d, 0.6635520458221436d,
-            0.6493816375732422d, 0.6355138421058655d, 0.6219421625137329d, 0.6086603403091431d,
-            0.5956621170043945d, 0.5829415321350098d, 0.5704925656318665d, 0.5583094954490662d,
-            0.5463865399360657d, 0.5347182154655457d, 0.5232990980148315d, 0.5121238231658936d,
-            0.5011872053146362d, 0.4904841780662537d, 0.4800096750259399d, 0.4697588682174683d,
-            0.4597269892692566d, 0.4499093294143677d, 0.4403013288974762d, 0.4308985173702240d,
-            0.4216965138912201d, 0.4126909971237183d, 0.4038778245449066d, 0.3952528536319733d,
-            0.3868120610713959d, 0.3785515129566193d, 0.3704673945903778d, 0.3625559210777283d,
-            0.3548133969306946d, 0.3472362160682678d, 0.3398208320140839d, 0.3325638175010681d,
-            0.3254617750644684d, 0.3185114264488220d, 0.3117094635963440d, 0.3050527870655060d,
-            0.2985382676124573d, 0.2921628654003143d, 0.2859236001968384d, 0.2798175811767578d,
-            0.2738419771194458d, 0.2679939568042755d, 0.2622708380222321d, 0.2566699385643005d,
-            0.2511886358261108d, 0.2458244115114212d, 0.2405747324228287d, 0.2354371547698975d,
-            0.2304092943668366d, 0.2254888117313385d, 0.2206734120845795d, 0.2159608304500580d,
-            0.2113489061594009d, 0.2068354636430740d, 0.2024184018373489d, 0.1980956792831421d,
-            0.1938652694225311d, 0.1897251904010773d, 0.1856735348701477d, 0.1817083954811096d,
-            0.1778279393911362d, 0.1740303486585617d, 0.1703138649463654d, 0.1666767448186874d,
-            0.1631172895431519d, 0.1596338599920273d, 0.1562248021364212d, 0.1528885662555695d,
-            0.1496235728263855d, 0.1464282870292664d, 0.1433012634515762d, 0.1402409970760346d,
-            0.1372461020946503d, 0.1343151479959488d, 0.1314467936754227d, 0.1286396980285645d,
-            0.1258925348520279d, 0.1232040524482727d, 0.1205729842185974d, 0.1179980933666229d,
-            0.1154781952500343d, 0.1130121126770973d, 0.1105986908078194d, 0.1082368120551109d,
-            0.1059253737330437d, 0.1036632955074310d, 0.1014495193958283d, 0.0992830246686935d,
-            0.0971627980470657d, 0.0950878411531448d, 0.0930572077631950d, 0.0910699293017387d,
-            0.0891250967979431d, 0.0872217938303947d, 0.0853591337800026d, 0.0835362523794174d,
-            0.0817523002624512d, 0.0800064504146576d, 0.0782978758215904d, 0.0766257941722870d,
-            0.0749894231557846d, 0.0733879879117012d, 0.0718207582831383d, 0.0702869966626167d,
-            0.0687859877943993d, 0.0673170387744904d, 0.0658794566988945d, 0.0644725710153580d
-    };
-    /**
      * Translation for porta2note speed - 10 values
      */
     public static final int[] IT_VolColumnPortaNoteSpeedTranslation = {
@@ -1052,6 +1035,30 @@ public class ModConstants {
     }
 
     /**
+     * Return an integer, representing the String converted to byte values in
+     * BigEndian interpretation ("ABCD" --> 0x41424344
+     *
+     * @param magicString the magic code - always four characters!
+     * @return
+     * @since 05.05.2026
+     */
+    public static int getMagicBE(final String magicString) {
+        return ((magicString.charAt(0) & 0xFF) << 24) | ((magicString.charAt(1) & 0xFF) << 16) | ((magicString.charAt(2) & 0xFF) << 8) | (magicString.charAt(3) & 0xFF);
+    }
+
+    /**
+     * Return an integer, representing the String converted to byte values in
+     * LittleEndian interpretation ("ABCD" --> 0x44434241
+     *
+     * @param magicString the magic code - always four characters!
+     * @return
+     * @since 05.05.2026
+     */
+    public static int getMagicLE(final String magicString) {
+        return ((magicString.charAt(3) & 0xFF) << 24) | ((magicString.charAt(2) & 0xFF) << 16) | ((magicString.charAt(1) & 0xFF) << 8) | (magicString.charAt(0) & 0xFF);
+    }
+
+    /**
      * Our standard Date formatter
      */
     public static final DateTimeFormatter DATE_FORMATER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -1067,6 +1074,24 @@ public class ModConstants {
         if ((version & 0xffFF) == 0)
             return "%x.%02x".formatted((version >> 24) & 0xff, (version >> 16) & 0xff);
         return "%x.%02x.%02x.%02x".formatted((version >> 24) & 0xff, (version >> 16) & 0xff, (version >> 8) & 0xff, version & 0xff);
+    }
+
+    /**
+     * @param versionString
+     * @return
+     */
+    public static int parseModPlugVersionString(String versionString) {
+        if (versionString == null || versionString.isEmpty()) return 0;
+        char[] chars = versionString.trim().toUpperCase().toCharArray();
+        int version = 0;
+        final StringBuilder numbers = new StringBuilder();
+        for (char c : chars) {
+            if ((Character.isDigit(c) || (c >= 'A' && c <= 'F')) && c != '.')
+                numbers.append(c);
+        }
+        while (numbers.length() < 7) numbers.append('0');
+        version = Integer.parseInt(numbers.toString(), 16);
+        return version;
     }
 
     /**

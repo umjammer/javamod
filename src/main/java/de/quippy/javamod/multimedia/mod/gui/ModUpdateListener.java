@@ -70,17 +70,23 @@ public interface ModUpdateListener {
         public final int actPeekLeft;
         public final int actPeekRight;
         public final boolean isSurround;
+        public final boolean isMidiAdlib;
 
-        public PeekInformation(int sampleRate, long samplesMixed, int channel, int actPeekLeft, int actPeekRight, boolean isSurround) {
+        public PeekInformation(int sampleRate, long samplesMixed, int channel, int actPeekLeft, int actPeekRight, boolean isSurround, boolean isMidiAdlib) {
             super(sampleRate, samplesMixed);
             this.channel = channel;
             this.actPeekLeft = actPeekLeft;
             this.actPeekRight = actPeekRight;
             this.isSurround = isSurround;
+            this.isMidiAdlib = isMidiAdlib;
+        }
+
+        public PeekInformation(int sampleRate, long samplesMixed, int channel, int actPeekLeft, int actPeekRight, boolean isSurround) {
+            this(sampleRate, samplesMixed, channel, actPeekLeft, actPeekRight, isSurround, false);
         }
 
         public String toString() {
-            return super.toString() + "-->Peek: " + channel + ": " + actPeekLeft + "/" + actPeekRight + ((isSurround) ? " is surround" : Helpers.EMPTY_STING);
+            return super.toString() + "-->Peek: " + channel + ": " + actPeekLeft + "/" + actPeekRight + ((isSurround) ? " is surround" : Helpers.EMPTY_STING) + ((isMidiAdlib) ? " is Midi / Adlib " : Helpers.EMPTY_STING);
         }
     }
 
@@ -108,7 +114,7 @@ public interface ModUpdateListener {
      * @param infoObject
      * @since 13.11.2023
      */
-    void getPatternPositionInformation(PatternPositionInformation infoObject);
+    void getPatternPositionInformation(ModUpdateListener.PatternPositionInformation infoObject);
 
     /**
      * This method is called to inform listeners about peek informations on
@@ -122,7 +128,7 @@ public interface ModUpdateListener {
      * @param infoObject
      * @since 13.11.2023
      */
-    void getPeekInformation(PeekInformation infoObject);
+    void getPeekInformation(ModUpdateListener.PeekInformation infoObject);
 
     /**
      * This method will inform any listener, that status informations will

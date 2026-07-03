@@ -167,7 +167,7 @@ public class MultiTrackerMod extends ProTrackerMod {
 
         setBaseVolume(ModConstants.MAXGLOBALVOLUME);
         int preAmp = ModConstants.MAX_MIXING_PREAMP / getNChannels();
-        setMixingPreAmp((preAmp < ModConstants.MIN_MIXING_PREAMP) ? ModConstants.MIN_MIXING_PREAMP : (preAmp > 0x80) ? 0x80 : preAmp);
+        setMixingPreAmp((preAmp < ModConstants.MIN_MIXING_PREAMP) ? ModConstants.MIN_MIXING_PREAMP : Math.min(preAmp, 0x80));
 
         setTrackerName("MultiTrackerMod V" + ((version >> 4) & 0x0F) + '.' + (version & 0xF));
 
@@ -180,7 +180,7 @@ public class MultiTrackerMod extends ProTrackerMod {
             String sampleName = inputStream.readString(22);
 
             // Length
-            int length = inputStream.readIntelDWord();
+            int sampleLength = current.byteLength = inputStream.readIntelDWord();
 
             // Repeat start and stop
             int repeatStart = inputStream.readIntelDWord();
@@ -194,7 +194,7 @@ public class MultiTrackerMod extends ProTrackerMod {
 
             int sampleType = inputStream.read();
             if ((sampleType & 0x01) != 0) { // 16Bit:
-                length >>= 1;
+                sampleLength >>= 1;
                 repeatStart >>= 1;
                 repeatStop >>= 1;
             }
@@ -202,41 +202,39 @@ public class MultiTrackerMod extends ProTrackerMod {
             // Loops sanity check
             if (repeatStart + 4 >= repeatStop) repeatStart = repeatStop = 0;
             if (repeatStart < repeatStop)
-                current.setLoopType(ModConstants.LOOP_ON);
+                current.loopType = ModConstants.LOOP_ON;
             else
-                current.setLoopType(0);
+                current.loopType = 0;
 
-            current.setName(sampleName);
-            current.setLength(length);
-            current.setByteLength(current.length);
+            current.name = sampleName;
+            current.sampleLength = sampleLength;
 
-            current.setLoopStart(repeatStart);
-            current.setLoopStop(repeatStop);
-            current.setLoopLength(repeatStop - repeatStart);
+            current.loopStart = repeatStart;
+            current.loopStop = repeatStop;
+            current.loopLength = repeatStop-repeatStart;
 
             // Defaults for non-existent SustainLoop
-            current.setSustainLoopStart(0);
-            current.setSustainLoopStop(0);
-            current.setSustainLoopLength(0);
+            current.sustainLoopStart = 0;
+            current.sustainLoopStop = 0;
+            current.sustainLoopLength = 0;
 
             // setFineTune
-            fine = (fine > 0x7F) ? fine - 0x100 : fine;
-            current.setFineTune(fine);
-            current.setBaseFrequency(ModConstants.IT_fineTuneTable[(fine >> 4) + 8]);
-            current.setTranspose(0);
+            current.fineTune = (fine > 0x7F) ? fine - 0x100 : fine;
+            current.baseFrequency = ModConstants.IT_fineTuneTable[(fine >> 4) + 8];
+            current.transpose = 0;
 
             // Volume 64 is maximum
-            current.setVolume((vol > 64) ? 64 : vol);
-            current.setGlobalVolume(ModConstants.MAXSAMPLEVOLUME);
+            current.volume = Math.min(vol, 64);
+            current.globalVolume = ModConstants.MAXSAMPLEVOLUME;
 
             // Defaults!
-            current.setPanning(false);
-            current.setDefaultPanning(128);
+            current.setPanning = false;
+            current.defaultPanning = 128;
 
             // SampleData
             int flags = ModConstants.SM_PCMU;
             if ((sampleType & 0x01) != 0) flags |= ModConstants.SM_16BIT;
-            current.setSampleType(flags);
+            current.sampleType = flags;
 
             instrumentContainer.setSample(i, current);
         }
@@ -249,7 +247,7 @@ public class MultiTrackerMod extends ProTrackerMod {
         // during read, so memorize this file pointer...
         long tracksStart = inputStream.getFilePointer();
         // and skip to pattern data:
-        inputStream.skip(192 * numTracks);
+        inputStream.skip(192L * numTracks);
 
         PatternContainer patternContainer = new PatternContainer(this, getNPattern(), beatsPerTrack, getNChannels());
         setPatternContainer(patternContainer);
@@ -264,7 +262,7 @@ public class MultiTrackerMod extends ProTrackerMod {
                     }
                 } else {
                     long resetToPos = inputStream.getFilePointer();
-                    inputStream.seek(tracksStart + (192 * (track - 1)));
+                    inputStream.seek(tracksStart + (192L * (track - 1)));
                     for (int row = 0; row < beatsPerTrack; row++) {
                         PatternElement pe = patternContainer.createPatternElement(pattNum, row, chn);
 

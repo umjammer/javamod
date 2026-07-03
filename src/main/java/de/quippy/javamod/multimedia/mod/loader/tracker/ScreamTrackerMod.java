@@ -91,9 +91,9 @@ public class ScreamTrackerMod extends Module {
     private static final int songST2Vibrato = 0x01;
     private static final int songST2Tempo = 0x02;
     private static final int songAmigaSlides = 0x04;
-    //    private static final int songVolOptimized	 = 0x08;
+//    private static final int songVolOptimized	 = 0x08;
     private static final int songAmigaLimit = 0x10;
-    //    private static final int songEnableFilter	 = 0x20;
+//    private static final int songEnableFilter	 = 0x20;
     private static final int songFastVolSlide = 0x40;
 //	private static final int songCustomData		 = 0x80;
 
@@ -265,7 +265,7 @@ public class ScreamTrackerMod extends Module {
                             currentElement.setVolumeEffectOp(volume - 128);
                         } else {
                             currentElement.setVolumeEffect(1);
-                            currentElement.setVolumeEffectOp((volume > 64) ? 64 : volume);
+                            currentElement.setVolumeEffectOp(Math.min(volume, 64));
                         }
                     }
                     currentElement.setEffect(effect);
@@ -287,8 +287,7 @@ public class ScreamTrackerMod extends Module {
         inputStream.readByte(); // should always be 0x1A to allow "TYPE SONG.S3M" on DOS
         byte type = inputStream.readByte();
         if (type != 0x10) throw new IOException("Unsupported S3M MOD (ID!=0x10)");
-        /*int reserved = */
-        inputStream.readIntelUnsignedWord();
+        /* int reserved = */ inputStream.readIntelUnsignedWord();
 
         setSongLength(inputStream.readIntelUnsignedWord());
         setNSamples(inputStream.readIntelUnsignedWord());
@@ -307,7 +306,7 @@ public class ScreamTrackerMod extends Module {
         if ((flags & songAmigaSlides) != 0) songFlags |= ModConstants.SONG_AMIGASLIDES;
         if ((flags & songAmigaLimit) != 0) songFlags |= ModConstants.SONG_AMIGALIMITS;
         if ((flags & songFastVolSlide) != 0 || version == 0x1300) songFlags |= ModConstants.SONG_FASTVOLSLIDES;
-//		final boolean hasCustomData = (flags&songCustomData)!=0; 
+//		  boolean hasCustomData = (flags&songCustomData) != 0;
         songFlags |= ModConstants.SONG_ITOLDEFFECTS; // default, so we do not need to check for IT
 
         // Samples Type (version)
@@ -333,11 +332,10 @@ public class ScreamTrackerMod extends Module {
         int masterVol = inputStream.read();
         if ((masterVol & 0x80) != 0) songFlags |= ModConstants.SONG_ISSTEREO;
         int mixingPreAmp = masterVol & 0x7F;
-        setMixingPreAmp((mixingPreAmp < 0x10) ? 0x10 : mixingPreAmp);
+        setMixingPreAmp(Math.max(mixingPreAmp, 0x10));
 
         // UltraClick removal --> ignored (only for GUS playback)
-        /*int uc = */
-        inputStream.read();
+        /* int uc = */ inputStream.read();
 
         // DefaultPanning
         usePanningValues = inputStream.read() == 0xFC;
@@ -345,8 +343,7 @@ public class ScreamTrackerMod extends Module {
         // skip again arbitrary data (8Byte unused, 2Byte is pointer to special data, if "special data flag" at offset 0x26 is set
         int extVersionInfo = inputStream.readIntelUnsignedWord();
         inputStream.skip(6);
-        /*final int specialDataParaPointer = */
-        inputStream.readIntelUnsignedWord();
+        /* int specialDataParaPointer = */ inputStream.readIntelUnsignedWord();
 
         // PanningValues and active or inactive Channels
         channelStatus = new byte[32];
@@ -370,28 +367,39 @@ public class ScreamTrackerMod extends Module {
                 tmpPanning[c] = ModConstants.CHANNEL_IS_MUTED;
         }
 
+        // Orders:	This is the order in which the patterns are played.
+        //			Valid values are from 0->???. S3MTech does not say
+        //			255 = "---", End of song marker
+        //			254 = "+++", Skip to next order
         // Song Arrangement
         int songLength = getSongLength();
         if (songLength <= 0) songLength = 1;
         else if (songLength > 256) songLength = 256;
         allocArrangement(songLength);
-        for (int i = 0; i < songLength; i++) getArrangement()[i] = inputStream.read();
-        if (getArrangement()[0] == 255) {
-            getArrangement()[0] = 0;
-            getArrangement()[1] = 255;
+        int[] arrangement = getArrangement();
+        for (int i = 0; i < songLength; i++) {
+            arrangement[i] = inputStream.read();
+            if (arrangement[i] == 0xFF) arrangement[i] = ModConstants.INVALID_PAT_INDEX;
+            else if (arrangement[i] == 0xFE) arrangement[i] = ModConstants.IGNORE_PAT_INDEX;
+        }
+
+        // What did I fix with this?
+        if (arrangement[0] == ModConstants.INVALID_PAT_INDEX) {
+            arrangement[0] = 0;
+            arrangement[1] = ModConstants.INVALID_PAT_INDEX;
         }
 
         // if songLength is odd, there might be a 0xff left...
         long startSeek = 96L + getSongLength();
         if ((songLength & 0x01) != 0) {
             byte skipByte = inputStream.readByte();
-            if (skipByte == 0xff) startSeek++;
+            if (skipByte == (byte) 0xFF) startSeek++; // as we seek with this value directly afterwards, we do not need a skipBack
         }
 
         int anzPointers = getNSamples() + getNPattern();
         long[] paraPointers = new long[anzPointers];
         inputStream.seek(startSeek);
-        for (int i = 0; i < anzPointers; i++) paraPointers[i] = (inputStream.readIntelUnsignedWord() << 4);
+        for (int i = 0; i < anzPointers; i++) paraPointers[i] = (long) inputStream.readIntelUnsignedWord() << 4;
 
         // After the paraPointers we have the Panning Section - if any!
         // so, we read it here - this might even overwrite disabled channels from above
@@ -413,7 +421,7 @@ public class ScreamTrackerMod extends Module {
         int anzChannels = 0;
         for (int c = 0; c < 32; c++) {
             int status = channelStatus[c] & 0xff;
-            if ((status & ~0x80) < 19 || !REMOVE_UNUSED_CHANNELS) { // active channel
+            if ((status & ~0x80) < 0x19 || !REMOVE_UNUSED_CHANNELS) { // active channel
                 tmpPanning[anzChannels] = tmpPanning[c];
                 channelMap[c] = anzChannels++;
             } else
@@ -444,24 +452,23 @@ public class ScreamTrackerMod extends Module {
             Sample current = new Sample();
 
             // Defaults
-            current.setGlobalVolume(ModConstants.MAXSAMPLEVOLUME);
+            current.globalVolume = ModConstants.MAXSAMPLEVOLUME;
 
             int instrumentType = inputStream.read();
-            current.setType(instrumentType);
+            current.type = instrumentType;
             // Sample name
-            current.setDosFileName(inputStream.readString(12));
+            current.dosFileName = inputStream.readString(12);
 
             // Sample Para Pointer (useless for adlib...)
             int highByte = inputStream.read();
             int lowByte = inputStream.readIntelUnsignedWord();
-            long sampleOffset = (lowByte | (highByte << 16)) << 4;
+            long sampleOffset = (lowByte | ((long) highByte << 16)) << 4;
             if (sampleOffset > inputStream.getLength()) sampleOffset &= 0xffFF;
 
             if (instrumentType == 1) { // Sample
                 // Length
                 int sampleLength = inputStream.readIntelDWord();
-                current.setLength(sampleLength);
-                current.setByteLength(current.length);
+                current.byteLength = current.sampleLength = sampleLength;
 
                 if (sampleLength > 0) anySamples = true;
 
@@ -475,26 +482,26 @@ public class ScreamTrackerMod extends Module {
                 if ((repeatStart > repeatStop) || repeatLength < 2)
                     repeatStart = repeatStop = repeatLength = 0;
 
-                current.setLoopStart(repeatStart);
-                current.setLoopStop(repeatStop);
-                current.setLoopLength(repeatLength);
+                current.loopStart = repeatStart;
+                current.loopStop = repeatStop;
+                current.loopLength = repeatLength;
 
                 // Defaults for non-existent SustainLoop
-                current.setSustainLoopStart(0);
-                current.setSustainLoopStop(0);
-                current.setSustainLoopLength(0);
+                current.sustainLoopStart = 0;
+                current.sustainLoopStop = 0;
+                current.sustainLoopLength = 0;
 
                 // volume
                 int volume = inputStream.read();
-                current.setVolume((volume > 64) ? 64 : volume);
+                current.volume = Math.min(volume, 64);
 
                 // Reserved (Sample Beginning Offset?!)
                 inputStream.skip(1);
                 packingScheme = inputStream.readByte(); // 0: unpacked, 1: DP30ADPCM packing
 
                 // Flags: 1:Loop 2:Stereo 4:16Bit-Sample...
-                current.setFlags(inputStream.read());
-                current.setLoopType(((current.flags & 0x01) == 0x01) ? ModConstants.LOOP_ON : 0);
+                current.flags = inputStream.read();
+                current.loopType = ((current.flags & 0x01) == 0x01) ? ModConstants.LOOP_ON : 0;
             } else if (instrumentType > 1 && instrumentType < 8) {
                 // According to tech.txt S3M supports AdLib channels for instruments
                 // 2:Melody 3:Basedrum 4:Snare 5:Tom 6:Cym 7:HiHat
@@ -509,27 +516,27 @@ public class ScreamTrackerMod extends Module {
                 if (current.getAdlibWaveSelect(0) > 3 || current.getAdlibWaveSelect(1) > 3) needsOPL = OPL3;
                 // volume
                 int volume = inputStream.read();
-                current.setVolume((volume > 64) ? 64 : volume);
+                current.volume = Math.min(volume, 64);
                 // "dsk" - unknown + plus 2 unused bytes
                 inputStream.skip(3);
             } else { // Something we do not know
                 inputStream.skip(12);
                 // volume
                 int volume = inputStream.read();
-                current.setVolume((volume > 64) ? 64 : volume);
+                current.volume = Math.min(volume, 64);
                 inputStream.skip(3);
             }
 
             // C4SPD
-            current.setFineTune(0);
-            current.setTranspose(0);
+            current.fineTune = 0;
+            current.transpose = 0;
             int baseFreq = inputStream.readIntelDWord();
 
             if (instrumentType > 1 && instrumentType < 8 && ((baseFreq < 1000 || baseFreq > 0xffFF))) // If this is adlib
                 baseFreq = ModConstants.BASEFREQUENCY;
             else if (baseFreq <= 0) baseFreq = ModConstants.BASEFREQUENCY;
             else if (baseFreq < 1024) baseFreq = 1024;
-            current.setBaseFrequency(baseFreq);
+            current.baseFrequency = baseFreq;
 
             // Again reserved data - but we pick out the GUS addresses. Schism and ModPlug use that to identify certain playback quirks
             inputStream.skip(4);
@@ -538,14 +545,14 @@ public class ScreamTrackerMod extends Module {
             inputStream.skip(6);
 
             // SampleName
-            current.setName(inputStream.readString(28));
+            current.name = inputStream.readString(28);
 
             // Key
             inputStream.skip(4); // should be "SCRS" (sample) or "SCRI" (adlib instrument) - we ignore that, because of already known "instrumentType"
 
             // Defaults!
-            current.setPanning(false);
-            current.setDefaultPanning(128);
+            current.setPanning = false;
+            current.defaultPanning = 128;
 
             if (instrumentType == 1) {
                 // SampleData
@@ -558,9 +565,9 @@ public class ScreamTrackerMod extends Module {
                     if ((current.flags & sample16Bit) != 0) flags |= ModConstants.SM_16BIT;
                 }
 
-                current.setStereo((flags & ModConstants.SM_STEREO) != 0);
+                current.isStereo = (flags & ModConstants.SM_STEREO) != 0;
                 inputStream.seek(sampleOffset);
-                current.setSampleType(flags);
+                current.sampleType = flags;
                 readSampleData(current, inputStream);
             }
 
@@ -586,9 +593,6 @@ public class ScreamTrackerMod extends Module {
             }
         }
         patternContainer.setChannelActiveStatus(panningValue);
-
-        // Correct the songlength for playing, skip markerpattern... (do not want to skip them during playing!)
-        cleanUpArrangement();
 
         String trackerName = null;
         switch (version >> 12) {
@@ -655,5 +659,9 @@ public class ScreamTrackerMod extends Module {
         // but only, if standards of S3M are broken (in this case: OOPL3 is needed)
         if ((getModType() & (ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT)) != 0 && patternContainer.getChannelColors() == null)
             patternContainer.createMPTMDefaultRainbowColors();
+
+        // now we throw out the song end marker pattern
+        // or just keep it - we skip it during play back anyway.
+        removeEndOfArrangement();
     }
 }

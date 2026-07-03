@@ -37,7 +37,6 @@ import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.ModMixer;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Instrument;
 import de.quippy.javamod.multimedia.mod.loader.instrument.Sample;
-import de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory;
 
 
 /**
@@ -62,7 +61,6 @@ public class SampleInstrumentPlayer {
      * @param theModMixer
      */
     public SampleInstrumentPlayer(ModMixer theModMixer) {
-        super();
         doHardStop = false;
         setCurrentModMixer(theModMixer);
     }
@@ -74,7 +72,8 @@ public class SampleInstrumentPlayer {
         this.currentModMixer = currentModMixer;
         if (currentModMixer != null) {
             currentMixer = currentModMixer.getModMixer();
-            aktMemo = currentMixer.new ChannelMemory();
+            aktMemo = new ChannelMemory();
+            aktMemo.rampDownMemory = new ChannelMemory();
             aktMemo.instrumentFinished = true;
         }
     }
@@ -106,7 +105,7 @@ public class SampleInstrumentPlayer {
 
     public void stopPlayback() {
         if (instrument != null)
-            aktMemo.keyOff = true;
+            currentMixer.doKeyOff(aktMemo); // FT2 needs more than just a flag...
         else {
             doHardStop = true;
             aktMemo.instrumentFinished = true;
@@ -141,15 +140,15 @@ public class SampleInstrumentPlayer {
         currentMixer.globalVolume = ModConstants.MAXGLOBALVOLUME;
         aktMemo.doFastVolRamp = true;
 
-        // now for the tuning of the current note set
-        currentMixer.setPeriodBorders(aktMemo);
-        currentMixer.setNewPlayerTuningFor(aktMemo, currentMixer.getFineTunePeriod(aktMemo));
-
         // reset all instrument / sample values
         currentMixer.resetInstrumentPointers(aktMemo, true);
         currentMixer.resetFineTune(aktMemo, aktMemo.currentSample);
         currentMixer.resetEnvelopes(aktMemo);
         currentMixer.resetAutoVibrato(aktMemo, aktMemo.currentSample);
+        currentMixer.setPeriodBorders(aktMemo);
+
+        // now for the tuning of the current note set
+        currentMixer.setNewPlayerTuningFor(aktMemo, currentMixer.getFineTunePeriod(aktMemo));
 
         // ImpulseTracker specials
         if (currentMixer.isIT && instrument != null) {
@@ -164,7 +163,7 @@ public class SampleInstrumentPlayer {
     }
 
     private void playSample() {
-        if (sample == null || sample.length == 0) return;
+        if (sample == null || sample.sampleLength == 0) return;
 
         int sampleRate = currentModMixer.getCurrentSampleRate();
         int sampleSizeInBits = currentModMixer.getCurrentSampleSizeInBits();
@@ -198,7 +197,7 @@ public class SampleInstrumentPlayer {
                 aktMemo.instrumentFinished = true;
 
             //and then render one tick of sample data
-            currentMixer.mixChannelIntoBuffers(leftBuffer, rightBuffer, 0, samplesPerTick, aktMemo);
+            currentMixer.mixChannelIntoBuffers(leftBuffer, rightBuffer, 0, samplesPerTick, aktMemo, false);
 
             // copy those to the render buffer
             for (int s = 0; s < samplesPerTick; s++) {

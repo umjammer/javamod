@@ -442,17 +442,20 @@ logger.log(Level.TRACE, "url: " + fileURL);
         String fileName = Helpers.getFileNameFromURL(fileURL);
         if (fileName.length() < 3) return false; // already finished
 
-        String path = fileURL.getFile();
-        String patchFileName = path.substring(0, path.lastIndexOf('/')) + '/' + fileName.substring(0, 3) + "patch.003";
-
         RandomAccessInputStreamImpl inputStream = null;
         try {
-//            final URL patchFileURL = new URL(fileURL.getProtocol(), fileURL.getHost(), fileURL.getPort(), patchFileName);
+            String path = fileURL.getFile();
+            String patchFileName = path.substring(0, path.lastIndexOf('/')) + '/' + fileName.substring(0, 3) + "patch.003";
+
+//            URL patchFileURL = new URL(fileURL.getProtocol(), fileURL.getHost(), fileURL.getPort(), patchFileName);
             URL patchFileURL = (new URI(fileURL.getProtocol(), fileURL.getUserInfo(), fileURL.getHost(), fileURL.getPort(), patchFileName, fileURL.getQuery(), fileURL.getRef())).toURL();
             if (!Helpers.urlExists(patchFileURL)) return false;
             inputStream = new RandomAccessInputStreamImpl(patchFileURL);
-            if (inputStream.available() == 0) return false;
-logger.log(Level.DEBUG, "patch: " + patchFileURL);
+            if (!Helpers.urlExists(patchFileURL)) {
+                logger.log(Level.ERROR, "Patchfile " + patchFileURL + " was not found!");
+                return false;
+            }
+            logger.log(Level.DEBUG, "patch: " + patchFileURL);
 
             stins = 0;
             int[] ins = new int[28];
@@ -546,11 +549,13 @@ logger.log(Level.TRACE, ex.getMessage(), ex);
                     type = FILE_CMF;
                 break;
             case 0x84:
-                if (magicBytes[1] == 0 && loadSierraIns(url))
+                if (magicBytes[1] == 0) {
+                    /* boolean success = */ loadSierraIns(url); // if the file is not found, nothing bad happens - there is just silence!
                     if (magicBytes[2] == 0xF0)
                         type = FILE_ADVSIERRA;
                     else
                         type = FILE_SIERRA;
+                }
                 break;
             default:
                 long size = ((long) magicBytes[0] & 0xff) | (((long) magicBytes[1] & 0xff) << 8) | (((long) magicBytes[3] & 0xff) << 24) | (((long) magicBytes[2] & 0xff) << 16);

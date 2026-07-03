@@ -22,6 +22,7 @@
 
 package de.quippy.javamod.multimedia.mod;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.System.Logger;
@@ -30,20 +31,27 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import javax.swing.JPanel;
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiDevice.Info;
+import javax.sound.sampled.AudioFileFormat.Type;
+import javax.sound.sampled.AudioFormat.Encoding;
 
 import de.quippy.javamod.io.SpiModfileInputStream;
 import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import de.quippy.javamod.multimedia.SpiMultimediaContainer;
+import de.quippy.javamod.multimedia.midi.MidiContainer;
 import de.quippy.javamod.multimedia.mod.gui.ModInstrumentDialog;
 import de.quippy.javamod.multimedia.mod.gui.ModPatternDialog;
 import de.quippy.javamod.multimedia.mod.gui.ModSampleDialog;
 import de.quippy.javamod.multimedia.mod.gui.SongUpdater;
 import de.quippy.javamod.multimedia.mod.loader.Module;
 import de.quippy.javamod.multimedia.mod.loader.ModuleFactory;
+import de.quippy.javamod.multimedia.mod.midi.ModMidiMixer;
 import de.quippy.javamod.system.Helpers;
+import vavi.sound.sampled.mod.ModEncoding;
+import vavi.sound.sampled.mod.ModFileFormatType;
 
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.getLogger;
@@ -72,6 +80,8 @@ public class ModContainer extends MultimediaContainer implements SpiMultimediaCo
     public static final String PROPERTY_PLAYER_DITHERFILTER = "javamod.player.ditherfilter";
     public static final String PROPERTY_PLAYER_DITHERTYPE = "javamod.player.dithertype";
     public static final String PROPERTY_PLAYER_DITHERBYPASS = "javamod.player.ditherbypass";
+    public static final String PROPERTY_PLAYER_MIDIOUTPUTDEVICE = "javamod.player.outputdevice";
+    public static final String PROPERTY_PLAYER_MIDISOUNDBANK = "javamod.player.soundbankurl";
 
     private static final String PROPERTY_PATTERN_POS = "javamod.player.position.patterns";
     private static final String PROPERTY_PATTERN_SIZE = "javamod.player.size.patterns";
@@ -100,6 +110,8 @@ public class ModContainer extends MultimediaContainer implements SpiMultimediaCo
     public static final String DEFAULT_DITHERFILTER = "4";
     public static final String DEFAULT_DITHERTYPE = "2";
     public static final String DEFAULT_DITHERBYPASS = "false";
+    public static final String DEFAULT_MIDIOUTPUTDEVICE = "Gervill";
+    public static final String DEFAULT_MIDISOUNDBANKURL = Helpers.EMPTY_STING;
     protected static final String[] SAMPLERATE = {
             "8000", "11025", "16000", "22050", "33075", "44100", DEFAULT_SAMPLERATE, "96000", "192000"
     };
@@ -108,12 +120,6 @@ public class ModContainer extends MultimediaContainer implements SpiMultimediaCo
     };
     protected static final String[] BITSPERSAMPLE = {
             "8", DEFAULT_BITSPERSAMPLE, "24", "32"
-    };
-    protected static final String[] INTERPOLATION = {
-            "None", "Linear", "Cubic", "Kaiser", "Windowed FIR"
-    };
-    protected static final String[] AMIGA_EMULATION = {
-            "None", "Amiga 500", "Amiga 1200"
     };
     protected static final String[] BUFFERSIZE = {
             "10", "15", "20", "25", DEFAULT_MSBUFFERSIZE, "40", "50", "75", "100", "150", "175", "200", "250", "500", "750"
@@ -130,6 +136,14 @@ public class ModContainer extends MultimediaContainer implements SpiMultimediaCo
     private ModConfigPanel modConfigPanel;
     private SongUpdater songUpdater;
 
+    protected static MidiDevice.Info getMidiOutDeviceByName(final String midiDeviceName) {
+        for (Info element : MidiContainer.MIDIOUTDEVICEINFOS) {
+            if (element.getName().equalsIgnoreCase(midiDeviceName))
+                return element;
+        }
+        return null;
+    }
+
     @Override
     public void setFileURL(URL url) {
         super.setFileURL(url);
@@ -139,7 +153,7 @@ public class ModContainer extends MultimediaContainer implements SpiMultimediaCo
 
             currentMod = ModuleFactory.getInstance(url);
             if (!MultimediaContainerManager.isHeadlessMode())
-                ((ModInfoPanel) getInfoPanel()).fillInfoPanelWith(currentMod);
+                getInfoPanel().fillInfoPanelWith(currentMod);
         } catch (IOException ex) {
             currentMod = null;
             logger.log(Level.ERROR, "[ModContainer] Failed with loading of " + url.toString(), ex);
@@ -178,7 +192,7 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
     }
 
     /**
-     * @return gentleman agreement: Object[] { String::songname, Long::duration }
+     * @return "songname", "duration"
      */
     @Override
     public Map<String, Object> getSongInfosFor(URL url) {
@@ -263,6 +277,8 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
         currentProps.setProperty(PROPERTY_PLAYER_DITHERFILTER, newProps.getProperty(PROPERTY_PLAYER_DITHERFILTER, DEFAULT_DITHERFILTER));
         currentProps.setProperty(PROPERTY_PLAYER_DITHERTYPE, newProps.getProperty(PROPERTY_PLAYER_DITHERTYPE, DEFAULT_DITHERTYPE));
         currentProps.setProperty(PROPERTY_PLAYER_DITHERBYPASS, newProps.getProperty(PROPERTY_PLAYER_DITHERBYPASS, DEFAULT_DITHERBYPASS));
+        currentProps.setProperty(PROPERTY_PLAYER_MIDIOUTPUTDEVICE, newProps.getProperty(PROPERTY_PLAYER_MIDIOUTPUTDEVICE, DEFAULT_MIDIOUTPUTDEVICE));
+        currentProps.setProperty(PROPERTY_PLAYER_MIDISOUNDBANK, newProps.getProperty(PROPERTY_PLAYER_MIDISOUNDBANK, DEFAULT_MIDISOUNDBANKURL));
 
         if (!MultimediaContainerManager.isHeadlessMode()) {
             ModConfigPanel configPanel = getConfigPanel();
@@ -325,7 +341,19 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
             props.setProperty(PROPERTY_PLAYER_DITHERFILTER, currentProps.getProperty(PROPERTY_PLAYER_DITHERFILTER, DEFAULT_DITHERFILTER));
             props.setProperty(PROPERTY_PLAYER_DITHERTYPE, currentProps.getProperty(PROPERTY_PLAYER_DITHERTYPE, DEFAULT_DITHERTYPE));
             props.setProperty(PROPERTY_PLAYER_DITHERBYPASS, currentProps.getProperty(PROPERTY_PLAYER_DITHERBYPASS, DEFAULT_DITHERBYPASS));
+            props.setProperty(PROPERTY_PLAYER_MIDIOUTPUTDEVICE, currentProps.getProperty(PROPERTY_PLAYER_MIDIOUTPUTDEVICE, DEFAULT_MIDIOUTPUTDEVICE));
+            props.setProperty(PROPERTY_PLAYER_MIDISOUNDBANK, currentProps.getProperty(PROPERTY_PLAYER_MIDISOUNDBANK, DEFAULT_MIDISOUNDBANKURL));
         }
+    }
+
+    private File getSoundBankFile() {
+        String soundBankFile = (currentProps != null) ? currentProps.getProperty(PROPERTY_PLAYER_MIDISOUNDBANK, DEFAULT_MIDISOUNDBANKURL) : DEFAULT_MIDISOUNDBANKURL;
+        if (soundBankFile == null || soundBankFile.isEmpty()) return null;
+        return new File(soundBankFile);
+    }
+
+    private MidiDevice.Info getMidiInfo() {
+        return ModContainer.getMidiOutDeviceByName((currentProps != null) ? currentProps.getProperty(PROPERTY_PLAYER_MIDIOUTPUTDEVICE, DEFAULT_MIDIOUTPUTDEVICE) : DEFAULT_MIDIOUTPUTDEVICE);
     }
 
     /**
@@ -355,7 +383,13 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
         int ditherType = Integer.parseInt(currentProps.getProperty(PROPERTY_PLAYER_DITHERTYPE, DEFAULT_DITHERTYPE));
         boolean ditherByPass = Boolean.parseBoolean(currentProps.getProperty(PROPERTY_PLAYER_DITHERBYPASS, DEFAULT_DITHERBYPASS));
 
-        return new ModMixer(currentMod, bitsPerSample, channels, frequency, isp, amigaEmulation, wideStereoMix, noiseReduction, megaBass, dcRemoval, loopValue, maxNNAChannels, msBufferSize, ditherFilter, ditherType, ditherByPass);
+        ModMixer newModMixer = new ModMixer(currentMod, bitsPerSample, channels, frequency, isp, amigaEmulation, wideStereoMix, noiseReduction, megaBass, dcRemoval, loopValue, maxNNAChannels, msBufferSize, ditherFilter, ditherType, ditherByPass);
+
+        // we need to add the midi output - by reading from the midi
+        MidiDevice.Info info = getMidiInfo();
+        File soundBankFile = getSoundBankFile();
+        newModMixer.setModMidiMixer(new ModMidiMixer(info, soundBankFile, currentMod.getNChannels()));
+        return newModMixer;
     }
 
     /**
@@ -427,5 +461,15 @@ logger.log(DEBUG, "mod: " + mod.getClass().getName());
     @Override
     public void cleanUp() {
         unwireListeners();
+    }
+
+    @Override
+    public Encoding getEncoding() {
+        return new ModEncoding("MOD");
+    }
+
+    @Override
+    public Type getType() {
+        return new ModFileFormatType("MOD", "stk,nst,mod,wow,xm,far,mtm,stm,sts,stx,s3m,it,mptm,powerpacker");
     }
 }

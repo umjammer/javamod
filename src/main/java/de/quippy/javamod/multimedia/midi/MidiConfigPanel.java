@@ -38,6 +38,7 @@ import javax.swing.filechooser.FileFilter;
 
 import de.quippy.javamod.main.gui.tools.FileChooserFilter;
 import de.quippy.javamod.main.gui.tools.FileChooserResult;
+import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.system.Helpers;
 
 
@@ -177,8 +178,8 @@ public class MidiConfigPanel extends JPanel {
             midiOutputDevice = new JComboBox<>();
             midiOutputDevice.setName("midiOutputDevice");
 
-            if (MidiContainer.MIDIOUTDEVICEINFOS != null) {
-                javax.swing.DefaultComboBoxModel<MidiDevice.Info> theModel = new javax.swing.DefaultComboBoxModel<>(MidiContainer.MIDIOUTDEVICEINFOS);
+            if (MultimediaContainer.getMidiOutDeviceInfos() != null) {
+                javax.swing.DefaultComboBoxModel<MidiDevice.Info> theModel = new javax.swing.DefaultComboBoxModel<>(MultimediaContainer.getMidiOutDeviceInfos());
                 midiOutputDevice.setModel(theModel);
             }
             midiOutputDevice.setFont(Helpers.getDialogFont());
@@ -237,8 +238,8 @@ public class MidiConfigPanel extends JPanel {
             mixerInputDevice = new JComboBox<>();
             mixerInputDevice.setName("mixerInputDevice");
 
-            if (MidiContainer.MIXERDEVICEINFOS != null) {
-                javax.swing.DefaultComboBoxModel<javax.sound.sampled.Mixer.Info> theModel = new javax.swing.DefaultComboBoxModel<>(MidiContainer.MIXERDEVICEINFOS);
+            if (MultimediaContainer.getMixerDeviceIndos() != null) {
+                javax.swing.DefaultComboBoxModel<javax.sound.sampled.Mixer.Info> theModel = new javax.swing.DefaultComboBoxModel<>(MultimediaContainer.getMixerDeviceIndos());
                 mixerInputDevice.setModel(theModel);
             }
             mixerInputDevice.setFont(Helpers.getDialogFont());
@@ -253,8 +254,9 @@ public class MidiConfigPanel extends JPanel {
         getCapture().setSelected((Boolean.parseBoolean(newProps.getProperty(MidiContainer.PROPERTY_MIDIPLAYER_CAPTURE, MidiContainer.DEFAULT_CAPUTRE))));
         javax.sound.sampled.Mixer.Info mixerInfo = getMixerInfo(newProps.getProperty(MidiContainer.PROPERTY_MIDIPLAYER_MIXERNAME, MidiContainer.DEFAULT_MIXERNAME));
         if (mixerInfo != null) {
-            for (int i = 0; i < MidiContainer.MIXERDEVICEINFOS.length; i++) {
-                if (MidiContainer.MIXERDEVICEINFOS[i].toString().equals(mixerInfo.toString())) {
+            javax.sound.sampled.Mixer.Info[] mixerDeviceInfos = MultimediaContainer.getMixerDeviceIndos();
+            for (int i = 0; i < mixerDeviceInfos.length; i++) {
+                if (mixerDeviceInfos[i].toString().equals(mixerInfo.toString())) {
                     getMixerInputDevice().setSelectedIndex(i);
                 }
             }

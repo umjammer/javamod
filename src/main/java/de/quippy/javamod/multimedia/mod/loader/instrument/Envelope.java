@@ -22,7 +22,7 @@
 
 package de.quippy.javamod.multimedia.mod.loader.instrument;
 
-import de.quippy.javamod.multimedia.mod.mixer.BasicModMixer.ChannelMemory;
+import de.quippy.javamod.multimedia.mod.mixer.ChannelMemory;
 import de.quippy.javamod.system.Helpers;
 
 
@@ -44,6 +44,7 @@ public class Envelope {
     public int endPoint;
     public EnvelopeType envelopeType;
     public boolean on, sustain, loop, carry, filter, xm_style;
+    public boolean sustainIsZero, loopIsZero; // will be true, if all values in the loop are zero
     public byte[] oldITVolumeEnvelope;
 
     private static final int SHIFT = 16;
@@ -94,7 +95,7 @@ public class Envelope {
                     copyBack = true;
                     if (sustain && !aktMemo.keyOff) {
                         if (envPos - 1 == sustainStartPoint) {
-                            envPos--; // silly, as we do not copy back...
+                            envPos--;
                             copyBack = false;
                         }
                     }
@@ -242,7 +243,7 @@ public class Envelope {
         if (positions != null && positions.length > 0) {
             // limit endPoint to the smallest possible array index
             // and consider arrays of different length
-            setNPoints((nPoints > positions.length) ? positions.length : (nPoints > value.length) ? value.length : nPoints);
+            setNumberOfPoints((nPoints > positions.length) ? positions.length : Math.min(nPoints, value.length));
 
             // sanitize the values and positions
             positions[0] = 0;
@@ -253,8 +254,7 @@ public class Envelope {
                 // So, if position is smaller than prior position and no MSB is set:
                 if (positions[pos] < positions[pos - 1] && (positions[pos] & 0xff00) == 0) {
                     positions[pos] |= (positions[pos - 1] & 0xff00); // add possible high byte of prior position
-                    if (positions[pos] < positions[pos - 1])
-                        positions[pos] |= 0x0100; // still smaller? Force MSB set (OMPT does "+=" - which seems wrong)
+                    if (positions[pos] < positions[pos - 1]) positions[pos] += 0x0100; // Force MSB set via adding
                 }
                 positions[pos] = Math.max(positions[pos], positions[pos - 1]);
                 value[pos] = Helpers.limitMax(value[pos], maxValue);
@@ -269,76 +269,34 @@ public class Envelope {
             endPoint = -1;
             on = sustain = loop = carry = filter = xm_style = false;
         }
+        loopIsZero = false;
+        if (loop) {
+            int addMeUp = 0;
+            for (int i = loopStartPoint; i <= loopEndPoint; i++) addMeUp += value[i];
+            loopIsZero = addMeUp == 0;
+        }
+        sustainIsZero = false;
+        if (sustain) {
+            int addMeUp = 0;
+            for (int i = sustainStartPoint; i <= sustainEndPoint; i++) addMeUp += value[i];
+            sustainIsZero = addMeUp == 0;
+        }
     }
 
     /**
-     * @param loopEndPoint The loopEndPoint to set.
+     * @param points set the number of points
      */
-    public void setLoopEndPoint(int loopEndPoint) {
-        this.loopEndPoint = loopEndPoint;
-    }
-
-    /**
-     * @param loopStartPoint The loopStartPoint to set.
-     */
-    public void setLoopStartPoint(int loopStartPoint) {
-        this.loopStartPoint = loopStartPoint;
-    }
-
-    /**
-     * @param points The nPoints to set.
-     */
-    public void setNPoints(int points) {
+    public void setNumberOfPoints(int points) {
         endPoint = (nPoints = points) - 1;
     }
 
     /**
-     * @param positions The positions to set.
+     * Set the sustainPoints (XM-Version)
+     *
+     * @param sustainPoint
      */
-    public void setPositions(int[] positions) {
-        this.positions = positions;
-    }
-
-    /**
-     * @param value The value to set.
-     */
-    public void setValue(int[] value) {
-        this.value = value;
-    }
-
-    /**
-     * @param sustainPoint The sustainPoint to set. (XM-Version)
-     */
-    public void setSustainPoint(int sustainPoint) {
+    public void setSustainPoint_XM(int sustainPoint) {
         this.sustainStartPoint = this.sustainEndPoint = sustainPoint;
-    }
-
-    /**
-     * @param sustainEndPoint the sustainEndPoint to set (IT-Version)
-     */
-    public void setSustainEndPoint(int sustainEndPoint) {
-        this.sustainEndPoint = sustainEndPoint;
-    }
-
-    /**
-     * @param sustainStartPoint the sustainStartPoint to set (IT-Version)
-     */
-    public void setSustainStartPoint(int sustainStartPoint) {
-        this.sustainStartPoint = sustainStartPoint;
-    }
-
-    /**
-     * @param envelopeType the envelopeType to set
-     */
-    public void setEnvelopeType(EnvelopeType envelopeType) {
-        this.envelopeType = envelopeType;
-    }
-
-    /**
-     * @return the envelopeType
-     */
-    public EnvelopeType getEnvelopeType() {
-        return envelopeType;
     }
 
     /**

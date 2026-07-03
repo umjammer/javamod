@@ -31,6 +31,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Properties;
+import javax.sound.sampled.AudioFileFormat.Type;
+import javax.sound.sampled.AudioFormat.Encoding;
 import javax.swing.JPanel;
 
 import de.quippy.javamod.mixer.Mixer;
@@ -40,6 +42,8 @@ import de.quippy.javamod.multimedia.SpiMultimediaContainer;
 import de.quippy.javamod.multimedia.opl.emu.EmuOPL.Version;
 import de.quippy.javamod.multimedia.opl.sequencer.OPL3Sequence;
 import de.quippy.javamod.system.Helpers;
+import vavi.sound.sampled.mod.ModEncoding;
+import vavi.sound.sampled.mod.ModFileFormatType;
 
 import static java.lang.System.getLogger;
 
@@ -229,5 +233,15 @@ logger.log(Level.TRACE, e.getMessage(), e);
 
     @Override
     public void playBackStopped() {
+    }
+
+    @Override
+    public Encoding getEncoding() {
+        return new ModEncoding("OPL3");
+    }
+
+    @Override
+    public Type getType() {
+        return new ModFileFormatType("OPL3", "rol,laa,cmf,dro,sci");
     }
 }

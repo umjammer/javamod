@@ -228,20 +228,22 @@ public class ScreamTrackerOldMod extends Module {
         // Version
         int vHi = inputStream.read();
         int vLow = inputStream.read();
-        version = vHi << 4 | vLow;
+        version = vHi << 8 | vLow;
         setTrackerName("ScreamTracker V" + vHi + '.' + vLow);
 
-        // is always mono
-        //songFlags |= ModConstants.SONG_ISSTEREO;
         // default, so we do not need to check for IT
         songFlags |= ModConstants.SONG_ST2VIBRATO;
         songFlags |= ModConstants.SONG_ST2TEMPO;
         songFlags |= ModConstants.SONG_ITOLDEFFECTS;
+        // is always mono
+        //songFlags |= ModConstants.SONG_ISSTEREO;
 
-        // PlaybackTemp
+        // set Tempo and BPM
         int playBackTempo = inputStream.read();
-        if (vLow < 21) playBackTempo = ((playBackTempo / 10) << 4) + (playBackTempo % 10);
-        setTempo((playBackTempo >> 4) != 0 ? playBackTempo >> 4 : 1);
+        if (vLow < 21) // Hi and Low Nibble were saved to the base of 10. Yeah!
+            playBackTempo = ((playBackTempo / 10) << 4) + (playBackTempo % 10);
+        if (playBackTempo == 0) playBackTempo = 0x60;
+        setTempo(playBackTempo >> 4);
         setBPMSpeed(ModConstants.convertST2tempo(playBackTempo));
 
         // count of pattern in arrangement
@@ -251,8 +253,6 @@ public class ScreamTrackerOldMod extends Module {
 
         // Base volume
         setBaseVolume(inputStream.read() << 1);
-//        final int preAmp = ModConstants.MAX_MIXING_PREAMP / getNChannels();
-//        setMixingPreAmp((preAmp < ModConstants.MIN_MIXING_PREAMP) ? ModConstants.MIN_MIXING_PREAMP : (preAmp > 0x80) ? 0x80 : preAmp);
         setMixingPreAmp(ModConstants.MIN_MIXING_PREAMP);
 
         // Skip these reserved bytes
@@ -265,57 +265,56 @@ public class ScreamTrackerOldMod extends Module {
         for (int i = 0; i < getNSamples(); i++) {
             Sample current = new Sample();
             // Samplename
-            current.setName(inputStream.readString(12));
-            current.setStereo(false); // Default
+            current.name = inputStream.readString(12);
+            current.isStereo = false; // Default
 
             // reserved
             inputStream.skip(1);
 
             // instrument Disk number, if song (not yet supported)
             int diskNumber = inputStream.read();
-            if (STMType == 0x01) current.setName(current.name + " #" + diskNumber);
+            if (STMType == 0x01) current.name += " #" + diskNumber;
 
             // Reserved (Sample Beginning Offset?!)
             inputStream.skip(2);
 
             // Length
-            current.setLength(inputStream.readIntelUnsignedWord());
-            current.setByteLength(current.length);
+            current.byteLength = current.sampleLength = inputStream.readIntelUnsignedWord();
 
             // Repeat start and stop
             int repeatStart = inputStream.readIntelUnsignedWord();
             int repeatStop = inputStream.readIntelUnsignedWord();
 
             if (repeatStart < repeatStop && repeatStop != 0xffFF)
-                current.setLoopType(ModConstants.LOOP_ON);
+                current.loopType = ModConstants.LOOP_ON;
             else
-                current.setLoopType(0);
+                current.loopType = 0;
 
-            current.setLoopStart(repeatStart);
-            current.setLoopStop(repeatStop);
-            current.setLoopLength(repeatStop - repeatStart);
+            current.loopStart = repeatStart;
+            current.loopStop = repeatStop;
+            current.loopLength = repeatStop - repeatStart;
 
             // Defaults for non-existent SustainLoop
-            current.setSustainLoopStart(0);
-            current.setSustainLoopStop(0);
-            current.setSustainLoopLength(0);
+            current.sustainLoopStart = 0;
+            current.sustainLoopStop = 0;
+            current.sustainLoopLength = 0;
 
             // volume 64 is maximum
             int vol = inputStream.read() & 0x7F;
-            current.setVolume((vol > 64) ? 64 : vol);
-            current.setGlobalVolume(ModConstants.MAXSAMPLEVOLUME);
+            current.volume = Math.min(vol, 64);
+            current.globalVolume = ModConstants.MAXSAMPLEVOLUME;
 
             // reserved
             inputStream.skip(1);
 
             // Defaults!
-            current.setPanning(false);
-            current.setDefaultPanning(128);
+            current.setPanning = false;
+            current.defaultPanning = 128;
 
             // Base Frequency
-            current.setFineTune(0);
-            current.setTranspose(0);
-            current.setBaseFrequency(inputStream.readIntelUnsignedWord());
+            current.fineTune = 0;
+            current.transpose = 0;
+            current.baseFrequency = inputStream.readIntelUnsignedWord();
 
             // Reserved
             inputStream.skip(4);
@@ -326,14 +325,17 @@ public class ScreamTrackerOldMod extends Module {
         }
 
         // always space for 128 pattern... With STMs we need to guess the arrangement length
-        allocArrangement(128);
+        int orderSize = (vLow == 0) ? 64 : 128;
+        allocArrangement(orderSize);
+        int[] arrangement = getArrangement();
         int currentSongLength = -1;
-        for (int i = 0; i < 128; i++) {
+        for (int i = 0; i < orderSize; i++) {
             int nextPatternIndex = inputStream.read();
-            getArrangement()[i] = nextPatternIndex;
-            if (currentSongLength == -1 && nextPatternIndex == 99) currentSongLength = i;
+            if (nextPatternIndex == 99 || nextPatternIndex == 255) nextPatternIndex = ModConstants.INVALID_PAT_INDEX;
+            arrangement[i] = nextPatternIndex;
+            if (currentSongLength == -1 && nextPatternIndex == ModConstants.INVALID_PAT_INDEX) currentSongLength = i;
         }
-        while (getArrangement()[currentSongLength - 1] >= getNPattern()) currentSongLength--;
+        while (arrangement[currentSongLength - 1] >= getNPattern()) currentSongLength--;
         setSongLength(currentSongLength);
 
         PatternContainer patternContainer = new PatternContainer(this, getNPattern(), 64, getNChannels());
@@ -348,10 +350,8 @@ public class ScreamTrackerOldMod extends Module {
 
         for (int i = 0; i < getNSamples(); i++) {
             Sample current = getInstrumentContainer().getSample(i);
-            current.setSampleType(ModConstants.SM_PCMS);
+            current.sampleType = ModConstants.SM_PCMS;
             readSampleData(current, inputStream);
         }
-
-        cleanUpArrangement();
     }
 }

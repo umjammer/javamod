@@ -45,19 +45,18 @@ public class PatternElementIT extends PatternElement {
         super(parentMod, parentPatternRow, patternIndex, patternRow, channel);
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement#getEffectChar()
-     */
     @Override
     public char getEffectChar() {
-        return (effect == 0x1B) ? '#' : (effect == 0 && effectOp != 0) ? '.' : (char) ('A' + effect - 1);
+        return switch (effect) {
+            case 0x1B -> '#';
+            case 0x1C -> '\\';
+            case 0x1D -> ':';
+            case 0x1E -> '+';
+            case 0x1F -> '*';
+            default -> (effect == 0 && effectOp != 0) ? '.' : (char) ('A' + effect - 1);
+        };
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement#getEffectName()
-     */
     @Override
     public String getEffectName() {
         switch (effect) {
@@ -153,14 +152,11 @@ public class PatternElementIT extends PatternElement {
                             case 0x1:
                                 return "Enabl. Surround";
                             // MPT Effects only
-//                            case 0x8: // Disable reverb for this channel
-//                                break;
-//                            case 0x9: // Force reverb for this channel
-//                                break;
-//                            case 0xA: // Select mono surround mode (center channel). This is the default
-//                                break;
-//                            case 0xB: // Select quad surround mode: this allows you to pan in the rear channels, especially useful for 4-speakers playback. Note that S9A and S9B do not activate the surround for the current channel, it is a global setting that will affect the behavior of the surround for all channels. You can enable or disable the surround for individual channels by using the S90 and S91 effects. In quad surround mode, the channel surround will stay active until explicitely disabled by a S90 effect
-//                                break;
+                            case 0x8: return "Disable reverb";
+                            case 0x9: return "Force reverb";
+                            case 0xA: return "Mono surround";
+                            case 0xB: return "Quad surround";
+                            // ----
                             case 0xC:
                                 return "Global FilterMode Off";
                             case 0xD:
@@ -189,11 +185,13 @@ public class PatternElementIT extends PatternElement {
                 break;
             case 0x14:
                 return
+                        ((effectOp == 0) ?        // 0x00
+                                "Set BPM (cont.)" :
                         (effectOp >> 4 == 0) ?    // 0x0X
-                                "Set BPM (slower)" :
-                                (effectOp >> 4 == 1) ?    // 0x1X
-                                        "Set BPM (faster)" :
-                                        "Set BPM";        // else
+                                "Set BPM (slow.)":
+                        (effectOp >> 4 == 1) ?    // 0x1X
+                                "Set BPM (fast.)" :
+                                "Set BPM");
             case 0x15:
                 return "Fine Vibrato";
             case 0x16:
@@ -210,15 +208,14 @@ public class PatternElementIT extends PatternElement {
                 return "Parameter Extension";
             case 0x1C:
                 return "Smooth Midi Macro";
+            case 0x1D: return "Note Delay&Cut";
+            case 0x1E: return "Set Finetune";
+            case 0x1F: return "Smooth Finetune";
         }
         //logger.log(Level.ERROR, "Unknown: " + ModConstants.getAsHex(effect, 2) + "/" + ModConstants.getAsHex(effectOp, 2));
         return Helpers.EMPTY_STING;
     }
 
-    /**
-     * @return
-     * @see de.quippy.javamod.multimedia.mod.loader.pattern.PatternElement#getEffectCategory()
-     */
     @Override
     public int getEffectCategory() {
         switch (effect) {
@@ -314,14 +311,11 @@ public class PatternElementIT extends PatternElement {
                             case 0x1:
                                 return EFFECT_PANNING;
                             // MPT Effects only
-//                            case 0x8: // Disable reverb for this channel
-//                                break;
-//                            case 0x9: // Force reverb for this channel
-//                                break;
-//                            case 0xA: // Select mono surround mode (center channel). This is the default
-//                                break;
-//                            case 0xB: // Select quad surround mode: this allows you to pan in the rear channels, especially useful for 4-speakers playback. Note that S9A and S9B do not activate the surround for the current channel, it is a global setting that will affect the behavior of the surround for all channels. You can enable or disable the surround for individual channels by using the S90 and S91 effects. In quad surround mode, the channel surround will stay active until explicitely disabled by a S90 effect
-//                                break;
+                            case 0x8: return EFFECT_PANNING;
+                            case 0x9: return EFFECT_PANNING;
+                            case 0xA: return EFFECT_PANNING;
+                            case 0xB: return EFFECT_PANNING;
+                            // ----
                             case 0xC:
                                 return EFFECT_GLOBAL;
                             case 0xD:
@@ -364,6 +358,9 @@ public class PatternElementIT extends PatternElement {
                 return EFFECT_NORMAL;
             case 0x1C:
                 return EFFECT_NORMAL;
+            case 0x1D: return EFFECT_NORMAL;
+            case 0x1E: return EFFECT_PITCH;
+            case 0x1F: return EFFECT_PITCH;
         }
         return EFFECT_UNKNOWN;
     }

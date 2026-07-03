@@ -30,6 +30,8 @@ import java.util.NoSuchElementException;
 import javax.sound.sampled.AudioFormat;
 
 import de.quippy.javamod.mixer.BasicMixer;
+import de.quippy.javamod.multimedia.sid.PlayerUtil.PcmSink;
+import libsidplay.common.EventScheduler;
 import libsidplay.common.SamplingRate;
 import libsidplay.config.IConfig;
 import libsidplay.sidtune.SidTune;
@@ -38,10 +40,18 @@ import sidplay.audio.Audio;
 import sidplay.audio.AudioConfig;
 import sidplay.audio.AudioDriver;
 import sidplay.audio.JWAVDriver.JWAVStreamDriver;
+import sidplay.audio.exceptions.SongEndException;
 import sidplay.ini.IniConfig;
 import sidplay.player.State;
+import vavi.io.OutputEngine;
 
+import static de.quippy.javamod.multimedia.sid.PlayerUtil.playerOpen;
 import static java.lang.System.getLogger;
+import static sidplay.player.State.OPEN;
+import static sidplay.player.State.PAUSE;
+import static sidplay.player.State.PLAY;
+import static sidplay.player.State.QUIT;
+import static sidplay.player.State.START;
 
 
 /**
@@ -328,5 +338,133 @@ logger.log(Level.DEBUG, "play: " + sidPlayer.stateProperty().get());
             closeAudioDevice();
 logger.log(Level.DEBUG, "exit startPlayback");
         }
+    }
+
+    /**
+     * Single threaded decoding.
+     * <p>
+     * Unlike {@link #getOutputEngine()} this does not let {@link Player} run its own
+     * "Player" thread, and audio is <em>pulled</em>, not pushed: nothing calls back into
+     * an {@link AudioDriver} that performs I/O. {@link #initialize} opens the emulation on
+     * the caller's thread; then each {@link OutputEngine#execute()} call performs the
+     * three explicit steps of the engine contract:
+     * <ol>
+     * <li><b>advance</b> &mdash; clock the C64 until the reSID mixer has rendered a chunk,</li>
+     * <li><b>get</b> the chunked 16-bit PCM out of {@link PcmSink},</li>
+     * <li><b>write</b> that chunk to the target {@link OutputStream}.</li>
+     * </ol>
+     * {@link PcmSink} is a passive latch (the reSID mixer requires <em>some</em>
+     * {@link AudioDriver} to render into); it does no I/O and is installed through the
+     * public {@link Player#setAudioDriver(AudioDriver)} hook so the WAV/stream driver is
+     * never used.
+     */
+    @Override
+    public OutputEngine getOutputEngine() {
+        return new OutputEngine() {
+
+            /** target */
+            private OutputStream out;
+
+            /** passive PCM latch the reSID mixer renders into; pulled in execute() */
+            private PcmSink sink;
+
+            @Override
+            public void initialize(OutputStream out) throws IOException {
+                if (this.out != null) {
+                    throw new IOException("Already initialized");
+                }
+                this.out = out;
+
+                SIDMixer.this.initialize();
+                int bufferSize = sampleRate;
+                int byteBufferSize = (isStereo) ? bufferSize : bufferSize << 1;
+                setSourceLineBufferSize(byteBufferSize);
+
+                parentSIDContainer.nameChanged();
+                setIsPlaying();
+
+                if (getSeekPosition() > 0) seek(getSeekPosition());
+
+                // The reSID mixer renders into an AudioDriver buffer; install a passive
+                // latch (no I/O, no callbacks) so execute() can pull the samples itself
+                // instead of the mixer pushing them out. Installed via the public hook,
+                // so the WAV/stream driver is bypassed entirely.
+                sink = new PcmSink();
+                sidPlayer.setAudioDriver(sink);
+
+                // Replicate Player#playerRunnable's start sequence on *this* thread
+                // (no Player thread is started), so the emulation can be clocked from
+                // execute(). The SID-chip insertion and mixer start happen through events
+                // fired while clocking, exactly as in the real play() loop.
+                sidPlayer.stopC64();
+                sidPlayer.setTune(sidTune);
+                sidPlayer.stateProperty().set(OPEN);
+                playerOpen(sidPlayer, sidConfig, sidTune); // private Player#open() + playList
+                sidPlayer.stateProperty().set(START);
+                // Player#menuHook is a UI-only callback; nothing to do in batch mode.
+                sidPlayer.stateProperty().set(PLAY);
+            }
+
+            @Override
+            public void execute() throws IOException {
+                if (out == null) {
+                    throw new IOException("Not yet initialized");
+                }
+                try {
+                    if (stopPositionIsReached()) setIsStopping();
+                    if (isStopping()) {
+                        sidPlayer.stateProperty().set(QUIT);
+                        setIsStopped();
+                        out.close();
+                        return;
+                    }
+
+                    State state = sidPlayer.stateProperty().get();
+                    if (state != PLAY && state != PAUSE) {
+                        setHasFinished();
+                        out.close();
+                        return;
+                    }
+
+                    // 1. advance: clock the C64 until the reSID mixer has rendered a chunk
+                    EventScheduler scheduler = sidPlayer.getC64().getEventScheduler();
+                    if (state == PAUSE) {
+                        scheduler.clockThreadSafeEvents();
+                        Thread.sleep(250L);
+                    } else {
+                        while (sink.available() == 0 && sidPlayer.stateProperty().get() == PLAY) {
+                            scheduler.clock();
+                        }
+                    }
+
+                    // 2. get the chunked audio data, 3. write it to the output engine
+                    byte[] chunk = sink.drain();
+                    if (chunk.length > 0) {
+                        out.write(chunk);
+                    }
+
+                    State after = sidPlayer.stateProperty().get();
+                    if (after != PLAY && after != PAUSE) {
+                        setHasFinished();
+                        out.close();
+                    }
+                } catch (SongEndException e) {
+                    sidPlayer.getTimer().end();
+                    byte[] chunk = sink.drain(); // flush whatever was rendered before the end
+                    if (chunk.length > 0) out.write(chunk);
+                    setHasFinished();
+                    out.close();
+                } catch (Throwable e) {
+                    logger.log(Level.ERROR, e.getMessage(), e);
+                    out.close();
+                }
+            }
+
+            @Override
+            public void finish() throws IOException {
+                PlayerUtil.playerClose(sidPlayer); // private Player#close(): teardown
+                setIsStopped();
+            }
+        };
     }
 }

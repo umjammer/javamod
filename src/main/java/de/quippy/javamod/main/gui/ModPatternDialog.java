@@ -801,11 +801,11 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
      * @param peekVolumeRight
      * @since 28.11.2023
      */
-    private void updateVolume(int channel, int peekVolumeLeft, int peekVolumeRight, boolean isSurround) {
+    private void updateVolume(int channel, int peekVolumeLeft, int peekVolumeRight, boolean isSurround, boolean isMidiAdlib) {
         // because of possible race conditions (EventQueue.invokeLater) a new mod can already be loaded while the old updater is still updating for an old mod
         // this should not happen, but occasional it does
         if (channelButtons != null && channel < channelButtons.length && peakMeterButtons[channel] != null)
-            peakMeterButtons[channel].setMeterValues(peekVolumeLeft, peekVolumeRight, isSurround);
+            peakMeterButtons[channel].setMeterValues(peekVolumeLeft, peekVolumeRight, isSurround, isMidiAdlib);
     }
 
     /**
@@ -815,7 +815,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         if (patternContainer != null) {
             int channels = channelButtons.length;
             for (int c = 0; c < channels; c++) {
-                updateVolume(c, 0, 0, false);
+                updateVolume(c, 0, 0, false, false);
             }
         }
     }
@@ -1137,7 +1137,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
     @Override
     public void getPeekInformation(PeekInformation infoObject) {
         if (isVisible())
-            updateVolume(infoObject.channel, infoObject.actPeekLeft, infoObject.actPeekRight, infoObject.isSurround);
+            updateVolume(infoObject.channel, infoObject.actPeekLeft, infoObject.actPeekRight, infoObject.isSurround, infoObject.isMidiAdlib);
     }
 
     @Override

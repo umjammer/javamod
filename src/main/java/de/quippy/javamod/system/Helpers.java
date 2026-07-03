@@ -62,6 +62,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.MidiUnavailableException;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
@@ -95,7 +98,7 @@ public class Helpers {
     }
 
     /** Version Information */
-    public static final String VERSION = "V3.9.6";
+    public static final String VERSION = "V3.9.7";
     public static final String PROGRAM = "Java Mod Player";
     public static final String FULLVERSION = PROGRAM + ' ' + VERSION;
     public static final String COPYRIGHT = "© by Daniel Becker since 2006";
@@ -850,8 +853,9 @@ public class Helpers {
      * based on the inputFileName string
      * This works only for protocol "file"!!
      *
-     * @param baseURL
-     * @param inputFileName
+     * THIS IS FOR PLAYLISTS ONLY! It expects a file name at the end of baseURL - and so does a "getParent()"
+     * @param baseURL the playlist file name with a full pathname
+     * @param inputFileName one filename of the list
      * @return
      * @since 23.03.2011
      */
@@ -865,45 +869,51 @@ public class Helpers {
             if (Helpers.urlExists(fileURL))
                 return fileURL;
             else {
-                // get the path portion of the URL - this might lead to the same value of inputFileName (mostly it should)
-                String fileName = fileURL.toURI().getPath();
-                // and remove a possible trailing slash
-                if (fileName.charAt(0) == '/') fileName = fileName.substring(1);
+                String path = createLocalFileStringFromURL(baseURL, true);
+                Path basePath = Paths.get(path);
+                Path fileName = Paths.get(inputFileName);
+                String result = basePath.getParent().resolve(fileName).normalize().toString();
+                return createURLfromString(result);
 
-                // Get the path portion of the URL - and do NOT decode URL type entries (like %20 for spaces) - we need to keep them!
-                String path = baseURL.toURI().getPath();
-
-                // a windows network drive is represented by "file:////servername/path..." - which is not a valid URI and the later "normalize" will delete those
-                boolean isWindowsNetworkDrive = path.startsWith("//");
-
-                // now get rid of playlist file name
-                int lastSlash = path.lastIndexOf('/');
-                StringBuilder relPath = new StringBuilder(path.substring(0, lastSlash + 1));
-
-                int iterations = 0;
-
-                URL fullURL = new URI(baseURL.getProtocol(), null, baseURL.getHost(), baseURL.getPort(), relPath + fileName, null, null).toURL();
-                while (!urlExists(fullURL) && iterations < 256) {
-                    relPath.append("../");
-                    fullURL = new URI(baseURL.getProtocol(), null, baseURL.getHost(), baseURL.getPort(), relPath + fileName, null, null).toURL();
-                    iterations++;
-                }
-                if (iterations < 256) {
-                    try {
-                        URI returnURL = fullURL.toURI().normalize();
-                        if (isWindowsNetworkDrive) // normalize will delete the trailing "////" in front - so re-add those
-                            return new URI(returnURL.getScheme(), null, returnURL.getHost(), returnURL.getPort(), "///" + returnURL.getPath(), null, null).toURL();
-                        else
-                            return returnURL.toURL();
-                    } catch (URISyntaxException x) {
-                        logger.log(Level.ERROR, "[createAbsolutePathForFile]", x);
-                    }
-                    // we failed :(, so just the fullURL
-                    return fullURL;
-                } else {
-                    logger.log(Level.INFO, "File not found: " + inputFileName + " in relation to " + baseURL);
-                    return Helpers.createURLfromString(inputFileName);
-                }
+//                // get the path portion of the URL - this might lead to the same value of inputFileName (mostly it should)
+//                String fileName = fileURL.toURI().getPath();
+//                // and remove a possible trailing slash
+//                if (fileName.charAt(0) == '/') fileName = fileName.substring(1);
+//
+//                // Get the path portion of the URL - and do (since Java 20) decode URL type entries (like %20 for spaces)!
+//                final String path = baseURL.toURI().getPath();
+//
+//                // a windows network drive is represented by "file:////servername/path..." - which is not a valid URI and the later "normalize" will delete those
+//                final boolean isWindowsNetworkDrive = path.startsWith("//");
+//
+//                // now get rid of playlist file name
+//                final int lastSlash = path.lastIndexOf('/');
+//                final StringBuilder relPath = new StringBuilder(path.substring(0, lastSlash + 1));
+//
+//                int iterations = 0;
+//
+//                URL fullURL = new URI(baseURL.getProtocol(), null, baseURL.getHost(), baseURL.getPort(), ((new StringBuilder(relPath)).append(fileName)).toString(), null, null).toURL();
+//                while (!urlExists(fullURL) && iterations < 256) {
+//                    relPath.append("../");
+//                    fullURL = new URI(baseURL.getProtocol(), null, baseURL.getHost(), baseURL.getPort(), ((new StringBuilder(relPath)).append(fileName)).toString(), null, null).toURL();
+//                    iterations++;
+//                }
+//                if (iterations < 256) {
+//                    try {
+//                        final URI returnURL = fullURL.toURI().normalize();
+//                        if (isWindowsNetworkDrive) // normalize will delete the trailing "////" in front - so re-add those
+//                            return new URI(returnURL.getScheme(), null, returnURL.getHost(), returnURL.getPort(), ((new StringBuilder("///")).append(returnURL.getPath())).toString(), null, null).toURL();
+//                        else
+//                            return returnURL.toURL();
+//                    } catch (final URISyntaxException x) {
+//                        Log.error("[createAbsolutePathForFile]", x);
+//                    }
+//                    // we failed :(, so just the fullURL
+//                    return fullURL;
+//                } else {
+//                    Log.info("File not found: " + inputFileName + " in relation to " + baseURL);
+//                    return Helpers.createURLfromString(inputFileName);
+//                }
             }
         } catch (Throwable ex) {
             logger.log(Level.ERROR, "[createAbsolutePathForFile]", ex);
@@ -1147,6 +1157,42 @@ public class Helpers {
             AudioInfos = result.toString();
         }
         return AudioInfos;
+    }
+
+    /**
+     * @return
+     * @since 24.10.2010
+     */
+    public static MidiDevice.Info[] getMidiOutDevices() {
+        List<MidiDevice.Info> midiOuts = new ArrayList<>();
+        MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+        for (MidiDevice.Info element : infos) {
+            try {
+                MidiDevice device = MidiSystem.getMidiDevice(element);
+                if (device.getMaxReceivers() != 0) midiOuts.add(element);
+            } catch (MidiUnavailableException _) {
+            }
+        }
+        MidiDevice.Info[] result = new MidiDevice.Info[midiOuts.size()];
+        midiOuts.toArray(result);
+        return result;
+    }
+
+    /**
+     * @return
+     * @since 27.11.2010
+     */
+    public static javax.sound.sampled.Mixer.Info[] getInputMixerNames() {
+        List<javax.sound.sampled.Mixer.Info> mixers = new ArrayList<>();
+        javax.sound.sampled.Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
+        Line.Info lineInfo = new Line.Info(TargetDataLine.class);
+        for (javax.sound.sampled.Mixer.Info element : mixerInfos) {
+            javax.sound.sampled.Mixer mixer = AudioSystem.getMixer(element);
+            if (mixer.isLineSupported(lineInfo)) {
+                mixers.add(element);
+            }
+        }
+        return mixers.toArray(Mixer.Info[]::new);
     }
 
     /**

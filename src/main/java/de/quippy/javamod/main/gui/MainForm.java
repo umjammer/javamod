@@ -68,6 +68,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
@@ -2246,12 +2247,10 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
         try {
             MultimediaContainer newContainer = MultimediaContainerManager.getMultimediaContainer(sourceFile);
             if (newContainer != null) {
-                Mixer mixer = getCurrentContainer().createNewMixer();
+                Mixer mixer = createNewMixer();
                 if (mixer != null) {
                     mixer.setAudioProcessor(null);
-                    mixer.setVolume(currentVolume);
-                    mixer.setBalance(currentBalance);
-                    mixer.setSoundOutputStream(getSoundOutputStream());
+                    removeMixer(); // no seek bar
                     mixer.setPlayDuringExport(false);
                     mixer.setExportFile(targetFile);
                     mixer.setMillisecondPosition(fromMillisecondPosition);
@@ -2327,6 +2326,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
                 FileChooserResult chooserResult = Helpers.selectFileNameFor(MainForm.this, exportPath, "Export here", fileFilterExport, false, 0, false, true);
                 if (chooserResult != null) {
                     File destinationDir = chooserResult.getSelectedFile();
+                    AtomicBoolean cancel = new AtomicBoolean(false);
                     if (destinationDir.isDirectory() && destinationDir.canWrite()) {
                         int c = ((int) Math.log10(entries.length)) + 1; // amount of leading zeros
                         if (c < 2) c = 2; // always one leading zero
@@ -2334,6 +2334,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
                         getExportDialog().setVisible(true);
                         getExportDialog().setGeneralMinimum(0);
                         getExportDialog().setGeneralMaximum(entries.length);
+                        getExportDialog().setNewCancelAction(() -> cancel.set(true));
                         try {
                             for (int i = 0; i < entries.length; i++) {
                                 PlayListEntry entry = entries[i];
@@ -2347,10 +2348,7 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
                                 getExportDialog().setGeneralValue(i);
                                 if (destination.exists()) {
                                     int owresult = JOptionPane.showConfirmDialog(MainForm.this, destination + "\nalready exists! Overwrite?", "Overwrite confirmation", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                                    if (owresult == JOptionPane.CANCEL_OPTION) {
-                                        getExportDialog().setVisible(false);
-                                        return;
-                                    }
+                                    if (owresult == JOptionPane.CANCEL_OPTION) break;
                                     if (owresult == JOptionPane.NO_OPTION) continue; // next File
                                     boolean ok = destination.delete();
                                     if (!ok && destination.exists()) {
@@ -2362,9 +2360,12 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
                                     exportFileToWave(entry.getFile(), destination, entry.getTimeIndex(), entry.getDuration(), getExportDialog());
                                 else
                                     Helpers.copyFromURL(entry.getFile(), destination, getExportDialog());
+
+                                if (cancel.get()) break;
                             }
                         } finally {
                             getExportDialog().setVisible(false);
+                            getExportDialog().setNewCancelAction(null);
                         }
                     }
                 }
@@ -2670,11 +2671,11 @@ public class MainForm extends JFrame implements DspProcessorCallBack, PlayThread
      * @since 14.09.2008
      */
     private boolean loadMultimediaOrPlayListFile(URL mediaPLSFileURL) {
-        addFileToLastLoaded(mediaPLSFileURL);
         currentPlayList = null;
         try {
             currentPlayList = PlayList.createFromFile(mediaPLSFileURL, false, false);
             if (currentPlayList != null) {
+                addFileToLastLoaded(mediaPLSFileURL);
                 getPlaylistGUI().setNewPlaylist(currentPlayList);
                 return doNextPlayListEntry();
             }

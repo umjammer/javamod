@@ -7,9 +7,12 @@
 package vavi.sound.sampled.mod;
 
 import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
 import javax.sound.sampled.AudioFormat;
+
+import de.quippy.javamod.multimedia.MultimediaContainer;
 
 import static java.lang.System.getLogger;
 
@@ -24,25 +27,27 @@ public class ModEncoding extends AudioFormat.Encoding {
 
     private static final Logger logger = getLogger(ModEncoding.class.getName());
 
-    public static final ModEncoding MOD = new ModEncoding("MOD");
-    public static final ModEncoding OPL3 = new ModEncoding("OPL3");
-    public static final ModEncoding SID = new ModEncoding("SID");
-
     /**
      * Constructs a new encoding.
      *
      * @param name Name of the mod audio encoding.
      */
-    private ModEncoding(String name) {
+    public ModEncoding(String name) {
         super(name);
     }
 
-    static final ModEncoding[] encodings = {
-            MOD, OPL3, SID
-    };
+
+    public static final List<ModEncoding> encodings = new ArrayList<>();
+
+    static {
+        for (var fileFormat : ServiceLoader.load(MultimediaContainer.class)) {
+            if (fileFormat.getEncoding() != null) {
+                encodings.add((ModEncoding) fileFormat.getEncoding());
+            }
+        }
+    }
 
     public static ModEncoding valueOf(String name) {
-logger.log(Level.DEBUG, name);
-        return Arrays.stream(encodings).filter(e -> name.equalsIgnoreCase(e.toString())).findFirst().get();
+        return encodings.stream().filter(e -> name.equalsIgnoreCase(e.toString())).findFirst().orElseThrow();
     }
 }

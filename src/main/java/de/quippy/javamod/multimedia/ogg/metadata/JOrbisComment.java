@@ -100,7 +100,7 @@ class State {
 
 public class JOrbisComment {
 
-    private static final Logger logger = getLogger(State.class.getName());
+    private static final Logger logger = getLogger(JOrbisComment.class.getName());
 
     protected static final int CHUNKSIZE = 4096;
     private State state = null;

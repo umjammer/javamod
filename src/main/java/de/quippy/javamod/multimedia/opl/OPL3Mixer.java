@@ -22,6 +22,8 @@
 
 package de.quippy.javamod.multimedia.opl;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import javax.sound.sampled.AudioFormat;
@@ -31,6 +33,7 @@ import de.quippy.javamod.multimedia.opl.emu.EmuOPL;
 import de.quippy.javamod.multimedia.opl.emu.EmuOPL.OplType;
 import de.quippy.javamod.multimedia.opl.emu.EmuOPL.Version;
 import de.quippy.javamod.multimedia.opl.sequencer.OPL3Sequence;
+import vavi.io.OutputEngine;
 
 import static java.lang.System.getLogger;
 
@@ -257,5 +260,126 @@ logger.log(Level.DEBUG, "opl: " + opl.getClass().getName() + ", " + OPLVersion);
             setIsStopped();
             closeAudioDevice();
         }
+    }
+
+    @Override
+    public OutputEngine getOutputEngine() {
+        return new OutputEngine() {
+
+            /** target */
+            private OutputStream out;
+
+            boolean finished = false;
+            int[] fromOPL3 = new int[2];
+            int bufferIndex = 0;
+
+            @Override
+            public void initialize(OutputStream out) throws IOException {
+                if (this.out != null) {
+                    throw new IOException("Already initialized");
+                } else {
+                    this.out = out;
+
+                    //
+                    OPL3Mixer.this.initialize();
+                    fromOPL3 = new int[2];
+                    samplesWritten = 0;
+                    bufferIndex = 0;
+
+                    setIsPlaying();
+
+                    if (getSeekPosition() > 0) seek(getSeekPosition());
+                }
+            }
+
+            @Override
+            public void execute() throws IOException {
+                if (out == null) {
+                    throw new IOException("Not yet initialized");
+                } else {
+                    try {
+                        if (!finished) {
+                            boolean newData = opl3Sequence.updateToOPL(opl);
+
+                            double refresh = (newData) ? 1.0d / opl3Sequence.getRefresh() : (double) COOL_DOWN;
+                            int samples = (int) (((double) sampleRate * refresh) + 0.5);
+                            if (hasStopPosition()) {
+                                long bytesToWrite = getSamplesToWriteLeft();
+                                if ((long) (samples) > bytesToWrite) samples = (int) bytesToWrite;
+                            }
+                            for (int s = 0; s < samples; s++) {
+                                opl.read(fromOPL3);
+                                int samplel = fromOPL3[0];
+                                int sampler = fromOPL3[1];
+                                fromOPL3[0] = fromOPL3[1] = 0;
+
+                                // WideStereo Mixing - but only with stereo
+                                if (doVirtualStereo && opl.getOPLType() != OplType.OPL2) {
+                                    wideLBuffer[writePointer] = samplel;
+                                    wideRBuffer[writePointer++] = sampler;
+                                    if (writePointer >= maxWideStereo) writePointer = 0;
+
+                                    sampler += (int) (wideLBuffer[readPointer] / 2);
+                                    samplel += (int) (wideRBuffer[readPointer++] / 2);
+                                    if (readPointer >= maxWideStereo) readPointer = 0;
+                                }
+
+                                // let's do a fast ramp down at the end, to avoid clicking
+                                if (!newData && samples - s <= RAMP_DOWN_START) {
+                                    samplel = (samplel * rampDownVolume) / (1 << RAMP_DOWN_SHIFT);
+                                    sampler = (sampler * rampDownVolume) / (1 << RAMP_DOWN_SHIFT);
+                                    rampDownVolume--;
+                                    if (rampDownVolume <= 0) rampDownVolume = 0;
+                                }
+
+                                // Clipping - always a good idea (sample is 32bit (int), but 16 bit is border):
+                                if (samplel > 0x0000_7FFF) samplel = 0x0000_7FFF;
+                                else if (samplel < 0xffFF_8000) samplel = 0xffFF_8000;
+                                if (sampler > 0x0000_7FFF) sampler = 0x0000_7FFF;
+                                else if (sampler < 0xffFF_8000) sampler = 0xffFF_8000;
+
+                                buffer[bufferIndex] = (byte) (samplel & 0xff);
+                                buffer[bufferIndex + 1] = (byte) ((samplel >> 8) & 0xff);
+                                buffer[bufferIndex + 2] = (byte) (sampler & 0xff);
+                                buffer[bufferIndex + 3] = (byte) ((sampler >> 8) & 0xff);
+                                samplesWritten++;
+                                bufferIndex += 4;
+                                if (bufferIndex >= bufferSize) {
+                                    out.write(buffer, 0, bufferIndex - 4);
+                                    bufferIndex = 0;
+                                }
+                                if (isStopping() || isPausing() || isInSeeking()) break;
+                            }
+
+                            if (!newData && !isStopping()) { // if no new Data, we are ready
+                                // finish off the buffer, if something is left
+                                bufferIndex -= 4;
+                                if (bufferIndex > 0) {
+                                    out.write(buffer, 0, bufferIndex);
+                                }
+                                finished = true;
+                            }
+
+                            if (stopPositionIsReached()) {
+                                setIsStopping();
+                                out.close();
+                            }
+                        }
+                        if (finished) {
+                            setHasFinished();
+                            out.close();
+                        }
+                    } catch (Throwable e) {
+                        logger.log(Level.ERROR, e.getMessage(), e);
+                        out.close();
+                    }
+                }
+            }
+
+            @Override
+            public void finish() throws IOException {
+                setIsStopped();
+            }
+        };
     }
 }

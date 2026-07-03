@@ -30,6 +30,7 @@ import de.quippy.javamod.io.SoundOutputStream;
 import de.quippy.javamod.io.SoundOutputStreamImpl;
 import de.quippy.javamod.mixer.dsp.AudioProcessor;
 import de.quippy.javamod.multimedia.sid.SIDMixer;
+import vavi.io.OutputEngine;
 
 
 /**
@@ -276,6 +277,9 @@ public abstract class Mixer {
     public abstract int getCurrentKBperSecond();
 
     public abstract int getCurrentSampleRate();
+
+    /** for spi */
+    public abstract OutputEngine getOutputEngine();
 
     @Override
     public String toString() {

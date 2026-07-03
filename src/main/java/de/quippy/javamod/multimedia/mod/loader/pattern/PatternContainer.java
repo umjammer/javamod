@@ -26,6 +26,7 @@ import java.awt.Color;
 
 import de.quippy.javamod.multimedia.mod.ModConstants;
 import de.quippy.javamod.multimedia.mod.loader.Module;
+import de.quippy.javamod.system.Helpers;
 
 
 /**
@@ -39,6 +40,7 @@ public class PatternContainer {
 
     // MPTP specific information
     protected String[] channelNames;
+    protected int[] channelPluginIndex;
     protected Color[] channelColors;
     protected boolean[] channelIsActive;
 
@@ -82,6 +84,21 @@ public class PatternContainer {
         for (int i = 0; i < patterns.length; i++) {
             if (patterns[i] != null) patterns[i].setToChannels(i, nChannels);
         }
+        String[] newChannelNames = (channelNames != null) ? new String[nChannels] : null;
+        int[] newChannelPluginIndex = (channelPluginIndex != null) ? new int[nChannels] : null;
+        Color[] newChannelColors = (channelColors != null) ? new Color[nChannels] : null;
+        boolean[] newChannelIsActive = (channelIsActive != null) ? new boolean[nChannels] : null;
+
+        for (int i = 0; i < nChannels; i++) {
+            if (newChannelNames != null) newChannelNames[i] = (i < channelNames.length) ? channelNames[i] : Helpers.EMPTY_STING;
+            if (newChannelPluginIndex != null) newChannelPluginIndex[i] = (i < channelPluginIndex.length) ? channelPluginIndex[i] : -1;
+            if (newChannelColors != null) newChannelColors[i] = (i < channelColors.length) ? channelColors[i] : null;
+            if (newChannelIsActive != null) newChannelIsActive[i] = (i < channelIsActive.length) ? channelIsActive[i] : true;
+        }
+        channelNames = newChannelNames;
+        channelPluginIndex = newChannelPluginIndex;
+        channelColors = newChannelColors;
+        channelIsActive = newChannelIsActive;
     }
 
     /**
@@ -189,6 +206,38 @@ public class PatternContainer {
      */
     public void setPatternElement(PatternElement patternElement) {
         patterns[patternElement.getPatternIndex()].setPatternElement(patternElement.getRow(), patternElement.getChannel(), patternElement);
+    }
+
+    public void setChannelMixplugin(int chn, int mixPlugIn) {
+        if (channelPluginIndex == null) {
+            int anzChannels = (patterns != null && patterns[0] != null) ? patterns[0].getChannels() : chn;
+            channelPluginIndex = new int[anzChannels];
+            for (int i = 0; i < anzChannels; i++) channelPluginIndex[i] = -1;
+        } else if (chn >= channelPluginIndex.length) {
+            int[] newChannelPluginIndex = new int[chn];
+            for (int i = 0; i < chn; i++)
+                newChannelPluginIndex[i] = (i < channelPluginIndex.length) ? channelPluginIndex[i] : -1;
+            channelPluginIndex = newChannelPluginIndex;
+        }
+        channelPluginIndex[chn] = mixPlugIn;
+    }
+
+    public void setPatternNames(String[] patNames) {
+        if (patNames == null) return;
+
+        int len = Math.min(patNames.length, patterns.length);
+        for (int pattIndex = 0; pattIndex < len; pattIndex++) {
+            patterns[pattIndex].setPatternName(patNames[pattIndex]);
+        }
+    }
+
+    /**
+     * @param patternIndex
+     * @return
+     * @since 06.02.2024
+     */
+    public String getPatternName(int patternIndex) {
+        return patterns[patternIndex].getPatternName();
     }
 
     /**

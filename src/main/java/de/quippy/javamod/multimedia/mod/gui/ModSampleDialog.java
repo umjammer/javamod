@@ -924,7 +924,7 @@ public class ModSampleDialog extends JDialog {
                 int scrollBarHeight = getImageBufferScrollPane().getHorizontalScrollBar().getPreferredSize().height;
                 Insets inset = getImageBufferScrollPane().getInsets();
                 d.height = getImageBufferScrollPane().getHeight() - inset.top - inset.bottom - (scrollBarHeight << 1);
-                d.width = theSample.length << (newZoom - 1);
+                d.width = theSample.sampleLength << (newZoom - 1);
                 getContentPane().remove(getImageBufferPanel());
                 getImageBufferScrollPane().setViewportView(getImageBufferPanel());
                 getContentPane().add(getImageBufferScrollPane(), Helpers.getGridBagConstraint(0, 3, 1, 0, GridBagConstraints.BOTH, GridBagConstraints.WEST, 1.0, 1.0));
@@ -1093,6 +1093,13 @@ public class ModSampleDialog extends JDialog {
         spinnerModelData.add(ModConstants.getAsHex(0, 2));
         getSelectSample().setModel(new SpinnerListModel(spinnerModelData));
 
+        clearSampleFields();
+
+        // after setting the new model, make the editor of the spinner un-editable
+        ((DefaultEditor) getSelectSample().getEditor()).getTextField().setEditable(false);
+    }
+
+    private void clearSampleFields() {
         getButton_Play().setEnabled(false);
         getZoomSelector().setEnabled(false);
 
@@ -1122,12 +1129,13 @@ public class ModSampleDialog extends JDialog {
 
         getImageBufferPanel().setVisible(true);
         getAdlibSamplePanel().setVisible(false);
-
-        // after setting the new model, make the editor of the spinner un-editable
-        ((DefaultEditor) getSelectSample().getEditor()).getTextField().setEditable(false);
     }
 
     private void fillWithSample(Sample sample) {
+        if (sample == null) {
+            clearSampleFields();
+            return;
+        }
         getButton_Play().setEnabled(true);
         getZoomSelector().setEnabled(true);
 

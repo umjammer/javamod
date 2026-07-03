@@ -93,7 +93,7 @@ public class PatternElementXM extends PatternElement {
             case 0x0B:
                 return "Pattern Position Jump";
             case 0x0C:
-                return "Set volume";
+                return "Set Volume";
             case 0x0D:
                 return "Pattern break";
             case 0x0E:

@@ -39,9 +39,10 @@ public class PeekMeterComponent extends JComponent {
 
     @Serial
     private static final long serialVersionUID = -3051678250074031407L;
+    private static final int MIDI_COLOR_START = 8;
 
     private int peekLeft, peekRight;
-    private boolean isSurround;
+    private boolean isSurround, isMidiAdlib;
 
     private Color[] peekMeterColors;
 
@@ -54,11 +55,15 @@ public class PeekMeterComponent extends JComponent {
     }
 
     private void initialize() {
-        peekMeterColors = new Color[8];
+        peekMeterColors = new Color[16];
+//        for (int i = 0; i < 8; i++) {
+//            int r = i * 255 / 8;
+//            int g = 255 - r;
+//            peekMeterColors[i] = new Color(r, g, 0);
+//        }
         for (int i = 0; i < 8; i++) {
-            int r = i * 255 / 8;
-            int g = 255 - r;
-            peekMeterColors[i] = new Color(r, g, 0);
+            peekMeterColors[i] = (i < 4) ? new Color(0x00C800) : (i < 6) ? new Color(0xFFC800) : new Color(0xE10000);
+            peekMeterColors[i + MIDI_COLOR_START] = (i < 4) ? new Color(0x1896E1) : (i < 6) ? new Color(0xFFC800) : new Color(0xE10000);
         }
     }
 
@@ -68,10 +73,15 @@ public class PeekMeterComponent extends JComponent {
      * @param isSurround is surrounding or not
      * @since 30.10.2025
      */
-    public void setMeterValues(int peekLeft, int peekRight, boolean isSurround) {
+    public void setMeterValues(int peekLeft, int peekRight, boolean isSurround, boolean isMidiAdlib) {
+        // do we have to repaint?
+        if (this.peekLeft == peekLeft && this.peekRight == peekRight &&
+                this.isSurround == isSurround && this.isMidiAdlib == isMidiAdlib) return;
+        // yes, we need to repaint
         this.peekLeft = peekLeft;
         this.peekRight = peekRight;
         this.isSurround = isSurround;
+        this.isMidiAdlib = isMidiAdlib;
         repaint();
     }
 
@@ -105,7 +115,7 @@ public class PeekMeterComponent extends JComponent {
         int barWidth = middle >> 3;
         int height = (d.height < 3) ? 1 : d.height - 2;
 
-        // with surround we will draw "backwards" towards center
+        // with surround, we will draw "backwards" towards center
         // just so we have some kind of indication
         int xLeft, xRight, addLeft, addRight;
         if (!isSurround) {
@@ -122,16 +132,12 @@ public class PeekMeterComponent extends JComponent {
 
         // draw the rectangles with clipping considered
         Rectangle clipping = g.getClipBounds();
-        for (int i = 0; i < 8; i++) {
-            if (i < peekLeft) {
-                g.setColor(peekMeterColors[i]);
-                fillRectWithClipping(g, xLeft, 1, barWidth - 1, height, clipping);
-            }
+        for (int i = 0, c = (isMidiAdlib) ? MIDI_COLOR_START : 0; i < 8; i++, c++) {
+            g.setColor(peekMeterColors[c]);
+            if (i < peekLeft) fillRectWithClipping(g, xLeft, 1, barWidth - 1, height, clipping);
             xLeft += addLeft;
-            if (i < peekRight) {
-                g.setColor(peekMeterColors[i]);
-                fillRectWithClipping(g, xRight, 1, barWidth - 1, height, clipping);
-            }
+
+            if (i < peekRight) fillRectWithClipping(g, xRight, 1, barWidth - 1, height, clipping);
             xRight += addRight;
         }
     }
