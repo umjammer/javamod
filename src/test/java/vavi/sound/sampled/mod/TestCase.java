@@ -8,12 +8,17 @@ package vavi.sound.sampled.mod;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Predicate;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -27,13 +32,15 @@ import de.quippy.javamod.mixer.Mixer;
 import de.quippy.javamod.multimedia.MultimediaContainer;
 import de.quippy.javamod.multimedia.MultimediaContainerManager;
 import de.quippy.javamod.multimedia.mod.ModContainer;
+import vavi.util.Debug;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import vavi.util.Debug;
-import vavi.util.properties.annotation.Property;
-import vavi.util.properties.annotation.PropsEntity;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import static de.quippy.javamod.io.SpiModfileInputStream.MAX_BUFFER_SIZE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -78,6 +85,12 @@ Debug.println("volume: " + volume + ", opl: " + System.getProperty("javamod.play
 
     @Property
     String opl = "";
+
+    @Property
+    String dir;
+
+    @Property
+    String ext;
 
     @Test
     @Disabled("for creating prototype")
@@ -241,5 +254,71 @@ Debug.println("Interrupt");
         clip.drain();
         clip.stop();
         clip.close();
+    }
+
+    /**
+     * @param dir separated by ';'
+     * @param ext separated by ','
+     */
+    static List<Path> listFilesUnderDirFilteredByExt(String dir, String ext) {
+//Debug.println("dir: " + dir);
+//Debug.println("ext: " + ext);
+        Predicate<Path> x = p -> Arrays.stream(ext.split(",")).anyMatch(e -> p.getFileName().toString().toLowerCase().endsWith(e));
+        return Arrays.stream(dir.split(File.pathSeparator)).flatMap(d -> {
+            try {
+                return Files.walk(Paths.get(d)).filter(x);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }).toList();
+    }
+
+    @Test
+    @DisplayName("play random one in the dir filtered by ext")
+    @EnabledIfSystemProperty(named = "vavi.test", matches = "ide")
+    void test6() throws Exception {
+        listFilesUnderDirFilteredByExt(dir, ext).stream()
+                .sorted((a, b) -> Math.random() < 0.5 ? -1 : 1)
+                .forEach(p -> {
+                    try {
+Debug.println("path: " + p);
+                        AudioInputStream sourceAis = AudioSystem.getAudioInputStream(new BufferedInputStream(Files.newInputStream(p), MAX_BUFFER_SIZE));
+
+                        AudioFormat inAudioFormat = sourceAis.getFormat();
+Debug.println("IN: " + inAudioFormat);
+                        AudioFormat outAudioFormat = new AudioFormat(
+                                inAudioFormat.getSampleRate(),
+                                16,
+                                inAudioFormat.getChannels(),
+                                true,
+                                inAudioFormat.isBigEndian());
+Debug.println("OUT: " + outAudioFormat);
+
+                        assertTrue(AudioSystem.isConversionSupported(outAudioFormat, inAudioFormat));
+
+                        AudioInputStream pcmAis = AudioSystem.getAudioInputStream(outAudioFormat, sourceAis);
+Debug.println(pcmAis.getClass().getName());
+                        DataLine.Info info = new DataLine.Info(SourceDataLine.class, pcmAis.getFormat());
+                        SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
+                        line.open(pcmAis.getFormat());
+                        line.addLineListener(ev -> Debug.println(ev.getType()));
+                        line.start();
+
+                        volume(line, volume);
+
+                        byte[] buf = new byte[line.getBufferSize()];
+                        while (!later(time).come()) {
+                            int r = pcmAis.read(buf, 0, buf.length);
+                            if (r < 0) {
+                                break;
+                            }
+                            line.write(buf, 0, r);
+                        }
+                        line.drain();
+                        line.stop();
+                        line.close();
+                    } catch (Exception _) {
+                    }
+                });
     }
 }

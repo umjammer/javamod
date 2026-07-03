@@ -85,9 +85,9 @@ public class ModInstrumentDialog extends JDialog {
     private static final String NOT_SET = "Not Set";
     private static final String ERROR = "? (ERROR)";
 
-    public static final String BUTTONPLAY_INACTIVE = "/de/quippy/javamod/main/gui/ressources/play.gif";
-    public static final String BUTTONPLAY_ACTIVE = "/de/quippy/javamod/main/gui/ressources/play_aktiv.gif";
-    public static final String BUTTONPLAY_NORMAL = "/de/quippy/javamod/main/gui/ressources/play_normal.gif";
+    public static final String BUTTONPLAY_INACTIVE = "/de/quippy/javamod/main/gui/resources/play.gif";
+    public static final String BUTTONPLAY_ACTIVE = "/de/quippy/javamod/main/gui/resources/play_aktiv.gif";
+    public static final String BUTTONPLAY_NORMAL = "/de/quippy/javamod/main/gui/resources/play_normal.gif";
 
     private ImageIcon buttonPlay_Active = null;
     private ImageIcon buttonPlay_Inactive = null;

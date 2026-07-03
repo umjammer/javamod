@@ -205,6 +205,8 @@ logger.log(Level.TRACE, e);
                     throw new IOException("Unsupported MOD-Type: " + inputStream.getFileName());
             }
 
+            mod.loadModFile(inputStream); // TODO location
+
             lastLoadedModURL = url;
             return lastLoadedMod = mod;
         } catch (Throwable ex) {
