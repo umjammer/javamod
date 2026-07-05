@@ -265,10 +265,12 @@ public class Envelope {
             loopStartPoint = Helpers.limitMax(loopStartPoint, loopEndPoint);
             sustainEndPoint = Helpers.limitMax(sustainEndPoint, endPoint);
             sustainStartPoint = Helpers.limitMax(sustainStartPoint, sustainEndPoint);
-        } else {
+        } else
             endPoint = -1;
+
+        if (endPoint < 0)
             on = sustain = loop = carry = filter = xm_style = false;
-        }
+
         loopIsZero = false;
         if (loop) {
             int addMeUp = 0;
