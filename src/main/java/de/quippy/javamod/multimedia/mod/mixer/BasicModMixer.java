@@ -268,8 +268,7 @@ public abstract class BasicModMixer {
 
         // Set to first pattern
         currentTick = currentArrangement = currentRow = 0;
-        currentPatternIndex = mod.getArrangement()[currentArrangement];
-        currentPattern = mod.getPatternContainer().getPattern(currentPatternIndex);
+        skipIllegalPattern(mod.getArrangement(), mod.getSongLength());
 
         patternDelayCount = patternTicksDelayCount =
                 patternJumpRowIndex = patternBreakRowIndex = patternBreakPatternIndex = -1;
@@ -313,7 +312,7 @@ public abstract class BasicModMixer {
             useSoftPanning = false;
         } else if (((mod.getModType() & ModConstants.MODTYPE_OMPT) != 0 ||  // Open Modplug Tracker?
                 (mod.getModType() & ModConstants.MODTYPE_MIX_v1_17RC3) != 0) &&
-                (mod.getModType() & (ModConstants.MODTYPE_MIX_Compatible | ModConstants.MODTYPE_MIX_CompatibleFT2)) == 0) {
+                (mod.getModType() & (ModConstants.MODTYPE_MIX_Compatible | ModConstants.MODTYPE_MIX_CompatibleFT2)) == 0) { // But no compatible Mixing!
             masterVolume = mod.getMixingPreAmp();
             extraAttenuation = 0;
             globalPreAmpShift = ModConstants.PREAMP_SHIFT;
@@ -1717,8 +1716,7 @@ public abstract class BasicModMixer {
             // Sample panning overrides instrument panning
             if (newSample.setPanning) aktMemo.currentInstrumentPanning = aktMemo.panning = newSample.defaultPanning;
         }
-        // if a rampDown/Up is needed, the caller must decide
-        //aktMemo.doFastVolRamp = true; // resetting the volume means some kind of "re-trigger" - do not make it soft!
+        aktMemo.doFastVolRamp = true; // resetting the volume means some kind of "re-trigger" - do not make it soft!
     }
 
     /**
@@ -2050,6 +2048,30 @@ public abstract class BasicModMixer {
     }
 
     /**
+     * Sets currentPatternIndex and currentPattern to the next valid Pattern.
+     * I.e. it will skip illegal pattern (==null or marker pattern)
+     *
+     * @param arrangement
+     * @param songLength
+     * @since 04.07.2026
+     */
+    protected void skipIllegalPattern(final int[] arrangement, final int songLength) {
+        currentPatternIndex = arrangement[currentArrangement];
+        Pattern pattern = mod.getPatternContainer().getPattern(currentPatternIndex);
+        // Jump over marker pattern
+        while ((currentPatternIndex == ModConstants.IGNORE_PAT_INDEX || currentPatternIndex == ModConstants.INVALID_PAT_INDEX || pattern == null) && currentArrangement < songLength) {
+            currentArrangement++;
+            if (currentArrangement >= songLength) break;
+            pattern = mod.getPatternContainer().getPattern(currentPatternIndex = arrangement[currentArrangement]);
+        }
+        // still not at end of song?
+        if (currentArrangement < songLength)
+            currentPattern = pattern;
+        else
+            currentPattern = null;
+    }
+
+    /**
      * Will proceed to the next row, the next pattern or signal "end of song"
      * Will also perform any pattern jumps and pattern breaks
      *
@@ -2109,7 +2131,7 @@ public abstract class BasicModMixer {
             if (isXM && currentArrangement < songLength) {
                 int patIndex = arrangement[currentArrangement];
                 Pattern pat = mod.getPatternContainer().getPattern(patIndex);
-                if (currentRow >= pat.getRowCount()) {
+                if (pat != null && currentRow >= pat.getRowCount()) {
                     currentArrangement--;
                     currentRow = 0;
                     // as this is the meaning of infinity:
@@ -2122,18 +2144,9 @@ public abstract class BasicModMixer {
             resetJumpPositionSet();
 
             // End of song? Fetch new pattern if not...
-            if (currentArrangement < songLength) {
-                currentPatternIndex = arrangement[currentArrangement];
-                // Jump over marker pattern
-                while ((currentPatternIndex == ModConstants.IGNORE_PAT_INDEX || currentPatternIndex == ModConstants.INVALID_PAT_INDEX) && currentArrangement < songLength) {
-                    currentArrangement++;
-                    if (currentArrangement >= songLength) break;
-                    currentPatternIndex = arrangement[currentArrangement];
-                }
-                // still not at end of song?
-                if (currentArrangement < songLength)
-                    currentPattern = mod.getPatternContainer().getPattern(currentPatternIndex);
-            }
+            if (currentArrangement < songLength)
+                skipIllegalPattern(arrangement, songLength);
+
             // End of song? Fetch new pattern if not...
             if (currentArrangement >= songLength) {
                 if (!ignoreLoop && loopSong) {

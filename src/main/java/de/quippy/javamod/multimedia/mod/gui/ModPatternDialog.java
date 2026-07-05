@@ -326,6 +326,9 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
         newButton.setMinimumSize(size);
         newButton.setMaximumSize(size);
         newButton.setPreferredSize(size);
+        if (patternContainer != null && patternContainer.getPattern(arrangementIndex) == null)
+            newButton.setForeground(Color.GRAY);
+
         if (arrangementIndex > -1 && arrangementIndex != ModConstants.INVALID_PAT_INDEX && arrangementIndex != ModConstants.IGNORE_PAT_INDEX) {
             newButton.addActionListener(_ -> {
                 if (currentMixer != null && !currentMixer.isStopped() && currentModMixer != null) {
@@ -1045,7 +1048,7 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
                 // NOOP
                 // Invoke Later problem:
                 // as this is called from the SWING Queue, it might be that updating the
-                // display is not finished, when a new MOD is loaded,
+                // display is not finished, when a new MOD is loaded.
                 // That might lead to ArrayIndexOutOfBoundsException, as the global arrays
                 // are already changing when a new mod is loaded
             }
@@ -1155,15 +1158,17 @@ public class ModPatternDialog extends JDialog implements ModUpdateListener {
 
         // We need to copy the arrangement to songLength values
         arrangement = new int[songLength];
-        for (int i = 0; i < songLength; i++) arrangement[i] = newArrangement[i];
+        System.arraycopy(newArrangement, 0, arrangement, 0, songLength);
 
-        createChannelButtons(patternContainer.getChannels());
+        final int channels = patternContainer.getChannels();
+        getPatternImagePanel().setChannels(channels);
+        createChannelButtons(channels);
 
         EventQueue.invokeLater(() -> {
             try {
                 // and then display them
                 fillButtonsForArrangement();
-                fillButtonsForChannels(0, patternContainer.getChannels());
+                fillButtonsForChannels(0, channels);
                 setCurrentPattern(0);
                 setPreferredSize(getSize());
                 updateMuteStatus();
