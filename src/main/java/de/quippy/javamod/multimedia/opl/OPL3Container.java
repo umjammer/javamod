@@ -106,6 +106,8 @@ public class OPL3Container extends MultimediaContainer implements SpiMultimediaC
 
     @Override
     public boolean isSupported(InputStream stream) {
+        if (!Boolean.parseBoolean(System.getProperty("vavi.sound.sampled.spi.mod.opl", "true")))
+            return false;
         try {
             OPL3Sequence sequence = OPL3Sequence.getOPL3SequenceInstanceFor(stream);
 logger.log(Level.DEBUG, "opl: " + sequence.getClass().getName());
