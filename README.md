@@ -90,6 +90,7 @@
 * ~~upstream made large update~~
 * ~~system property that off opl spi~~
 * ~~make SidMixer single thread~~
+* current sid mixer doesn't need patched library? ... no maven repo for sidplay2
 
 ---
 

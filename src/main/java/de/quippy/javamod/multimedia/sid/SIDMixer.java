@@ -39,7 +39,6 @@ import sidplay.Player;
 import sidplay.audio.Audio;
 import sidplay.audio.AudioConfig;
 import sidplay.audio.AudioDriver;
-import sidplay.audio.JWAVDriver.JWAVStreamDriver;
 import sidplay.audio.exceptions.SongEndException;
 import sidplay.ini.IniConfig;
 import sidplay.player.State;
@@ -252,6 +251,16 @@ logger.log(Level.DEBUG, "sid sampleRate: " + sampleRate);
         return output;
     }
 
+    /**
+     * Single threaded playback to the audio line.
+     * <p>
+     * Like {@link #getOutputEngine()} this <em>pulls</em> audio instead of pushing it:
+     * no {@link Player} thread is started and nothing calls back into an
+     * {@link AudioDriver} that performs I/O. A passive {@link PcmSink} latch is installed
+     * through the public {@link Player#setAudioDriver(AudioDriver)} hook (so the WAV/stream
+     * driver is never used), the emulation is opened and clocked on this thread, and each
+     * rendered chunk is drained from the latch and written straight to the audio line.
+     */
     @Override
     public void startPlayback() {
         initialize();
@@ -264,76 +273,73 @@ logger.log(Level.DEBUG, "sid sampleRate: " + sampleRate);
 
         if (getSeekPosition() > 0) seek(getSeekPosition());
 
-        OutputStream os = new OutputStream() {
-            @Override
-            public void write(int b) throws IOException {
-                byte[] buf = new byte[] {(byte) b};
-                write(buf, 0, 1);
-            }
-
-            @Override
-            public void write(byte[] b, int off, int len) throws IOException {
-                try {
-logger.log(Level.TRACE, "write: " + len + ", " + sidPlayer.stateProperty().get());
-                    writeSampleDataToLine(b, off, len);
-                } catch (Exception e) {
-logger.log(Level.TRACE, "stream closed?: " + sidPlayer.stateProperty().get() + ", " + e);
-                }
-            }
-        };
-
         try {
 logger.log(Level.TRACE, "sampleRate: " + sampleRate);
             setAudioFormat(new AudioFormat(this.sampleRate, 16, 2, true, false));
             openAudioDevice();
             if (!isInitialized()) return;
 
-            AudioDriver audioDriver = sidConfig.getAudioSection().getAudio().getAudioDriver();
-logger.log(Level.TRACE, "audioDriver: " + audioDriver);
-            if (!(audioDriver instanceof JWAVStreamDriver streamDriver)) {
-                throw new IllegalStateException("unsupported audio driver: " + audioDriver);
-            }
+            // Pull, don't push: install a passive PCM latch the reSID mixer renders into
+            // (no I/O, no callbacks) and clock the emulation from this thread, so neither
+            // the Player thread nor the WAV/stream driver is used.
+            PcmSink sink = new PcmSink();
+            sidPlayer.setAudioDriver(sink);
 
-            streamDriver.setOut(os);
-
-            sidPlayer.play(sidTune);
-            while (sidPlayer.stateProperty().get() != State.PLAY) {
-                try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
-            }
+            // Replicate Player#playerRunnable's start sequence on *this* thread (no Player
+            // thread is started), so the emulation can be clocked from this loop.
+            sidPlayer.stopC64();
+            sidPlayer.setTune(sidTune);
+            sidPlayer.stateProperty().set(OPEN);
+            playerOpen(sidPlayer, sidConfig, sidTune); // private Player#open() + playList
+            sidPlayer.stateProperty().set(START);
+            sidPlayer.stateProperty().set(PLAY);
 logger.log(Level.DEBUG, "play: " + sidPlayer.stateProperty().get());
 
-            do {
-                if (stopPositionIsReached()) setIsStopping();
+            EventScheduler scheduler = sidPlayer.getC64().getEventScheduler();
+            try {
+                do {
+                    if (stopPositionIsReached()) setIsStopping();
 
-                if (isStopping()) {
-                    setIsStopped();
-                    break;
-                }
-                if (isPausing()) {
-                    sidPlayer.pauseContinue();
-                    setIsPaused();
-                    while (isPaused()) {
-                        try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
+                    if (isStopping()) {
+                        sidPlayer.stateProperty().set(QUIT);
+                        setIsStopped();
+                        break;
                     }
-                }
-                if (isInSeeking()) {
-                    setIsSeeking();
-                    while (isInSeeking()) {
-                        try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
+                    if (isPausing()) {
+                        setIsPaused();
+                        while (isPaused()) {
+                            try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
+                        }
                     }
-                }
-                try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
-            } while (sidPlayer.stateProperty().get() == State.PLAY);
-            if (sidPlayer.stateProperty().get() != State.PLAY) setHasFinished(); // Piece was played full
+                    if (isInSeeking()) {
+                        setIsSeeking();
+                        while (isInSeeking()) {
+                            try { Thread.sleep(10L); } catch (InterruptedException ex) { /* noop */ }
+                        }
+                    }
+
+                    // 1. advance: clock the C64 until the reSID mixer has rendered a chunk
+                    while (sink.available() == 0 && sidPlayer.stateProperty().get() == PLAY) {
+                        scheduler.clock();
+                    }
+
+                    // 2. get the chunked audio data, 3. write it to the line
+                    byte[] chunk = sink.drain();
+                    if (chunk.length > 0) {
+logger.log(Level.TRACE, "write: " + chunk.length + ", " + sidPlayer.stateProperty().get());
+                        writeSampleDataToLine(chunk, 0, chunk.length);
+                    }
+                } while (sidPlayer.stateProperty().get() == PLAY);
+            } catch (SongEndException e) {
+                sidPlayer.getTimer().end();
+                byte[] chunk = sink.drain(); // flush whatever was rendered before the end
+                if (chunk.length > 0) writeSampleDataToLine(chunk, 0, chunk.length);
+            }
+            if (sidPlayer.stateProperty().get() != PLAY) setHasFinished(); // Piece was played full
         } catch(Throwable ex) {
             throw new RuntimeException(ex);
         } finally {
-            try {
-                os.close();
-            } catch (IOException e) {
-                logger.log(Level.ERROR, e);
-            }
-            sidPlayer.quit();
+            PlayerUtil.playerClose(sidPlayer); // private Player#close(): teardown
             setIsStopped();
             closeAudioDevice();
 logger.log(Level.DEBUG, "exit startPlayback");
