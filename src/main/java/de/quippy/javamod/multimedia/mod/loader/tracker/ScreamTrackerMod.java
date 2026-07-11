@@ -59,35 +59,35 @@ public class ScreamTrackerMod extends Module {
     // Flags
 
     //	38 (26h)|  2  | FLAGS.  This is the flags section.  You need to bitwise AND
-    //	|     |	it with the following values to see if the corresponding flags
-    //	|     | are set.  Most of them are for Scream Tracker specific
-    //	|     |	information so can just about be ignored if you like.
-    //	|     | if ((value AND  1) >0) : st2vibrato (not supported in st3.01)
-    //	|     | if ((value AND  2) >0) : st2tempo (not supported in st3.01)
-    //	|     | if ((value AND  4) >0) : amigaslides (not supported in st3.01)
-    //	|     | if ((value AND  8) >0) : 0vol optimizations: Automatically
-    //	|     |                          turn off looping notes whose volume
-    //	|     |                          is 0 for >2 note rows.  Don't bother
-    //	|     |                          with this.
-    //	|     | if ((value AND 16) >0) : amiga limits: Disallow any notes
-    //	|     |                          that go beyond the amiga hardware
-    //	|     |                          limits (like amiga does). This means
-    //	|     |                          that sliding up stops at B-5 etc.
-    //	|     |                          This also affects some minor amiga
-    //	|     |                          compatibility issues.
-    //	|     | if ((value AND 32) >0) : enable filter/sfx (not supported)
-    //	|     | if ((value AND 64) >0) : st3.00 volumeslides.  Normally
-    //	|     |                          volumeslide is NOT performed on first
-    //	|     |                          frame of each row (this is according
-    //	|     |                          to amiga playing). If this is set,
-    //	|     |                          volumeslide is performed ALSO on the
-    //	|     |                          first row. This is set by default if
-    //	|     |                          the CWT/V value is 1300h.
-    //	|     | if ((value AND 128) >0): special custom data in file.  If
-    //	|     |                          this is set then you can use the
-    //	|     |                          'Special' pointer at offset 3Eh.
-    //	|     |				  See more about this when describing
-    //	|     |				  this special pointer.
+    //	        |     |	it with the following values to see if the corresponding flags
+    //	        |     | are set.  Most of them are for Scream Tracker specific
+    //	        |     |	information so can just about be ignored if you like.
+    //	        |     | if ((value AND  1) >0) : st2vibrato (not supported in st3.01)
+    //	        |     | if ((value AND  2) >0) : st2tempo (not supported in st3.01)
+    //	        |     | if ((value AND  4) >0) : amigaslides (not supported in st3.01)
+    //	        |     | if ((value AND  8) >0) : 0vol optimizations: Automatically
+    //	        |     |                          turn off looping notes whose volume
+    //	        |     |                          is 0 for >2 note rows.  Don't bother
+    //	        |     |                          with this.
+    //	        |     | if ((value AND 16) >0) : amiga limits: Disallow any notes
+    //	        |     |                          that go beyond the amiga hardware
+    //	        |     |                          limits (like amiga does). This means
+    //	        |     |                          that sliding up stops at B-5 etc.
+    //	        |     |                          This also affects some minor amiga
+    //	        |     |                          compatibility issues.
+    //	        |     | if ((value AND 32) >0) : enable filter/sfx (not supported)
+    //	        |     | if ((value AND 64) >0) : st3.00 volumeslides.  Normally
+    //	        |     |                          volumeslide is NOT performed on first
+    //	        |     |                          frame of each row (this is according
+    //	        |     |                          to amiga playing). If this is set,
+    //	        |     |                          volumeslide is performed ALSO on the
+    //	        |     |                          first row. This is set by default if
+    //	        |     |                          the CWT/V value is 1300h.
+    //	        |     | if ((value AND 128) >0): special custom data in file.  If
+    //	        |     |                          this is set then you can use the
+    //	        |     |                          'Special' pointer at offset 3Eh.
+    //	        |     |				  See more about this when describing
+    //	        |     |				  this special pointer.
     private static final int songST2Vibrato = 0x01;
     private static final int songST2Tempo = 0x02;
     private static final int songAmigaSlides = 0x04;
