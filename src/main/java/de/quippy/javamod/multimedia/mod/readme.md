@@ -16,6 +16,7 @@
 | IT   |   ✅️   | IT/MPTM         | implulse   | Impulse Tracker, OpenMPT                                                            |
 | MO3  |   ✅️   | MO3             | mo3        | Un4seen MO3 compressed modules (IT/S3M/XM/MOD/MTM, MP3/Ogg/delta samples)           |
 | XRNS |   ✅️   | XRNS            | renoise    | Renoise song (zip: Song.xml + flac/ogg/wav samples), converted to XM à la xrns2xmod |
+| AON  |   ✅️   | AON,AON8        | artofnoise | Art Of Noise (Amiga 4/8 voices), converted to XM; synth wave tables approximated    |
 
  - PowerPacker ... compression
 
@@ -112,7 +113,6 @@ Compressed modules in ZIP / LHA / RAR / GZ archives, as well as various module-s
 
 #### real exts under mods dir
 
-- .aon ... Art of Noise module (https://github.com/neumatho/NostalgicPlayer)
 - .dm2 ... Delta Music Module (https://github.com/neumatho/NostalgicPlayer)
 - .med ... MED (https://github.com/neumatho/NostalgicPlayer)
 - .umx ... Module Converter (https://github.com/neumatho/NostalgicPlayer)
