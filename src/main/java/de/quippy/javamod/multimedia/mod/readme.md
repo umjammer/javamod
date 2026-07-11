@@ -4,23 +4,24 @@
 
 #### javamod
 
-| name | status | ext             | tracker    | comment                                                                   |
-|------|:------:|-----------------|------------|---------------------------------------------------------------------------|
-| MOD  |   ✅️   | MOD,STK,NST,WOW | pro        | ProTracker(mod), SoundTracker and compatible(stk), Mod's Grave(wow) etc.  |
-| XM   |   ✅️   | XM              | xm         | FastTracker 2                                                             |
-| FAR  |   ✅️   | FAR             | frandole   | Farandole Composer                                                        |
-| MTM  |   ✅️   | MTM             | multi      | MultiTracker                                                              |
-| STM  |   ✅️   | STM,STS         | scream old | ScreamTracker 2                                                           |
-| STX  |   ✅️   | STX             | scream stx | Scream Tracker Music Interface Kit                                        |
-| S3M  |   ✅️   | S3M             | scream     | ScreamTracker 3                                                           |
-| IT   |   ✅️   | IT/MPTM         | implulse   | Impulse Tracker, OpenMPT                                                  |
-| MO3  |   ✅️   | MO3             | mo3        | Un4seen MO3 compressed modules (IT/S3M/XM/MOD/MTM, MP3/Ogg/delta samples) |
+| name | status | ext             | tracker    | comment                                                                             |
+|------|:------:|-----------------|------------|-------------------------------------------------------------------------------------|
+| MOD  |   ✅️   | MOD,STK,NST,WOW | pro        | ProTracker(mod), SoundTracker and compatible(stk), Mod's Grave(wow) etc.            |
+| XM   |   ✅️   | XM              | xm         | FastTracker 2                                                                       |
+| FAR  |   ✅️   | FAR             | frandole   | Farandole Composer                                                                  |
+| MTM  |   ✅️   | MTM             | multi      | MultiTracker                                                                        |
+| STM  |   ✅️   | STM,STS         | scream old | ScreamTracker 2                                                                     |
+| STX  |   ✅️   | STX             | scream stx | Scream Tracker Music Interface Kit                                                  |
+| S3M  |   ✅️   | S3M             | scream     | ScreamTracker 3                                                                     |
+| IT   |   ✅️   | IT/MPTM         | implulse   | Impulse Tracker, OpenMPT                                                            |
+| MO3  |   ✅️   | MO3             | mo3        | Un4seen MO3 compressed modules (IT/S3M/XM/MOD/MTM, MP3/Ogg/delta samples)           |
+| XRNS |   ✅️   | XRNS            | renoise    | Renoise song (zip: Song.xml + flac/ogg/wav samples), converted to XM à la xrns2xmod |
 
  - PowerPacker ... compression
 
+#### MODPLUG
+
 ```
-MODPLUG
-------------------------------------
 MOD   ProTracker (Amiga)
 STM   ScreamTracker 2
 S3M   ScreamTracker 3
@@ -44,9 +45,9 @@ MT2   MadTracker 2
 PSM   Epic Megagames MASI
 ```
 
+#### OpenMPT
+
 ```
-OpenMPT
-------------------------------------
 667                  Composer 667
 669                  Composer 669 / UNIS 669
 AMF                  ASYLUM Music Format
@@ -109,7 +110,19 @@ XMF                  Astroidea XMF
 Compressed modules in ZIP / LHA / RAR / GZ archives, as well as various module-specific and other legacy compression formats (MMCMP, PowerPacker, XPK, Pack-Ice and many others)
 ```
 
+#### real exts under mods dir
+
+- .aon ... Art of Noise module (https://github.com/neumatho/NostalgicPlayer)
+- .dm2 ... Delta Music Module (https://github.com/neumatho/NostalgicPlayer)
+- .med ... MED (https://github.com/neumatho/NostalgicPlayer)
+- .umx ... Module Converter (https://github.com/neumatho/NostalgicPlayer)
+- .rns ... Renoise <1.8 binary format ("RNS0xx" chunks), proprietary and undocumented - not supported (xrns2xmod cannot read it either)
+
 ## References
 
-- https://github.com/OpenMPT/openmpt/
-- OpenCubicPlayer
+- [OpenMPT](https://github.com/OpenMPT/openmpt/)
+- [NostalgicPlayer](https://github.com/neumatho/NostalgicPlayer)
+- [OpenCubicPlayer](https://github.com/mywave82/opencubicplayer)
+- https://github.com/fstarred/xrns2xmod (xrns)
+- samples
+    * https://nostalgicplayer.dk/modules/format/mo3/4 (mo3)
