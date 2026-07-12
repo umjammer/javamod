@@ -4,19 +4,20 @@
 
 #### javamod
 
-| name | status | ext             | tracker    | comment                                                                             |
-|------|:------:|-----------------|------------|-------------------------------------------------------------------------------------|
-| MOD  |   ✅️   | MOD,STK,NST,WOW | pro        | ProTracker(mod), SoundTracker and compatible(stk), Mod's Grave(wow) etc.            |
-| XM   |   ✅️   | XM              | xm         | FastTracker 2                                                                       |
-| FAR  |   ✅️   | FAR             | frandole   | Farandole Composer                                                                  |
-| MTM  |   ✅️   | MTM             | multi      | MultiTracker                                                                        |
-| STM  |   ✅️   | STM,STS         | scream old | ScreamTracker 2                                                                     |
-| STX  |   ✅️   | STX             | scream stx | Scream Tracker Music Interface Kit                                                  |
-| S3M  |   ✅️   | S3M             | scream     | ScreamTracker 3                                                                     |
-| IT   |   ✅️   | IT/MPTM         | implulse   | Impulse Tracker, OpenMPT                                                            |
-| MO3  |   ✅️   | MO3             | mo3        | Un4seen MO3 compressed modules (IT/S3M/XM/MOD/MTM, MP3/Ogg/delta samples)           |
-| XRNS |   ✅️   | XRNS            | renoise    | Renoise song (zip: Song.xml + flac/ogg/wav samples), converted to XM à la xrns2xmod |
-| AON  |   ✅️   | AON,AON8        | artofnoise | Art Of Noise (Amiga 4/8 voices), converted to XM; synth wave tables approximated    |
+| name | status | ext             | tracker     | comment                                                                             |
+|------|:------:|-----------------|-------------|-------------------------------------------------------------------------------------|
+| MOD  |   ✅️   | MOD,STK,NST,WOW | pro         | ProTracker(mod), SoundTracker and compatible(stk), Mod's Grave(wow) etc.            |
+| XM   |   ✅️   | XM              | xm          | FastTracker 2                                                                       |
+| FAR  |   ✅️   | FAR             | frandole    | Farandole Composer                                                                  |
+| MTM  |   ✅️   | MTM             | multi       | MultiTracker                                                                        |
+| STM  |   ✅️   | STM,STS         | scream old  | ScreamTracker 2                                                                     |
+| STX  |   ✅️   | STX             | scream stx  | Scream Tracker Music Interface Kit                                                  |
+| S3M  |   ✅️   | S3M             | scream      | ScreamTracker 3                                                                     |
+| IT   |   ✅️   | IT/MPTM         | implulse    | Impulse Tracker, OpenMPT                                                            |
+| MO3  |   ✅️   | MO3             | mo3         | Un4seen MO3 compressed modules (IT/S3M/XM/MOD/MTM, MP3/Ogg/delta samples)           |
+| XRNS |   ✅️   | XRNS            | renoise     | Renoise song (zip: Song.xml + flac/ogg/wav samples), converted to XM à la xrns2xmod |
+| AON  |   ✅️   | AON,AON8        | artofnoise  | Art Of Noise (Amiga 4/8 voices), converted to XM; synth wave tables approximated    |
+| DM2  |   ✅️   | DM2             | deltamusic2 | Delta Music Module                                                                  |
 
  - PowerPacker ... compression
 
@@ -113,7 +114,6 @@ Compressed modules in ZIP / LHA / RAR / GZ archives, as well as various module-s
 
 #### real exts under mods dir
 
-- .dm2 ... Delta Music Module (https://github.com/neumatho/NostalgicPlayer)
 - .med ... MED (https://github.com/neumatho/NostalgicPlayer)
 - .umx ... Module Converter (https://github.com/neumatho/NostalgicPlayer)
 - .rns ... Renoise <1.8 binary format ("RNS0xx" chunks), proprietary and undocumented - not supported (xrns2xmod cannot read it either)

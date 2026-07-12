@@ -40,6 +40,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import static de.quippy.javamod.io.SpiModfileInputStream.MAX_BUFFER_SIZE;
@@ -82,6 +83,9 @@ Debug.println("volume: " + volume + ", opl: " + System.getProperty("javamod.play
 
     @Property
     String mod = "src/test/resources/test.mod";
+
+    @Property
+    String dm2;
 
     @Property
     String opl = "";
@@ -213,6 +217,48 @@ Debug.println(pcmAis.getClass().getName());
         File file = Paths.get(mod).toFile();
         AudioInputStream ais = AudioSystem.getAudioInputStream(file);
         assertEquals(ModEncoding.valueOf("MOD"), ais.getFormat().getEncoding());
+    }
+
+    @Test
+    @EnabledIf("localPropertiesExists")
+    @DisplayName("Delta Music 2.0 (.dm2) loader")
+    void testDM2() throws Exception {
+        Path path = Paths.get(dm2);
+        assertTrue(Files.exists(path));
+        AudioInputStream sourceAis = AudioSystem.getAudioInputStream(new BufferedInputStream(Files.newInputStream(path), MAX_BUFFER_SIZE));
+        AudioFormat inAudioFormat = sourceAis.getFormat();
+        AudioFormat outAudioFormat = new AudioFormat(
+                inAudioFormat.getSampleRate(),
+                16,
+                inAudioFormat.getChannels(),
+                true,
+                inAudioFormat.isBigEndian());
+        assertTrue(AudioSystem.isConversionSupported(outAudioFormat, inAudioFormat));
+        AudioInputStream pcmAis = AudioSystem.getAudioInputStream(outAudioFormat, sourceAis);
+        
+        // Read the entire stream to check total bytes and max amplitude
+        byte[] buf = new byte[8192];
+        long totalRead = 0;
+        int maxVal = 0;
+        int r;
+        try {
+            while ((r = pcmAis.read(buf)) != -1) {
+                totalRead += r;
+                for (int i = 0; i < r - 1; i += 2) {
+                    short val = (short) ((buf[i] & 0xFF) | (buf[i+1] << 8));
+                    int absVal = Math.abs(val);
+                    if (absVal > maxVal) {
+                        maxVal = absVal;
+                    }
+                }
+            }
+            System.out.println("PCM Total Read: " + totalRead + " bytes, Max Amplitude: " + maxVal);
+        } catch (Exception e) {
+            System.out.println("PCM Read Exception: " + e.getMessage());
+            Debug.printStackTrace(e);
+        }
+
+        pcmAis.close();
     }
 
     @Test
