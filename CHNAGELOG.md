@@ -1,4 +1,4 @@
-# JavaMod V3.9.7 Theta
+# JavaMod V3.9.7
 
 ## New in Version 3.9.7
 * FIX: Complete overhaul of volume ramping - got rid of the default
