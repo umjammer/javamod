@@ -1,4 +1,4 @@
-# JavaMod V3.9.7 Epsilon
+# JavaMod V3.9.7
 
 ## New in Version 3.9.7
 * FIX: Complete overhaul of volume ramping - got rid of the default
@@ -6,6 +6,9 @@
 * FIX: Bidi Loops and interpolation was still wrong - especially when a bidi
        loop is very small and a high pitched note is being played
 * FIX: Instrument Sample Player respects doKeyOff specials of FT2 now
+* FIX: FT2: can have a pattern index in the arrangement, that does not exist
+* FIX: FT2: Wrong implementation of Porta2Note resulted in wrong volume setting
+* FIX: If an envelope has zero number of points, deactivate envelope and loops
 * NEW: ChannelMemory moved to its own class file now
 * NEW: complete overhaul on WindowedFIR (8 taps + Low Pass) interpolation
 * NEW: Export to Wave got a cancel button. Export will stop after current file

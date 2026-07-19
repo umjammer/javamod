@@ -268,8 +268,7 @@ public abstract class BasicModMixer {
 
         // Set to first pattern
         currentTick = currentArrangement = currentRow = 0;
-        currentPatternIndex = mod.getArrangement()[currentArrangement];
-        currentPattern = mod.getPatternContainer().getPattern(currentPatternIndex);
+        skipIllegalPattern(mod.getArrangement(), mod.getSongLength());
 
         patternDelayCount = patternTicksDelayCount =
                 patternJumpRowIndex = patternBreakRowIndex = patternBreakPatternIndex = -1;
@@ -313,7 +312,7 @@ public abstract class BasicModMixer {
             useSoftPanning = false;
         } else if (((mod.getModType() & ModConstants.MODTYPE_OMPT) != 0 ||  // Open Modplug Tracker?
                 (mod.getModType() & ModConstants.MODTYPE_MIX_v1_17RC3) != 0) &&
-                (mod.getModType() & (ModConstants.MODTYPE_MIX_Compatible | ModConstants.MODTYPE_MIX_CompatibleFT2)) == 0) {
+                (mod.getModType() & (ModConstants.MODTYPE_MIX_Compatible | ModConstants.MODTYPE_MIX_CompatibleFT2)) == 0) { // But no compatible Mixing!
             masterVolume = mod.getMixingPreAmp();
             extraAttenuation = 0;
             globalPreAmpShift = ModConstants.PREAMP_SHIFT;
@@ -1717,8 +1716,7 @@ public abstract class BasicModMixer {
             // Sample panning overrides instrument panning
             if (newSample.setPanning) aktMemo.currentInstrumentPanning = aktMemo.panning = newSample.defaultPanning;
         }
-        // if a rampDown/Up is needed, the caller must decide
-        //aktMemo.doFastVolRamp = true; // resetting the volume means some kind of "re-trigger" - do not make it soft!
+        aktMemo.doFastVolRamp = true; // resetting the volume means some kind of "re-trigger" - do not make it soft!
     }
 
     /**
@@ -2050,6 +2048,30 @@ public abstract class BasicModMixer {
     }
 
     /**
+     * Sets currentPatternIndex and currentPattern to the next valid Pattern.
+     * I.e. it will skip illegal pattern (==null or marker pattern)
+     *
+     * @param arrangement
+     * @param songLength
+     * @since 04.07.2026
+     */
+    protected void skipIllegalPattern(final int[] arrangement, final int songLength) {
+        currentPatternIndex = arrangement[currentArrangement];
+        Pattern pattern = mod.getPatternContainer().getPattern(currentPatternIndex);
+        // Jump over marker pattern
+        while ((currentPatternIndex == ModConstants.IGNORE_PAT_INDEX || currentPatternIndex == ModConstants.INVALID_PAT_INDEX || pattern == null) && currentArrangement < songLength) {
+            currentArrangement++;
+            if (currentArrangement >= songLength) break;
+            pattern = mod.getPatternContainer().getPattern(currentPatternIndex = arrangement[currentArrangement]);
+        }
+        // still not at end of song?
+        if (currentArrangement < songLength)
+            currentPattern = pattern;
+        else
+            currentPattern = null;
+    }
+
+    /**
      * Will proceed to the next row, the next pattern or signal "end of song"
      * Will also perform any pattern jumps and pattern breaks
      *
@@ -2109,7 +2131,7 @@ public abstract class BasicModMixer {
             if (isXM && currentArrangement < songLength) {
                 int patIndex = arrangement[currentArrangement];
                 Pattern pat = mod.getPatternContainer().getPattern(patIndex);
-                if (currentRow >= pat.getRowCount()) {
+                if (pat != null && currentRow >= pat.getRowCount()) {
                     currentArrangement--;
                     currentRow = 0;
                     // as this is the meaning of infinity:
@@ -2122,18 +2144,9 @@ public abstract class BasicModMixer {
             resetJumpPositionSet();
 
             // End of song? Fetch new pattern if not...
-            if (currentArrangement < songLength) {
-                currentPatternIndex = arrangement[currentArrangement];
-                // Jump over marker pattern
-                while ((currentPatternIndex == ModConstants.IGNORE_PAT_INDEX || currentPatternIndex == ModConstants.INVALID_PAT_INDEX) && currentArrangement < songLength) {
-                    currentArrangement++;
-                    if (currentArrangement >= songLength) break;
-                    currentPatternIndex = arrangement[currentArrangement];
-                }
-                // still not at end of song?
-                if (currentArrangement < songLength)
-                    currentPattern = mod.getPatternContainer().getPattern(currentPatternIndex);
-            }
+            if (currentArrangement < songLength)
+                skipIllegalPattern(arrangement, songLength);
+
             // End of song? Fetch new pattern if not...
             if (currentArrangement >= songLength) {
                 if (!ignoreLoop && loopSong) {
@@ -2363,13 +2376,23 @@ public abstract class BasicModMixer {
                 if (aktMemo.currentSamplePos >= loopEnd) {
                     // In a mod file - if a new sample is set but not activated, activate now at end of loop
                     // but do not set volume or finetune. That was set before.
-                    if (isMOD && aktMemo.assignedSample != null && aktMemo.currentSample != aktMemo.assignedSample) {
+                    if (isMOD && aktMemo.assignedSample != null && sample != aktMemo.assignedSample) {
                         sample = aktMemo.currentSample = aktMemo.assignedSample;
-                        aktMemo.prevSampleOffset = 0;
+                        // also set new loop endpoints (No sustain with Protracker Mods)
                         // ProTracker always jumps to the loopStart and with empty loops these are 0-2 (mostly a silent part of the sample)
                         // but we reset that to 0/0 and wouldn't loop in (0/2) anyway - so we jump at the sample end in that case to simulate that.
                         aktMemo.currentSamplePos = ((sample.loopType & ModConstants.LOOP_ON) != 0) ? aktMemo.currentSample.loopStart : aktMemo.currentSample.sampleLength - 1;
                         aktMemo.currentTuningPos = 0;
+                        if ((sample.loopType & ModConstants.LOOP_ON) != 0) {
+                            aktMemo.currentSamplePos = loopStart = sample.loopStart;
+                            loopEnd = sample.loopStop;
+                            inLoop = ModConstants.LOOP_ON;
+                        } else {
+                            loopStart = 0;
+                            aktMemo.currentSamplePos = (loopLength = loopEnd = sample.sampleLength) - 1;
+                            inLoop = 0;
+                        }
+                        aktMemo.currentTuningPos = aktMemo.prevSampleOffset = 0;
                         continue;
                     }
 
@@ -2435,8 +2458,6 @@ public abstract class BasicModMixer {
                 aktMemo.interpolationMagic = sample.getLoopMagic(aktMemo.currentSamplePos);
             } else
                 aktMemo.interpolationMagic = 0;
-
-            if (aktMemo.instrumentFinished) break;
         }
     }
 

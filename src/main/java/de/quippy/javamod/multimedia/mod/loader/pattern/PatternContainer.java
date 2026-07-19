@@ -109,7 +109,7 @@ public class PatternContainer {
     }
 
     public int getChannels() {
-        return (patterns != null && patterns.length > 0 && patterns[0] != null) ? patterns[0].getChannels() : 0;
+        return (parentMod != null) ? parentMod.getNChannels() : 0;
     }
 
     /**
@@ -130,21 +130,23 @@ public class PatternContainer {
      * @return Returns the pattern.
      */
     public Pattern getPattern(int patternIndex) {
-        return patterns[patternIndex];
+        return (patternIndex < patterns.length) ? patterns[patternIndex] : null;
     }
 
     /**
      * @return Returns the pattern.
      */
     public PatternRow getPatternRow(int patternIndex, int row) {
-        return (patterns[patternIndex] != null) ? patterns[patternIndex].getPatternRow(row) : null;
+        Pattern pattern = getPattern(patternIndex);
+        return (pattern != null) ? pattern.getPatternRow(row) : null;
     }
 
     /**
      * @return Returns the pattern.
      */
     public PatternElement getPatternElement(int patternIndex, int row, int channel) {
-        return (patterns[patternIndex] != null) ? patterns[patternIndex].getPatternElement(row, channel) : null;
+        Pattern pattern = getPattern(patternIndex);
+        return (pattern != null) ? pattern.getPatternElement(row, channel) : null;
     }
 
     /**
