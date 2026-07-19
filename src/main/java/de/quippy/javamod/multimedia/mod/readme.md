@@ -112,7 +112,7 @@ XMF                  Astroidea XMF
 Compressed modules in ZIP / LHA / RAR / GZ archives, as well as various module-specific and other legacy compression formats (MMCMP, PowerPacker, XPK, Pack-Ice and many others)
 ```
 
-#### real exts under mods dir
+#### real exts under sample mods dir
 
 - .med ... MED (https://github.com/neumatho/NostalgicPlayer)
 - .umx ... Module Converter (https://github.com/neumatho/NostalgicPlayer)

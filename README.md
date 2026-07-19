@@ -14,14 +14,15 @@
 - made libraries outsourced as much as possible
 - javax.sound.spi compliant
 
-| player | subtype                                                                     | status |          spi          | library                                                      | comment                                                                    |
-|--------|-----------------------------------------------------------------------------|:------:|:---------------------:|--------------------------------------------------------------|----------------------------------------------------------------------------|
-| mod    | STK, NST, MOD, WOW, XM, FAR, MTM, STM, STS, STX, S3M, IT, MPTM, PowerPacker |   ✅    |           ✅           | this                                                         |                                                                            |
-| mod    | AMS, DMF, MDL, OKT, PTM, ULT, 669                                           |   🚫   |                       |                                                              |                                                                            |
-| opl    | ROL, LAA, CMF, DRO, SCI                                                     |   ✅    |           ✅           | this                                                         | [opl3 class is duplicated](https://github.com/umjammer/vavi-sound-sandbox) | gbc,spc are not tested       |
-| opl    | HSC, SNG, D00, ADL, RAD                                                     |   🚫   |                       |                                                              |
-| sid    | SID                                                                         |   ✅    |           ✅           | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)           | RSID?                                                                      |
-| vgm    | VGM, GBC, NSF, SPC, KSS, GYM, SAP                                           |   ✅    | ✅&nbsp;<sup>[1]</sup> | [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu) |                                                                            |
+| player | subtype                                                                                                                             | status |          spi          | library                                                              | comment                                                                    |
+|--------|-------------------------------------------------------------------------------------------------------------------------------------|:------:|:---------------------:|----------------------------------------------------------------------|----------------------------------------------------------------------------|
+| mod    | STK, NST, MOD, WOW, XM, FAR, MTM, STM, STS, STX, S3M, IT, MPTM, PowerPacker                                                         |   ✅    |           ✅           | [this](src/main/java/de/quippy/javamod/multimedia/mod/readme.md)     | javamod                                                                    |
+| mod    | MO3, XRNS, AON, AON8, DM2                                                                                                           |   ✅    |           ✅           | [this](src/main/java/de/quippy/javamod/multimedia/mod/readme.md)     |                                                                            |
+| mod    | AMS, DMF, MDL, OKT, PTM, ULT, 669                                                                                                   |   🚫   |                       |                                                                      |                                                                            |
+| opl    | ROL, LAA, CMF, DRO, SCI                                                                                                             |   ✅    |           ✅           | this                                                                 | [opl3 class is duplicated](https://github.com/umjammer/vavi-sound-sandbox) | gbc,spc are not tested       |
+| opl    | HSC, SNG, D00, ADL, RAD, [etc.](https://github.com/umjammer/vavi-sound-sandbox/blob/master/src/main/java/vavi/sound/opl3/readme.md) |   ✅    |           ✅           | [vavi-sound-sandbox](https://github.com/umjammer/vavi-sound-sandbox) |                                                                            |
+| sid    | SID                                                                                                                                 |   ✅    |           ✅           | [JSIDPlay2](https://github.com/umjammer/JSIDPlay2)                   | RSID?                                                                      |
+| vgm    | VGM, GBC, NSF, SPC, KSS, GYM, SAP                                                                                                   |   ✅    | ✅&nbsp;<sup>[1]</sup> | [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu)         |                                                                            |
 
 <sub>[1] the spi is implemented in [vavi-sound-emu](https://github.com/umjammer/vavi-sound-emu)</sub>
 
@@ -91,6 +92,9 @@
 * ~~system property that off opl spi~~
 * ~~make SidMixer single thread~~
 * current sid mixer doesn't need patched library? ... no maven repo for sidplay2
+* fable5 said
+> One heads-up for A/B listening against javamod: javamod has its own bug in this exact spot — ins[10] = getNext(1) << 4 + getNext(1) shifts by 4 + n21 due to Java precedence, zeroing the connection bit whenever
+>  n21 is odd. I followed the AdPlug C original ((n20<<4)|n21), which is the correct upstream, so patches with connection = 1 may sound slightly different from javamod but more faithful to the real thing.
 
 ---
 
