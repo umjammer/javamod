@@ -1,5 +1,12 @@
 # JavaMod V3.9.7
 
+## New in Version 3.9.8
+* FIX: Sample swap with MODs in mixChannelIntoBuffers did not properly (re)set
+       all variables (sampleLength / interpolationMagic). Error was hidden by
+       Amiga emulation. (Thanks to Adam Waldenberg)
+* FIX: reading cues: sampleIndex is starting at 1 - forgot to subtract 1 from
+       index. (Thanks to Adam Waldenberg)
+
 ## New in Version 3.9.7
 * FIX: Complete overhaul of volume ramping - got rid of the default
        "interweaving" technology

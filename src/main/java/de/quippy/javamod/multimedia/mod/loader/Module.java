@@ -1551,9 +1551,13 @@ public abstract class Module {
                         int cues = (size - 2) >> 2; // should be MAX_CUES (or less)
                         int sampleIndex = inputStream.readIntelWord();
                         if (sampleIndex > 0 && sampleIndex <= getNSamples()) {
-                            Sample sample = getInstrumentContainer().getSample(sampleIndex);
+                            Sample sample = getInstrumentContainer().getSample(sampleIndex - 1);
+                            if (sample == null) { // huh?
+                                inputStream.skip(cues << 2);
+                                break;
+                            }
                             // future versions of OMPT might have more than 9 cues...
-                            int[] theCues = new int[cues < Sample.MAX_CUES ? Sample.MAX_CUES : cues];
+                            int[] theCues = new int[Math.max(cues, Sample.MAX_CUES)];
                             int cue = 0;
                             for (; cue < cues; cue++) theCues[cue] = inputStream.readIntelDWord();
                             // if we had less than max_cues, fill up with default
