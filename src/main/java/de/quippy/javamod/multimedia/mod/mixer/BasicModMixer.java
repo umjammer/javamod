@@ -2360,7 +2360,7 @@ public abstract class BasicModMixer {
             aktMemo.currentTuningPos += aktMemo.currentTuning;
             if (aktMemo.currentTuningPos < ModConstants.SHIFT_MAX) continue;
 
-            final int addToSamplePos = aktMemo.currentTuningPos >> ModConstants.SHIFT;
+            int addToSamplePos = aktMemo.currentTuningPos >> ModConstants.SHIFT;
             aktMemo.currentTuningPos &= ModConstants.SHIFT_MASK;
 
             // New tuning position - so initiate a blebInjection:
@@ -2386,13 +2386,16 @@ public abstract class BasicModMixer {
                         if ((sample.loopType & ModConstants.LOOP_ON) != 0) {
                             aktMemo.currentSamplePos = loopStart = sample.loopStart;
                             loopEnd = sample.loopStop;
+                            loopLength = sample.loopLength;
                             inLoop = ModConstants.LOOP_ON;
                         } else {
                             loopStart = 0;
-                            aktMemo.currentSamplePos = (loopLength = loopEnd = sample.sampleLength) - 1;
+                            aktMemo.currentSamplePos = (loopEnd = loopLength = sample.sampleLength) - 1;
                             inLoop = 0;
                         }
                         aktMemo.currentTuningPos = aktMemo.prevSampleOffset = 0;
+                        // The interpolation magic still belongs to the sample just left; recompute it for the new one
+                        aktMemo.interpolationMagic = (inLoop == ModConstants.LOOP_ON) ? sample.getLoopMagic(aktMemo.currentSamplePos) : 0;
                         continue;
                     }
 
