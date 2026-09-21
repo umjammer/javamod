@@ -1653,7 +1653,7 @@ public abstract class BasicModMixer {
      */
     protected void resetInstrumentPointers(ChannelMemory aktMemo, boolean forceS3MZero) {
         // init the ramp down of this channel
-        startRampDown(aktMemo);
+        startRampDown(aktMemo, false);
 
         // Paula relevant event (8BitBubsy's startDMA)
         // in his implementation, the currentTuningPos is reset *after* calling refetchPeriod
@@ -1671,9 +1671,8 @@ public abstract class BasicModMixer {
             int max = aktMemo.currentSample.sampleLength - 1;
             aktMemo.currentSamplePos = Math.min(aktMemo.prevSampleOffset, max);
         } else if (isS3M) { // special S3M sample offset handling
-            int offset = (!forceS3MZero) ? ((ScreamTrackerMixer) this).validateNewSampleOffset(aktMemo, aktMemo.prevSampleOffset) : 0;
-            aktMemo.currentSamplePos = offset;
             // prevSampleOffset is set zero in setNewInstrumentAndPeriod with a new instrument
+            aktMemo.currentSamplePos = (!forceS3MZero) ? ((ScreamTrackerMixer) this).validateNewSampleOffset(aktMemo, aktMemo.prevSampleOffset) : 0;
         } else {
             aktMemo.prevSampleOffset =
                     aktMemo.currentSamplePos = 0;
@@ -1937,9 +1936,9 @@ public abstract class BasicModMixer {
      * @since 07.06.2026
      * @param aktMemo
      */
-    protected void startRampDown(ChannelMemory aktMemo) {
+    protected void startRampDown(ChannelMemory aktMemo, boolean forceCurrentSample) {
         if (aktMemo.isChannelActive() && !aktMemo.hasMidiOutput() && (aktMemo.actRampVolLeft > 0 || aktMemo.actRampVolRight > 0)) { // rampDown needed?
-            aktMemo.setUpRampDown(); // copy current to rampDownMemory
+            aktMemo.setUpRampDown(forceCurrentSample); // copy current to rampDownMemory
             calculateVolRampLen(aktMemo.rampDownMemory);
         }
     }

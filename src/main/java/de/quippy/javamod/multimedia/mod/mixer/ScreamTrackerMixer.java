@@ -104,6 +104,8 @@ public class ScreamTrackerMixer extends BasicModMixer {
         switch (frequencyTableType) {
             case ModConstants.STM_S3M_TABLE:
             case ModConstants.IT_AMIGA_TABLE:
+                // Happens if a channel has a note but no sample was ever set - so also no finetune frequency is set
+                if (aktMemo.currentFinetuneFrequency == 0) return 0;
                 int s3mNote = ModConstants.FreqS3MTable[noteIndex % 12];
                 int s3mOctave = noteIndex / 12;
                 // If I do not do it like this, it is too precise - and limits do not work
@@ -169,8 +171,8 @@ public class ScreamTrackerMixer extends BasicModMixer {
         int newPeriod = aktMemo.currentNotePeriodSet = theNewPeriod;
 
         if (newPeriod <= 0) {
+            if (!aktMemo.instrumentFinished) startRampDown(aktMemo, true);
             aktMemo.currentTuning = 0;
-            if (!aktMemo.instrumentFinished) startRampDown(aktMemo);
             return;
         }
 
@@ -203,7 +205,7 @@ public class ScreamTrackerMixer extends BasicModMixer {
                 aktMemo.currentTuning = 0;
                 break;
         }
-        if (aktMemo.currentTuning == 0 && !aktMemo.instrumentFinished) startRampDown(aktMemo);
+        if (aktMemo.currentTuning == 0 && !aktMemo.instrumentFinished) startRampDown(aktMemo, true);
     }
 
     @Override
@@ -491,9 +493,8 @@ public class ScreamTrackerMixer extends BasicModMixer {
         aktMemo.noteCut = true;
         //aktMemo.currentVolume = 0;
         //aktMemo.doFastVolRamp = true;
-        startRampDown(aktMemo);
         // Schism sets tuning=0 and deletes the last period
-        setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod = 0);
+        setNewPlayerTuningFor(aktMemo, aktMemo.currentNotePeriod = 0); // will also do the startRampDown
         // if this is a NNA-Channel, release it
         if (aktMemo.isNNA) aktMemo.channelNumber = -1;
         if (aktMemo.hasMidiOutput()) modMidiMixer.sendMidiNote(aktMemo, ModConstants.KEY_OFF, 0);
