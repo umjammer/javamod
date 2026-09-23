@@ -207,10 +207,10 @@ public class XMMod extends ProTrackerMod {
                 rows = 64;
             else
                 if (rows > 4096) rows = 4096;
-//            {
-//                int MaxPatternSize = ((getModType() & (ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT)) != 0) ? 1024 : 256;
-//                if (rows > MaxPatternSize) rows = MaxPatternSize;
-//            }
+//                {
+//                    int MaxPatternSize = ((getModType() & (ModConstants.MODTYPE_MPT | ModConstants.MODTYPE_OMPT)) != 0) ? 1024 : 256;
+//                    if (rows > MaxPatternSize) rows = MaxPatternSize;
+//                }
 
             int packedPatternDataSize = inputStream.readIntelUnsignedWord();
             if (packedPatternDataSize == 0) {
@@ -260,13 +260,14 @@ public class XMMod extends ProTrackerMod {
      */
     private void readXMSampleData(RandomAccessInputStream inputStream, InstrumentsContainer instrumentContainer, int anzSamples, int sampleOffsetIndex) throws IOException {
         for (int samIndex = 0; samIndex < anzSamples; samIndex++) {
-            // XMs can have 16bit samples with an uneven amount of bytes. Even though I have no idea why that is:
-            // as we convert to "amount of samples to read", that extra byte is not read nor skipped.
-            // Therefore, lets seek at the end of sample data.
+            // XMs can have 16bit samples with an uneven amount of bytes. Even though I have no idea why that is.
+            // As we convert to "amount of samples to read", that extra byte is not read nor skipped.
+            // Therefore let's seek to the end of sample data.
+            // For ADPCM packed samples the size must be calculated
             long filePointer = inputStream.getFilePointer();
             Sample current = instrumentContainer.getSample(samIndex + sampleOffsetIndex);
             readSampleData(current, inputStream);
-            inputStream.seek(filePointer + current.byteLength);
+            inputStream.seek(filePointer + (((current.sampleType & ModConstants.SM_ADPCM) != 0) ? 16 + ((current.byteLength + 1) >> 1) : current.byteLength));
         }
     }
 
@@ -351,7 +352,7 @@ public class XMMod extends ProTrackerMod {
         // OrderNum:
         setSongLength(inputStream.readIntelUnsignedWord());
 
-        //SongRestart
+        // SongRestart
         int songRestart = inputStream.readIntelUnsignedWord();
         setSongRestart((songRestart > getSongLength()) ? 0 : songRestart);
 
