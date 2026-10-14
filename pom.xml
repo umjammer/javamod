@@ -49,7 +49,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>6.0.3</version>
+        <version>6.1.3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -60,20 +60,20 @@
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.1.18</version>
+      <version>1.1.24</version>
     </dependency>
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-sound</artifactId>
-      <version>1.0.27</version>
+      <version>1.1.8</version>
     </dependency>
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>jlayer</artifactId>
-      <version>1.0.3</version>
+      <version>1.0.6</version>
     </dependency>
     <dependency>
-      <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / vavi -->
+      <groupId>com.github.umjammer</groupId> <!-- vavi / com.github.umjammer -->
       <artifactId>vavi-sound-flac</artifactId>
       <version>0.0.8</version>
     </dependency>
@@ -88,12 +88,12 @@
       <version>0.0.7</version>
     </dependency>
     <dependency>
-      <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / net.sourceforge.jmac -->
+      <groupId>com.github.umjammer</groupId> <!-- net.sourceforge.jmac / com.github.umjammer -->
       <artifactId>jmac</artifactId>
       <version>1.7.6v</version>
     </dependency>
     <dependency>
-      <groupId>com.github.umjammer.JSIDPlay2</groupId> <!-- com.github.umjammer.JSIDPlay2 / jsidplay2 -->
+      <groupId>com.github.umjammer.JSIDPlay2</groupId> <!-- jsidplay2 / com.github.umjammer.JSIDPlay2 -->
       <artifactId>jsidplay2</artifactId>
       <version>4.10.0v</version>
       <exclusions>
@@ -153,22 +153,35 @@
           <groupId>com.fasterxml.jackson.core</groupId>
           <artifactId>jackson-core</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.glassfish.jaxb</groupId>
+          <artifactId>jaxb-runtime</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 <dependency>
   <groupId>org.apache.commons</groupId>
   <artifactId>commons-lang3</artifactId>
-  <version>3.20.0</version>
+  <version>3.21.0</version>
 </dependency>
 <dependency>
   <groupId>com.fasterxml.jackson.core</groupId>
   <artifactId>jackson-core</artifactId>
-  <version>2.21.1</version>
+  <version>2.22.3</version>
+</dependency>
+<dependency>
+  <groupId>com.fasterxml.jackson.core</groupId>
+  <artifactId>jackson-databind</artifactId>
+  <version>2.22.3</version>
 </dependency>
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- uk.co.omgdrv / com.github.umjammer -->
       <artifactId>simplevgm</artifactId>
-      <version>1.5.11</version>
+      <version>1.5.12</version>
     </dependency>
 
     <dependency>
